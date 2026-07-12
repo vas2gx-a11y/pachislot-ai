@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}機種スペック登録システム{% endblock %}
+
+{% block header %}
+<h1 class="text-3xl font-bold text-yellow-500">🎯 機種スペック登録システム</h1>
+{% endblock %}
+
+{% block content %}
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-8 border border-gray-700">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-2 text-gray-200">
+                🎯 機種スペックを登録する（画像から自動読み込み）
+            </h2>
+            <p class="text-sm text-gray-400 mb-2">
+                スペック表や設定判別要素の画像をアップロードすると、AIが機種名・強示唆ワード・ゲームフロー・設定別確率表を自動で読み取り、機種マスタ(スプレッドシートの「{{ machines_sheet_name }}」シート)に保存します。
+            </p>
+            <div class="bg-gray-900 border border-gray-700 rounded p-3 mb-4 text-sm text-gray-300">
+                📊 スプレッドシートに直接書き込みたい場合は
+                <a href="{{ spreadsheet_url }}" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 underline">こちらから直接開いて編集</a>
+                できます。「{{ machines_sheet_name }}」シートの
+                <code class="text-yellow-400">keyword</code> / <code class="text-yellow-400">hint_words</code> / <code class="text-yellow-400">game_flow</code> / <code class="text-yellow-400">setting_ratios</code>
+                の各セルに直接テキストを入力・編集すれば、次回のアクセスから設定予測に反映されます(アプリの再起動は不要です)。
+                <code class="text-yellow-400">setting_ratios</code> はJSON形式(例: <code class="text-gray-400">{"1":{"big":"1/400","reg":"1/800"}}</code>)でも、自由なテキスト(例: 設定6は差枚+200枚想定)でも構いません。
+            </div>
+            <form action="{{ url_for('machines.machines_upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">機種名キーワード（任意）</label>
+                        <input type="text" name="keyword" placeholder="AIが読み取れない場合の補助用（例: ToLOVE）" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">追加の強示唆ワード（任意・カンマ区切り）</label>
+                        <input type="text" name="hint_words" placeholder="例: 強示唆,高確,チャンス" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">スペック画像（必須）</label>
+                    <input type="file" name="spec_image" accept="image/*" required class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
+                </div>
+                <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-8 py-3 rounded shadow-md self-start">
+                    画像を解析して機種データを登録
+                </button>
+            </form>
+
+            {% if machine_list %}
+            <div class="mt-8 border-t border-gray-700 pt-4">
+                <h3 class="text-sm font-semibold text-gray-400 mb-3">📋 登録済み機種一覧</h3>
+                <div class="flex flex-col gap-3">
+                    {% for m in machine_list %}
+                    <details class="bg-gray-900 border border-gray-700 rounded p-3">
+                        <summary class="cursor-pointer select-none font-bold text-yellow-400">{{ m.keyword }}</summary>
+                        <div class="mt-2 text-sm text-gray-300">
+                            <div class="mb-1"><span class="text-gray-500">強示唆ワード:</span> {{ m.hint_words | join(", ") if m.hint_words else "登録なし" }}</div>
+                            <div class="mb-2"><span class="text-gray-500">ゲームフロー:</span> {{ m.game_flow if m.game_flow else "登録なし" }}</div>
+                            {% if m.setting_ratios %}
+                                {% if m.setting_ratios is mapping %}
+                                <div class="overflow-x-auto">
+                                    <table class="text-xs border-collapse">
+                                        <thead>
+                                            <tr class="text-gray-500">
+                                                <th class="pr-4 text-left">設定</th><th class="pr-4 text-left">BIG</th><th class="pr-4 text-left">REG</th><th class="pr-4 text-left">合成</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for setting_no, ratios in m.setting_ratios.items() %}
+                                            <tr class="text-gray-200">
+                                                <td class="pr-4">設定{{ setting_no }}</td>
+                                                <td class="pr-4">{{ ratios.big if ratios.big else "-" }}</td>
+                                                <td class="pr-4">{{ ratios.reg if ratios.reg else "-" }}</td>
+                                                <td class="pr-4">{{ ratios.total if ratios.total else "-" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="text-gray-300 whitespace-pre-wrap">{{ m.setting_ratios }}</div>
+                                {% endif %}
+                            {% else %}
+                            <div class="text-gray-500">設定別確率表: 登録なし</div>
+                            {% endif %}
+                        </div>
+                    </details>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{{ url_for('records.index') }}" class="block bg-gray-800 hover:bg-gray-750 p-4 rounded-lg shadow-lg border border-gray-700 text-gray-200 transition">
+        ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る
+    </a>
+{% endblock %}
