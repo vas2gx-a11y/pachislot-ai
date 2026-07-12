@@ -52,11 +52,12 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
-# records シートの列構成(session_idを追加)
+# records シートの列構成(session_idを追加、machine_number/store_nameを追加)
 HEADERS = [
-    "session_id", "date", "machine_name", "total_games", "big_count", "reg_count",
+    "session_id", "date", "machine_name", "machine_number", "store_name",
+    "total_games", "big_count", "reg_count",
     "current_games", "difference_slabs", "graph_features",
-    "other_info", "user_note", "estimation",
+    "other_info", "user_note", "estimation", "setting_probabilities",
 ]
 
 # machines シートの列構成
@@ -131,6 +132,14 @@ def load_records():
         for r in records:
             for field in NUMERIC_FIELDS:
                 r[field] = _to_int(r.get(field, 0))
+            raw_probs = str(r.get("setting_probabilities", "")).strip()
+            if raw_probs:
+                try:
+                    r["setting_probabilities"] = _normalize_setting_probabilities(json.loads(raw_probs))
+                except json.JSONDecodeError:
+                    r["setting_probabilities"] = {}
+            else:
+                r["setting_probabilities"] = {}
         records.reverse()  # 新しい順に表示
         return records
     except Exception as e:
@@ -188,13 +197,16 @@ def load_machine_rules():
 def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
     """
     machines シートに機種情報を保存する。
-    同じ keyword の行が既にあれば上書き、なければ新規追加する(upsert)。
+    同じ keyword の行が既にあれば、既存データに新しい内容を追記(マージ)する。
+    なければ新規追加する。
+
+    - hint_words: 既存 + 新規 を合算(重複除去)
+    - game_flow: 既存の説明文の末尾に新しい説明文を追記(全く同じ内容なら追記しない)
+    - setting_ratios: 既存の辞書をベースに、新しいキーで追加・更新(新規に無い既存キーは保持)
     """
     keyword = (keyword or "").strip()
     if not keyword:
         return False
-    hint_words_str = ",".join(w.strip() for w in hint_words if w.strip())
-    setting_ratios_json = json.dumps(setting_ratios or {}, ensure_ascii=False)
 
     try:
         ws = get_machines_worksheet()
@@ -205,7 +217,48 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
                 target_row = i
                 break
 
-        row_values = [keyword, hint_words_str, game_flow, setting_ratios_json]
+        # 既存データを読み込む(あれば)
+        existing_hint_words = []
+        existing_game_flow = ""
+        existing_setting_ratios = {}
+        if target_row:
+            existing_row = ws.row_values(target_row)
+            if len(existing_row) > 1:
+                existing_hint_words = [w.strip() for w in existing_row[1].split(",") if w.strip()]
+            if len(existing_row) > 2:
+                existing_game_flow = existing_row[2].strip()
+            if len(existing_row) > 3 and existing_row[3].strip():
+                try:
+                    parsed_existing = json.loads(existing_row[3])
+                    if isinstance(parsed_existing, dict):
+                        existing_setting_ratios = parsed_existing
+                except json.JSONDecodeError:
+                    existing_setting_ratios = {}
+
+        # 強示唆ワード: 既存 + 新規をマージ(重複除去、順序維持)
+        merged_hint_words = list(dict.fromkeys(
+            existing_hint_words + [w.strip() for w in (hint_words or []) if w.strip()]
+        ))
+
+        # ゲームフロー: 新しい説明文が既存に含まれていなければ末尾に追記
+        new_game_flow = (game_flow or "").strip()
+        if new_game_flow and new_game_flow not in existing_game_flow:
+            merged_game_flow = (
+                f"{existing_game_flow}\n{new_game_flow}".strip("\n")
+                if existing_game_flow else new_game_flow
+            )
+        else:
+            merged_game_flow = existing_game_flow
+
+        # 設定判別要素: 既存をベースに新しいキーで追加・更新(保持したまま追記)
+        merged_setting_ratios = dict(existing_setting_ratios)
+        if isinstance(setting_ratios, dict):
+            merged_setting_ratios.update(setting_ratios)
+
+        hint_words_str = ",".join(merged_hint_words)
+        setting_ratios_json = json.dumps(merged_setting_ratios, ensure_ascii=False)
+        row_values = [keyword, hint_words_str, merged_game_flow, setting_ratios_json]
+
         if target_row:
             ws.update(f"A{target_row}:D{target_row}", [row_values])
         else:
@@ -230,13 +283,17 @@ def get_session_history_text(session_id):
     return " ".join(texts)
 
 
-def get_recent_same_machine_records(machine_name, exclude_session_id="", days=7, limit=5):
+def get_recent_same_machine_records(machine_name, store_name="", exclude_session_id="", days=7, limit=5):
     """
     同じ機種名(前日・今週など、別セッションを含む)の直近の記録を取得する。
+    store_name が指定されている場合は、同じ店舗(店舗名が完全一致)の記録のみを対象にする。
+    (店舗が違えば設定投入方針も変わるため、店舗情報が入力されている場合は店舗を絞り込んで
+    ホールの傾向分析の精度を上げる。店舗名が未入力の場合は従来通り店舗を問わず参照する。)
     現在編集中のセッション(exclude_session_id)は除外し、日付が新しい順に最大limit件返す。
     ※ セッション単位で最新1件のみを採用する(同じ来店で何度も記録した分の重複を避けるため)。
     """
     machine_name = (machine_name or "").strip()
+    store_name = (store_name or "").strip()
     if not machine_name:
         return []
 
@@ -255,6 +312,10 @@ def get_recent_same_machine_records(machine_name, exclude_session_id="", days=7,
         # 機種名が部分一致していれば同じ機種とみなす(表記ゆれをある程度許容)
         if machine_name not in r_machine and r_machine not in machine_name:
             continue
+        if store_name:
+            r_store = str(r.get("store_name", "")).strip()
+            if r_store != store_name:
+                continue  # 店舗情報が入力されている場合は、同じ店舗の記録のみ対象にする
         try:
             record_date = datetime.strptime(str(r.get("date", "")), "%Y-%m-%d %H:%M:%S")
         except (ValueError, TypeError):
@@ -286,12 +347,15 @@ def format_recent_history(records):
     return " / ".join(lines)
 
 
-def summarize_hall_tendency(records, hint_words=None):
+def summarize_hall_tendency(records, hint_words=None, store_filtered=False):
     """
     直近の同機種データから、そのホール・その台の実際の傾向(平均差枚・勝率・
     強示唆ワードの出現頻度など)を集計し、判定材料として使えるサマリー文を作る。
+    store_filtered=True の場合は、店舗名で絞り込んだ「同一店舗」のデータであることを明記する。
     """
     if not records:
+        if store_filtered:
+            return "傾向データなし(この店舗での過去データが登録されていないため判定不可)"
         return "傾向データなし(過去データが登録されていないため判定不可)"
 
     hint_words = hint_words or []
@@ -308,8 +372,9 @@ def summarize_hall_tendency(records, hint_words=None):
             if any(hint in note_text for hint in hint_words):
                 hint_hit_count += 1
 
+    scope_label = "同一店舗での" if store_filtered else "(店舗情報未入力のため店舗を問わない)"
     summary = (
-        f"直近{n}回の平均差枚: {avg_diff:+.0f}枚, "
+        f"{scope_label}直近{n}回の平均差枚: {avg_diff:+.0f}枚, "
         f"プラス収支の割合: {plus_rate:.0f}% ({plus_count}/{n}回)"
     )
     if hint_words:
@@ -341,8 +406,10 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
     prompt = f"""
     パチスロのデータ画面です。以下のJSON形式でのみ出力してください。他の文章は不要です。
     graph_features と other_info は必ず日本語の文章で記述してください(英語や記号だけの出力は不可)。
+    machine_number(台番号)は、画像内に表示されている台番号・台の管理番号があればその数字や文字列をそのまま読み取ってください。
+    見当たらない・読み取れない場合は空文字("")にしてください(推測で埋めないでください)。
     {machine_context}
-    {{"total_games": 0, "big_count": 0, "reg_count": 0, "current_games": 0, "difference_slabs": 0, "graph_features": "", "other_info": ""}}
+    {{"total_games": 0, "big_count": 0, "reg_count": 0, "current_games": 0, "difference_slabs": 0, "machine_number": "", "graph_features": "", "other_info": ""}}
     """
     payload = {
         "contents": [
@@ -482,12 +549,73 @@ def _format_setting_ratios(setting_ratios):
     return " / ".join(lines)
 
 
-def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text=""):
+def _normalize_setting_probabilities(raw):
+    """
+    {"1": 20, "2": 15, ...} のような設定1〜6の確率(数値)を受け取り、
+    6つ全てのキーを持ち、合計がちょうど100になるように整数へ正規化する。
+    値が読み取れない/不正な場合は均等配分(情報不足を意味する)にフォールバックする。
+    """
+    settings = [str(i) for i in range(1, 7)]
+    values = {}
+    if isinstance(raw, dict):
+        for s in settings:
+            try:
+                v = float(raw.get(s, 0) or 0)
+            except (TypeError, ValueError):
+                v = 0
+            values[s] = max(0.0, v)
+
+    total = sum(values.values()) if values else 0
+    if not values or total <= 0:
+        # 情報が全く無い場合は完全に均等(=判別材料が無いことを意味する)
+        base = 100 // 6
+        remainder = 100 - base * 6
+        return {s: base + (1 if i < remainder else 0) for i, s in enumerate(settings)}
+
+    # 比率を保ったまま合計100の整数へ丸める(端数は大きい順に配分)
+    scaled = {s: values[s] / total * 100 for s in settings}
+    floored = {s: int(scaled[s]) for s in settings}
+    remainder = 100 - sum(floored.values())
+    # 端数が大きい設定から順に+1して合計を100に合わせる
+    for s in sorted(settings, key=lambda s: scaled[s] - floored[s], reverse=True)[:remainder]:
+        floored[s] += 1
+    return floored
+
+
+def _describe_data_volume(total_games, recent_records_count, has_session_history):
+    """
+    現在の情報量をざっくり3段階(乏しい/普通/十分)で表現し、AIへの指示に使う。
+    """
+    score = 0
+    if total_games >= 1000:
+        score += 2
+    elif total_games >= 300:
+        score += 1
+    if recent_records_count >= 3:
+        score += 2
+    elif recent_records_count >= 1:
+        score += 1
+    if has_session_history:
+        score += 1
+
+    if score <= 1:
+        return "乏しい(累計G数が少なく、過去の参考データもほぼ無い)"
+    elif score <= 3:
+        return "普通(ある程度データはあるが、まだ十分とは言えない)"
+    return "十分(累計G数・過去データともに揃っている)"
+
+
+def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
+             recent_records_count=0):
     """
     machine_name・強示唆ワード・ゲームフロー・設定別確率表・累計データ・
     過去のメモやAI備考・同機種の直近の来店データ(とその傾向分析)をGeminiに渡し、
-    日本語で設定予測コメントを生成してもらう。
+    設定1〜6それぞれの確率(%)と、日本語の短い判定コメントを生成してもらう。
+    情報が少ない場合は、確率が特定の設定に偏らず均等に近い数値になるよう指示している
+    (=数値そのものが「まだ判別材料が少ない」ことを表す)。
     AI呼び出しに失敗した場合は簡易的なキーワード判定にフォールバックする。
+
+    戻り値: (comment: str, setting_probabilities: {"1": int, ..., "6": int})  ※合計100
     """
     stats = stats or {}
     matched_keyword, rule = find_machine_rule(machine_name)
@@ -500,12 +628,16 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     reg_count = stats.get("reg_count", 0)
     actual_big_rate = f"1/{total_games / big_count:.1f}" if big_count else "算出不可"
     actual_reg_rate = f"1/{total_games / reg_count:.1f}" if reg_count else "算出不可"
+    data_volume = _describe_data_volume(
+        total_games, recent_records_count, bool(combined_text and combined_text.strip())
+    )
 
     prompt = f"""
     あなたはパチスロの設定判別をサポートするアシスタントです。
-    以下の情報をもとに、この台の設定(高設定である可能性)について
-    日本語で20〜40文字程度の簡潔な判定コメントを1つだけ出力してください。
-    判定コメント以外の説明文・前置き・記号は一切出力しないでください。
+    以下の情報をもとに、この台の設定1〜設定6それぞれである確率(%)を推測し、
+    必ず以下のJSON形式のみで出力してください。他の文章・前置き・記号は一切不要です。
+
+    {{"setting_probabilities": {{"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0}}, "comment": "20〜40文字程度の日本語コメント"}}
 
     【機種名】{machine_name}
     【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
@@ -515,17 +647,19 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     【今回のメモ・AI画像解析結果の蓄積テキスト】{combined_text if combined_text.strip() else "情報なし"}
     【同機種・このホールでの直近(約7日以内)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
     【同機種の直近の来店データ(個別内訳・参考情報)】{recent_history_text if recent_history_text else "登録なし"}
+    【現時点の情報量】{data_volume}
 
+    setting_probabilities の6つの値は、合計がちょうど100になるように整数で出力してください。
+    情報量が「乏しい」場合は、特定の設定に偏らせず16〜17%前後の均等に近い数値にしてください
+    (=まだ判別材料が少ないことを数値そのもので表現してください)。
+    情報量が「普通」「十分」で、実測確率のズレ・強示唆ワード・ホールの傾向などから
+    高設定/低設定の可能性が読み取れる場合は、該当する設定に大きく偏らせて構いません。
     設定別確率表が登録されている場合は、実測確率と各設定の理論値を比較して
-    最も近い設定帯を推測に反映してください。
-    強示唆ワードが蓄積テキストに含まれている場合は高設定寄りのコメントを、
-    データが乏しい場合はその旨を踏まえたコメントを出してください。
+    最も近い設定帯の確率を高めに評価してください。
     「同機種・このホールでの直近の傾向分析」(平均差枚・プラス収支率・強示唆ワード出現頻度など)は、
-    そのホールがこの台に対して高設定を使いやすいかどうかの実績を示す重要な材料です。
-    設定自体は日ごとにリセットされますが、ホールの設定投入方針(この台をよく使う/据え置きが多いなど)は
-    傾向として継続しやすいため、単なる免責事項として退けず、判定に積極的に反映してください。
-    傾向が好調(平均差枚がプラス、プラス収支率が高い)であれば強気の判定を、
-    傾向が不調であれば慎重な判定を出してください。
+    そのホールがこの台に対して高設定を使いやすいかどうかの実績を示す重要な材料なので、
+    単なる免責事項として退けず、確率分布に積極的に反映してください。
+    comment には判定の根拠となった主なポイントを簡潔に含めてください。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {"Content-Type": "application/json"}
@@ -536,19 +670,30 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
         )
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        if raw_text:
-            return raw_text
+        json_start = raw_text.find("{")
+        json_end = raw_text.rfind("}") + 1
+        if json_start != -1 and json_end != 0:
+            parsed = json.loads(raw_text[json_start:json_end])
+            comment = str(parsed.get("comment", "")).strip() or "判定コメントなし"
+            probabilities = _normalize_setting_probabilities(parsed.get("setting_probabilities"))
+            return comment, probabilities
+        logger.error(f"設定予測AI JSONが見つかりません: {raw_text}")
     except requests.exceptions.Timeout:
         logger.error("設定予測AI タイムアウト")
     except requests.exceptions.RequestException as e:
         logger.error(f"設定予測AI 通信エラー: {e}")
     except (KeyError, IndexError) as e:
         logger.error(f"設定予測AI レスポンス構造エラー: {e}")
+    except json.JSONDecodeError as e:
+        logger.error(f"設定予測AI JSON解析エラー: {e}")
 
     # AI呼び出しに失敗した場合の簡易フォールバック
     if hint_words and any(hint in combined_text for hint in hint_words):
-        return "高設定濃厚!? (要確認/AI判定失敗のため簡易判定)"
-    return "推測中...(AI判定失敗)"
+        fallback_probabilities = _normalize_setting_probabilities(
+            {"1": 5, "2": 5, "3": 10, "4": 20, "5": 30, "6": 30}
+        )
+        return "高設定濃厚!? (要確認/AI判定失敗のため簡易判定)", fallback_probabilities
+    return "推測中...(AI判定失敗)", _normalize_setting_probabilities({})
 
 
 # ---------------------------------------------------------------------------
@@ -573,13 +718,20 @@ def index():
     # 「追加分析」等で機種名が指定されている場合、参考として使われる直近の同機種データをプレビュー表示する
     recent_history_preview = []
     hall_tendency_preview = ""
+    preset_store = ""
     if preset_machine:
         _, preview_rule = find_machine_rule(preset_machine)
+        # 継続セッションであれば、そのセッションで既に入力済みの店舗名を引き継いでプレビューに反映する
+        if preset_session:
+            for r in history:
+                if str(r.get("session_id", "")) == preset_session and str(r.get("store_name", "")).strip():
+                    preset_store = str(r.get("store_name", "")).strip()
+                    break
         recent_history_preview = get_recent_same_machine_records(
-            preset_machine, exclude_session_id=preset_session, days=7
+            preset_machine, store_name=preset_store, exclude_session_id=preset_session, days=7
         )
         hall_tendency_preview = summarize_hall_tendency(
-            recent_history_preview, hint_words=preview_rule.get("hint_words", [])
+            recent_history_preview, hint_words=preview_rule.get("hint_words", []), store_filtered=bool(preset_store)
         )
 
     return render_template(
@@ -587,6 +739,7 @@ def index():
         history=history,
         preset_machine=preset_machine,
         preset_session=preset_session,
+        preset_store=preset_store,
         machine_list=machine_list,
         spreadsheet_url=SPREADSHEET_URL,
         machines_sheet_name=MACHINES_SHEET_NAME,
@@ -598,6 +751,7 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     machine_name = request.form.get("machine_name", "不明な機種").strip()
+    store_name = request.form.get("store_name", "").strip()
     user_note = request.form.get("user_note", "").strip()
     session_id = request.form.get("session_id", "").strip()
     file = request.files.get("image")
@@ -619,6 +773,7 @@ def upload():
     machine_game_flow = machine_rule.get("game_flow", "")
 
     total, big, reg, current, diff = 0, 0, 0, 0, 0
+    machine_number = ""
     graph_features, other_info = "画像なし", "特になし"
 
     if file and file.filename != "":
@@ -644,11 +799,20 @@ def upload():
             reg = parsed_data.get("reg_count", 0)
             current = parsed_data.get("current_games", 0)
             diff = parsed_data.get("difference_slabs", 0)
+            machine_number = str(parsed_data.get("machine_number", "") or "").strip()
             graph_features = parsed_data.get("graph_features", "不明")
             other_info = parsed_data.get("other_info", "特になし")
         else:
             flash("画像の解析に失敗しました。手動で確認してください。")
             graph_features, other_info = "解析失敗", "解析失敗"
+
+    # 今回の入力に店舗名が無かった場合、同一セッションの過去の記録から引き継ぐ
+    # (店舗名でホールの傾向分析を絞り込むため、参考データ取得の前に確定させておく)
+    if not store_name and session_id:
+        for r in load_records():
+            if str(r.get("session_id", "")) == session_id and str(r.get("store_name", "")).strip():
+                store_name = str(r.get("store_name", "")).strip()
+                break
 
     # このセッションの過去のメモ・AI備考も合わせて、設定予測をやり直す
     past_text = get_session_history_text(session_id)
@@ -657,11 +821,14 @@ def upload():
     # 前日・今週など、同機種の別セッションの記録も参考情報として取得する
     if history_days > 0:
         recent_records = get_recent_same_machine_records(
-            machine_name, exclude_session_id=session_id, days=history_days
+            machine_name, store_name=store_name, exclude_session_id=session_id, days=history_days
         )
         recent_history_text = format_recent_history(recent_records)
-        hall_tendency_text = summarize_hall_tendency(recent_records, hint_words=machine_hint_words)
+        hall_tendency_text = summarize_hall_tendency(
+            recent_records, hint_words=machine_hint_words, store_filtered=bool(store_name)
+        )
     else:
+        recent_records = []
         recent_history_text = "参照しない設定のため未参照"
         hall_tendency_text = "参照しない設定のため未算出"
 
@@ -673,10 +840,24 @@ def upload():
         "difference_slabs": diff,
     }
 
+    # 今回の画像に台番号が写っていなかった場合、同一セッションの過去の記録から引き継ぐ
+    if not machine_number and session_id:
+        for r in load_records():
+            if str(r.get("session_id", "")) == session_id and str(r.get("machine_number", "")).strip():
+                machine_number = str(r.get("machine_number", "")).strip()
+                break
+
+    estimation_comment, setting_probabilities = estimate(
+        machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
+        recent_records_count=len(recent_records),
+    )
+
     record = {
         "session_id": session_id,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "machine_name": machine_name,
+        "machine_number": machine_number,
+        "store_name": store_name,
         "total_games": total,
         "big_count": big,
         "reg_count": reg,
@@ -685,7 +866,8 @@ def upload():
         "graph_features": graph_features,
         "other_info": other_info,
         "user_note": user_note,
-        "estimation": estimate(machine_name, combined_text, stats, recent_history_text, hall_tendency_text),
+        "estimation": estimation_comment,
+        "setting_probabilities": json.dumps(setting_probabilities, ensure_ascii=False),
     }
     save_record(record)
     return redirect(url_for("index"))

@@ -40,8 +40,13 @@
                         <input type="text" name="machine_name" value="{{ preset_machine }}" required placeholder="例: ToLOVEる" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
                     </div>
                     <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">店舗名（任意）</label>
+                        <input type="text" name="store_name" value="{{ preset_store }}" placeholder="例: ○○ホール △△店" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-400 mb-1">スクショ画像（任意）</label>
                         <input type="file" name="image" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-1">台番号は画像から自動で読み取ります(見えていれば)。</p>
                     </div>
                 </div>
                 <div>
@@ -57,6 +62,7 @@
                         <option value="30">今月（直近30日）</option>
                     </select>
                     <p class="text-xs text-gray-500 mt-1">同じ機種名の他セッション(前日・今週など)のG数・BIG/REG・差枚・メモを参考情報としてAIに渡します。</p>
+                    <p class="text-xs text-gray-500 mt-1">推測結果は設定1〜6それぞれの確率(%)で表示されます。情報が少ないうちは均等に近い数値になるので、「追加分析」で画像やメモを追加していくほど精度が上がります。</p>
                 </div>
 
                 {% if recent_history_preview %}
@@ -167,8 +173,8 @@
             <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4">
                 <div class="flex justify-between items-start gap-2 mb-2">
                     <div class="min-w-0">
-                        <div class="text-xs text-gray-400 truncate">{{ item.date }}</div>
-                        <div class="font-bold text-yellow-400 truncate">{{ item.machine_name }}</div>
+                        <div class="text-xs text-gray-400 truncate">{{ item.date }}{% if item.store_name %} ・ {{ item.store_name }}{% endif %}</div>
+                        <div class="font-bold text-yellow-400 truncate">{{ item.machine_name }}{% if item.machine_number %} <span class="text-gray-400 font-normal">(No.{{ item.machine_number }})</span>{% endif %}</div>
                     </div>
                     <a href="/?machine_name={{ item.machine_name }}&session_id={{ item.session_id }}" class="shrink-0 bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded">追加分析</a>
                 </div>
@@ -183,6 +189,19 @@
                 <div class="text-sm font-bold text-yellow-400 border-t border-gray-700 pt-2 mt-2">
                     推測結果: {{ item.estimation }}
                 </div>
+                {% if item.setting_probabilities %}
+                <div class="flex flex-col gap-0.5 mt-2">
+                    {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-10 shrink-0 text-gray-400">設定{{ setting_no }}</span>
+                        <div class="flex-1 bg-gray-700 rounded h-2 overflow-hidden">
+                            <div class="bg-yellow-500 h-2" style="width: {{ pct }}%;"></div>
+                        </div>
+                        <span class="w-9 shrink-0 text-right text-gray-300">{{ pct }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
             {% else %}
             <div class="text-center text-gray-400 bg-gray-800 border border-gray-700 rounded-lg p-6">
@@ -196,7 +215,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-700 text-gray-300 text-sm uppercase">
-                        <th class="p-4">日時</th><th class="p-4">機種名</th><th class="p-4">G数</th><th class="p-4">差枚</th>
+                        <th class="p-4">日時</th><th class="p-4">店舗名</th><th class="p-4">機種名</th><th class="p-4">台番号</th><th class="p-4">G数</th><th class="p-4">差枚</th>
                         <th class="p-4">メモ / AI備考</th><th class="p-4 text-yellow-500">推測結果</th><th class="p-4">操作</th>
                     </tr>
                 </thead>
@@ -204,14 +223,31 @@
                     {% for item in history %}
                     <tr class="hover:bg-gray-750 transition text-gray-200">
                         <td class="p-4 text-sm text-gray-400 whitespace-nowrap">{{ item.date }}</td>
+                        <td class="p-4 text-sm text-gray-300 whitespace-nowrap">{{ item.store_name }}</td>
                         <td class="p-4 font-bold text-yellow-400">{{ item.machine_name }}</td>
+                        <td class="p-4 text-sm text-gray-300 whitespace-nowrap">{{ item.machine_number }}</td>
                         <td class="p-4 whitespace-nowrap">{{ item.total_games }}G</td>
                         <td class="p-4 whitespace-nowrap {% if item.difference_slabs > 0 %}text-green-400{% endif %}">{{ item.difference_slabs }}枚</td>
                         <td class="p-4 text-sm">
                             <div class="text-yellow-500">{{ item.user_note }}</div>
                             <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
                         </td>
-                        <td class="p-4 text-sm font-bold text-yellow-400">{{ item.estimation }}</td>
+                        <td class="p-4 text-sm font-bold text-yellow-400">
+                            <div>{{ item.estimation }}</div>
+                            {% if item.setting_probabilities %}
+                            <div class="flex flex-col gap-0.5 mt-2 font-normal min-w-[140px]">
+                                {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="w-10 shrink-0 text-gray-400">設定{{ setting_no }}</span>
+                                    <div class="flex-1 bg-gray-700 rounded h-2 overflow-hidden">
+                                        <div class="bg-yellow-500 h-2" style="width: {{ pct }}%;"></div>
+                                    </div>
+                                    <span class="w-9 shrink-0 text-right text-gray-300">{{ pct }}%</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </td>
                         <td class="p-4 whitespace-nowrap">
                             <a href="/?machine_name={{ item.machine_name }}&session_id={{ item.session_id }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
                         </td>
