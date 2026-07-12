@@ -10,18 +10,43 @@
     <div class="bg-gray-800 rounded-lg shadow-lg mb-8 border border-gray-700">
         <div class="p-6">
             <h2 class="text-xl font-semibold mb-2 text-gray-200">
-                🎯 機種スペックを登録する（画像から自動読み込み）
+                🌐 URLからスペック情報を取り込む
+            </h2>
+            <p class="text-sm text-gray-400 mb-4">
+                機種のスペック・解析情報が載っているページのURL(例: DMMぱちタウンの機種ページなど)を入力すると、
+                AIがページ本文から機種名・強示唆ワード・ゲームフロー・設定別確率・天井・ボーナス・CZ・設定示唆演出などをまとめて読み取り登録します。
+            </p>
+            <form action="{{ url_for('machines.machines_import_url') }}" method="POST" class="flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-[2]">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">スペック情報ページのURL（必須）</label>
+                        <input type="url" name="spec_url" required placeholder="https://p-town.dmm.com/machines/xxxx" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">機種名キーワード（任意）</label>
+                        <input type="text" name="url_keyword" placeholder="AIが読み取れない場合の補助用" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-8 py-3 rounded shadow-md self-start">
+                    URLからスペック情報を取り込む
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-8 border border-gray-700">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-2 text-gray-200">
+                📸 スペック画像から登録する
             </h2>
             <p class="text-sm text-gray-400 mb-2">
-                スペック表や設定判別要素の画像をアップロードすると、AIが機種名・強示唆ワード・ゲームフロー・設定別確率表を自動で読み取り、機種マスタ(スプレッドシートの「{{ machines_sheet_name }}」シート)に保存します。
+                スペック表や設定判別要素の画像をアップロードすると、AIが機種名・強示唆ワード・ゲームフロー・設定別確率表などを自動で読み取り、機種マスタ(スプレッドシートの「{{ machines_sheet_name }}」シート)に保存します。
             </p>
             <div class="bg-gray-900 border border-gray-700 rounded p-3 mb-4 text-sm text-gray-300">
                 📊 スプレッドシートに直接書き込みたい場合は
                 <a href="{{ spreadsheet_url }}" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 underline">こちらから直接開いて編集</a>
-                できます。「{{ machines_sheet_name }}」シートの
-                <code class="text-yellow-400">keyword</code> / <code class="text-yellow-400">hint_words</code> / <code class="text-yellow-400">game_flow</code> / <code class="text-yellow-400">setting_ratios</code>
-                の各セルに直接テキストを入力・編集すれば、次回のアクセスから設定予測に反映されます(アプリの再起動は不要です)。
-                <code class="text-yellow-400">setting_ratios</code> はJSON形式(例: <code class="text-gray-400">{"1":{"big":"1/400","reg":"1/800"}}</code>)でも、自由なテキスト(例: 設定6は差枚+200枚想定)でも構いません。
+                できます。「{{ machines_sheet_name }}」シートの各セルに直接テキストを入力・編集すれば、次回のアクセスから設定予測に反映されます(アプリの再起動は不要です)。
+                <code class="text-yellow-400">setting_ratios</code> 等のJSON項目はJSON形式(例: <code class="text-gray-400">{"1":{"big":"1/400","reg":"1/800"}}</code>)でも、自由なテキストでも構いません。
             </div>
             <form action="{{ url_for('machines.machines_upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
                 <div class="flex flex-col md:flex-row gap-4">
@@ -38,7 +63,7 @@
                     <label class="block text-sm font-medium text-gray-400 mb-1">スペック画像（必須）</label>
                     <input type="file" name="spec_image" accept="image/*" required class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
                 </div>
-                <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-8 py-3 rounded shadow-md self-start">
+                <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-8 py-3 rounded shadow-md self-start">
                     画像を解析して機種データを登録
                 </button>
             </form>
@@ -50,35 +75,83 @@
                     {% for m in machine_list %}
                     <details class="bg-gray-900 border border-gray-700 rounded p-3">
                         <summary class="cursor-pointer select-none font-bold text-yellow-400">{{ m.keyword }}</summary>
-                        <div class="mt-2 text-sm text-gray-300">
-                            <div class="mb-1"><span class="text-gray-500">強示唆ワード:</span> {{ m.hint_words | join(", ") if m.hint_words else "登録なし" }}</div>
-                            <div class="mb-2"><span class="text-gray-500">ゲームフロー:</span> {{ m.game_flow if m.game_flow else "登録なし" }}</div>
+                        <div class="mt-2 text-sm text-gray-300 flex flex-col gap-3">
+
+                            {% if m.basic_info %}
+                            <div>
+                                <div class="text-gray-500 mb-1">基本情報:</div>
+                                <ul class="ml-2">
+                                    {% for k, v in m.basic_info.items() %}
+                                    <li>{{ k }}: {{ v }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <div><span class="text-gray-500">強示唆ワード:</span> {{ m.hint_words | join(", ") if m.hint_words else "登録なし" }}</div>
+                            <div><span class="text-gray-500">ゲームフロー:</span> {{ m.game_flow if m.game_flow else "登録なし" }}</div>
+
                             {% if m.setting_ratios %}
-                                {% if m.setting_ratios is mapping %}
-                                <div class="overflow-x-auto">
-                                    <table class="text-xs border-collapse">
-                                        <thead>
-                                            <tr class="text-gray-500">
-                                                <th class="pr-4 text-left">設定</th><th class="pr-4 text-left">BIG</th><th class="pr-4 text-left">REG</th><th class="pr-4 text-left">合成</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for setting_no, ratios in m.setting_ratios.items() %}
-                                            <tr class="text-gray-200">
-                                                <td class="pr-4">設定{{ setting_no }}</td>
-                                                <td class="pr-4">{{ ratios.big if ratios.big else "-" }}</td>
-                                                <td class="pr-4">{{ ratios.reg if ratios.reg else "-" }}</td>
-                                                <td class="pr-4">{{ ratios.total if ratios.total else "-" }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                                <div>
+                                    <div class="text-gray-500 mb-1">設定別確率表:</div>
+                                    {% if m.setting_ratios is mapping and "raw" in m.setting_ratios and m.setting_ratios | length == 1 %}
+                                    <div class="text-gray-300 whitespace-pre-wrap ml-2">{{ m.setting_ratios.raw }}</div>
+                                    {% elif m.setting_ratios is mapping %}
+                                    <div class="overflow-x-auto">
+                                        <table class="text-xs border-collapse">
+                                            <thead>
+                                                <tr class="text-gray-500">
+                                                    <th class="pr-4 text-left">設定</th><th class="pr-4 text-left">BIG</th><th class="pr-4 text-left">REG</th><th class="pr-4 text-left">合成</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for setting_no, ratios in m.setting_ratios.items() %}
+                                                <tr class="text-gray-200">
+                                                    <td class="pr-4">設定{{ setting_no }}</td>
+                                                    <td class="pr-4">{{ ratios.big if ratios is mapping and ratios.big else "-" }}</td>
+                                                    <td class="pr-4">{{ ratios.reg if ratios is mapping and ratios.reg else "-" }}</td>
+                                                    <td class="pr-4">{{ ratios.total if ratios is mapping and ratios.total else "-" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-gray-300 whitespace-pre-wrap ml-2">{{ m.setting_ratios }}</div>
+                                    {% endif %}
                                 </div>
-                                {% else %}
-                                <div class="text-gray-300 whitespace-pre-wrap">{{ m.setting_ratios }}</div>
+                            {% endif %}
+
+                            {% for label, field in [("天井情報", m.ceiling_info), ("ボーナス関連情報", m.bonus_info), ("CZ関連情報", m.cz_info), ("設定示唆演出", m.suggestion_info)] %}
+                                {% if field %}
+                                <div>
+                                    <div class="text-gray-500 mb-1">{{ label }}:</div>
+                                    {% if field is mapping and "raw" in field and field | length == 1 %}
+                                    <div class="text-gray-300 whitespace-pre-wrap ml-2">{{ field.raw }}</div>
+                                    {% elif field is mapping %}
+                                    <ul class="ml-2">
+                                        {% for k, v in field.items() %}
+                                        <li>{{ k }}: {{ v }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                    <div class="text-gray-300 whitespace-pre-wrap ml-2">{{ field }}</div>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                            {% else %}
-                            <div class="text-gray-500">設定別確率表: 登録なし</div>
+                            {% endfor %}
+
+                            {% if m.extra_info %}
+                            <div>
+                                <div class="text-gray-500 mb-1">その他情報:</div>
+                                <div class="text-gray-300 whitespace-pre-wrap ml-2">{{ m.extra_info }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if m.source_url %}
+                            <div class="text-xs text-gray-500">
+                                取り込み元: <a href="{{ m.source_url }}" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 underline">{{ m.source_url }}</a>
+                            </div>
                             {% endif %}
                         </div>
                     </details>
