@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パチスロAIデータ管理システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-6">
+
+    <div class="w-full max-w-[100%] mx-auto">
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl font-bold text-yellow-500">🎰 パチスロAIデータ管理ダッシュボード</h1>
+        </header>
+
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 text-gray-200">📸 データ・状況を追加する</h2>
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">機種名</label>
+                        <input type="text" name="machine_name" value="{{ preset_machine }}" required placeholder="例: ToLOVEる" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">スクショ画像（任意）</label>
+                        <input type="file" name="image" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">メモ（前日データや打ちながらの状況）</label>
+                    <textarea name="user_note" rows="2" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"></textarea>
+                </div>
+                <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-8 py-3 rounded shadow-md">データを蓄積して解析</button>
+            </form>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-700 text-gray-300 text-sm uppercase">
+                        <th class="p-4">日時</th><th class="p-4">機種名</th><th class="p-4">G数</th><th class="p-4">差枚</th>
+                        <th class="p-4">メモ / AI備考</th><th class="p-4 text-yellow-500">推測結果</th><th class="p-4">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for item in history %}
+                    <tr class="hover:bg-gray-750 transition text-gray-200">
+                        <td class="p-4 text-sm text-gray-400">{{ item.date }}</td>
+                        <td class="p-4 font-bold text-yellow-400">{{ item.machine_name }}</td>
+                        <td class="p-4">{{ item.total_games }}G</td>
+                        <td class="p-4 {% if item.difference_slabs > 0 %}text-green-400{% endif %}">{{ item.difference_slabs }}枚</td>
+                        <td class="p-4 text-sm">
+                            <div class="text-yellow-500">{{ item.user_note }}</div>
+                            <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
+                        </td>
+                        <td class="p-4 text-sm font-bold text-yellow-400">{{ item.estimation }}</td>
+                        <td class="p-4">
+                            <a href="/?machine_name={{ item.machine_name }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[
+    {
+        "date": "2026-07-12 18:21:41",
+        "machine_name": "ToLOVEる",
+        "total_games": 4677,
+        "big_count": 19,
+        "reg_count": 0,
+        "current_games": 537,
+        "difference_slabs": -3500,
+        "graph_features": "全体的に右肩下がりで、一度大きく落ち込みわずかに回復している",
+        "other_info": "ART回数: 10回, 最高出玉: 1918枚, 合成確率: 1/246, ATスルー回数: 9回 (BB19回に対しART10回のため), 最高連チャン数は不明",
+        "estimation": "低設定濃厚（設定1以下下振れ） (初当り: 1/246)"
+    },
+    {
+        "date": "2026-07-12 18:18:17",
+        "machine_name": "ToLOVEる",
+        "total_games": 4677,
+        "big_count": 19,
+        "reg_count": 0,
+        "current_games": 537,
+        "difference_slabs": -3300,
+        "graph_features": "終日マイナス圏で推移し、最後に大きく凹んでいる",
+        "other_info": "BB19回に対してARTが10回のため、9回のATスルー。REGは0回。最高出玉は1,918枚。合成確率は1/246。",
+        "estimation": "計算中..."
+    }
+]
