@@ -13,6 +13,18 @@
             <h1 class="text-3xl font-bold text-yellow-500">🎰 パチスロAIデータ管理ダッシュボード</h1>
         </header>
 
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="mb-6 flex flex-col gap-2">
+                    {% for message in messages %}
+                    <div class="bg-red-900/60 border border-red-600 text-red-200 px-4 py-3 rounded">
+                        ⚠️ {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700">
             <h2 class="text-xl font-semibold mb-4 text-gray-200">📸 データ・状況を追加する</h2>
             <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
