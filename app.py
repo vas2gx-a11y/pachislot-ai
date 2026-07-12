@@ -2,6 +2,7 @@ import os
 import base64
 import json
 import logging
+import uuid
 from datetime import datetime
 
 import requests
@@ -32,15 +33,10 @@ ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_UPLOAD_SIZE = 8 * 1024 * 1024  # 8MB
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_SIZE
 
-# --- 機種ごとの推測ロジック設定 ---
-MACHINE_HINT_RULES = {
-    "ToLOVE": ["強示唆", "高確", "チャンス"],
-    "トラブル": ["強示唆", "高確", "チャンス"],
-}
-
 # --- Googleスプレッドシート設定 ---
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = os.environ.get("SHEET_NAME", "records")
+MACHINES_SHEET_NAME = os.environ.get("MACHINES_SHEET_NAME", "machines")
 SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
 
 if not SPREADSHEET_ID:
@@ -53,33 +49,64 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
+# records シートの列構成(session_idを追加)
 HEADERS = [
-    "date", "machine_name", "total_games", "big_count", "reg_count",
+    "session_id", "date", "machine_name", "total_games", "big_count", "reg_count",
     "current_games", "difference_slabs", "graph_features",
     "other_info", "user_note", "estimation",
 ]
 
+# machines シートの列構成(機種名キーワード → 強示唆ワード群)
+MACHINE_HEADERS = ["keyword", "hint_words"]
 
-def get_worksheet():
+# 初回起動時、machinesシートが空だった場合に入れておくデフォルト値
+DEFAULT_MACHINE_RULES = [
+    {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス"},
+    {"keyword": "トラブル", "hint_words": "強示唆,高確,チャンス"},
+]
+
+
+# ---------------------------------------------------------------------------
+# Googleスプレッドシート接続
+# ---------------------------------------------------------------------------
+def get_client():
     creds_dict = json.loads(SERVICE_ACCOUNT_JSON)
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-    client = gspread.authorize(creds)
+    return gspread.authorize(creds)
+
+
+def get_records_worksheet():
+    client = get_client()
     sheet = client.open_by_key(SPREADSHEET_ID)
     try:
         ws = sheet.worksheet(SHEET_NAME)
     except gspread.exceptions.WorksheetNotFound:
         ws = sheet.add_worksheet(title=SHEET_NAME, rows=1000, cols=len(HEADERS))
         ws.append_row(HEADERS)
-    # ヘッダーが無ければ追加
     if ws.row_values(1) != HEADERS:
         ws.insert_row(HEADERS, 1)
     return ws
 
 
-def load_data():
+def get_machines_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
     try:
-        ws = get_worksheet()
-        records = ws.get_all_records()  # 1行目をヘッダーとして辞書のリストで取得
+        ws = sheet.worksheet(MACHINES_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=MACHINES_SHEET_NAME, rows=200, cols=len(MACHINE_HEADERS))
+        ws.append_row(MACHINE_HEADERS)
+        for rule in DEFAULT_MACHINE_RULES:
+            ws.append_row([rule["keyword"], rule["hint_words"]])
+    if ws.row_values(1) != MACHINE_HEADERS:
+        ws.insert_row(MACHINE_HEADERS, 1)
+    return ws
+
+
+def load_records():
+    try:
+        ws = get_records_worksheet()
+        records = ws.get_all_records()
         records.reverse()  # 新しい順に表示
         return records
     except Exception as e:
@@ -89,12 +116,45 @@ def load_data():
 
 def save_record(record):
     try:
-        ws = get_worksheet()
+        ws = get_records_worksheet()
         row = [record.get(h, "") for h in HEADERS]
         ws.append_row(row)
     except Exception as e:
         logger.error(f"スプレッドシート書き込みエラー: {e}")
         flash("スプレッドシートへの保存に失敗しました。")
+
+
+def load_machine_rules():
+    """machines シートから {keyword: [hint_words...]} の辞書を作る"""
+    try:
+        ws = get_machines_worksheet()
+        rows = ws.get_all_records()
+        rules = {}
+        for row in rows:
+            keyword = str(row.get("keyword", "")).strip()
+            hint_words_raw = str(row.get("hint_words", "")).strip()
+            if not keyword:
+                continue
+            hint_words = [w.strip() for w in hint_words_raw.split(",") if w.strip()]
+            rules[keyword] = hint_words
+        return rules
+    except Exception as e:
+        logger.error(f"機種マスタ読み込みエラー: {e}")
+        return {}
+
+
+def get_session_history_text(session_id):
+    """同じセッションの過去のメモ・AI備考を全部つなげたテキストを返す"""
+    if not session_id:
+        return ""
+    records = load_records()
+    texts = []
+    for r in records:
+        if str(r.get("session_id", "")) == session_id:
+            texts.append(str(r.get("user_note", "")))
+            texts.append(str(r.get("graph_features", "")))
+            texts.append(str(r.get("other_info", "")))
+    return " ".join(texts)
 
 
 # ---------------------------------------------------------------------------
@@ -151,10 +211,16 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg"):
 # ---------------------------------------------------------------------------
 # 推測ロジック
 # ---------------------------------------------------------------------------
-def estimate(machine_name, user_note):
-    for keyword, hint_words in MACHINE_HINT_RULES.items():
-        if keyword in machine_name:
-            if any(hint in user_note for hint in hint_words):
+def estimate(machine_name, combined_text):
+    """
+    machine_name に一致するキーワードを machines シートから探し、
+    combined_text(このセッションの全メモ+AI備考をまとめたもの)の中に
+    強示唆ワードが含まれているかで判定する。
+    """
+    rules = load_machine_rules()
+    for keyword, hint_words in rules.items():
+        if keyword and keyword in machine_name:
+            if hint_words and any(hint in combined_text for hint in hint_words):
                 return "高設定濃厚!? (要確認)"
             return "推測中..."
     return "通常・展開次第"
@@ -166,15 +232,26 @@ def estimate(machine_name, user_note):
 @app.route("/")
 def index():
     preset_machine = request.args.get("machine_name", "")
-    history = load_data()
-    return render_template("index.html", history=history, preset_machine=preset_machine)
+    preset_session = request.args.get("session_id", "")
+    history = load_records()
+    return render_template(
+        "index.html",
+        history=history,
+        preset_machine=preset_machine,
+        preset_session=preset_session,
+    )
 
 
 @app.route("/upload", methods=["POST"])
 def upload():
     machine_name = request.form.get("machine_name", "不明な機種").strip()
     user_note = request.form.get("user_note", "").strip()
+    session_id = request.form.get("session_id", "").strip()
     file = request.files.get("image")
+
+    # session_id が無ければ、これは新しい台のセッションとして新規発行
+    if not session_id:
+        session_id = uuid.uuid4().hex[:12]
 
     total, big, reg, current, diff = 0, 0, 0, 0, 0
     graph_features, other_info = "画像なし", "特になし"
@@ -182,7 +259,7 @@ def upload():
     if file and file.filename != "":
         if not allowed_file(file.filename):
             flash("対応していないファイル形式です(jpg / jpeg / png / webp のみ)")
-            return redirect(url_for("index"))
+            return redirect(url_for("index", machine_name=machine_name, session_id=session_id))
 
         ext = file.filename.rsplit(".", 1)[1].lower()
         mime_type = "image/png" if ext == "png" else "image/webp" if ext == "webp" else "image/jpeg"
@@ -203,7 +280,12 @@ def upload():
             flash("画像の解析に失敗しました。手動で確認してください。")
             graph_features, other_info = "解析失敗", "解析失敗"
 
+    # このセッションの過去のメモ・AI備考も合わせて、設定予測をやり直す
+    past_text = get_session_history_text(session_id)
+    combined_text = " ".join([past_text, user_note, graph_features, other_info])
+
     record = {
+        "session_id": session_id,
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "machine_name": machine_name,
         "total_games": total,
@@ -214,7 +296,7 @@ def upload():
         "graph_features": graph_features,
         "other_info": other_info,
         "user_note": user_note,
-        "estimation": estimate(machine_name, user_note),
+        "estimation": estimate(machine_name, combined_text),
     }
     save_record(record)
     return redirect(url_for("index"))

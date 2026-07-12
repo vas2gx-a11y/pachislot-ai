@@ -26,8 +26,14 @@
         {% endwith %}
 
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700">
-            <h2 class="text-xl font-semibold mb-4 text-gray-200">📸 データ・状況を追加する</h2>
+            <h2 class="text-xl font-semibold mb-4 text-gray-200">
+                📸 データ・状況を追加する
+                {% if preset_session %}
+                    <span class="text-sm text-blue-400 font-normal ml-2">(継続セッション: {{ preset_session }})</span>
+                {% endif %}
+            </h2>
             <form action="/upload" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+                <input type="hidden" name="session_id" value="{{ preset_session }}">
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-400 mb-1">機種名</label>
@@ -42,7 +48,9 @@
                     <label class="block text-sm font-medium text-gray-400 mb-1">メモ（前日データや打ちながらの状況）</label>
                     <textarea name="user_note" rows="2" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"></textarea>
                 </div>
-                <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-8 py-3 rounded shadow-md">データを蓄積して解析</button>
+                <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-8 py-3 rounded shadow-md">
+                    {% if preset_session %}このセッションに追加して再解析{% else %}データを蓄積して解析{% endif %}
+                </button>
             </form>
         </div>
 
@@ -67,7 +75,7 @@
                         </td>
                         <td class="p-4 text-sm font-bold text-yellow-400">{{ item.estimation }}</td>
                         <td class="p-4">
-                            <a href="/?machine_name={{ item.machine_name }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
+                            <a href="/?machine_name={{ item.machine_name }}&session_id={{ item.session_id }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
                         </td>
                     </tr>
                     {% endfor %}
