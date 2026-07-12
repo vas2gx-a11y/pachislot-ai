@@ -103,10 +103,24 @@ def get_machines_worksheet():
     return ws
 
 
+NUMERIC_FIELDS = ["total_games", "big_count", "reg_count", "current_games", "difference_slabs"]
+
+
+def _to_int(value):
+    """スプレッドシートのセルが空文字や文字列で返ってきても安全にintへ変換する"""
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return 0
+
+
 def load_records():
     try:
         ws = get_records_worksheet()
         records = ws.get_all_records()
+        for r in records:
+            for field in NUMERIC_FIELDS:
+                r[field] = _to_int(r.get(field, 0))
         records.reverse()  # 新しい順に表示
         return records
     except Exception as e:
