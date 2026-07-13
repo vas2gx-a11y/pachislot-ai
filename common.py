@@ -289,6 +289,20 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
         return False
 
 
+def load_all_chat_history():
+    """
+    chat_logs シートの全行を返す(スプレッドシートに追加された順=時系列順)。
+    一覧画面で各セッションごとの質問件数・直近の回答をまとめて表示するために使う
+    (セッションごとに毎回シートを読みに行くと遅くなるため、1回の読み込みで済ませる)。
+    """
+    try:
+        ws = get_chat_worksheet()
+        return ws.get_all_records()
+    except Exception as e:
+        logger.error(f"チャット全履歴読み込みエラー: {e}")
+        return []
+
+
 def load_chat_history(session_id, limit=20):
     """
     指定セッションのQ&A履歴を古い順(=会話の時系列順)で返す。
@@ -518,7 +532,7 @@ def analyze_machine_spec_with_gemini(base64_image, mime_type="image/jpeg"):
     {
       "machine_name": "画像から読み取れる機種名(正式名称、または特徴的な一部の単語)",
       "hint_words": ["強設定示唆として画像に書かれているキーワードや台詞の一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井など。わかる範囲で簡潔にまとめる)",
+      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、狙い目ゾーン(規定G数)など、天井・ゾーン絡みの立ち回り判断に使える情報があれば必ず含めて、わかる範囲で簡潔にまとめる)",
       "setting_ratios": {
         "1": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
         "2": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
@@ -688,7 +702,7 @@ def analyze_machine_url_with_gemini(page_text, source_url=""):
     {{
       "machine_name": "ページから読み取れる機種名(正式名称、または特徴的な一部の単語)",
       "hint_words": ["強設定示唆として書かれているキーワード・演出名・スタンプ名などの一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、機械割など。わかる範囲で簡潔にまとめる)",
+      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、狙い目ゾーン(規定G数)、機械割など。天井・ゾーン絡みの立ち回り判断に使える情報があれば必ず含めて、わかる範囲で簡潔にまとめる)",
       "setting_ratios": {{
         "1": {{"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x または自由記述の設定差情報"}},
         "2": {{"...": "..."}},
@@ -1034,6 +1048,7 @@ def _format_session_records_for_chat(records):
             probs_text = "算出なし"
         lines.append(
             f"[{r.get('date', '')}] 総回転数{r.get('total_games', 0)}G, "
+            f"現在の回転数(前回BIG/REGからのG数、天井・ゾーン判断用){r.get('current_games', 0)}G, "
             f"BIG{r.get('big_count', 0)}回, REG{r.get('reg_count', 0)}回, "
             f"差枚{r.get('difference_slabs', 0)}枚, メモ:{r.get('user_note', '') or 'なし'}, "
             f"AI備考:{r.get('other_info', '') or 'なし'}, "
@@ -1094,9 +1109,15 @@ def answer_question(session_id, machine_name, question, chat_history=None):
     else:
         chat_history_text = "なし(このセッションでの初めての質問)"
 
+    latest_current_games = latest.get("current_games", 0)
+
     prompt = f"""
     あなたはパチスロの実戦データ分析をサポートするアシスタントです。
     ユーザーは実際にこの台を打っており、これまで記録してきたデータをもとに質問しています。
+    質問には「天井まで/ゾーンまであと何G様子見すべきか」のような、ゲーム数を絡めた
+    立ち回りの相談も含まれます。【この機種のゲームフロー】に天井ゲーム数やゾーン(規定G数)の
+    情報が含まれている場合は、【現在の回転数】と照らし合わせて、
+    具体的な残りゲーム数の目安や、続行/様子見/ヤメの判断を必ず含めて回答してください。
     以下の情報を踏まえて、質問に日本語で具体的に回答してください(150〜250文字程度を目安に、
     箇条書きが適切な場合は箇条書きを使っても構いません)。
     断定的な保証(必ず勝てる等)はできないため、「データから読み取れる傾向としては」という
@@ -1106,8 +1127,9 @@ def answer_question(session_id, machine_name, question, chat_history=None):
 
     【機種名】{machine_name}
     【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
-    【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
+    【この機種のゲームフロー(AT/ART仕様、天井ゲーム数、ゾーンなど)】{game_flow if game_flow else "登録なし"}
     【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
+    【現在の回転数(前回BIG/REGからのG数、天井・ゾーン判断の基準になる数値)】{latest_current_games}G
     【このセッションの蓄積データ(時系列、記録するたびに再解析している)】
     {session_records_text}
     【直近(最新)の設定確率推測結果】{latest_probs_text} (コメント: {latest.get('estimation', '') or 'なし'})

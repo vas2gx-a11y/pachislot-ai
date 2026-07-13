@@ -99,6 +99,7 @@
     <!-- スマホ用: カードレイアウト（md未満で表示） -->
     <div class="flex flex-col gap-3 md:hidden">
         {% for item in history %}
+        {% set item_chat = chat_history_by_session.get(item.session_id, []) %}
         <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4">
             <div class="flex justify-between items-start gap-2 mb-2">
                 <div class="min-w-0">
@@ -131,6 +132,27 @@
                 {% endfor %}
             </div>
             {% endif %}
+            <details class="mt-3 border-t border-gray-700 pt-2">
+                <summary class="cursor-pointer select-none text-xs text-blue-400 font-semibold">
+                    💬 AIに質問する{% if item_chat %} ({{ item_chat|length }}件の質問済み){% endif %}
+                </summary>
+                <div class="mt-2 flex flex-col gap-2">
+                    {% if item_chat %}
+                    {% for chat in item_chat[-2:] %}
+                    <div class="bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                        <div class="text-blue-400 font-semibold">Q. {{ chat.question }}</div>
+                        <div class="text-gray-300 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
+                        <input type="hidden" name="session_id" value="{{ item.session_id }}">
+                        <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
+                        <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500">
+                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded whitespace-nowrap">質問</button>
+                    </form>
+                </div>
+            </details>
         </div>
         {% else %}
         <div class="text-center text-gray-400 bg-gray-800 border border-gray-700 rounded-lg p-6">
@@ -150,6 +172,7 @@
             </thead>
             <tbody class="divide-y divide-gray-700">
                 {% for item in history %}
+                {% set item_chat = chat_history_by_session.get(item.session_id, []) %}
                 <tr class="hover:bg-gray-750 transition text-gray-200">
                     <td class="p-4 text-sm text-gray-400 whitespace-nowrap">{{ item.date }}</td>
                     <td class="p-4 text-sm text-gray-300 whitespace-nowrap">{{ item.store_name }}</td>
@@ -179,6 +202,31 @@
                     </td>
                     <td class="p-4 whitespace-nowrap">
                         <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
+                    </td>
+                </tr>
+                <tr class="bg-gray-850">
+                    <td colspan="9" class="px-4 pb-3">
+                        <details>
+                            <summary class="cursor-pointer select-none text-xs text-blue-400 font-semibold">
+                                💬 AIに質問する{% if item_chat %} ({{ item_chat|length }}件の質問済み){% endif %}
+                            </summary>
+                            <div class="mt-2 flex flex-col gap-2 max-w-2xl">
+                                {% if item_chat %}
+                                {% for chat in item_chat[-2:] %}
+                                <div class="bg-gray-900 border border-gray-700 rounded p-2 text-xs">
+                                    <div class="text-blue-400 font-semibold">Q. {{ chat.question }}</div>
+                                    <div class="text-gray-300 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
+                                    <input type="hidden" name="session_id" value="{{ item.session_id }}">
+                                    <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
+                                    <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500">
+                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded whitespace-nowrap">質問</button>
+                                </form>
+                            </div>
+                        </details>
                     </td>
                 </tr>
                 {% endfor %}

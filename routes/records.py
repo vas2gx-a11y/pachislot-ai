@@ -16,6 +16,14 @@ def index():
     preset_session = request.args.get("session_id", "")
     history = common.load_records()
 
+    # 一覧の各項目から直接AIに質問できるように、セッションIDごとのQ&A履歴をまとめて取得しておく
+    # (履歴の件数分シートを読みに行くと遅くなるため、1回の読み込みでグルーピングする)
+    chat_history_by_session = {}
+    for chat in common.load_all_chat_history():
+        sid = str(chat.get("session_id", ""))
+        if sid:
+            chat_history_by_session.setdefault(sid, []).append(chat)
+
     # 「追加分析」等で機種名が指定されている場合、参考として使われる直近の同機種データをプレビュー表示する
     recent_history_preview = []
     hall_tendency_preview = ""
@@ -29,7 +37,7 @@ def index():
                 if str(r.get("session_id", "")) == preset_session and str(r.get("store_name", "")).strip():
                     preset_store = str(r.get("store_name", "")).strip()
                     break
-            chat_history = common.load_chat_history(preset_session)
+            chat_history = chat_history_by_session.get(preset_session, [])
         recent_history_preview = common.get_recent_same_machine_records(
             preset_machine, store_name=preset_store, exclude_session_id=preset_session, days=7
         )
@@ -46,6 +54,7 @@ def index():
         recent_history_preview=recent_history_preview,
         hall_tendency_preview=hall_tendency_preview,
         chat_history=chat_history,
+        chat_history_by_session=chat_history_by_session,
     )
 
 
