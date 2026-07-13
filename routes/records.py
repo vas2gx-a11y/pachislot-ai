@@ -73,6 +73,9 @@ def upload():
     total, big, reg, current, diff = 0, 0, 0, 0, 0
     machine_number = ""
     graph_features, other_info = "画像なし", "特になし"
+    # 設定予測(estimate)にも同じ画像を渡し、グラフの形状などを直接判定材料にする
+    image_for_estimate = None
+    mime_type_for_estimate = "image/jpeg"
 
     if file and file.filename != "":
         if not common.allowed_file(file.filename):
@@ -84,6 +87,8 @@ def upload():
 
         image_bytes = file.read()
         base64_image = base64.b64encode(image_bytes).decode("utf-8")
+        image_for_estimate = base64_image
+        mime_type_for_estimate = mime_type
         parsed_data = common.analyze_image_with_gemini(
             base64_image, mime_type,
             machine_name=machine_name,
@@ -148,6 +153,7 @@ def upload():
     estimation_comment, setting_probabilities = common.estimate(
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
         recent_records_count=len(recent_records),
+        base64_image=image_for_estimate, mime_type=mime_type_for_estimate,
     )
 
     record = {

@@ -753,6 +753,81 @@ def _normalize_setting_probabilities(raw):
     return floored
 
 
+def _parse_ratio_string_to_probability(value):
+    """
+    "1/398.0" や "1/398" のような分数表記、"0.25%" のようなパーセント表記の文字列を
+    確率(0〜1の実数)に変換する。変換できない場合は None を返す。
+    """
+    if value is None:
+        return None
+    s = str(value).strip()
+    if not s:
+        return None
+
+    m = re.match(r"^1\s*/\s*([0-9]+(?:\.[0-9]+)?)$", s)
+    if m:
+        try:
+            denom = float(m.group(1))
+            return 1.0 / denom if denom > 0 else None
+        except ValueError:
+            return None
+
+    m = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*%$", s)
+    if m:
+        try:
+            return float(m.group(1)) / 100.0
+        except ValueError:
+            return None
+
+    try:
+        v = float(s)
+        return v if 0 < v < 1 else None
+    except ValueError:
+        return None
+
+
+def _build_setting_match_hint(setting_ratios, total_games, big_count, reg_count):
+    """
+    機種マスタの設定別確率表(BIG/REGの理論値)と、今回の実測値をPython側で数値比較し、
+    実測値に近い順に設定を並べたヒント文を作る。
+    分数の比較をAIに丸投げすると計算を誤ることがあるため、事前に計算した結果を
+    プロンプトに添えることで判定の精度を上げるのが狙い。
+    setting_ratios が自由記述テキストの場合や、必要な数値が無い場合は
+    その旨を伝えるメッセージを返す(AIはこの場合テキストの内容から自分で判断する)。
+    """
+    if not isinstance(setting_ratios, dict) or not setting_ratios:
+        return "スペック表(設定別のBIG/REG理論値)が未登録、または自由記述のため自動計算なし"
+    if total_games <= 0 or (big_count <= 0 and reg_count <= 0):
+        return "累計G数またはBIG/REG回数が不足しているため自動計算なし"
+
+    actual_big_prob = (big_count / total_games) if big_count else None
+    actual_reg_prob = (reg_count / total_games) if reg_count else None
+
+    rows = []
+    for setting_no in sorted(setting_ratios.keys(), key=lambda x: (len(x), x)):
+        values = setting_ratios[setting_no]
+        if not isinstance(values, dict):
+            continue
+        theo_big = _parse_ratio_string_to_probability(values.get("big"))
+        theo_reg = _parse_ratio_string_to_probability(values.get("reg"))
+
+        diffs = []
+        if actual_big_prob is not None and theo_big:
+            diffs.append(abs(actual_big_prob - theo_big) / theo_big)
+        if actual_reg_prob is not None and theo_reg:
+            diffs.append(abs(actual_reg_prob - theo_reg) / theo_reg)
+
+        if diffs:
+            rows.append((setting_no, sum(diffs) / len(diffs)))
+
+    if not rows:
+        return "設定別確率表から数値(1/xxx形式)を読み取れないため自動計算なし(自由記述の内容から判断してください)"
+
+    rows.sort(key=lambda x: x[1])
+    ranked = " > ".join(f"設定{no}(乖離{diff * 100:.1f}%)" for no, diff in rows)
+    return f"実測値に近い順(乖離率が小さいほど実測値に近い): {ranked}"
+
+
 def _describe_data_volume(total_games, recent_records_count, has_session_history):
     """
     現在の情報量をざっくり3段階(乏しい/普通/十分)で表現し、AIへの指示に使う。
@@ -777,11 +852,16 @@ def _describe_data_volume(total_games, recent_records_count, has_session_history
 
 
 def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
-             recent_records_count=0):
+             recent_records_count=0, base64_image=None, mime_type="image/jpeg"):
     """
     machine_name・強示唆ワード・ゲームフロー・設定別確率表・累計データ・
     過去のメモやAI備考・同機種の直近の来店データ(とその傾向分析)をGeminiに渡し、
     設定1〜6それぞれの確率(%)と、日本語の短い判定コメントを生成してもらう。
+    base64_image が渡された場合は、今回アップロードされたデータ画面・グラフ画像も
+    そのまま添付し、AIに画像を直接見た上で判定させる(グラフの形状や画面内の
+    示唆演出など、テキスト化しきれていない情報を判定材料に加えるため)。
+    また、スペック表(設定別のBIG/REG理論値)と実測値の乖離をPython側で事前計算し、
+    ヒントとしてプロンプトに含めることで、AIが分数の比較を誤るリスクを減らしている。
     情報が少ない場合は、確率が特定の設定に偏らず均等に近い数値になるよう指示している
     (=数値そのものが「まだ判別材料が少ない」ことを表す)。
     AI呼び出しに失敗した場合は簡易的なキーワード判定にフォールバックする。
@@ -802,6 +882,18 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     data_volume = _describe_data_volume(
         total_games, recent_records_count, bool(combined_text and combined_text.strip())
     )
+    setting_match_hint = _build_setting_match_hint(setting_ratios, total_games, big_count, reg_count)
+
+    image_instruction = ""
+    if base64_image:
+        image_instruction = """
+    今回アップロードされたデータ画面・グラフの画像も添付しています。テキスト情報だけでなく、
+    画像そのものも直接確認し、以下のような視覚的な情報も判定材料に加えてください。
+    ・差枚グラフの形状(急増/急落/ジワ増/ジワ減/V字回復/横ばいなど)や、現在の推移の勢い
+    ・画面内に表示されている演出・キャラクター・スタンプ・文字色など、強示唆ワードに関連しそうな要素
+    ・その他、テキストの数値だけでは伝わらない画面内の情報
+    画像から読み取った内容で判定に使ったものがあれば、comment に簡潔に反映してください。
+    """
 
     prompt = f"""
     あなたはパチスロの設定判別をサポートするアシスタントです。
@@ -814,25 +906,30 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
     【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
     【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
+    【実測値と設定別理論値の自動比較(Pythonで計算済み、参考値として重視してください)】{setting_match_hint}
     【今回の累計データ】総回転数: {total_games}G, BIG: {big_count}回 (実測確率 {actual_big_rate}), REG: {reg_count}回 (実測確率 {actual_reg_rate}), 現在の回転数: {stats.get("current_games", 0)}G, 差枚: {stats.get("difference_slabs", 0)}枚
     【今回のメモ・AI画像解析結果の蓄積テキスト】{combined_text if combined_text.strip() else "情報なし"}
     【同機種・このホールでの直近(約7日以内)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
     【同機種の直近の来店データ(個別内訳・参考情報)】{recent_history_text if recent_history_text else "登録なし"}
     【現時点の情報量】{data_volume}
-
+    {image_instruction}
     setting_probabilities の6つの値は、合計がちょうど100になるように整数で出力してください。
     情報量が「乏しい」場合は、特定の設定に偏らせず16〜17%前後の均等に近い数値にしてください
     (=まだ判別材料が少ないことを数値そのもので表現してください)。
     情報量が「普通」「十分」で、実測確率のズレ・強示唆ワード・ホールの傾向などから
     高設定/低設定の可能性が読み取れる場合は、該当する設定に大きく偏らせて構いません。
     設定別確率表が登録されている場合は、実測確率と各設定の理論値を比較して
-    最も近い設定帯の確率を高めに評価してください。
+    最も近い設定帯の確率を高めに評価してください。特に「実測値と設定別理論値の自動比較」の
+    結果は事前に計算済みの正確な数値なので、優先して参考にしてください。
     「同機種・このホールでの直近の傾向分析」(平均差枚・プラス収支率・強示唆ワード出現頻度など)は、
     そのホールがこの台に対して高設定を使いやすいかどうかの実績を示す重要な材料なので、
     単なる免責事項として退けず、確率分布に積極的に反映してください。
     comment には判定の根拠となった主なポイントを簡潔に含めてください。
     """
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    parts = [{"text": prompt}]
+    if base64_image:
+        parts.append({"inlineData": {"mimeType": mime_type, "data": base64_image}})
+    payload = {"contents": [{"parts": parts}]}
     headers = {"Content-Type": "application/json"}
 
     try:
