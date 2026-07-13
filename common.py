@@ -68,7 +68,8 @@ HEADERS = [
 # hint_words: 強示唆ワード群(カンマ区切り)
 # game_flow: ゲームフロー・システムの説明(AT/ART純増、上乗せ契機など)
 # setting_ratios: 設定1〜6ごとの確率(BIG/REG/合成など)をJSON文字列で格納
-MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios"]
+# sources: この機種データがどこから取り込まれたか(画像アップロード/URL)の履歴をJSON文字列で格納
+MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sources"]
 
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
@@ -203,10 +204,21 @@ def load_machine_rules():
                     setting_ratios = setting_ratios_raw
             else:
                 setting_ratios = {}
+            sources_raw = str(row.get("sources", "")).strip()
+            if sources_raw:
+                try:
+                    sources = json.loads(sources_raw)
+                    if not isinstance(sources, list):
+                        sources = []
+                except json.JSONDecodeError:
+                    sources = []
+            else:
+                sources = []
             rules[keyword] = {
                 "hint_words": hint_words,
                 "game_flow": game_flow,
                 "setting_ratios": setting_ratios,
+                "sources": sources,
             }
         return rules
     except Exception as e:
@@ -214,7 +226,7 @@ def load_machine_rules():
         return {}
 
 
-def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
+def save_machine_rule(keyword, hint_words, game_flow, setting_ratios, source_label=""):
     """
     machines シートに機種情報を保存する。
     同じ keyword の行が既にあれば、既存データに新しい内容を追記(マージ)する。
@@ -223,6 +235,8 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
     - hint_words: 既存 + 新規 を合算(重複除去)
     - game_flow: 既存の説明文の末尾に新しい説明文を追記(全く同じ内容なら追記しない)
     - setting_ratios: 既存の辞書をベースに、新しいキーで追加・更新(新規に無い既存キーは保持)
+    - source_label: 今回取り込んだ情報源(画像アップロード/取り込み元URLなど)を示すラベル。
+      既存の情報源リストに無ければ追加し、どのサイト・画像から情報を集約したかを蓄積していく。
     """
     keyword = (keyword or "").strip()
     if not keyword:
@@ -241,6 +255,7 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
         existing_hint_words = []
         existing_game_flow = ""
         existing_setting_ratios = {}
+        existing_sources = []
         if target_row:
             existing_row = ws.row_values(target_row)
             if len(existing_row) > 1:
@@ -254,6 +269,13 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
                         existing_setting_ratios = parsed_existing
                 except json.JSONDecodeError:
                     existing_setting_ratios = {}
+            if len(existing_row) > 4 and existing_row[4].strip():
+                try:
+                    parsed_sources = json.loads(existing_row[4])
+                    if isinstance(parsed_sources, list):
+                        existing_sources = parsed_sources
+                except json.JSONDecodeError:
+                    existing_sources = []
 
         # 強示唆ワード: 既存 + 新規をマージ(重複除去、順序維持)
         merged_hint_words = list(dict.fromkeys(
@@ -275,18 +297,66 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
         if isinstance(setting_ratios, dict):
             merged_setting_ratios.update(setting_ratios)
 
+        # 情報源: 同じラベルが無ければ追加(取り込むたびに履歴として蓄積)
+        merged_sources = list(existing_sources)
+        source_label = (source_label or "").strip()
+        if source_label:
+            already_recorded = any(
+                isinstance(s, dict) and s.get("label") == source_label for s in merged_sources
+            )
+            if not already_recorded:
+                merged_sources.append({
+                    "label": source_label,
+                    "date": datetime.now().strftime("%Y-%m-%d"),
+                })
+
         hint_words_str = ",".join(merged_hint_words)
         setting_ratios_json = json.dumps(merged_setting_ratios, ensure_ascii=False)
-        row_values = [keyword, hint_words_str, merged_game_flow, setting_ratios_json]
+        sources_json = json.dumps(merged_sources, ensure_ascii=False)
+        row_values = [keyword, hint_words_str, merged_game_flow, setting_ratios_json, sources_json]
 
         if target_row:
-            ws.update(f"A{target_row}:D{target_row}", [row_values])
+            ws.update(f"A{target_row}:E{target_row}", [row_values])
         else:
             ws.append_row(row_values)
         return True
     except Exception as e:
         logger.error(f"機種マスタ書き込みエラー: {e}")
         return False
+
+
+def find_mergeable_keyword(candidate_name, rules):
+    """
+    新しく登録しようとしている機種名(candidate_name、AIが画像/URLから読み取った名前)が、
+    既存の登録キーワードと実質的に同じ機種を指していそうな場合、そのキーワードを返す。
+
+    AIが機種名を読み取るたびに微妙に違う表記(例:「ToLOVEるダークネス」と
+    「L ToLOVEるダークネス」)になることがあり、そのまま新規キーワードとして保存すると
+    同じ機種のデータが複数のキーワードに分裂し、集約されなくなってしまう。
+    これを避けるため、双方向の部分一致(どちらかがどちらかを含む)を許容し、
+    最も一致度の高い(文字数が長い)既存キーワードを優先して返す。
+    一致するものが無ければ None を返す(=新規キーワードとして登録する)。
+    """
+    candidate_name = (candidate_name or "").strip()
+    if not candidate_name:
+        return None
+
+    for keyword in rules:
+        if (keyword or "").strip() == candidate_name:
+            return keyword  # 完全一致は即採用
+
+    best_keyword = None
+    best_overlap = 0
+    for keyword in rules:
+        k = (keyword or "").strip()
+        if not k:
+            continue
+        if k in candidate_name or candidate_name in k:
+            overlap = min(len(k), len(candidate_name))
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_keyword = keyword
+    return best_keyword
 
 
 def load_all_chat_history():
@@ -798,6 +868,43 @@ def find_machine_rule(machine_name):
 
     logger.warning(f"機種スペック未登録: 「{machine_name}」に一致するキーワードが見つかりませんでした")
     return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
+
+
+def debug_machine_name_match(machine_name):
+    """
+    machine_name が machines シートのどのキーワードとマッチする/しないかを診断する。
+    「登録したはずなのに一致しない」という問題の原因(前後の空白・全角/半角の違い・
+    見えない文字など)を切り分けるためのデバッグ用関数。
+
+    戻り値: {
+        "input": 入力された機種名(前後空白除去前後の両方を表示),
+        "matched_keyword": 最終的に採用されたキーワード(無ければ None),
+        "candidates": [{"keyword": ..., "is_exact_match": bool, "is_substring_match": bool}, ...],
+    }
+    """
+    raw_input = machine_name or ""
+    stripped_input = raw_input.strip()
+    rules = load_machine_rules()
+
+    candidates = []
+    for keyword in rules.keys():
+        k = (keyword or "").strip()
+        candidates.append({
+            "keyword": keyword,
+            "keyword_repr": repr(keyword),  # 前後の見えない空白・改行などがあれば repr で分かる
+            "is_exact_match": bool(k) and k == stripped_input,
+            "is_substring_match": bool(k) and k in stripped_input,
+        })
+
+    matched_keyword, _ = find_machine_rule(machine_name)
+
+    return {
+        "input": raw_input,
+        "input_repr": repr(raw_input),
+        "stripped_input": stripped_input,
+        "matched_keyword": matched_keyword,
+        "candidates": candidates,
+    }
 
 
 def _format_setting_ratios(setting_ratios):
