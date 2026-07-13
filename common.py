@@ -2,8 +2,9 @@ import os
 import json
 import logging
 import re
-import html
 from datetime import datetime
+from html.parser import HTMLParser
+from urllib.parse import urlparse
 
 import requests
 import gspread
@@ -25,11 +26,15 @@ if not API_KEY:
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
 REQUEST_TIMEOUT = 30  # seconds
-SPEC_IMPORT_TIMEOUT = 60  # URLからのスペック一括取り込みはページが長文になるため長めに確保
-PAGE_TEXT_MAX_CHARS = 120000  # ページ本文からGeminiに渡すテキストの上限文字数
 
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "pdf"}
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_UPLOAD_SIZE = 8 * 1024 * 1024  # 8MB
+
+# --- URLから機種データを取り込む機能の設定 ---
+ALLOWED_URL_SCHEMES = {"http", "https"}
+URL_FETCH_TIMEOUT = 20  # seconds
+URL_FETCH_MAX_BYTES = 3 * 1024 * 1024  # 3MB(取得するHTMLの上限)
+URL_TEXT_MAX_CHARS = 18000  # Geminiに渡す本文テキストの最大文字数(長すぎるページは切り詰める)
 
 # --- Googleスプレッドシート設定 ---
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
@@ -61,29 +66,14 @@ HEADERS = [
 # machines シートの列構成
 # keyword: 機種名に含まれるキーワード
 # hint_words: 強示唆ワード群(カンマ区切り)
-# basic_info: 型式名・メーカー名・機械割・導入開始日・機種概要など(JSON文字列)
 # game_flow: ゲームフロー・システムの説明(AT/ART純増、上乗せ契機など)
 # setting_ratios: 設定1〜6ごとの確率(BIG/REG/合成など)をJSON文字列で格納
-# ceiling_info: 天井ゲーム数・突入条件・恩恵・リセット仕様・ヤメ時など(JSON文字列)
-# bonus_info: ボーナス当選率・平均獲得枚数・1Gあたりの純増など(JSON文字列)
-# cz_info: CZの種類・当選確率・期待度など(JSON文字列)
-# suggestion_info: 終了画面示唆・獲得枚数示唆・内部状態示唆などの設定示唆演出(JSON文字列)
-# extra_info: 上記に当てはまらないが重要な情報(発明品・演出詳細など、自由記述)
-# source_url: この機種データを取り込んだ元ページのURL(参考用)
-MACHINE_HEADERS = [
-    "keyword", "hint_words", "basic_info", "game_flow", "setting_ratios",
-    "ceiling_info", "bonus_info", "cz_info", "suggestion_info", "extra_info", "source_url",
-]
-
-# 上記のうち、既存データに対して辞書としてマージ(update)する項目
-_JSON_MERGE_FIELDS = {"basic_info", "setting_ratios", "ceiling_info", "bonus_info", "cz_info", "suggestion_info"}
-# 上記のうち、既存データに対してテキストとして追記マージする項目
-_TEXT_MERGE_FIELDS = {"game_flow", "extra_info"}
+MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios"]
 
 # 初回起動時、machinesシートが空だった場合に入れておくデフォルト値
 DEFAULT_MACHINE_RULES = [
-    {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス"},
-    {"keyword": "トラブル", "hint_words": "強示唆,高確,チャンス"},
+    {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
+    {"keyword": "トラブル", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
 ]
 
 
@@ -118,12 +108,11 @@ def get_machines_worksheet():
         ws = sheet.add_worksheet(title=MACHINES_SHEET_NAME, rows=200, cols=len(MACHINE_HEADERS))
         ws.append_row(MACHINE_HEADERS)
         for rule in DEFAULT_MACHINE_RULES:
-            ws.append_row([rule.get(h, "") for h in MACHINE_HEADERS])
+            ws.append_row([
+                rule["keyword"], rule["hint_words"],
+                rule.get("game_flow", ""), rule.get("setting_ratios", "{}"),
+            ])
     if ws.row_values(1) != MACHINE_HEADERS:
-        # 列構成が変わった場合はヘッダー行を挿入する。
-        # 既存のmachinesシートが旧スキーマ(4列)のままだと、この操作で新ヘッダー行が
-        # 先頭に追加されるだけで既存データの列は自動移行されないため、
-        # 列構成を変更した際は一度シートの中身を確認してください。
         ws.insert_row(MACHINE_HEADERS, 1)
     return ws
 
@@ -161,117 +150,20 @@ def load_records():
         return []
 
 
-def get_record_by_session(session_id):
-    """
-    指定した session_id の記録を records シートから1件取得する(無ければ None)。
-    継続セッション(追加分析)の際、前回までの内容を引き継ぐために使う。
-    """
-    session_id = str(session_id or "").strip()
-    if not session_id:
-        return None
+def save_record(record):
     try:
         ws = get_records_worksheet()
-        session_ids = ws.col_values(1)  # 1列目 = session_id
-        for i, value in enumerate(session_ids[1:], start=2):  # ヘッダー行を除く
-            if str(value).strip() == session_id:
-                row_values = ws.row_values(i)
-                record = {h: (row_values[idx] if idx < len(row_values) else "") for idx, h in enumerate(HEADERS)}
-                for field in NUMERIC_FIELDS:
-                    record[field] = _to_int(record.get(field, 0))
-                return record
-        return None
-    except Exception as e:
-        logger.error(f"セッション記録読み込みエラー: {e}")
-        return None
-
-
-def save_or_update_record(record):
-    """
-    records シートに記録を保存する。
-    同じ session_id の行が既にあれば、その行を丸ごと上書き更新する(1セッション = 1行)。
-    無ければ新規に行を追加する。
-    (追加分析のたびに行が増えて履歴が分裂しないようにするための仕組み。
-     項目のマージ・引き継ぎ・結合は呼び出し側で行ってから渡すこと。)
-    """
-    session_id = str(record.get("session_id", "")).strip()
-    try:
-        ws = get_records_worksheet()
-        target_row = None
-        if session_id:
-            session_ids = ws.col_values(1)
-            for i, value in enumerate(session_ids[1:], start=2):
-                if str(value).strip() == session_id:
-                    target_row = i
-                    break
-
-        row_values = [record.get(h, "") for h in HEADERS]
-        if target_row:
-            last_col = chr(ord("A") + len(HEADERS) - 1)  # HEADERSは15列 → "O"
-            ws.update(f"A{target_row}:{last_col}{target_row}", [row_values])
-        else:
-            ws.append_row(row_values)
+        row = [record.get(h, "") for h in HEADERS]
+        ws.append_row(row)
     except Exception as e:
         logger.error(f"スプレッドシート書き込みエラー: {e}")
         flash("スプレッドシートへの保存に失敗しました。")
 
 
-# 新しい内容が無い/意味の無いプレースホルダーの場合は結合対象から除外する
-_MERGE_PLACEHOLDER_VALUES = {"", "画像なし", "特になし", "解析失敗", "不明"}
-
-
-def merge_text_field(old_text, new_text):
-    """
-    既存のテキスト(old_text)に新しいテキスト(new_text)を追記して結合する。
-    - new_text が空/プレースホルダー("画像なし"等)なら何もしない
-    - new_text が old_text に既に含まれていれば重複追記しない
-    - それ以外は old_text の末尾に改行区切りで追記する
-    """
-    old_text = (old_text or "").strip()
-    new_text = (new_text or "").strip()
-    if new_text in _MERGE_PLACEHOLDER_VALUES:
-        return old_text
-    if not old_text:
-        return new_text
-    if new_text in old_text:
-        return old_text
-    return f"{old_text}\n{new_text}"
-
-
-def _parse_json_cell(raw):
-    """スプレッドシートのセル文字列をJSONとしてパースする。dict以外/失敗時は{}を返す"""
-    raw = (raw or "").strip()
-    if not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-        return parsed if isinstance(parsed, dict) else {}
-    except json.JSONDecodeError:
-        return {}
-
-
-def _load_structured_field(raw):
-    """
-    machines シートのJSON項目セルを読み込む。
-    JSONとして解釈できればその辞書を、できなければ自由記述テキストとして
-    {"raw": "..."} の形にして返す(スプレッドシートに直接自由文を書き込んでいた場合に対応)。
-    """
-    raw = str(raw or "").strip()
-    if not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-        return parsed if isinstance(parsed, dict) else {"raw": str(parsed)}
-    except json.JSONDecodeError:
-        return {"raw": raw}
-
-
 def load_machine_rules():
     """
     machines シートから
-    {keyword: {"hint_words": [...], "game_flow": "...", "setting_ratios": {...},
-               "basic_info": {...}, "ceiling_info": {...}, "bonus_info": {...},
-               "cz_info": {...}, "suggestion_info": {...}, "extra_info": "...",
-               "source_url": "..."}}
+    {keyword: {"hint_words": [...], "game_flow": "...", "setting_ratios": {...}}}
     の辞書を作る
     """
     try:
@@ -284,17 +176,20 @@ def load_machine_rules():
                 continue
             hint_words_raw = str(row.get("hint_words", "")).strip()
             hint_words = [w.strip() for w in hint_words_raw.split(",") if w.strip()]
+            game_flow = str(row.get("game_flow", "")).strip()
+            setting_ratios_raw = str(row.get("setting_ratios", "")).strip()
+            if setting_ratios_raw:
+                try:
+                    setting_ratios = json.loads(setting_ratios_raw)
+                except json.JSONDecodeError:
+                    # JSON形式でなければ、スプレッドシートに直接書かれた自由記述テキストとして扱う
+                    setting_ratios = setting_ratios_raw
+            else:
+                setting_ratios = {}
             rules[keyword] = {
                 "hint_words": hint_words,
-                "game_flow": str(row.get("game_flow", "")).strip(),
-                "extra_info": str(row.get("extra_info", "")).strip(),
-                "source_url": str(row.get("source_url", "")).strip(),
-                "basic_info": _load_structured_field(row.get("basic_info", "")),
-                "setting_ratios": _load_structured_field(row.get("setting_ratios", "")),
-                "ceiling_info": _load_structured_field(row.get("ceiling_info", "")),
-                "bonus_info": _load_structured_field(row.get("bonus_info", "")),
-                "cz_info": _load_structured_field(row.get("cz_info", "")),
-                "suggestion_info": _load_structured_field(row.get("suggestion_info", "")),
+                "game_flow": game_flow,
+                "setting_ratios": setting_ratios,
             }
         return rules
     except Exception as e:
@@ -302,23 +197,19 @@ def load_machine_rules():
         return {}
 
 
-def save_machine_rule(keyword, fields):
+def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
     """
     machines シートに機種情報を保存する。
-    同じ keyword の行が既にあれば、既存データに新しい内容を項目ごとにマージする。
+    同じ keyword の行が既にあれば、既存データに新しい内容を追記(マージ)する。
     なければ新規追加する。
 
-    fields には MACHINE_HEADERS の keyword 以外の項目のうち、更新したいものだけ渡せばよい。
-      - hint_words: list[str]                          → 既存+新規をマージ(重複除去)
-      - game_flow / extra_info: str                     → 既存の末尾に追記(重複・空は無視)
-      - basic_info / setting_ratios / ceiling_info /
-        bonus_info / cz_info / suggestion_info: dict     → 既存の辞書に対してupdate(保持したまま追記・上書き)
-      - source_url: str                                  → 最新のものに置き換え
+    - hint_words: 既存 + 新規 を合算(重複除去)
+    - game_flow: 既存の説明文の末尾に新しい説明文を追記(全く同じ内容なら追記しない)
+    - setting_ratios: 既存の辞書をベースに、新しいキーで追加・更新(新規に無い既存キーは保持)
     """
     keyword = (keyword or "").strip()
     if not keyword:
         return False
-    fields = fields or {}
 
     try:
         ws = get_machines_worksheet()
@@ -330,40 +221,49 @@ def save_machine_rule(keyword, fields):
                 break
 
         # 既存データを読み込む(あれば)
-        existing = {h: "" for h in MACHINE_HEADERS}
+        existing_hint_words = []
+        existing_game_flow = ""
+        existing_setting_ratios = {}
         if target_row:
             existing_row = ws.row_values(target_row)
-            for idx, h in enumerate(MACHINE_HEADERS):
-                if idx < len(existing_row):
-                    existing[h] = existing_row[idx]
-
-        merged = {"keyword": keyword}
+            if len(existing_row) > 1:
+                existing_hint_words = [w.strip() for w in existing_row[1].split(",") if w.strip()]
+            if len(existing_row) > 2:
+                existing_game_flow = existing_row[2].strip()
+            if len(existing_row) > 3 and existing_row[3].strip():
+                try:
+                    parsed_existing = json.loads(existing_row[3])
+                    if isinstance(parsed_existing, dict):
+                        existing_setting_ratios = parsed_existing
+                except json.JSONDecodeError:
+                    existing_setting_ratios = {}
 
         # 強示唆ワード: 既存 + 新規をマージ(重複除去、順序維持)
-        existing_hint_words = [w.strip() for w in existing.get("hint_words", "").split(",") if w.strip()]
-        new_hint_words = [str(w).strip() for w in (fields.get("hint_words") or []) if str(w).strip()]
-        merged["hint_words"] = ",".join(list(dict.fromkeys(existing_hint_words + new_hint_words)))
+        merged_hint_words = list(dict.fromkeys(
+            existing_hint_words + [w.strip() for w in (hint_words or []) if w.strip()]
+        ))
 
-        # テキスト追記型(ゲームフロー・その他情報): 新しい内容が既存に無ければ末尾に追記
-        for field in _TEXT_MERGE_FIELDS:
-            merged[field] = merge_text_field(existing.get(field, ""), fields.get(field, ""))
+        # ゲームフロー: 新しい説明文が既存に含まれていなければ末尾に追記
+        new_game_flow = (game_flow or "").strip()
+        if new_game_flow and new_game_flow not in existing_game_flow:
+            merged_game_flow = (
+                f"{existing_game_flow}\n{new_game_flow}".strip("\n")
+                if existing_game_flow else new_game_flow
+            )
+        else:
+            merged_game_flow = existing_game_flow
 
-        # JSON(dict)マージ型: 既存の辞書をベースに新しいキーで追加・更新(保持したまま追記)
-        for field in _JSON_MERGE_FIELDS:
-            existing_dict = _parse_json_cell(existing.get(field, ""))
-            new_value = fields.get(field)
-            if isinstance(new_value, dict):
-                existing_dict.update(new_value)
-            merged[field] = json.dumps(existing_dict, ensure_ascii=False)
+        # 設定判別要素: 既存をベースに新しいキーで追加・更新(保持したまま追記)
+        merged_setting_ratios = dict(existing_setting_ratios)
+        if isinstance(setting_ratios, dict):
+            merged_setting_ratios.update(setting_ratios)
 
-        # 取り込み元URL: 新しいものがあれば置き換え、無ければ既存を維持
-        merged["source_url"] = str(fields.get("source_url") or existing.get("source_url", "")).strip()
-
-        row_values = [merged.get(h, "") for h in MACHINE_HEADERS]
+        hint_words_str = ",".join(merged_hint_words)
+        setting_ratios_json = json.dumps(merged_setting_ratios, ensure_ascii=False)
+        row_values = [keyword, hint_words_str, merged_game_flow, setting_ratios_json]
 
         if target_row:
-            last_col = chr(ord("A") + len(MACHINE_HEADERS) - 1)  # MACHINE_HEADERSは11列 → "K"
-            ws.update(f"A{target_row}:{last_col}{target_row}", [row_values])
+            ws.update(f"A{target_row}:D{target_row}", [row_values])
         else:
             ws.append_row(row_values)
         return True
@@ -372,39 +272,19 @@ def save_machine_rule(keyword, fields):
         return False
 
 
-def fetch_page_text(url, max_chars=PAGE_TEXT_MAX_CHARS):
-    """
-    指定したURLのページを取得し、HTMLタグ等を除去したテキストを返す。
-    (機種スペック情報サイトなどからスペック情報を一括で取り込むために使う)
-    取得や解析に失敗した場合は None を返す。
-    """
-    try:
-        resp = requests.get(
-            url, timeout=REQUEST_TIMEOUT, headers={"User-Agent": "Mozilla/5.0 (compatible; SpecImportBot/1.0)"}
-        )
-        resp.raise_for_status()
-    except requests.exceptions.Timeout:
-        logger.error(f"ページ取得タイムアウト: {url}")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.error(f"ページ取得エラー: {url} / {e}")
-        return None
+def get_session_history_text(session_id):
+    """同じセッションの過去のメモ・AI備考を全部つなげたテキストを返す"""
+    if not session_id:
+        return ""
+    records = load_records()
+    texts = []
+    for r in records:
+        if str(r.get("session_id", "")) == session_id:
+            texts.append(str(r.get("user_note", "")))
+            texts.append(str(r.get("graph_features", "")))
+            texts.append(str(r.get("other_info", "")))
+    return " ".join(texts)
 
-    html_text = resp.text
-    # script/styleタグは中身ごと除去
-    html_text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html_text, flags=re.DOTALL | re.IGNORECASE)
-    # 残りのHTMLタグを除去
-    text = re.sub(r"<[^>]+>", " ", html_text)
-    # HTMLエンティティ(&amp;等)をデコード
-    text = html.unescape(text)
-    # 余分な空白・空行を圧縮
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n\s*\n+", "\n", text)
-    text = text.strip()
-
-    if len(text) > max_chars:
-        text = text[:max_chars]
-    return text
 
 def get_recent_same_machine_records(machine_name, store_name="", exclude_session_id="", days=7, limit=5):
     """
@@ -518,19 +398,18 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
     machine_context = ""
     if machine_name:
         machine_context = f"""
-    このファイルは「{machine_name}」のデータ画面(または関連する画面・資料)です。
+    この画像は「{machine_name}」のデータ画面(または関連する画面)です。
     この機種で登録されている強示唆ワード: {", ".join(hint_words) if hint_words else "登録なし"}
     この機種のゲームフロー: {game_flow if game_flow else "登録なし"}
-    ファイル内の文字・演出・グラフに、上記の強示唆ワードやそれに類する高設定示唆要素が
+    画像内の文字・演出・グラフに、上記の強示唆ワードやそれに類する高設定示唆要素が
     見て取れる場合は、other_info または graph_features に具体的に(何が見えたか)記載してください。
     見当たらない場合は無理に書かず「特になし」としてください。
     """
 
     prompt = f"""
-    パチスロのデータ画面です(画像またはPDFで渡されます。PDFの場合は複数ページあれば全ページ分の内容を踏まえてください)。
-    以下のJSON形式でのみ出力してください。他の文章は不要です。
+    パチスロのデータ画面です。以下のJSON形式でのみ出力してください。他の文章は不要です。
     graph_features と other_info は必ず日本語の文章で記述してください(英語や記号だけの出力は不可)。
-    machine_number(台番号)は、ファイル内に表示されている台番号・台の管理番号があればその数字や文字列をそのまま読み取ってください。
+    machine_number(台番号)は、画像内に表示されている台番号・台の管理番号があればその数字や文字列をそのまま読み取ってください。
     見当たらない・読み取れない場合は空文字("")にしてください(推測で埋めないでください)。
     {machine_context}
     {{"total_games": 0, "big_count": 0, "reg_count": 0, "current_games": 0, "difference_slabs": 0, "machine_number": "", "graph_features": "", "other_info": ""}}
@@ -577,33 +456,29 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
 def analyze_machine_spec_with_gemini(base64_image, mime_type="image/jpeg"):
     """
     機種のスペック表・設定判別要素の画像を解析し、
-    機種名・強示唆ワード・ゲームフロー・設定別確率表・天井・ボーナス・CZ・設定示唆演出などを抽出する。
+    機種名・強示唆ワード・ゲームフロー・設定別確率表を抽出する。
     """
     prompt = """
     パチスロ機種のスペック表、または設定判別要素・設定示唆情報が書かれた画像です。
     画像から読み取れる情報をもとに、以下のJSON形式でのみ出力してください。他の文章は不要です。
     値が読み取れない項目は空文字("")や空オブジェクト({})にしてください。数値を推測で埋めないでください。
-    machine_name, hint_words, game_flow, extra_info の内容は必ず日本語で記述してください。
+    machine_name, game_flow, hint_words の内容は必ず日本語で記述してください。
 
     {
       "machine_name": "画像から読み取れる機種名(正式名称、または特徴的な一部の単語)",
       "hint_words": ["強設定示唆として画像に書かれているキーワードや台詞の一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機など。わかる範囲で簡潔にまとめる)",
-      "basic_info": {"型式名": "", "メーカー名": "", "機械割": "", "導入開始日": "", "機種概要": ""},
+      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井など。わかる範囲で簡潔にまとめる)",
       "setting_ratios": {
         "1": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "2": {}, "3": {}, "4": {}, "5": {}, "6": {}
-      },
-      "ceiling_info": {"天井ゲーム数": "", "設定変更後の天井": "", "天井突入条件": "", "天井恩恵": "", "リセット仕様": "", "ヤメ時": ""},
-      "bonus_info": {"ボーナス当選率": "", "平均獲得枚数": "", "1Gあたりの純増": ""},
-      "cz_info": {"CZ種類と確率": "", "CZ期待度": ""},
-      "suggestion_info": {"終了画面示唆": "", "獲得枚数示唆": "", "内部状態示唆": "", "その他の設定示唆演出": ""},
-      "extra_info": "上記項目に当てはまらないが重要そうな情報を簡潔にまとめたもの"
+        "2": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
+        "3": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
+        "4": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
+        "5": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
+        "6": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"}
+      }
     }
 
     setting_ratios は画像に記載されている設定のみを含めてください(全設定が写っていなければ写っている分だけでよい)。
-    basic_info / ceiling_info / bonus_info / cz_info / suggestion_info は、
-    画像から読み取れた項目だけキーを含めてください(無理に全キーを埋めなくてよい)。
     """
     payload = {
         "contents": [
@@ -644,42 +519,142 @@ def analyze_machine_spec_with_gemini(base64_image, mime_type="image/jpeg"):
     return None
 
 
-def analyze_machine_spec_from_text(page_text, source_url=""):
+# ---------------------------------------------------------------------------
+# URLから機種スペック情報を取り込む
+# ---------------------------------------------------------------------------
+class _VisibleTextExtractor(HTMLParser):
     """
-    機種スペック・解析情報サイトなどのページ本文(HTMLタグ除去済みテキスト)から、
-    機種名・強示唆ワード・ゲームフロー・設定別確率・天井・ボーナス・CZ・設定示唆演出などを
-    まとめて抽出する。ナビゲーションメニューや広告・関連記事・口コミなど無関係な文章が
-    混ざっていても、機種スペックに関係する部分だけを読み取るようGeminiに指示する。
+    HTMLから <script>/<style> 等を除いた「人間が読める本文テキスト」だけを
+    抜き出すための簡易パーサー。ライブラリ追加(BeautifulSoup等)無しで完結させるため、
+    標準ライブラリの html.parser のみを使う。
+    """
+
+    # 本文として意味の薄いタグの中身は読み飛ばす
+    _SKIP_TAGS = {"script", "style", "noscript", "svg", "head", "template"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self._skip_depth = 0
+        self._chunks = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self._SKIP_TAGS:
+            self._skip_depth += 1
+
+    def handle_startendtag(self, tag, attrs):
+        pass
+
+    def handle_endtag(self, tag):
+        if tag in self._SKIP_TAGS and self._skip_depth > 0:
+            self._skip_depth -= 1
+
+    def handle_data(self, data):
+        if self._skip_depth == 0:
+            text = data.strip()
+            if text:
+                self._chunks.append(text)
+
+    def get_text(self):
+        return "\n".join(self._chunks)
+
+
+def _is_allowed_url(url):
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    return parsed.scheme in ALLOWED_URL_SCHEMES and bool(parsed.netloc)
+
+
+def fetch_url_text(url):
+    """
+    指定されたURLのページを取得し、本文と思われるテキストのみを抽出して返す。
+    取得や解析に失敗した場合は None を返す。
+    """
+    url = (url or "").strip()
+    if not url or not _is_allowed_url(url):
+        logger.error(f"URL取り込み: 不正なURL: {url!r}")
+        return None
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (compatible; PachislotDataBot/1.0; "
+            "+machine-spec-import)"
+        )
+    }
+
+    try:
+        response = requests.get(
+            url, headers=headers, timeout=URL_FETCH_TIMEOUT, stream=True
+        )
+        response.raise_for_status()
+
+        content_type = response.headers.get("Content-Type", "")
+        if "text/html" not in content_type and "application/xhtml" not in content_type:
+            logger.error(f"URL取り込み: HTML以外のコンテンツタイプ: {content_type}")
+            return None
+
+        raw_bytes = response.raw.read(URL_FETCH_MAX_BYTES + 1, decode_content=True)
+        if len(raw_bytes) > URL_FETCH_MAX_BYTES:
+            logger.error("URL取り込み: ページサイズが上限を超えています")
+        html_text = raw_bytes.decode(response.encoding or "utf-8", errors="ignore")
+    except requests.exceptions.Timeout:
+        logger.error("URL取り込み: タイムアウト")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"URL取り込み: 通信エラー: {e}")
+        return None
+
+    try:
+        parser = _VisibleTextExtractor()
+        parser.feed(html_text)
+        text = parser.get_text()
+    except Exception as e:
+        logger.error(f"URL取り込み: HTML解析エラー: {e}")
+        return None
+
+    # 連続する空白行を整理しつつ、長すぎる場合は先頭から切り詰める
+    text = re.sub(r"\n{2,}", "\n", text).strip()
+    if len(text) > URL_TEXT_MAX_CHARS:
+        text = text[:URL_TEXT_MAX_CHARS]
+
+    return text or None
+
+
+def analyze_machine_url_with_gemini(page_text, source_url=""):
+    """
+    機種解析サイトのページ本文(テキスト)から、機種名・強示唆ワード・ゲームフロー・
+    設定別確率表(または設定差データ)を抽出する。analyze_machine_spec_with_gemini() の
+    画像版と同じ出力形式(JSON)に揃えることで、そのまま save_machine_rule() に渡せるようにする。
     """
     prompt = f"""
-    以下はパチスロ機種のスペック・解析情報サイトのページ本文です。
-    ナビゲーションメニューや広告・関連記事・ユーザー口コミなど、機種スペックと関係ない文章も
-    混ざっていることがあるので、機種スペックに関係する部分だけを読み取ってください。
-    読み取れた情報をもとに、以下のJSON形式でのみ出力してください。他の文章は不要です。
-    値が読み取れない項目は空文字("")や空オブジェクト({{}})にしてください。数値を推測で埋めないでください。
-    machine_name, hint_words, game_flow, extra_info の内容は必ず日本語で記述してください。
+    以下はパチンコ・パチスロの機種解析サイトのページ本文(HTMLからテキストのみ抽出したもの)です。
+    ページ内のナビゲーションメニューや広告、口コミなど、機種スペックと関係ない部分は無視してください。
+    読み取れる情報をもとに、以下のJSON形式でのみ出力してください。他の文章は一切不要です。
+    値が読み取れない項目は空文字("")や空オブジェクト({{}})にしてください。数値やデータを推測で埋めないでください。
+    machine_name, game_flow, hint_words の内容は必ず日本語で記述してください。
 
     {{
-      "machine_name": "機種名(正式名称、または特徴的な一部の単語)",
-      "hint_words": ["強設定示唆として書かれているキーワードや台詞の一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機など。簡潔にまとめる)",
-      "basic_info": {{"型式名": "", "メーカー名": "", "機械割": "", "導入開始日": "", "機種概要": ""}},
+      "machine_name": "ページから読み取れる機種名(正式名称、または特徴的な一部の単語)",
+      "hint_words": ["強設定示唆として書かれているキーワード・演出名・スタンプ名などの一覧"],
+      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、機械割など。わかる範囲で簡潔にまとめる)",
       "setting_ratios": {{
-        "1": {{"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"}},
-        "2": {{}}, "3": {{}}, "4": {{}}, "5": {{}}, "6": {{}}
-      }},
-      "ceiling_info": {{"天井ゲーム数": "", "設定変更後の天井": "", "天井突入条件": "", "天井恩恵": "", "リセット仕様": "", "ヤメ時": ""}},
-      "bonus_info": {{"ボーナス当選率": "", "平均獲得枚数": "", "1Gあたりの純増": ""}},
-      "cz_info": {{"CZ種類と確率": "", "CZ期待度": ""}},
-      "suggestion_info": {{"終了画面示唆": "", "獲得枚数示唆": "", "内部状態示唆": "", "その他の設定示唆演出": ""}},
-      "extra_info": "上記項目に当てはまらないが重要そうな情報(発明品・演出詳細など)を簡潔にまとめたもの"
+        "1": {{"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x または自由記述の設定差情報"}},
+        "2": {{"...": "..."}},
+        "3": {{"...": "..."}},
+        "4": {{"...": "..."}},
+        "5": {{"...": "..."}},
+        "6": {{"...": "..."}}
+      }}
     }}
 
-    setting_ratios は全設定が書かれていなくても、書かれている設定だけで構いません。
-    basic_info / ceiling_info / bonus_info / cz_info / suggestion_info は、
-    読み取れた項目だけキーを含めてください(無理に全キーを埋めなくてよい)。
+    設定ごとのBIG/REG確率表が無い機種(AT/STタイプなど)の場合は、
+    setting_ratios の各設定に "total" キーのみで、判明している設定差(例:
+    特定演出の出現率、当選率など)を自由記述で構いませんので記載してください。
+    情報が全く無い設定は省略して構いません。
 
-    --- ページ本文 ---
+    【対象URL】{source_url if source_url else "不明"}
+    【ページ本文】
     {page_text}
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -687,14 +662,14 @@ def analyze_machine_spec_from_text(page_text, source_url=""):
 
     try:
         response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=SPEC_IMPORT_TIMEOUT
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
         )
         response.raise_for_status()
     except requests.exceptions.Timeout:
-        logger.error("Gemini API タイムアウト(URL機種スペック解析)")
+        logger.error("Gemini API タイムアウト(URL機種データ解析)")
         return None
     except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API 通信エラー(URL機種スペック解析): {e}")
+        logger.error(f"Gemini API 通信エラー(URL機種データ解析): {e}")
         return None
 
     try:
@@ -702,16 +677,13 @@ def analyze_machine_spec_from_text(page_text, source_url=""):
         json_start = raw_text.find("{")
         json_end = raw_text.rfind("}") + 1
         if json_start == -1 or json_end == 0:
-            logger.error(f"JSONが見つかりません(URL機種スペック解析): {raw_text}")
+            logger.error(f"JSONが見つかりません(URL機種データ解析): {raw_text}")
             return None
-        parsed = json.loads(raw_text[json_start:json_end])
-        if source_url:
-            parsed["source_url"] = source_url
-        return parsed
+        return json.loads(raw_text[json_start:json_end])
     except (KeyError, IndexError) as e:
-        logger.error(f"Geminiレスポンス構造エラー(URL機種スペック解析): {e}")
+        logger.error(f"Geminiレスポンス構造エラー(URL機種データ解析): {e}")
     except json.JSONDecodeError as e:
-        logger.error(f"JSON解析エラー(URL機種スペック解析): {e} / raw={raw_text!r}")
+        logger.error(f"JSON解析エラー(URL機種データ解析): {e} / raw={raw_text!r}")
     return None
 
 
@@ -724,49 +696,19 @@ def find_machine_rule(machine_name):
     for keyword, rule in rules.items():
         if keyword and keyword in machine_name:
             return keyword, rule
-    return None, {
-        "hint_words": [], "game_flow": "", "extra_info": "", "source_url": "",
-        "basic_info": {}, "setting_ratios": {}, "ceiling_info": {},
-        "bonus_info": {}, "cz_info": {}, "suggestion_info": {},
-    }
-
-
-def _format_structured_field(value, empty_label="登録なし"):
-    """
-    load_machine_rules() が返す辞書(または {"raw": "..."} 形式)を
-    AIプロンプト・画面表示用の読みやすいテキストに変換する汎用フォーマッタ。
-    (basic_info / ceiling_info / bonus_info / cz_info / suggestion_info 向け)
-    """
-    if not value:
-        return empty_label
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        if set(value.keys()) == {"raw"}:
-            return str(value["raw"])
-        lines = []
-        for k, v in value.items():
-            if isinstance(v, dict):
-                sub = ", ".join(f"{sk}:{sv}" for sk, sv in v.items())
-                lines.append(f"{k} → {sub}")
-            else:
-                lines.append(f"{k}: {v}")
-        return " / ".join(lines) if lines else empty_label
-    return str(value)
+    return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
 
 
 def _format_setting_ratios(setting_ratios):
     """
     設定別確率表を読みやすいテキストに変換する。
     {"1": {"big": "1/398", ...}, ...} のような構造化データの他、
-    スプレッドシートに直接書かれた自由記述テキスト({"raw": "..."} や文字列)にも対応する。
+    スプレッドシートに直接書かれた自由記述テキスト(文字列)にも対応する。
     """
     if not setting_ratios:
         return "登録なし"
     if isinstance(setting_ratios, str):
         return setting_ratios
-    if isinstance(setting_ratios, dict) and set(setting_ratios.keys()) == {"raw"}:
-        return str(setting_ratios["raw"])
     lines = []
     for setting_no in sorted(setting_ratios.keys(), key=lambda x: (len(x), x)):
         values = setting_ratios[setting_no]
@@ -775,7 +717,7 @@ def _format_setting_ratios(setting_ratios):
         else:
             parts = str(values)
         lines.append(f"設定{setting_no} → {parts}")
-    return " / ".join(lines) if lines else "登録なし"
+    return " / ".join(lines)
 
 
 def _normalize_setting_probabilities(raw):
@@ -851,11 +793,6 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     hint_words = rule.get("hint_words", [])
     game_flow = rule.get("game_flow", "")
     setting_ratios = rule.get("setting_ratios", {})
-    ceiling_info = rule.get("ceiling_info", {})
-    bonus_info = rule.get("bonus_info", {})
-    cz_info = rule.get("cz_info", {})
-    suggestion_info = rule.get("suggestion_info", {})
-    extra_info = rule.get("extra_info", "")
 
     total_games = stats.get("total_games", 0)
     big_count = stats.get("big_count", 0)
@@ -877,11 +814,6 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
     【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
     【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
-    【この機種の天井情報】{_format_structured_field(ceiling_info)}
-    【この機種のボーナス関連情報】{_format_structured_field(bonus_info)}
-    【この機種のCZ関連情報】{_format_structured_field(cz_info)}
-    【この機種の設定示唆演出】{_format_structured_field(suggestion_info)}
-    【この機種のその他の登録情報】{extra_info if extra_info else "登録なし"}
     【今回の累計データ】総回転数: {total_games}G, BIG: {big_count}回 (実測確率 {actual_big_rate}), REG: {reg_count}回 (実測確率 {actual_reg_rate}), 現在の回転数: {stats.get("current_games", 0)}G, 差枚: {stats.get("difference_slabs", 0)}枚
     【今回のメモ・AI画像解析結果の蓄積テキスト】{combined_text if combined_text.strip() else "情報なし"}
     【同機種・このホールでの直近(約7日以内)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
