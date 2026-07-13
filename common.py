@@ -357,8 +357,13 @@ def get_recent_same_machine_records(machine_name, store_name="", exclude_session
     store_name が指定されている場合は、同じ店舗(店舗名が完全一致)の記録のみを対象にする。
     (店舗が違えば設定投入方針も変わるため、店舗情報が入力されている場合は店舗を絞り込んで
     ホールの傾向分析の精度を上げる。店舗名が未入力の場合は従来通り店舗を問わず参照する。)
-    現在編集中のセッション(exclude_session_id)は除外し、日付が新しい順に最大limit件返す。
-    ※ セッション単位で最新1件のみを採用する(同じ来店で何度も記録した分の重複を避けるため)。
+    現在編集中のセッション(exclude_session_id)は除外する。
+
+    「同一店舗・同一台番号・同じ日」の記録は、その日の中で最も新しい1件のみを採用する。
+    (同じ台を同じ日に複数セッションで記録した場合の重複カウントを避け、
+    日ごと・台ごとの実際の挙動を正しく集計するため。台番号が未入力の記録は
+    店舗名+日付のみでまとめて重複排除する簡易対応とする。)
+    日付が新しい順に最大limit件返す。
     """
     machine_name = (machine_name or "").strip()
     store_name = (store_name or "").strip()
@@ -367,9 +372,8 @@ def get_recent_same_machine_records(machine_name, store_name="", exclude_session
 
     records = load_records()  # 新しい順
     now = datetime.now()
-    seen_sessions = set()
-    matched = []
 
+    candidates = []
     for r in records:
         sid = str(r.get("session_id", ""))
         if sid and sid == exclude_session_id:
@@ -390,14 +394,21 @@ def get_recent_same_machine_records(machine_name, store_name="", exclude_session
             continue
         if (now - record_date).days > days:
             continue
-        if sid in seen_sessions:
-            continue  # 同一セッションは最新(=最初に出てくる)1件のみ採用
-        seen_sessions.add(sid)
-        matched.append(r)
-        if len(matched) >= limit:
-            break
+        candidates.append((record_date, r))
 
-    return matched
+    # 「同一店舗・同一台番号・同じ日」でグルーピングし、各グループの最新1件のみを残す
+    latest_by_group = {}
+    for record_date, r in candidates:
+        r_store = str(r.get("store_name", "")).strip()
+        r_machine_number = str(r.get("machine_number", "")).strip()
+        date_only = record_date.strftime("%Y-%m-%d")
+        group_key = (r_store, r_machine_number, date_only)
+        existing = latest_by_group.get(group_key)
+        if existing is None or record_date > existing[0]:
+            latest_by_group[group_key] = (record_date, r)
+
+    deduped = sorted(latest_by_group.values(), key=lambda x: x[0], reverse=True)
+    return [r for _, r in deduped[:limit]]
 
 
 def format_recent_history(records):
@@ -756,11 +767,36 @@ def analyze_machine_url_with_gemini(page_text, source_url=""):
 # 推測ロジック(AIによる設定判別)
 # ---------------------------------------------------------------------------
 def find_machine_rule(machine_name):
-    """machine_name に一致するキーワードを machines シートから探し、(keyword, rule辞書)を返す"""
+    """
+    machine_name に一致する登録済み機種を machines シートから探す。
+
+    以前は「辞書の並び順で最初に部分一致したもの」を採用していたため、
+    例えば「ToLOVE」と「ToLOVEるダークネス」のように複数のキーワードが
+    部分一致する場合に、意図しない(=より一般的で不正確な)機種スペックが
+    採用されてしまうことがあった。これを以下の優先順位に修正する:
+        1. machine_name とキーワードが完全一致するもの
+        2. machine_name に部分一致するキーワードのうち、最も文字数が長い
+           (=より具体的な)もの
+    """
+    machine_name = (machine_name or "").strip()
+    if not machine_name:
+        return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
+
     rules = load_machine_rules()
+
     for keyword, rule in rules.items():
-        if keyword and keyword in machine_name:
+        if keyword and keyword.strip() == machine_name:
             return keyword, rule
+
+    candidates = [
+        (keyword, rule) for keyword, rule in rules.items()
+        if keyword and keyword.strip() and keyword.strip() in machine_name
+    ]
+    if candidates:
+        candidates.sort(key=lambda kv: len(kv[0].strip()), reverse=True)
+        return candidates[0]
+
+    logger.warning(f"機種スペック未登録: 「{machine_name}」に一致するキーワードが見つかりませんでした")
     return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
 
 
@@ -938,6 +974,10 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     hint_words = rule.get("hint_words", [])
     game_flow = rule.get("game_flow", "")
     setting_ratios = rule.get("setting_ratios", {})
+    if matched_keyword:
+        logger.info(f"設定推測: 「{machine_name}」に機種スペック「{matched_keyword}」を適用")
+    else:
+        logger.info(f"設定推測: 「{machine_name}」に一致する機種スペックが未登録のため、スペック無しで推測")
 
     total_games = stats.get("total_games", 0)
     big_count = stats.get("big_count", 0)
