@@ -70,6 +70,10 @@ HEADERS = [
 # setting_ratios: 設定1〜6ごとの確率(BIG/REG/合成など)をJSON文字列で格納
 MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios"]
 
+# chat_logs シートの列構成(セッションごとのQ&A履歴)
+CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
+CHAT_HEADERS = ["session_id", "date", "question", "answer"]
+
 # 初回起動時、machinesシートが空だった場合に入れておくデフォルト値
 DEFAULT_MACHINE_RULES = [
     {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
@@ -114,6 +118,19 @@ def get_machines_worksheet():
             ])
     if ws.row_values(1) != MACHINE_HEADERS:
         ws.insert_row(MACHINE_HEADERS, 1)
+    return ws
+
+
+def get_chat_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(CHAT_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=CHAT_SHEET_NAME, rows=1000, cols=len(CHAT_HEADERS))
+        ws.append_row(CHAT_HEADERS)
+    if ws.row_values(1) != CHAT_HEADERS:
+        ws.insert_row(CHAT_HEADERS, 1)
     return ws
 
 
@@ -269,6 +286,40 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios):
         return True
     except Exception as e:
         logger.error(f"機種マスタ書き込みエラー: {e}")
+        return False
+
+
+def load_chat_history(session_id, limit=20):
+    """
+    指定セッションのQ&A履歴を古い順(=会話の時系列順)で返す。
+    直近のやり取りのみをAIへの文脈として使うため、件数を limit で絞る。
+    """
+    session_id = str(session_id or "").strip()
+    if not session_id:
+        return []
+    try:
+        ws = get_chat_worksheet()
+        rows = ws.get_all_records()
+        matched = [r for r in rows if str(r.get("session_id", "")) == session_id]
+        return matched[-limit:]
+    except Exception as e:
+        logger.error(f"チャット履歴読み込みエラー: {e}")
+        return []
+
+
+def save_chat_message(session_id, question, answer):
+    try:
+        ws = get_chat_worksheet()
+        ws.append_row([
+            str(session_id or ""),
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            question,
+            answer,
+        ])
+        return True
+    except Exception as e:
+        logger.error(f"チャット履歴保存エラー: {e}")
+        flash("質問履歴の保存に失敗しました。")
         return False
 
 
@@ -962,3 +1013,128 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
         )
         return "高設定濃厚!? (要確認/AI判定失敗のため簡易判定)", fallback_probabilities
     return "推測中...(AI判定失敗)", _normalize_setting_probabilities({})
+
+
+# ---------------------------------------------------------------------------
+# 分析結果へのQ&A(セッション単位のチャット)
+# ---------------------------------------------------------------------------
+def _format_session_records_for_chat(records):
+    """
+    セッション内の記録(古い順)を、チャット用プロンプトで読みやすい時系列テキストに変換する。
+    """
+    if not records:
+        return "登録なし"
+    ordered = sorted(records, key=lambda r: str(r.get("date", "")))
+    lines = []
+    for r in ordered:
+        probs = r.get("setting_probabilities") or {}
+        if isinstance(probs, dict) and probs:
+            probs_text = ", ".join(f"設定{s}:{probs.get(s, 0)}%" for s in sorted(probs, key=lambda x: (len(x), x)))
+        else:
+            probs_text = "算出なし"
+        lines.append(
+            f"[{r.get('date', '')}] 総回転数{r.get('total_games', 0)}G, "
+            f"BIG{r.get('big_count', 0)}回, REG{r.get('reg_count', 0)}回, "
+            f"差枚{r.get('difference_slabs', 0)}枚, メモ:{r.get('user_note', '') or 'なし'}, "
+            f"AI備考:{r.get('other_info', '') or 'なし'}, "
+            f"その時点の推測:{r.get('estimation', '') or 'なし'}({probs_text})"
+        )
+    return "\n".join(lines)
+
+
+def answer_question(session_id, machine_name, question, chat_history=None):
+    """
+    特定セッションの蓄積データ・機種スペック・直近の設定推測結果・ホールの傾向分析・
+    これまでのQ&A履歴をもとに、ユーザーからの自由な質問(例:「このまま打ち続けるべき?」)
+    にAIが日本語で回答する。
+
+    chat_history には [(質問, 回答), ...] の形式でこれまでのやり取りを渡すと、
+    その文脈を踏まえた回答になる(例: 「さっきの続きだけど〜」のような質問にも対応しやすくなる)。
+
+    戻り値: 回答テキスト(str)。失敗時はエラーを説明する日本語メッセージを返す。
+    """
+    session_id = str(session_id or "").strip()
+    question = (question or "").strip()
+    if not question:
+        return "質問内容が空でした。"
+
+    all_records = load_records()
+    session_records = [r for r in all_records if str(r.get("session_id", "")) == session_id]
+    if not session_records:
+        return "このセッションのデータが見つかりませんでした。まずデータを1件以上登録してください。"
+
+    latest = session_records[0]  # load_records() は新しい順
+    machine_name = machine_name or latest.get("machine_name", "")
+    store_name = str(latest.get("store_name", "")).strip()
+
+    matched_keyword, rule = find_machine_rule(machine_name)
+    hint_words = rule.get("hint_words", [])
+    game_flow = rule.get("game_flow", "")
+    setting_ratios = rule.get("setting_ratios", {})
+
+    session_records_text = _format_session_records_for_chat(session_records)
+    latest_probs = latest.get("setting_probabilities") or {}
+    if isinstance(latest_probs, dict) and latest_probs:
+        latest_probs_text = ", ".join(
+            f"設定{s}:{latest_probs.get(s, 0)}%" for s in sorted(latest_probs, key=lambda x: (len(x), x))
+        )
+    else:
+        latest_probs_text = "算出なし"
+
+    recent_records = get_recent_same_machine_records(
+        machine_name, store_name=store_name, exclude_session_id=session_id, days=7
+    )
+    hall_tendency_text = summarize_hall_tendency(
+        recent_records, hint_words=hint_words, store_filtered=bool(store_name)
+    )
+
+    chat_history = chat_history or []
+    if chat_history:
+        chat_history_text = "\n".join(f"Q: {q}\nA: {a}" for q, a in chat_history)
+    else:
+        chat_history_text = "なし(このセッションでの初めての質問)"
+
+    prompt = f"""
+    あなたはパチスロの実戦データ分析をサポートするアシスタントです。
+    ユーザーは実際にこの台を打っており、これまで記録してきたデータをもとに質問しています。
+    以下の情報を踏まえて、質問に日本語で具体的に回答してください(150〜250文字程度を目安に、
+    箇条書きが適切な場合は箇条書きを使っても構いません)。
+    断定的な保証(必ず勝てる等)はできないため、「データから読み取れる傾向としては」という
+    立場から、根拠を示しつつ答えてください。実際にやめるかどうかの最終判断はユーザー自身に
+    委ねる姿勢を保ちつつ、データに基づいた具体的な意見は述べてください(単なる一般論や
+    「自己責任で」で終わらせないこと)。
+
+    【機種名】{machine_name}
+    【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
+    【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
+    【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
+    【このセッションの蓄積データ(時系列、記録するたびに再解析している)】
+    {session_records_text}
+    【直近(最新)の設定確率推測結果】{latest_probs_text} (コメント: {latest.get('estimation', '') or 'なし'})
+    【同機種・このホールでの直近(約7日以内、このセッションを除く)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
+    【このセッションでのこれまでのQ&A】
+    {chat_history_text}
+    【今回の質問】{question}
+
+    回答のみを出力してください(前置きや「回答:」等のラベル、Markdown記法は不要です)。
+    """
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if raw_text:
+            return raw_text
+        logger.error("Q&A AI: 空の応答")
+    except requests.exceptions.Timeout:
+        logger.error("Q&A AI タイムアウト")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Q&A AI 通信エラー: {e}")
+    except (KeyError, IndexError) as e:
+        logger.error(f"Q&A AI レスポンス構造エラー: {e}")
+
+    return "回答の生成に失敗しました。もう一度お試しください。"

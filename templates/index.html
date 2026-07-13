@@ -63,6 +63,35 @@
         </form>
     </div>
 
+    {% if preset_session %}
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8 border border-gray-700">
+        <h2 class="text-xl font-semibold mb-4 text-gray-200">💬 このセッションについてAIに質問する</h2>
+        <p class="text-xs text-gray-500 mb-4">
+            例:「このまま打ち続けた方がいい?」「高設定っぽい要素はある?」「やめるべきタイミングは?」など、
+            このセッションの蓄積データ・機種スペック・直近の推測結果をもとにAIが回答します。
+        </p>
+        {% if chat_history %}
+        <div class="flex flex-col gap-3 mb-4">
+            {% for chat in chat_history %}
+            <div class="bg-gray-900 border border-gray-700 rounded p-3">
+                <div class="text-sm text-blue-400 font-semibold mb-1">Q. {{ chat.question }}</div>
+                <div class="text-sm text-gray-200 whitespace-pre-wrap">🤖 {{ chat.answer }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ chat.date }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 mb-4">まだ質問はありません。上記の例のように聞いてみてください。</p>
+        {% endif %}
+        <form action="{{ url_for('records.ask') }}" method="POST" class="flex flex-col md:flex-row gap-3">
+            <input type="hidden" name="session_id" value="{{ preset_session }}">
+            <input type="hidden" name="machine_name" value="{{ preset_machine }}">
+            <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-yellow-500">
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2 rounded shadow-md whitespace-nowrap">質問する</button>
+        </form>
+    </div>
+    {% endif %}
+
     <a href="{{ url_for('machines.machines_page') }}" class="block bg-gray-800 hover:bg-gray-750 p-4 rounded-lg shadow-lg mb-8 border border-gray-700 text-gray-200 transition">
         🎯 機種スペックの登録・確認は<span class="text-blue-400 underline ml-1">機種スペック登録システム</span>へ
     </a>

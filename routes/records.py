@@ -20,6 +20,7 @@ def index():
     recent_history_preview = []
     hall_tendency_preview = ""
     preset_store = ""
+    chat_history = []
     if preset_machine:
         _, preview_rule = common.find_machine_rule(preset_machine)
         # 継続セッションであれば、そのセッションで既に入力済みの店舗名を引き継いでプレビューに反映する
@@ -28,6 +29,7 @@ def index():
                 if str(r.get("session_id", "")) == preset_session and str(r.get("store_name", "")).strip():
                     preset_store = str(r.get("store_name", "")).strip()
                     break
+            chat_history = common.load_chat_history(preset_session)
         recent_history_preview = common.get_recent_same_machine_records(
             preset_machine, store_name=preset_store, exclude_session_id=preset_session, days=7
         )
@@ -43,6 +45,7 @@ def index():
         preset_store=preset_store,
         recent_history_preview=recent_history_preview,
         hall_tendency_preview=hall_tendency_preview,
+        chat_history=chat_history,
     )
 
 
@@ -175,3 +178,27 @@ def upload():
     }
     common.save_record(record)
     return redirect(url_for("records.index"))
+
+
+@records_bp.route("/ask", methods=["POST"])
+def ask():
+    session_id = request.form.get("session_id", "").strip()
+    machine_name = request.form.get("machine_name", "").strip()
+    question = request.form.get("question", "").strip()
+
+    if not session_id:
+        flash("セッションが見つかりません。まずデータを登録してください。")
+        return redirect(url_for("records.index"))
+
+    if not question:
+        flash("質問内容を入力してください。")
+        return redirect(url_for("records.index", machine_name=machine_name, session_id=session_id))
+
+    # これまでのQ&A履歴を文脈として渡すため取得しておく
+    past_chat = common.load_chat_history(session_id)
+    chat_history_pairs = [(r.get("question", ""), r.get("answer", "")) for r in past_chat]
+
+    answer = common.answer_question(session_id, machine_name, question, chat_history=chat_history_pairs)
+    common.save_chat_message(session_id, question, answer)
+
+    return redirect(url_for("records.index", machine_name=machine_name, session_id=session_id))
