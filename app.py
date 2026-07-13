@@ -5,6 +5,7 @@ from flask import Flask
 import common
 from routes.records import records_bp
 from routes.machines import machines_bp
+from routes.expected_value import expected_value_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
@@ -12,6 +13,7 @@ app.config["MAX_CONTENT_LENGTH"] = common.MAX_UPLOAD_SIZE
 
 app.register_blueprint(records_bp)
 app.register_blueprint(machines_bp)
+app.register_blueprint(expected_value_bp)
 
 
 if __name__ == "__main__":

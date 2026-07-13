@@ -106,8 +106,12 @@
                     <div class="text-xs text-gray-400 truncate">{{ item.date }}{% if item.store_name %} ・ {{ item.store_name }}{% endif %}</div>
                     <div class="font-bold text-yellow-400 truncate">{{ item.machine_name }}{% if item.machine_number %} <span class="text-gray-400 font-normal">(No.{{ item.machine_number }})</span>{% endif %}</div>
                 </div>
-                <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="shrink-0 bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded">追加分析</a>
+                <div class="shrink-0 flex flex-col gap-1">
+                    <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1.5 rounded text-center">追加分析</a>
+                    <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded text-center">🧮 期待値</a>
+                </div>
             </div>
+
             <div class="flex gap-4 text-sm mb-2">
                 <span class="text-gray-200">{{ item.total_games }}G</span>
                 <span class="{% if item.difference_slabs > 0 %}text-green-400{% else %}text-gray-200{% endif %}">{{ item.difference_slabs }}枚</span>
@@ -201,7 +205,10 @@
                         {% endif %}
                     </td>
                     <td class="p-4 whitespace-nowrap">
-                        <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">追加分析</a>
+                        <div class="flex flex-col gap-1">
+                            <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded text-center">追加分析</a>
+                            <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded text-center">🧮 期待値</a>
+                        </div>
                     </td>
                 </tr>
                 <tr class="bg-gray-850">

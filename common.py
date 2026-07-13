@@ -1200,3 +1200,102 @@ def answer_question(session_id, machine_name, question, chat_history=None):
         logger.error(f"Q&A AI レスポンス構造エラー: {e}")
 
     return "回答の生成に失敗しました。もう一度お試しください。"
+
+
+# ---------------------------------------------------------------------------
+# 期待値計算(天井/ゾーン狙いの単純期待値)
+# ---------------------------------------------------------------------------
+def calculate_expected_value(current_games, target_games, coin_cost_per_game, expected_payout, exchange_rate):
+    """
+    「現在のG数から、天井やゾーンなど目標G数まで様子見して打つ」ケースの
+    単純な期待値計算(決定論的な計算のみで行う。お金に関わる計算のためAIは使わない)。
+
+    現在G数から目標G数までの残りG数を投資コストとして見積もり、
+    目標到達時に見込める期待獲得枚数(円換算)と比較して期待値を算出する。
+    設定差や実際の当選確率のブレは考慮しない、あくまで単純な損益分岐の目安。
+
+    current_games: 現在の回転数(G)
+    target_games: 狙う目標G数(天井やゾーンのG数)
+    coin_cost_per_game: 1Gあたりの投資額(円)。20円スロットなら20円/Gが目安。
+    expected_payout: 目標到達時に見込める期待獲得枚数(枚)
+    exchange_rate: 交換レート(円/枚)
+
+    戻り値: 計算結果の辞書(remaining_games, investment_yen, expected_payout,
+             expected_return_yen, expected_value_yen, expected_value_per_game, is_plus)
+    """
+    remaining_games = max(target_games - current_games, 0)
+    investment_yen = remaining_games * coin_cost_per_game
+    expected_return_yen = expected_payout * exchange_rate
+    expected_value_yen = expected_return_yen - investment_yen
+    expected_value_per_game = (expected_value_yen / remaining_games) if remaining_games > 0 else 0.0
+
+    return {
+        "remaining_games": remaining_games,
+        "investment_yen": investment_yen,
+        "expected_payout": expected_payout,
+        "expected_return_yen": expected_return_yen,
+        "expected_value_yen": expected_value_yen,
+        "expected_value_per_game": expected_value_per_game,
+        "is_plus": expected_value_yen > 0,
+    }
+
+
+def estimate_expected_payout_with_gemini(machine_name, target_games, current_games):
+    """
+    機種スペック(ゲームフロー)をもとに、目標ゲーム数(天井/ゾーンなど)に到達した際に
+    見込める「平均的な期待獲得枚数」の目安をAIに概算してもらう。
+
+    注意: これは公表されている統計値ではなく、登録されているゲームフローのテキストから
+    AIが読み取れる範囲で推測した参考値に過ぎない。情報が不十分な場合は概算しない。
+
+    戻り値: (expected_payout: float | None, note: str)
+    """
+    machine_name = (machine_name or "").strip()
+    matched_keyword, rule = find_machine_rule(machine_name)
+    game_flow = rule.get("game_flow", "")
+    if not game_flow:
+        return None, "この機種のゲームフロー情報が未登録のため、AIによる期待獲得枚数の概算はできません。手動で入力してください。"
+
+    prompt = f"""
+    以下はパチスロ機種のゲームフロー情報です。この情報だけから、
+    目標ゲーム数({target_games}G、天井やゾーンなど)に到達した際に見込める
+    「平均的な期待獲得枚数(差枚)」のごくおおまかな目安を推測してください。
+    正確な統計値ではなく、ゲームフロー情報の記述(AT初期ゲーム数、上乗せ傾向、
+    ハーレムモード等の上位状態への移行率など)から読み取れる範囲での目安で構いません。
+    情報が不十分で妥当な推測ができない場合は、無理に数値を出さず 0 を返してください。
+
+    以下のJSON形式のみで出力してください。他の文章は一切不要です。
+    {{"expected_payout": 0, "note": "推測の前提や根拠を50文字程度で(日本語)"}}
+
+    【機種名】{machine_name}
+    【ゲームフロー】{game_flow}
+    【現在の回転数】{current_games}G
+    【目標ゲーム数】{target_games}G
+    """
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        json_start = raw_text.find("{")
+        json_end = raw_text.rfind("}") + 1
+        if json_start == -1 or json_end == 0:
+            return None, "AIによる概算に失敗しました。手動で入力してください。"
+        parsed = json.loads(raw_text[json_start:json_end])
+        payout = float(parsed.get("expected_payout", 0) or 0)
+        note = str(parsed.get("note", "")).strip()
+        if payout <= 0:
+            return None, note or "AIによる期待獲得枚数の概算ができませんでした。手動で入力してください。"
+        return payout, (note + "(AIによる概算値・参考程度に)" if note else "AIによる概算値(参考程度に)")
+    except requests.exceptions.Timeout:
+        logger.error("期待獲得枚数AI概算: タイムアウト")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"期待獲得枚数AI概算: 通信エラー: {e}")
+    except (KeyError, IndexError, json.JSONDecodeError, TypeError, ValueError) as e:
+        logger.error(f"期待獲得枚数AI概算: 解析エラー: {e}")
+
+    return None, "AIによる概算に失敗しました。手動で入力してください。"
