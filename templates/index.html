@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import section_header, icon_action, empty_state, stat_card, pagination %}
+{% from "_macros.html" import section_header, icon_action, empty_state, stat_card, pagination, score_breakdown %}
 
 {% block title %}パチスロAIデータ管理システム{% endblock %}
 
@@ -191,6 +191,7 @@
                 {% endfor %}
             </div>
             {% endif %}
+            {{ score_breakdown(item.category_scores) }}
 
             <!-- 行アクション: 今後ボタンが増えてもここに1行足すだけで済む -->
             <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-700">
@@ -216,8 +217,8 @@
                     <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
                         <input type="hidden" name="session_id" value="{{ item.session_id }}">
                         <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
-                        <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500">
-                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-xs font-bold px-3 py-1 rounded-md whitespace-nowrap transition">質問</button>
+                        <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-white focus:outline-none focus:border-yellow-500">
+                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
                     </form>
                 </div>
             </details>
@@ -278,6 +279,7 @@
                             {% endfor %}
                         </div>
                         {% endif %}
+                        <div class="font-normal min-w-[160px]">{{ score_breakdown(item.category_scores) }}</div>
                     </td>
                     <td class="p-4">
                         <!-- 行アクション: 今後ボタンが増えてもここに1行足すだけで済む(折り返す) -->
@@ -308,8 +310,8 @@
                                 <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
                                     <input type="hidden" name="session_id" value="{{ item.session_id }}">
                                     <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
-                                    <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-yellow-500">
-                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-xs font-bold px-3 py-1 rounded-md whitespace-nowrap transition">質問</button>
+                                    <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-white focus:outline-none focus:border-yellow-500">
+                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
                                 </form>
                             </div>
                         </details>

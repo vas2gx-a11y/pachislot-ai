@@ -92,7 +92,7 @@ HEADERS = [
     "current_games", "difference_slabs", "graph_features",
     "other_info", "user_note", "estimation", "setting_probabilities",
     "max_difference_slabs", "hamari_600_plus", "hamari_800_plus",
-    "max_renchan", "graph_shape_tags",
+    "max_renchan", "graph_shape_tags", "category_scores",
 ]
 
 # machines シートの列構成
@@ -301,6 +301,14 @@ def load_records():
                 r["setting_probabilities"] = {}
             raw_tags = str(r.get("graph_shape_tags", "")).strip()
             r["graph_shape_tags"] = [t.strip() for t in raw_tags.split(",") if t.strip()] if raw_tags else []
+            raw_scores = str(r.get("category_scores", "")).strip()
+            if raw_scores:
+                try:
+                    r["category_scores"] = json.loads(raw_scores)
+                except json.JSONDecodeError:
+                    r["category_scores"] = {}
+            else:
+                r["category_scores"] = {}
         records.reverse()  # 新しい順に表示
         _cache_set("records", records)
         return records
@@ -1407,18 +1415,35 @@ CATEGORY_SCORE_LABELS = {
 }
 
 
-def _append_category_score_breakdown(comment, category_scores):
+def _normalize_category_scores(category_scores):
     """
-    estimate() が返したカテゴリ別スコアを「[内訳] 合算一致:24/30 グラフ:15/20 ...」のような
-    短いテキストにしてコメントの末尾に追記する。一覧画面の estimation 欄にそのまま表示されるので、
-    テンプレート側の変更なしにスコア内訳を見せられる。
+    Geminiが返したカテゴリ別スコアを {key: 0〜満点の整数} の辞書に整形する。
+    不正な値・キーは除外し、各スコアは満点でクリップする。
+    テンプレート表示用の詳細(ラベル・満点)は describe_category_scores() で付与する。
     """
     if not isinstance(category_scores, dict) or not category_scores:
-        return comment
+        return {}
+    normalized = {}
+    for key, (_, max_score) in CATEGORY_SCORE_LABELS.items():
+        if key not in category_scores:
+            continue
+        try:
+            score = int(category_scores[key])
+        except (TypeError, ValueError):
+            continue
+        normalized[key] = max(0, min(score, max_score))
+    return normalized
 
-    parts = []
-    total_score = 0
-    total_max = 0
+
+def describe_category_scores(category_scores):
+    """
+    {"big_reg_match": 24, ...} のような辞書を、画面表示用に
+    ラベル・満点・達成率も含めたリストに変換する(スコア内訳UI用)。
+    スコアが無い場合は空リストを返す(=呼び出し側でスコア内訳セクション自体を出し分けられる)。
+    """
+    if not isinstance(category_scores, dict) or not category_scores:
+        return []
+    result = []
     for key, (label, max_score) in CATEGORY_SCORE_LABELS.items():
         if key not in category_scores:
             continue
@@ -1427,15 +1452,22 @@ def _append_category_score_breakdown(comment, category_scores):
         except (TypeError, ValueError):
             continue
         score = max(0, min(score, max_score))
-        parts.append(f"{label}{score}/{max_score}")
-        total_score += score
-        total_max += max_score
+        result.append({
+            "key": key,
+            "label": label,
+            "score": score,
+            "max_score": max_score,
+            "pct": round(score / max_score * 100) if max_score else 0,
+        })
+    return result
 
-    if not parts:
-        return comment
 
-    breakdown = " ".join(parts)
-    return f"{comment}\n[内訳] {breakdown} (計{total_score}/{total_max})"
+def category_scores_total(category_scores):
+    """スコア内訳の合計(現在値, 満点)を返す。スコアが無ければ (0, 0)。"""
+    breakdown = describe_category_scores(category_scores)
+    if not breakdown:
+        return 0, 0
+    return sum(b["score"] for b in breakdown), sum(b["max_score"] for b in breakdown)
 
 
 def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
@@ -1558,8 +1590,8 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
             parsed = json.loads(raw_text[json_start:json_end])
             comment = str(parsed.get("comment", "")).strip() or "判定コメントなし"
             probabilities = _normalize_setting_probabilities(parsed.get("setting_probabilities"))
-            comment = _append_category_score_breakdown(comment, parsed.get("category_scores"))
-            return comment, probabilities
+            category_scores = _normalize_category_scores(parsed.get("category_scores"))
+            return comment, probabilities, category_scores
         logger.error(f"設定予測AI JSONが見つかりません: {raw_text}")
     except requests.exceptions.Timeout:
         logger.error("設定予測AI タイムアウト")
@@ -1575,8 +1607,8 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
         fallback_probabilities = _normalize_setting_probabilities(
             {"1": 5, "2": 5, "3": 10, "4": 20, "5": 30, "6": 30}
         )
-        return "高設定濃厚!? (要確認/AI判定失敗のため簡易判定)", fallback_probabilities
-    return "推測中...(AI判定失敗)", _normalize_setting_probabilities({})
+        return "高設定濃厚!? (要確認/AI判定失敗のため簡易判定)", fallback_probabilities, {}
+    return "推測中...(AI判定失敗)", _normalize_setting_probabilities({}), {}
 
 
 # ---------------------------------------------------------------------------

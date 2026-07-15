@@ -198,8 +198,8 @@
                         <div class="text-xs text-gray-500 mb-1">📝 メモを追記する(特にゲームフローに関する内容・高設定挙動の示唆などを想定)</div>
                         <form action="{{ url_for('machines.add_note') }}" method="POST" class="flex flex-col gap-2">
                             <input type="hidden" name="keyword" value="{{ m.keyword }}">
-                            <textarea name="note" rows="2" placeholder="例: 設定6は差枚+500枚を超えてから複合対応込みで消化が早い印象。〇〇の演出が出たら高設定濃厚" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500"></textarea>
-                            <button type="submit" class="self-start bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-xs font-bold px-4 py-1.5 rounded-md transition">追記する</button>
+                            <textarea name="note" rows="2" placeholder="例: 設定6は差枚+500枚を超えてから複合対応込みで消化が早い印象。〇〇の演出が出たら高設定濃厚" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1.5 md:text-xs text-white focus:outline-none focus:border-yellow-500"></textarea>
+                            <button type="submit" class="self-start bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-5 py-2 md:px-4 md:py-1.5 rounded-md transition">追記する</button>
                         </form>
                     </div>
                 </div>

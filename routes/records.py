@@ -208,7 +208,7 @@ def upload():
                 machine_number = str(r.get("machine_number", "")).strip()
                 break
 
-    estimation_comment, setting_probabilities = common.estimate(
+    estimation_comment, setting_probabilities, category_scores = common.estimate(
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
         recent_records_count=len(recent_records),
         base64_image=image_for_estimate, mime_type=mime_type_for_estimate,
@@ -230,6 +230,7 @@ def upload():
         "user_note": user_note,
         "estimation": estimation_comment,
         "setting_probabilities": json.dumps(setting_probabilities, ensure_ascii=False),
+        "category_scores": json.dumps(category_scores, ensure_ascii=False),
         "max_difference_slabs": max_diff,
         "hamari_600_plus": hamari_600,
         "hamari_800_plus": hamari_800,
