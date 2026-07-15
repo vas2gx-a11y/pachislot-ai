@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import re
+import time
 from datetime import datetime
 from html.parser import HTMLParser
 from urllib.parse import urlparse
@@ -14,6 +15,35 @@ from flask import flash
 # --- ロギング設定 ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# 軽量インメモリキャッシュ
+# ---------------------------------------------------------------------------
+# 記録一覧・機種マスタ・Q&A履歴はページを開くたびにスプレッドシートへ読みに行くと、
+# データが増えるほど表示が重くなる主因になる。短いTTL(既定20秒)でキャッシュし、
+# 自分の書き込み操作(save_record等)の直後は該当キーを即座に無効化することで、
+# 「保存した内容がすぐ反映されない」という不整合を避けつつ読み込み回数を減らす。
+_cache = {}
+_CACHE_TTL_SECONDS = 20
+
+
+def _cache_get(key):
+    entry = _cache.get(key)
+    if not entry:
+        return None
+    value, expires_at = entry
+    if time.time() > expires_at:
+        del _cache[key]
+        return None
+    return value
+
+
+def _cache_set(key, value, ttl=_CACHE_TTL_SECONDS):
+    _cache[key] = (value, time.time() + ttl)
+
+
+def _cache_invalidate(key):
+    _cache.pop(key, None)
 
 # --- Gemini設定 ---
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -218,6 +248,10 @@ def _load_records_rows_fallback(ws):
 
 
 def load_records():
+    cached = _cache_get("records")
+    if cached is not None:
+        return cached
+
     try:
         ws = get_records_worksheet()
     except Exception as e:
@@ -252,6 +286,7 @@ def load_records():
             raw_tags = str(r.get("graph_shape_tags", "")).strip()
             r["graph_shape_tags"] = [t.strip() for t in raw_tags.split(",") if t.strip()] if raw_tags else []
         records.reverse()  # 新しい順に表示
+        _cache_set("records", records)
         return records
     except Exception as e:
         logger.error(f"スプレッドシート読み込みエラー(データ整形に失敗): {e}")
@@ -263,6 +298,7 @@ def save_record(record):
         ws = get_records_worksheet()
         row = [record.get(h, "") for h in HEADERS]
         ws.append_row(row)
+        _cache_invalidate("records")
     except Exception as e:
         logger.error(f"スプレッドシート書き込みエラー: {e}")
         flash("スプレッドシートへの保存に失敗しました。")
@@ -300,6 +336,10 @@ def load_machine_rules():
     {keyword: {"hint_words": [...], "game_flow": "...", "setting_ratios": {...}}}
     の辞書を作る
     """
+    cached = _cache_get("machine_rules")
+    if cached is not None:
+        return cached
+
     try:
         ws = get_machines_worksheet()
     except Exception as e:
@@ -353,6 +393,7 @@ def load_machine_rules():
                 "setting_ratios": setting_ratios,
                 "sources": sources,
             }
+        _cache_set("machine_rules", rules)
         return rules
     except Exception as e:
         logger.error(f"機種マスタ読み込みエラー(データ整形に失敗): {e}")
@@ -471,6 +512,7 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios, source_lab
             ws.update(f"A{target_row}:E{target_row}", [row_values])
         else:
             ws.append_row(row_values)
+        _cache_invalidate("machine_rules")
         return True
     except Exception as e:
         logger.error(f"機種マスタ書き込みエラー: {e}")
@@ -530,9 +572,14 @@ def load_all_chat_history():
     一覧画面で各セッションごとの質問件数・直近の回答をまとめて表示するために使う
     (セッションごとに毎回シートを読みに行くと遅くなるため、1回の読み込みで済ませる)。
     """
+    cached = _cache_get("chat_history_all")
+    if cached is not None:
+        return cached
     try:
         ws = get_chat_worksheet()
-        return ws.get_all_records()
+        rows = ws.get_all_records()
+        _cache_set("chat_history_all", rows)
+        return rows
     except Exception as e:
         logger.error(f"チャット全履歴読み込みエラー: {e}")
         return []
@@ -542,13 +589,13 @@ def load_chat_history(session_id, limit=20):
     """
     指定セッションのQ&A履歴を古い順(=会話の時系列順)で返す。
     直近のやり取りのみをAIへの文脈として使うため、件数を limit で絞る。
+    load_all_chat_history() のキャッシュを再利用し、二重にシートを読みに行かない。
     """
     session_id = str(session_id or "").strip()
     if not session_id:
         return []
     try:
-        ws = get_chat_worksheet()
-        rows = ws.get_all_records()
+        rows = load_all_chat_history()
         matched = [r for r in rows if str(r.get("session_id", "")) == session_id]
         return matched[-limit:]
     except Exception as e:
@@ -565,6 +612,7 @@ def save_chat_message(session_id, question, answer):
             question,
             answer,
         ])
+        _cache_invalidate("chat_history_all")
         return True
     except Exception as e:
         logger.error(f"チャット履歴保存エラー: {e}")

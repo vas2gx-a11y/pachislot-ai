@@ -9,20 +9,36 @@ import common
 
 records_bp = Blueprint("records", __name__)
 
+PAGE_SIZE = 30  # 一覧は最新分をこの件数ずつ表示する(件数が増えても表示が重くならないように)
+
 
 @records_bp.route("/")
 def index():
     preset_machine = request.args.get("machine_name", "")
     preset_session = request.args.get("session_id", "")
-    history = common.load_records()
-    dashboard_stats = common.build_dashboard_stats(history)
 
-    # 一覧の各項目から直接AIに質問できるように、セッションIDごとのQ&A履歴をまとめて取得しておく
-    # (履歴の件数分シートを読みに行くと遅くなるため、1回の読み込みでグルーピングする)
+    all_history = common.load_records()  # 新しい順。統計やセッション検索など「全件」を扱う処理はこちらを使う
+    dashboard_stats = common.build_dashboard_stats(all_history)
+
+    # ページネーション: 一度に描画するのは最新分だけに絞り、件数が増えても表示が重くならないようにする
+    try:
+        page = max(1, int(request.args.get("page", "1")))
+    except (TypeError, ValueError):
+        page = 1
+    total_records = len(all_history)
+    total_pages = max(1, (total_records + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = min(page, total_pages)
+    start = (page - 1) * PAGE_SIZE
+    history = all_history[start:start + PAGE_SIZE]  # 表示用(このページ分のみ)
+
+    # 一覧の各項目から直接AIに質問できるように、セッションIDごとのQ&A履歴をまとめて取得しておく。
+    # 表示しているページの記録に対応する分だけをグルーピングすればよいので、
+    # 全件との突き合わせは省き、無駄な処理・レンダリング量を減らす。
+    visible_session_ids = {str(r.get("session_id", "")) for r in history if r.get("session_id")}
     chat_history_by_session = {}
     for chat in common.load_all_chat_history():
         sid = str(chat.get("session_id", ""))
-        if sid:
+        if sid in visible_session_ids:
             chat_history_by_session.setdefault(sid, []).append(chat)
 
     # 「追加分析」等で機種名が指定されている場合、参考として使われる直近の同機種データをプレビュー表示する
@@ -32,13 +48,16 @@ def index():
     chat_history = []
     if preset_machine:
         _, preview_rule = common.find_machine_rule(preset_machine)
-        # 継続セッションであれば、そのセッションで既に入力済みの店舗名を引き継いでプレビューに反映する
+        # 継続セッションであれば、そのセッションで既に入力済みの店舗名を引き継いでプレビューに反映する。
+        # 対象のセッションはページネーションで表示されていない古いページにある可能性があるため、
+        # 必ず all_history(全件)から探す。
         if preset_session:
-            for r in history:
+            for r in all_history:
                 if str(r.get("session_id", "")) == preset_session and str(r.get("store_name", "")).strip():
                     preset_store = str(r.get("store_name", "")).strip()
                     break
-            chat_history = chat_history_by_session.get(preset_session, [])
+            # このセッションのQ&A履歴も、表示ページに依存せず専用の読み込みで確実に取得する
+            chat_history = common.load_chat_history(preset_session)
         recent_history_preview = common.get_recent_same_machine_records(
             preset_machine, store_name=preset_store, exclude_session_id=preset_session, days=7
         )
@@ -57,6 +76,9 @@ def index():
         hall_tendency_preview=hall_tendency_preview,
         chat_history=chat_history,
         chat_history_by_session=chat_history_by_session,
+        page=page,
+        total_pages=total_pages,
+        total_records=total_records,
     )
 
 

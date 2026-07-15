@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import section_header, icon_action, empty_state, stat_card %}
+{% from "_macros.html" import section_header, icon_action, empty_state, stat_card, pagination %}
 
 {% block title %}パチスロAIデータ管理システム{% endblock %}
 
@@ -109,7 +109,7 @@
         <span class="text-lg">🎯</span> 機種スペックの登録・確認は<span class="text-blue-400 underline ml-1">機種スペック登録システム</span>へ
     </a>
 
-    {{ section_header("📋", "記録一覧", history|length ~ "件" if history else None) }}
+    {{ section_header("📋", "記録一覧", (total_records ~ "件中 " ~ history|length ~ "件を表示") if total_records else None) }}
 
     <!-- スマホ用: カードレイアウト（md未満で表示） -->
     <div class="flex flex-col gap-3 md:hidden">
@@ -290,4 +290,6 @@
             </tbody>
         </table>
     </div>
+
+    {{ pagination('records.index', page, total_pages) }}
 {% endblock %}
