@@ -920,6 +920,26 @@ def analyze_machine_url_with_gemini(page_text, source_url=""):
 # ---------------------------------------------------------------------------
 # 推測ロジック(AIによる設定判別)
 # ---------------------------------------------------------------------------
+def build_dashboard_stats(history):
+    """
+    データ管理ダッシュボード上部に表示する簡単な統計サマリーを計算する。
+    今後この手のサマリー項目を増やす場合はここに追記していく。
+    """
+    total_records = len(history)
+    unique_machines = len({str(r.get("machine_name", "")).strip() for r in history if str(r.get("machine_name", "")).strip()})
+    unique_sessions = len({str(r.get("session_id", "")).strip() for r in history if str(r.get("session_id", "")).strip()})
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_count = sum(1 for r in history if str(r.get("date", "")).startswith(today_str))
+
+    return {
+        "total_records": total_records,
+        "unique_machines": unique_machines,
+        "unique_sessions": unique_sessions,
+        "today_count": today_count,
+    }
+
+
 def find_machine_rule(machine_name):
     """
     machine_name に一致する登録済み機種を machines シートから探す。

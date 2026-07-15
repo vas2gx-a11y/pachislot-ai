@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import section_header, empty_state %}
 
 {% block title %}機種スペック登録システム{% endblock %}
 
@@ -146,11 +147,7 @@
         </details>
     </div>
 
-    <h2 class="font-display font-bold text-lg text-gray-100 mb-3 flex items-center gap-2">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-700 text-base">📋</span>
-        登録済み機種一覧
-        {% if machine_list %}<span class="text-xs text-gray-500 font-normal font-sans">({{ machine_list|length }}件)</span>{% endif %}
-    </h2>
+    {{ section_header("📋", "登録済み機種一覧", (machine_list|length ~ "件") if machine_list else None) }}
     {% if machine_list %}
     <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-5 md:p-6 mb-6">
         <div class="flex flex-col gap-3">
@@ -203,9 +200,8 @@
         </div>
     </div>
     {% else %}
-    <div class="text-center text-gray-500 bg-gray-800 border border-gray-700 border-dashed rounded-xl p-8 mb-6">
-        <div class="text-2xl mb-2">🎯</div>
-        まだ機種が登録されていません。上の「画像から登録」または「URLから取り込む」から始めましょう。
+    <div class="mb-6">
+        {{ empty_state("🎯", "まだ機種が登録されていません。上の「画像から登録」または「URLから取り込む」から始めましょう。") }}
     </div>
     {% endif %}
 

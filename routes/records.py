@@ -15,6 +15,7 @@ def index():
     preset_machine = request.args.get("machine_name", "")
     preset_session = request.args.get("session_id", "")
     history = common.load_records()
+    dashboard_stats = common.build_dashboard_stats(history)
 
     # 一覧の各項目から直接AIに質問できるように、セッションIDごとのQ&A履歴をまとめて取得しておく
     # (履歴の件数分シートを読みに行くと遅くなるため、1回の読み込みでグルーピングする)
@@ -48,6 +49,7 @@ def index():
     return render_template(
         "index.html",
         history=history,
+        dashboard_stats=dashboard_stats,
         preset_machine=preset_machine,
         preset_session=preset_session,
         preset_store=preset_store,

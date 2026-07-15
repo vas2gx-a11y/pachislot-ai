@@ -1,8 +1,17 @@
 {% extends "base.html" %}
+{% from "_macros.html" import section_header, icon_action, empty_state, stat_card %}
 
 {% block title %}パチスロAIデータ管理システム{% endblock %}
 
 {% block content %}
+    <!-- 統計サマリー -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {{ stat_card("総記録数", dashboard_stats.total_records ~ "件") }}
+        {{ stat_card("記録した機種数", dashboard_stats.unique_machines ~ "種") }}
+        {{ stat_card("セッション数", dashboard_stats.unique_sessions ~ "回") }}
+        {{ stat_card("本日の記録", dashboard_stats.today_count ~ "件", "text-yellow-400") }}
+    </div>
+
     <div class="bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
         <h2 class="font-display font-bold text-lg text-gray-100 mb-4 flex items-center gap-2">
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-yellow-600/20 text-base">📸</span>
@@ -100,11 +109,7 @@
         <span class="text-lg">🎯</span> 機種スペックの登録・確認は<span class="text-blue-400 underline ml-1">機種スペック登録システム</span>へ
     </a>
 
-    <h2 class="font-display font-bold text-lg text-gray-100 mb-3 flex items-center gap-2">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-700 text-base">📋</span>
-        記録一覧
-        {% if history %}<span class="text-xs text-gray-500 font-normal font-sans">({{ history|length }}件)</span>{% endif %}
-    </h2>
+    {{ section_header("📋", "記録一覧", history|length ~ "件" if history else None) }}
 
     <!-- スマホ用: カードレイアウト（md未満で表示） -->
     <div class="flex flex-col gap-3 md:hidden">
@@ -115,13 +120,6 @@
                 <div class="min-w-0">
                     <div class="text-xs text-gray-400 truncate font-mono">{{ item.date }}{% if item.store_name %} ・ {{ item.store_name }}{% endif %}</div>
                     <div class="font-bold text-yellow-400 truncate">{{ item.machine_name }}{% if item.machine_number %} <span class="text-gray-400 font-normal font-mono">(No.{{ item.machine_number }})</span>{% endif %}</div>
-                </div>
-                <div class="shrink-0 flex flex-col gap-1 w-20">
-                    <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-2 py-1.5 rounded-md text-center transition">追加分析</a>
-                    <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-2 py-1.5 rounded-md text-center transition">🧮 期待値</a>
-                    {% if item.store_name and item.machine_number %}
-                    <a href="{{ url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-2 py-1.5 rounded-md text-center transition">📊 グラフ</a>
-                    {% endif %}
                 </div>
             </div>
 
@@ -149,7 +147,16 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <details class="mt-3 border-t border-gray-700 pt-2">
+
+            <!-- 行アクション: 今後ボタンが増えてもここに1行足すだけで済む -->
+            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-700">
+                {{ icon_action(url_for('records.index', machine_name=item.machine_name, session_id=item.session_id), "📝", "追加分析", "primary") }}
+                {{ icon_action(url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id), "🧮", "期待値") }}
+                {% if item.store_name and item.machine_number %}
+                {{ icon_action(url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name), "📊", "グラフ") }}
+                {% endif %}
+            </div>
+            <details class="mt-2 pt-2 border-t border-gray-800">
                 <summary class="cursor-pointer select-none text-xs text-blue-400 font-semibold">
                     💬 AIに質問する{% if item_chat %} ({{ item_chat|length }}件の質問済み){% endif %}
                 </summary>
@@ -172,10 +179,7 @@
             </details>
         </div>
         {% else %}
-        <div class="text-center text-gray-500 bg-gray-800 border border-gray-700 border-dashed rounded-xl p-8">
-            <div class="text-2xl mb-2">🎰</div>
-            まだデータがありません。上のフォームから最初の1件を記録しましょう。
-        </div>
+        {{ empty_state("🎰", "まだデータがありません。上のフォームから最初の1件を記録しましょう。") }}
         {% endfor %}
     </div>
 
@@ -218,12 +222,13 @@
                         </div>
                         {% endif %}
                     </td>
-                    <td class="p-4 whitespace-nowrap">
-                        <div class="flex flex-col gap-1 w-24">
-                            <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-md text-center transition">追加分析</a>
-                            <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded-md text-center transition">🧮 期待値</a>
+                    <td class="p-4">
+                        <!-- 行アクション: 今後ボタンが増えてもここに1行足すだけで済む(折り返す) -->
+                        <div class="flex flex-wrap gap-1.5 max-w-[160px]">
+                            {{ icon_action(url_for('records.index', machine_name=item.machine_name, session_id=item.session_id), "📝", "追加分析", "primary") }}
+                            {{ icon_action(url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id), "🧮", "期待値") }}
                             {% if item.store_name and item.machine_number %}
-                            <a href="{{ url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded-md text-center transition">📊 グラフ</a>
+                            {{ icon_action(url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name), "📊", "グラフ") }}
                             {% endif %}
                         </div>
                     </td>

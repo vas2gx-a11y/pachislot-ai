@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
 
 {% block title %}台データの推移グラフ{% endblock %}
 
@@ -105,16 +106,9 @@
             </table>
         </div>
         {% elif history %}
-        <div class="text-center text-gray-500 bg-gray-900/60 border border-gray-700 border-dashed rounded-xl p-8">
-            <div class="text-2xl mb-2">📊</div>
-            この台のデータがまだ1日分しかないため、グラフは表示できません。<br>
-            別の日に記録が増えると、ここに推移が表示されます。
-        </div>
+        {{ empty_state("📊", "この台のデータがまだ1日分しかないため、グラフは表示できません。別の日に記録が増えると、ここに推移が表示されます。") }}
         {% else %}
-        <div class="text-center text-gray-500 bg-gray-900/60 border border-gray-700 border-dashed rounded-xl p-8">
-            <div class="text-2xl mb-2">📊</div>
-            この店舗・台番号のデータがまだありません。
-        </div>
+        {{ empty_state("📊", "この店舗・台番号のデータがまだありません。") }}
         {% endif %}
     </div>
 
