@@ -31,7 +31,7 @@
                 <p class="text-sm text-gray-400 mb-4">
                     スペック表や設定判別要素の画像をアップロードすると、AIが機種名・強示唆ワード・ゲームフロー・設定別確率表を自動で読み取り、機種マスタに保存します。
                 </p>
-                <form action="{{ url_for('machines.machines_upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+                <form id="machine-image-form" action="{{ url_for('machines.machines_upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-gray-400 mb-1">機種名キーワード（任意）</label>
@@ -50,6 +50,12 @@
                         画像を解析して機種データを登録
                     </button>
                 </form>
+                <script>
+                    wireAsyncForm('machine-image-form', {
+                        uploadingText: '画像アップロード中',
+                        processingText: 'AI解析中...(数秒〜10秒程度かかります)'
+                    });
+                </script>
             </div>
         </details>
     </div>
@@ -65,7 +71,7 @@
                 <p class="text-sm text-gray-400 mb-4">
                     パチスロ解析サイトなどのページURLを入力すると、AIがページ内容を読み取り、機種名・強示唆ワード・ゲームフロー・設定差情報を自動で抽出して機種マスタに保存します（ログイン必須のページや会員限定ページは取得できません）。
                 </p>
-                <form action="{{ url_for('machines.machines_import_url') }}" method="POST" class="flex flex-col gap-4">
+                <form id="machine-url-form" action="{{ url_for('machines.machines_import_url') }}" method="POST" class="flex flex-col gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1">取り込み元URL（必須）</label>
                         <input type="url" name="spec_url" required placeholder="例: https://p-town.dmm.com/machines/4571" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
@@ -84,6 +90,12 @@
                         URLを解析して機種データを登録
                     </button>
                 </form>
+                <script>
+                    wireAsyncForm('machine-url-form', {
+                        uploadingText: '送信中',
+                        processingText: 'ページ取得・AI解析中...(サイトによっては時間がかかります)'
+                    });
+                </script>
             </div>
         </details>
     </div>

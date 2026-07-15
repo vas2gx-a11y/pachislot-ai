@@ -20,7 +20,7 @@
                 <span class="text-xs text-blue-400 font-normal font-sans">(継続セッション)</span>
             {% endif %}
         </h2>
-        <form action="{{ url_for('records.upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+        <form id="upload-form" action="{{ url_for('records.upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
             <input type="hidden" name="session_id" value="{{ preset_session }}">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
@@ -71,6 +71,12 @@
             </button>
             <p class="text-xs text-gray-500">推測結果は設定1〜6それぞれの確率(%)で表示されます。情報が少ないうちは均等に近い数値になるので、「追加分析」で画像やメモを追加していくほど精度が上がります。</p>
         </form>
+        <script>
+            wireAsyncForm('upload-form', {
+                uploadingText: '画像アップロード中',
+                processingText: 'AI解析中...(画像がある場合は10秒前後かかります)'
+            });
+        </script>
     </div>
 
     {% if preset_session %}
