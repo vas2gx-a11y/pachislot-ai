@@ -220,6 +220,32 @@ def save_record(record):
         flash("スプレッドシートへの保存に失敗しました。")
 
 
+def _load_machine_rows_fallback(ws):
+    """
+    ws.get_all_records() は、ヘッダー行に重複や空セルがあると例外を投げる
+    (gspreadの既知の挙動)。過去のシート移行などでヘッダーが乱れている場合に
+    「エラーは出ないが一覧が空に見える」事故につながるため、
+    生の値を取得して期待するヘッダー名の列位置を手動で特定するフォールバックを用意する。
+    """
+    all_values = ws.get_all_values()
+    if not all_values:
+        return []
+    header_row = all_values[0]
+    col_index = {}
+    for name in MACHINE_HEADERS:
+        if name in header_row:
+            col_index[name] = header_row.index(name)  # 同名が複数あれば最初の位置を採用
+
+    rows = []
+    for raw_row in all_values[1:]:
+        row_dict = {}
+        for name, idx in col_index.items():
+            row_dict[name] = raw_row[idx] if idx < len(raw_row) else ""
+        if str(row_dict.get("keyword", "")).strip():  # keywordが空の行(空行・ゴミ行)は除外
+            rows.append(row_dict)
+    return rows
+
+
 def load_machine_rules():
     """
     machines シートから
@@ -228,7 +254,24 @@ def load_machine_rules():
     """
     try:
         ws = get_machines_worksheet()
+    except Exception as e:
+        logger.error(f"機種マスタ読み込みエラー(シート取得に失敗): {e}")
+        return {}
+
+    try:
         rows = ws.get_all_records()
+    except Exception as e:
+        logger.warning(
+            f"get_all_records()に失敗したためフォールバック処理で読み込みます"
+            f"(ヘッダー行の重複・空セルなどが原因の可能性): {e}"
+        )
+        try:
+            rows = _load_machine_rows_fallback(ws)
+        except Exception as fallback_error:
+            logger.error(f"機種マスタ読み込みエラー(フォールバックも失敗): {fallback_error}")
+            return {}
+
+    try:
         rules = {}
         for row in rows:
             keyword = str(row.get("keyword", "")).strip()
@@ -264,8 +307,27 @@ def load_machine_rules():
             }
         return rules
     except Exception as e:
-        logger.error(f"機種マスタ読み込みエラー: {e}")
+        logger.error(f"機種マスタ読み込みエラー(データ整形に失敗): {e}")
         return {}
+
+
+def get_machines_sheet_diagnostics():
+    """
+    machinesシートの生の状態を確認するための軽量な診断情報。
+    一覧が空に見えるときに、ユーザー自身がスプレッドシートを開かなくても
+    画面上でシートの実際の中身(ヘッダー行・行数・先頭数行)を確認できるようにする。
+    """
+    try:
+        ws = get_machines_worksheet()
+        all_values = ws.get_all_values()
+        return {
+            "ok": True,
+            "total_rows": len(all_values),
+            "header_row": all_values[0] if all_values else [],
+            "sample_rows": all_values[1:6],
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 def save_machine_rule(keyword, hint_words, game_flow, setting_ratios, source_label=""):
@@ -365,6 +427,19 @@ def save_machine_rule(keyword, hint_words, game_flow, setting_ratios, source_lab
     except Exception as e:
         logger.error(f"機種マスタ書き込みエラー: {e}")
         return False
+
+
+def add_machine_note(keyword, note):
+    """
+    既に登録済みの機種に、ユーザーが手動でメモ(特にゲームフロー・高設定挙動の示唆など)を
+    追記するための関数。save_machine_rule() の game_flow マージ機構をそのまま使うので、
+    既存のhint_words・setting_ratiosは変更せず、game_flowの末尾に新しい文章を追記するだけになる。
+    """
+    keyword = (keyword or "").strip()
+    note = (note or "").strip()
+    if not keyword or not note:
+        return False
+    return save_machine_rule(keyword, [], note, {}, source_label="手動メモ")
 
 
 def find_mergeable_keyword(candidate_name, rules):

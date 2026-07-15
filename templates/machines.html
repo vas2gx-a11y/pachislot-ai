@@ -194,6 +194,14 @@
                         </ul>
                     </div>
                     {% endif %}
+                    <div class="mt-3 pt-3 border-t border-gray-800">
+                        <div class="text-xs text-gray-500 mb-1">📝 メモを追記する(特にゲームフローに関する内容・高設定挙動の示唆などを想定)</div>
+                        <form action="{{ url_for('machines.add_note') }}" method="POST" class="flex flex-col gap-2">
+                            <input type="hidden" name="keyword" value="{{ m.keyword }}">
+                            <textarea name="note" rows="2" placeholder="例: 設定6は差枚+500枚を超えてから複合対応込みで消化が早い印象。〇〇の演出が出たら高設定濃厚" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-yellow-500"></textarea>
+                            <button type="submit" class="self-start bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-xs font-bold px-4 py-1.5 rounded-md transition">追記する</button>
+                        </form>
+                    </div>
                 </div>
             </details>
             {% endfor %}
@@ -202,8 +210,36 @@
     {% else %}
     <div class="mb-6">
         {{ empty_state("🎯", "まだ機種が登録されていません。上の「画像から登録」または「URLから取り込む」から始めましょう。") }}
+        {% if sheet_diagnostics %}
+        <details class="mt-3 bg-gray-900/60 border border-gray-700 rounded-lg p-3 text-xs">
+            <summary class="cursor-pointer select-none text-gray-400 font-semibold">🔧 詳細情報(表示されない原因の確認用)</summary>
+            {% if sheet_diagnostics.ok %}
+            <div class="mt-2 text-gray-300 font-mono">
+                <div>シート上の総行数(ヘッダー含む): {{ sheet_diagnostics.total_rows }}</div>
+                <div class="mt-1 break-all">ヘッダー行: {{ sheet_diagnostics.header_row }}</div>
+                {% if sheet_diagnostics.sample_rows %}
+                <div class="mt-2 text-gray-500">先頭数行のサンプル:</div>
+                <ul class="mt-1 flex flex-col gap-0.5">
+                    {% for row in sheet_diagnostics.sample_rows %}
+                    <li class="break-all">{{ row }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if sheet_diagnostics.total_rows > 1 %}
+                <div class="mt-2 text-yellow-400">
+                    ⚠️ シートには{{ sheet_diagnostics.total_rows - 1 }}行のデータがあるはずですが、一覧には表示されていません。
+                    ヘッダー行の文言(1行目)が期待値(keyword, hint_words, game_flow, setting_ratios, sources)とズレている可能性があります。
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="mt-2 text-red-400">シートの読み込み自体に失敗しています: {{ sheet_diagnostics.error }}</div>
+            {% endif %}
+        </details>
+        {% endif %}
     </div>
     {% endif %}
+
 
     <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
         ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る

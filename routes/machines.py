@@ -37,12 +37,39 @@ def _resolve_keyword_for_merge(manual_keyword, ai_machine_name, rules):
 
 @machines_bp.route("/")
 def machines_page():
+    machine_list = _build_machine_list()
+    # 一覧が空のときは「本当に未登録なのか、読み込みで何か問題が起きているのか」を
+    # その場で確認できるよう、シートの生の状態も取得しておく
+    sheet_diagnostics = common.get_machines_sheet_diagnostics() if not machine_list else None
+
     return render_template(
         "machines.html",
-        machine_list=_build_machine_list(),
+        machine_list=machine_list,
         spreadsheet_url=common.SPREADSHEET_URL,
         machines_sheet_name=common.MACHINES_SHEET_NAME,
+        sheet_diagnostics=sheet_diagnostics,
     )
+
+
+@machines_bp.route("/add_note", methods=["POST"])
+def add_note():
+    keyword = request.form.get("keyword", "").strip()
+    note = request.form.get("note", "").strip()
+
+    if not keyword:
+        flash("対象の機種が特定できませんでした。")
+        return redirect(url_for("machines.machines_page"))
+
+    if not note:
+        flash("追記するメモを入力してください。")
+        return redirect(url_for("machines.machines_page"))
+
+    if common.add_machine_note(keyword, note):
+        flash(f"「{keyword}」にメモを追記しました。")
+    else:
+        flash("メモの追記に失敗しました。")
+
+    return redirect(url_for("machines.machines_page"))
 
 
 @machines_bp.route("/upload", methods=["POST"])
@@ -159,12 +186,15 @@ def machines_import_url():
 def diagnose():
     machine_name = request.args.get("machine_name", "")
     diagnosis = common.debug_machine_name_match(machine_name) if machine_name else None
+    machine_list = _build_machine_list()
+    sheet_diagnostics = common.get_machines_sheet_diagnostics() if not machine_list else None
 
     return render_template(
         "machines.html",
-        machine_list=_build_machine_list(),
+        machine_list=machine_list,
         spreadsheet_url=common.SPREADSHEET_URL,
         machines_sheet_name=common.MACHINES_SHEET_NAME,
         diagnosis=diagnosis,
         diagnose_input=machine_name,
+        sheet_diagnostics=sheet_diagnostics,
     )
