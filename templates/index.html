@@ -119,6 +119,9 @@
                 <div class="shrink-0 flex flex-col gap-1 w-20">
                     <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-2 py-1.5 rounded-md text-center transition">追加分析</a>
                     <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-2 py-1.5 rounded-md text-center transition">🧮 期待値</a>
+                    {% if item.store_name and item.machine_number %}
+                    <a href="{{ url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-2 py-1.5 rounded-md text-center transition">📊 グラフ</a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -219,6 +222,9 @@
                         <div class="flex flex-col gap-1 w-24">
                             <a href="{{ url_for('records.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-md text-center transition">追加分析</a>
                             <a href="{{ url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded-md text-center transition">🧮 期待値</a>
+                            {% if item.store_name and item.machine_number %}
+                            <a href="{{ url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name) }}" class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1 rounded-md text-center transition">📊 グラフ</a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

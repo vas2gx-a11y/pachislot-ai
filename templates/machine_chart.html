@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}台データの推移グラフ{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-3">
+    <span class="text-2xl md:text-3xl">📊</span>
+    <h1 class="font-display font-black text-xl md:text-2xl text-yellow-500 tracking-tight">台データの推移グラフ</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+    <div class="bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
+        <div class="mb-4">
+            <div class="text-xs text-gray-500">{{ store_name }} ・ 台番号 {{ machine_number }}</div>
+            <div class="font-bold text-yellow-400 text-lg">{{ machine_name }}</div>
+            <p class="text-xs text-gray-500 mt-1">
+                同一店舗・同一台番号の記録を日付順に並べています(同じ日に複数回記録した場合はその日の最新1件のみ)。
+            </p>
+        </div>
+
+        {% if history and history|length >= 2 %}
+        <div class="mb-8">
+            <div class="text-sm font-semibold text-gray-300 mb-2">🎮 総回転数(G数)の推移</div>
+            <canvas id="gamesChart" height="90"></canvas>
+        </div>
+        <div>
+            <div class="text-sm font-semibold text-gray-300 mb-2">💰 差枚の推移</div>
+            <canvas id="diffChart" height="90"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+        <script>
+            const chartLabels = {{ chart_labels | tojson }};
+            const chartGames = {{ chart_games | tojson }};
+            const chartDiffs = {{ chart_diffs | tojson }};
+
+            const gridColor = 'rgba(255,255,255,0.08)';
+            const tickColor = '#9ca3af';
+            const fontFamily = "'JetBrains Mono', ui-monospace, monospace";
+
+            new Chart(document.getElementById('gamesChart'), {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'G数',
+                        data: chartGames,
+                        borderColor: '#eab308',
+                        backgroundColor: 'rgba(234, 179, 8, 0.15)',
+                        pointBackgroundColor: '#eab308',
+                        tension: 0.25,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: tickColor, font: { family: fontFamily } }, grid: { color: gridColor } },
+                        y: { ticks: { color: tickColor, font: { family: fontFamily } }, grid: { color: gridColor } },
+                    },
+                }
+            });
+
+            const diffColors = chartDiffs.map(v => v >= 0 ? '#4ade80' : '#f87171');
+            new Chart(document.getElementById('diffChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: '差枚',
+                        data: chartDiffs,
+                        backgroundColor: diffColors,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: tickColor, font: { family: fontFamily } }, grid: { color: gridColor } },
+                        y: { ticks: { color: tickColor, font: { family: fontFamily } }, grid: { color: gridColor } },
+                    },
+                }
+            });
+        </script>
+
+        <div class="mt-8 border-t border-gray-700 pt-4 overflow-x-auto">
+            <table class="w-full text-left text-sm border-collapse font-mono tabular-nums">
+                <thead>
+                    <tr class="text-gray-500 text-xs uppercase">
+                        <th class="pr-4 pb-2">日付</th><th class="pr-4 pb-2">G数</th><th class="pr-4 pb-2">差枚</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    {% for r in history %}
+                    <tr class="text-gray-200">
+                        <td class="pr-4 py-1">{{ chart_labels[loop.index0] }}</td>
+                        <td class="pr-4 py-1">{{ r.total_games }}G</td>
+                        <td class="pr-4 py-1 {% if r.difference_slabs > 0 %}text-green-400{% else %}text-gray-300{% endif %}">{{ r.difference_slabs }}枚</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% elif history %}
+        <div class="text-center text-gray-500 bg-gray-900/60 border border-gray-700 border-dashed rounded-xl p-8">
+            <div class="text-2xl mb-2">📊</div>
+            この台のデータがまだ1日分しかないため、グラフは表示できません。<br>
+            別の日に記録が増えると、ここに推移が表示されます。
+        </div>
+        {% else %}
+        <div class="text-center text-gray-500 bg-gray-900/60 border border-gray-700 border-dashed rounded-xl p-8">
+            <div class="text-2xl mb-2">📊</div>
+            この店舗・台番号のデータがまだありません。
+        </div>
+        {% endif %}
+    </div>
+
+    <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
+        ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る
+    </a>
+{% endblock %}

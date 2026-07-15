@@ -99,8 +99,21 @@ def get_records_worksheet():
     except gspread.exceptions.WorksheetNotFound:
         ws = sheet.add_worksheet(title=SHEET_NAME, rows=1000, cols=len(HEADERS))
         ws.append_row(HEADERS)
-    if ws.row_values(1) != HEADERS:
-        ws.insert_row(HEADERS, 1)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(HEADERS)
+    elif current_headers != HEADERS and current_headers == HEADERS[:len(current_headers)]:
+        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        for i, header in enumerate(HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != HEADERS:
+        # 想定外のヘッダー構成の場合、insert_row で行をズラすと本番データが破損するため何もしない。
+        logger.warning(
+            f"記録データシートのヘッダーが想定と異なります: {current_headers} (期待値: {HEADERS})。"
+            f"列がズレている可能性があるため、内容を確認してください。"
+        )
     return ws
 
 
@@ -117,8 +130,26 @@ def get_machines_worksheet():
                 rule["keyword"], rule["hint_words"],
                 rule.get("game_flow", ""), rule.get("setting_ratios", "{}"),
             ])
-    if ws.row_values(1) != MACHINE_HEADERS:
-        ws.insert_row(MACHINE_HEADERS, 1)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        # ヘッダー行が空(真っさらなシート)の場合のみ、新規にヘッダー行を書き込む
+        ws.append_row(MACHINE_HEADERS)
+    elif current_headers != MACHINE_HEADERS and current_headers == MACHINE_HEADERS[:len(current_headers)]:
+        # 既存ヘッダーが新ヘッダーの先頭部分と完全に一致する場合(=列が後から追加されただけ、
+        # 例: sources列の新設)は、insert_row で行をズラさず、不足しているヘッダーだけを
+        # 同じ1行目に追記する。insert_row を使うと既存データが1行分ズレて破損するため使わない。
+        for i, header in enumerate(MACHINE_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != MACHINE_HEADERS:
+        # 想定外のヘッダー構成の場合は、データ破損を避けるためヘッダー行には手を加えない。
+        # (get_all_records は実際のヘッダー行の文言をそのままキーとして使うため、
+        #  多少キー名が古くても読み込み自体は継続できる)
+        logger.warning(
+            f"machinesシートのヘッダーが想定と異なります: {current_headers} "
+            f"(期待値: {MACHINE_HEADERS})。列がズレている可能性があるため、内容を確認してください。"
+        )
     return ws
 
 
@@ -130,8 +161,19 @@ def get_chat_worksheet():
     except gspread.exceptions.WorksheetNotFound:
         ws = sheet.add_worksheet(title=CHAT_SHEET_NAME, rows=1000, cols=len(CHAT_HEADERS))
         ws.append_row(CHAT_HEADERS)
-    if ws.row_values(1) != CHAT_HEADERS:
-        ws.insert_row(CHAT_HEADERS, 1)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(CHAT_HEADERS)
+    elif current_headers != CHAT_HEADERS and current_headers == CHAT_HEADERS[:len(current_headers)]:
+        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        for i, header in enumerate(CHAT_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != CHAT_HEADERS:
+        logger.warning(
+            f"chat_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {CHAT_HEADERS})"
+        )
     return ws
 
 
@@ -419,6 +461,48 @@ def get_session_history_text(session_id):
             texts.append(str(r.get("graph_features", "")))
             texts.append(str(r.get("other_info", "")))
     return " ".join(texts)
+
+
+def get_store_machine_history(store_name, machine_number, days=90, limit=60):
+    """
+    「同一店舗・同一台番号」の記録を日付昇順で返す(グラフ表示用)。
+    店舗名・台番号のどちらかが空の場合は、物理的に同じ台かどうか特定できないため空リストを返す。
+
+    get_recent_same_machine_records() と同じ方針で、同じ日に複数回記録している場合は
+    その日の最も新しい1件のみを採用する(重複カウントを避けるため)。
+    """
+    store_name = (store_name or "").strip()
+    machine_number = (machine_number or "").strip()
+    if not store_name or not machine_number:
+        return []
+
+    records = load_records()  # 新しい順
+    now = datetime.now()
+
+    candidates = []
+    for r in records:
+        if str(r.get("store_name", "")).strip() != store_name:
+            continue
+        if str(r.get("machine_number", "")).strip() != machine_number:
+            continue
+        try:
+            record_date = datetime.strptime(str(r.get("date", "")), "%Y-%m-%d %H:%M:%S")
+        except (ValueError, TypeError):
+            continue
+        if (now - record_date).days > days:
+            continue
+        candidates.append((record_date, r))
+
+    # 同じ日の記録はその日の最新1件のみを残す
+    latest_by_day = {}
+    for record_date, r in candidates:
+        date_only = record_date.strftime("%Y-%m-%d")
+        existing = latest_by_day.get(date_only)
+        if existing is None or record_date > existing[0]:
+            latest_by_day[date_only] = (record_date, r)
+
+    ordered = sorted(latest_by_day.values(), key=lambda x: x[0])  # 日付昇順(グラフ用)
+    return [r for _, r in ordered[-limit:]]
 
 
 def get_recent_same_machine_records(machine_name, store_name="", exclude_session_id="", days=7, limit=5):

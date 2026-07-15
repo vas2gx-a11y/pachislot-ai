@@ -211,3 +211,31 @@ def ask():
     common.save_chat_message(session_id, question, answer)
 
     return redirect(url_for("records.index", machine_name=machine_name, session_id=session_id))
+
+
+@records_bp.route("/machine_chart")
+def machine_chart():
+    store_name = request.args.get("store_name", "").strip()
+    machine_number = request.args.get("machine_number", "").strip()
+    machine_name = request.args.get("machine_name", "").strip()
+
+    if not store_name or not machine_number:
+        flash("店舗名と台番号の両方が入力されている記録のみ、グラフ表示できます。")
+        return redirect(url_for("records.index"))
+
+    history = common.get_store_machine_history(store_name, machine_number, days=90)
+
+    chart_labels = [str(r.get("date", ""))[:10] for r in history]
+    chart_games = [r.get("total_games", 0) for r in history]
+    chart_diffs = [r.get("difference_slabs", 0) for r in history]
+
+    return render_template(
+        "machine_chart.html",
+        store_name=store_name,
+        machine_number=machine_number,
+        machine_name=machine_name,
+        history=history,
+        chart_labels=chart_labels,
+        chart_games=chart_games,
+        chart_diffs=chart_diffs,
+    )
