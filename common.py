@@ -61,6 +61,8 @@ HEADERS = [
     "total_games", "big_count", "reg_count",
     "current_games", "difference_slabs", "graph_features",
     "other_info", "user_note", "estimation", "setting_probabilities",
+    "max_difference_slabs", "hamari_600_plus", "hamari_800_plus",
+    "max_renchan", "graph_shape_tags",
 ]
 
 # machines シートの列構成
@@ -177,7 +179,10 @@ def get_chat_worksheet():
     return ws
 
 
-NUMERIC_FIELDS = ["total_games", "big_count", "reg_count", "current_games", "difference_slabs"]
+NUMERIC_FIELDS = [
+    "total_games", "big_count", "reg_count", "current_games", "difference_slabs",
+    "max_difference_slabs", "hamari_600_plus", "hamari_800_plus", "max_renchan",
+]
 
 
 def _to_int(value):
@@ -188,10 +193,51 @@ def _to_int(value):
         return 0
 
 
+def _load_records_rows_fallback(ws):
+    """
+    machines側と同じ理由(get_all_records()がヘッダーの重複・空セルで例外を投げる)への対策。
+    生の値からHEADERSの列位置を手動で特定して読み込む。
+    """
+    all_values = ws.get_all_values()
+    if not all_values:
+        return []
+    header_row = all_values[0]
+    col_index = {}
+    for name in HEADERS:
+        if name in header_row:
+            col_index[name] = header_row.index(name)
+
+    rows = []
+    for raw_row in all_values[1:]:
+        row_dict = {}
+        for name, idx in col_index.items():
+            row_dict[name] = raw_row[idx] if idx < len(raw_row) else ""
+        if str(row_dict.get("session_id", "")).strip():  # session_idが空の行は除外
+            rows.append(row_dict)
+    return rows
+
+
 def load_records():
     try:
         ws = get_records_worksheet()
+    except Exception as e:
+        logger.error(f"スプレッドシート読み込みエラー(シート取得に失敗): {e}")
+        return []
+
+    try:
         records = ws.get_all_records()
+    except Exception as e:
+        logger.warning(
+            f"get_all_records()に失敗したためフォールバック処理で読み込みます"
+            f"(ヘッダー行の重複・空セルなどが原因の可能性): {e}"
+        )
+        try:
+            records = _load_records_rows_fallback(ws)
+        except Exception as fallback_error:
+            logger.error(f"スプレッドシート読み込みエラー(フォールバックも失敗): {fallback_error}")
+            return []
+
+    try:
         for r in records:
             for field in NUMERIC_FIELDS:
                 r[field] = _to_int(r.get(field, 0))
@@ -203,10 +249,12 @@ def load_records():
                     r["setting_probabilities"] = {}
             else:
                 r["setting_probabilities"] = {}
+            raw_tags = str(r.get("graph_shape_tags", "")).strip()
+            r["graph_shape_tags"] = [t.strip() for t in raw_tags.split(",") if t.strip()] if raw_tags else []
         records.reverse()  # 新しい順に表示
         return records
     except Exception as e:
-        logger.error(f"スプレッドシート読み込みエラー: {e}")
+        logger.error(f"スプレッドシート読み込みエラー(データ整形に失敗): {e}")
         return []
 
 
@@ -716,8 +764,22 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
     graph_features と other_info は必ず日本語の文章で記述してください(英語や記号だけの出力は不可)。
     machine_number(台番号)は、画像内に表示されている台番号・台の管理番号があればその数字や文字列をそのまま読み取ってください。
     見当たらない・読み取れない場合は空文字("")にしてください(推測で埋めないでください)。
+
+    追加で、画像から読み取れる範囲で以下も抽出してください(いずれも画面に実際に数値として
+    表示されている場合のみ読み取り、グラフの形から推測で数値を作らないこと):
+    - max_difference_slabs: 最大差枚(グラフの最高点付近に数値表示があれば。無ければ0)
+    - hamari_600_plus: 600G以上のハマり回数(ハマり回数の表・区間表示があれば。無ければ0)
+    - hamari_800_plus: 800G以上のハマり回数(同上。無ければ0)
+    - max_renchan: 最大連チャン数(BB/AT等の連続回数表示があれば。無ければ0)
+    - graph_shape_tags: 差枚グラフ全体の形状について、以下の語彙から当てはまるものだけを
+      配列で選ぶ(画像にグラフが写っていて、形状が明確に読み取れる場合のみ。不明なら空配列):
+      ["右肩上がり","右肩下がり","横ばい","一撃型","後ヅモ型","尻上がり","前半型","乱高下","安定型"]
+      これはグラフの座標を厳密に解析した数値ではなく、見た目からの大まかな分類である前提で選ぶこと。
     {machine_context}
-    {{"total_games": 0, "big_count": 0, "reg_count": 0, "current_games": 0, "difference_slabs": 0, "machine_number": "", "graph_features": "", "other_info": ""}}
+    {{"total_games": 0, "big_count": 0, "reg_count": 0, "current_games": 0, "difference_slabs": 0,
+      "machine_number": "", "graph_features": "", "other_info": "",
+      "max_difference_slabs": 0, "hamari_600_plus": 0, "hamari_800_plus": 0,
+      "max_renchan": 0, "graph_shape_tags": []}}
     """
     payload = {
         "contents": [
@@ -1238,6 +1300,61 @@ def _describe_data_volume(total_games, recent_records_count, has_session_history
     return "十分(累計G数・過去データともに揃っている)"
 
 
+def _estimate_payout_rate(total_games, difference_slabs, coins_per_game=3):
+    """
+    総回転数と差枚から、おおまかな出率(機械割)をPython側で計算する(⑧出率予測)。
+    1Gあたりの投入枚数(coins_per_game)は主流の3枚がけを既定値とする。
+    実際の投入枚数はBIG/RB中の増減や小役ズレなどで多少前後するため、あくまで目安。
+    """
+    if total_games <= 0:
+        return None
+    coin_in = total_games * coins_per_game
+    if coin_in <= 0:
+        return None
+    coin_out = coin_in + difference_slabs
+    return coin_out / coin_in * 100
+
+
+CATEGORY_SCORE_LABELS = {
+    "big_reg_match": ("合算一致", 30),
+    "graph_pattern": ("グラフ", 20),
+    "hamari": ("ハマり", 15),
+    "renchan": ("連チャン", 15),
+    "hall_tendency": ("ホール傾向", 20),
+}
+
+
+def _append_category_score_breakdown(comment, category_scores):
+    """
+    estimate() が返したカテゴリ別スコアを「[内訳] 合算一致:24/30 グラフ:15/20 ...」のような
+    短いテキストにしてコメントの末尾に追記する。一覧画面の estimation 欄にそのまま表示されるので、
+    テンプレート側の変更なしにスコア内訳を見せられる。
+    """
+    if not isinstance(category_scores, dict) or not category_scores:
+        return comment
+
+    parts = []
+    total_score = 0
+    total_max = 0
+    for key, (label, max_score) in CATEGORY_SCORE_LABELS.items():
+        if key not in category_scores:
+            continue
+        try:
+            score = int(category_scores[key])
+        except (TypeError, ValueError):
+            continue
+        score = max(0, min(score, max_score))
+        parts.append(f"{label}{score}/{max_score}")
+        total_score += score
+        total_max += max_score
+
+    if not parts:
+        return comment
+
+    breakdown = " ".join(parts)
+    return f"{comment}\n[内訳] {breakdown} (計{total_score}/{total_max})"
+
+
 def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
              recent_records_count=0, base64_image=None, mime_type="image/jpeg"):
     """
@@ -1275,6 +1392,15 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     )
     setting_match_hint = _build_setting_match_hint(setting_ratios, total_games, big_count, reg_count)
 
+    difference_slabs = stats.get("difference_slabs", 0)
+    max_difference_slabs = stats.get("max_difference_slabs", 0) or difference_slabs
+    hamari_600_plus = stats.get("hamari_600_plus", 0)
+    hamari_800_plus = stats.get("hamari_800_plus", 0)
+    max_renchan = stats.get("max_renchan", 0)
+    graph_shape_tags = stats.get("graph_shape_tags", [])
+    payout_rate = _estimate_payout_rate(total_games, difference_slabs)
+    payout_rate_text = f"約{payout_rate:.1f}%(3枚がけ換算の目安、実際の投入枚数とはズレる場合あり)" if payout_rate is not None else "算出不可"
+
     image_instruction = ""
     if base64_image:
         image_instruction = """
@@ -1288,17 +1414,28 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
 
     prompt = f"""
     あなたはパチスロの設定判別をサポートするアシスタントです。
-    以下の情報をもとに、この台の設定1〜設定6それぞれである確率(%)を推測し、
+    以下の情報をもとに、この台の設定1〜設定6それぞれである確率(%)を推測してください。
+    判定にあたっては、以下5つのカテゴリごとに根拠の強さを点数化してから、
+    総合的に設定確率を決めてください(点数配分の目安: 合算確率の一致度30点、
+    差枚グラフの推移20点、ハマり回数15点、連チャン15点、ホールの傾向20点、合計100点。
+    データが無い/薄いカテゴリは低めの点数にし、無理に高得点にしないこと)。
+
     必ず以下のJSON形式のみで出力してください。他の文章・前置き・記号は一切不要です。
 
-    {{"setting_probabilities": {{"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0}}, "comment": "20〜40文字程度の日本語コメント"}}
+    {{"category_scores": {{"big_reg_match": 0, "graph_pattern": 0, "hamari": 0, "renchan": 0, "hall_tendency": 0}},
+      "setting_probabilities": {{"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0}},
+      "comment": "20〜40文字程度の日本語コメント"}}
 
     【機種名】{machine_name}
     【この機種の強示唆ワード】{", ".join(hint_words) if hint_words else "登録なし"}
     【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
     【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
     【実測値と設定別理論値の自動比較(Pythonで計算済み、参考値として重視してください)】{setting_match_hint}
-    【今回の累計データ】総回転数: {total_games}G, BIG: {big_count}回 (実測確率 {actual_big_rate}), REG: {reg_count}回 (実測確率 {actual_reg_rate}), 現在の回転数: {stats.get("current_games", 0)}G, 差枚: {stats.get("difference_slabs", 0)}枚
+    【今回の累計データ】総回転数: {total_games}G, BIG: {big_count}回 (実測確率 {actual_big_rate}), REG: {reg_count}回 (実測確率 {actual_reg_rate}), 現在の回転数: {stats.get("current_games", 0)}G
+    【差枚グラフ関連】最終差枚: {difference_slabs}枚, 最大差枚: {max_difference_slabs}枚, 推定出率: {payout_rate_text}
+    【グラフの形状(画像からのAIによる大まかな分類、正確な数値ではない参考情報)】{", ".join(graph_shape_tags) if graph_shape_tags else "情報なし"}
+    【ハマり回数】600G以上: {hamari_600_plus}回, 800G以上: {hamari_800_plus}回 (画面に表示があった場合のみ。0は「表示なし/未検出」の可能性もある)
+    【最大連チャン】{max_renchan}連 (画面に表示があった場合のみ。0は「表示なし/未検出」の可能性もある)
     【今回のメモ・AI画像解析結果の蓄積テキスト】{combined_text if combined_text.strip() else "情報なし"}
     【同機種・このホールでの直近(約7日以内)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
     【同機種の直近の来店データ(個別内訳・参考情報)】{recent_history_text if recent_history_text else "登録なし"}
@@ -1312,6 +1449,9 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     設定別確率表が登録されている場合は、実測確率と各設定の理論値を比較して
     最も近い設定帯の確率を高めに評価してください。特に「実測値と設定別理論値の自動比較」の
     結果は事前に計算済みの正確な数値なので、優先して参考にしてください。
+    ハマり回数・連チャン数が「0」の場合、必ずしも「ハマりが無かった/連チャンが無かった」
+    ことを意味せず、単に画面に表示が無くて読み取れなかった可能性もあるため、
+    0の場合はそのカテゴリの点数を高くも低くもせず中間程度にとどめてください。
     「同機種・このホールでの直近の傾向分析」(平均差枚・プラス収支率・強示唆ワード出現頻度など)は、
     そのホールがこの台に対して高設定を使いやすいかどうかの実績を示す重要な材料なので、
     単なる免責事項として退けず、確率分布に積極的に反映してください。
@@ -1335,6 +1475,7 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
             parsed = json.loads(raw_text[json_start:json_end])
             comment = str(parsed.get("comment", "")).strip() or "判定コメントなし"
             probabilities = _normalize_setting_probabilities(parsed.get("setting_probabilities"))
+            comment = _append_category_score_breakdown(comment, parsed.get("category_scores"))
             return comment, probabilities
         logger.error(f"設定予測AI JSONが見つかりません: {raw_text}")
     except requests.exceptions.Timeout:

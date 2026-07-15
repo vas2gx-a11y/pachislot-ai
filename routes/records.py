@@ -85,6 +85,8 @@ def upload():
     machine_game_flow = machine_rule.get("game_flow", "")
 
     total, big, reg, current, diff = 0, 0, 0, 0, 0
+    max_diff, hamari_600, hamari_800, max_renchan = 0, 0, 0, 0
+    graph_shape_tags = []
     machine_number = ""
     graph_features, other_info = "画像なし", "特になし"
     # 設定予測(estimate)にも同じ画像を渡し、グラフの形状などを直接判定材料にする
@@ -119,6 +121,16 @@ def upload():
             machine_number = str(parsed_data.get("machine_number", "") or "").strip()
             graph_features = parsed_data.get("graph_features", "不明")
             other_info = parsed_data.get("other_info", "特になし")
+            max_diff = parsed_data.get("max_difference_slabs", 0) or 0
+            hamari_600 = parsed_data.get("hamari_600_plus", 0) or 0
+            hamari_800 = parsed_data.get("hamari_800_plus", 0) or 0
+            max_renchan = parsed_data.get("max_renchan", 0) or 0
+            raw_tags = parsed_data.get("graph_shape_tags") or []
+            if isinstance(raw_tags, list):
+                graph_shape_tags = [str(t).strip() for t in raw_tags if str(t).strip()]
+            # 最大差枚が読み取れなかった場合は、最終差枚を下回らないはずなので保険として採用
+            if max_diff <= 0:
+                max_diff = diff
         else:
             flash("画像の解析に失敗しました。手動で確認してください。")
             graph_features, other_info = "解析失敗", "解析失敗"
@@ -155,6 +167,11 @@ def upload():
         "reg_count": reg,
         "current_games": current,
         "difference_slabs": diff,
+        "max_difference_slabs": max_diff,
+        "hamari_600_plus": hamari_600,
+        "hamari_800_plus": hamari_800,
+        "max_renchan": max_renchan,
+        "graph_shape_tags": graph_shape_tags,
     }
 
     # 今回の画像に台番号が写っていなかった場合、同一セッションの過去の記録から引き継ぐ
@@ -186,6 +203,11 @@ def upload():
         "user_note": user_note,
         "estimation": estimation_comment,
         "setting_probabilities": json.dumps(setting_probabilities, ensure_ascii=False),
+        "max_difference_slabs": max_diff,
+        "hamari_600_plus": hamari_600,
+        "hamari_800_plus": hamari_800,
+        "max_renchan": max_renchan,
+        "graph_shape_tags": ",".join(graph_shape_tags),
     }
     common.save_record(record)
     return redirect(url_for("records.index"))

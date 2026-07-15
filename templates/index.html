@@ -123,17 +123,30 @@
                 </div>
             </div>
 
-            <div class="flex gap-4 text-sm mb-2 font-mono tabular-nums">
+            <div class="flex gap-4 text-sm mb-2 font-mono tabular-nums items-baseline">
                 <span class="text-gray-200">{{ item.total_games }}G</span>
                 <span class="{% if item.difference_slabs > 0 %}text-green-400 counter-glow-green{% else %}text-gray-200{% endif %} font-bold">{{ item.difference_slabs }}枚</span>
+                {% if item.max_difference_slabs and item.max_difference_slabs > item.difference_slabs %}
+                <span class="text-xs text-gray-500">(最大{{ item.max_difference_slabs }}枚)</span>
+                {% endif %}
             </div>
+            {% if item.graph_shape_tags %}
+            <div class="flex flex-wrap gap-1 mb-2">
+                {% for tag in item.graph_shape_tags %}
+                <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="text-sm mb-2">
                 <div class="text-yellow-500">{{ item.user_note }}</div>
                 <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
             </div>
             <div class="text-sm font-bold text-yellow-400 counter-glow border-t border-gray-700 pt-2 mt-2">
-                推測結果: {{ item.estimation }}
+                推測結果: {{ item.estimation.split('\n')[0] }}
             </div>
+            {% if '\n' in item.estimation %}
+            <div class="text-xs text-gray-500 font-mono mt-1">{{ item.estimation.split('\n')[1] }}</div>
+            {% endif %}
             {% if item.setting_probabilities %}
             <div class="flex flex-col gap-0.5 mt-2">
                 {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
@@ -201,13 +214,28 @@
                     <td class="p-4 font-bold text-yellow-400">{{ item.machine_name }}</td>
                     <td class="p-4 text-sm text-gray-300 whitespace-nowrap font-mono">{{ item.machine_number }}</td>
                     <td class="p-4 whitespace-nowrap font-mono tabular-nums">{{ item.total_games }}G</td>
-                    <td class="p-4 whitespace-nowrap font-mono tabular-nums font-bold {% if item.difference_slabs > 0 %}text-green-400 counter-glow-green{% endif %}">{{ item.difference_slabs }}枚</td>
+                    <td class="p-4 whitespace-nowrap font-mono tabular-nums font-bold {% if item.difference_slabs > 0 %}text-green-400 counter-glow-green{% endif %}">
+                        {{ item.difference_slabs }}枚
+                        {% if item.max_difference_slabs and item.max_difference_slabs > item.difference_slabs %}
+                        <div class="text-xs text-gray-500 font-normal">(最大{{ item.max_difference_slabs }}枚)</div>
+                        {% endif %}
+                    </td>
                     <td class="p-4 text-sm">
                         <div class="text-yellow-500">{{ item.user_note }}</div>
                         <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
+                        {% if item.graph_shape_tags %}
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            {% for tag in item.graph_shape_tags %}
+                            <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </td>
                     <td class="p-4 text-sm font-bold text-yellow-400">
-                        <div class="counter-glow">{{ item.estimation }}</div>
+                        <div class="counter-glow">{{ item.estimation.split('\n')[0] }}</div>
+                        {% if '\n' in item.estimation %}
+                        <div class="text-xs text-gray-500 font-mono font-normal mt-1">{{ item.estimation.split('\n')[1] }}</div>
+                        {% endif %}
                         {% if item.setting_probabilities %}
                         <div class="flex flex-col gap-0.5 mt-2 font-normal min-w-[140px]">
                             {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
