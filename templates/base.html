@@ -39,16 +39,67 @@
             background-attachment: fixed;
         }
 
-        /* カードコンポーネント: わずかなグラデーションと柔らかい影、ホバーで軽く浮き上がる */
+        /* カードコンポーネント: グラスモーフィズム(半透明+ぼかし)で奥行きと上質感を出す */
         .card {
-            background: linear-gradient(180deg, rgba(31, 41, 55, 0.92), rgba(17, 24, 39, 0.92));
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 32px -16px rgba(0, 0, 0, 0.55);
+            background: linear-gradient(180deg, rgba(31, 41, 55, 0.72), rgba(17, 24, 39, 0.82));
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.04);
             transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            animation: fadeInUp 0.4s ease both;
         }
         a.card:hover {
             transform: translateY(-2px);
             border-color: rgba(234, 179, 8, 0.35);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -16px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 52px -20px rgba(0, 0, 0, 0.7),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 見出し(h1)にグラデーション文字を適用し、少し高級感のある印象にする */
+        h1.font-display {
+            background: linear-gradient(135deg, #fde047 0%, #f59e0b 55%, #eab308 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 18px rgba(234, 179, 8, 0.25));
+        }
+
+        /* ヘッダーをスティッキー化し、スクロールしても常にナビにアクセスできるように
+           (背景をぼかしガラス風にして、コンテンツに重なっても読みやすさを保つ) */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(11, 14, 20, 0.75);
+        }
+
+        /* ナビの現在地(アクティブ)ピルに、フラットな塗りより上質なグラデーション+発光を追加 */
+        nav a.bg-yellow-600\/90 {
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            box-shadow: 0 4px 14px -4px rgba(234, 179, 8, 0.5);
+            border-color: transparent;
+        }
+
+        /* 設定確率バー: 光がゆっくり流れる光沢アニメーションでプレミアム感を出す */
+        .prob-bar { position: relative; overflow: hidden; }
+        .prob-bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+            background-size: 200% 100%;
+            animation: shine 2.6s ease-in-out infinite;
+        }
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* 主要CTAボタン(グラデーション黄色ボタン)にほんのり光沢と押下フィードバック */
@@ -83,6 +134,12 @@
             input, textarea, select {
                 font-size: 16px !important;
             }
+        }
+
+        /* アニメーションを好まない設定のユーザーには、動きを最小限にする */
+        @media (prefers-reduced-motion: reduce) {
+            .card { animation: none; }
+            .prob-bar::after { animation: none; }
         }
     </style>
 </head>
