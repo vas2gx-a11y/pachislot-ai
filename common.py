@@ -400,6 +400,25 @@ def load_machine_rules():
         return {}
 
 
+def get_records_sheet_diagnostics():
+    """
+    記録データ(records)シートの生の状態を確認するための軽量な診断情報。
+    一覧が空に見えるときに、ユーザー自身がスプレッドシートを開かなくても
+    画面上でシートの実際の中身(ヘッダー行・行数・先頭数行)を確認できるようにする。
+    """
+    try:
+        ws = get_records_worksheet()
+        all_values = ws.get_all_values()
+        return {
+            "ok": True,
+            "total_rows": len(all_values),
+            "header_row": all_values[0] if all_values else [],
+            "sample_rows": all_values[1:6],
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 def get_machines_sheet_diagnostics():
     """
     machinesシートの生の状態を確認するための軽量な診断情報。

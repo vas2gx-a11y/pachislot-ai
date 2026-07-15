@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
+    <div class="card bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
         <div class="mb-4">
             <div class="text-xs text-gray-500">{{ store_name }} ・ 台番号 {{ machine_number }}</div>
             <div class="font-bold text-yellow-400 text-lg">{{ machine_name }}</div>
@@ -112,7 +112,7 @@
         {% endif %}
     </div>
 
-    <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
+    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
         ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る
     </a>
 {% endblock %}
