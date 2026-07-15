@@ -123,6 +123,19 @@ def get_client():
     return gspread.authorize(creds)
 
 
+def _ensure_min_columns(ws, needed_cols):
+    """
+    update_cell() は、シートの現在の列数(グリッドサイズ)を超える範囲には書き込めない
+    (append_row と違って自動で列を広げてくれない)。
+    ヘッダー移行で新しい列を追記する前に、必要な列数までシートを広げておく。
+    """
+    try:
+        if ws.col_count < needed_cols:
+            ws.add_cols(needed_cols - ws.col_count)
+    except Exception as e:
+        logger.warning(f"シートの列数拡張に失敗しました(そのまま続行します): {e}")
+
+
 def get_records_worksheet():
     client = get_client()
     sheet = client.open_by_key(SPREADSHEET_ID)
@@ -138,6 +151,7 @@ def get_records_worksheet():
         ws.append_row(HEADERS)
     elif current_headers != HEADERS and current_headers == HEADERS[:len(current_headers)]:
         # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        _ensure_min_columns(ws, len(HEADERS))
         for i, header in enumerate(HEADERS[len(current_headers):], start=len(current_headers) + 1):
             ws.update_cell(1, i, header)
     elif current_headers != HEADERS:
@@ -172,6 +186,7 @@ def get_machines_worksheet():
         # 既存ヘッダーが新ヘッダーの先頭部分と完全に一致する場合(=列が後から追加されただけ、
         # 例: sources列の新設)は、insert_row で行をズラさず、不足しているヘッダーだけを
         # 同じ1行目に追記する。insert_row を使うと既存データが1行分ズレて破損するため使わない。
+        _ensure_min_columns(ws, len(MACHINE_HEADERS))
         for i, header in enumerate(MACHINE_HEADERS[len(current_headers):], start=len(current_headers) + 1):
             ws.update_cell(1, i, header)
     elif current_headers != MACHINE_HEADERS:
@@ -200,6 +215,7 @@ def get_chat_worksheet():
         ws.append_row(CHAT_HEADERS)
     elif current_headers != CHAT_HEADERS and current_headers == CHAT_HEADERS[:len(current_headers)]:
         # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        _ensure_min_columns(ws, len(CHAT_HEADERS))
         for i, header in enumerate(CHAT_HEADERS[len(current_headers):], start=len(current_headers) + 1):
             ws.update_cell(1, i, header)
     elif current_headers != CHAT_HEADERS:

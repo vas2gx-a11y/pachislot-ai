@@ -71,6 +71,19 @@
         summary { position: relative; }
         summary .chev { transition: transform 0.2s ease; display: inline-block; }
         details[open] summary .chev { transform: rotate(90deg); }
+
+        /*
+          スマホ対策: input/textarea/select の文字サイズが16px未満だと、
+          iOS Safari等がフォーカス時に画面全体を自動でズームインしてしまう
+          (「ボタンを押すと画面がでっかくなる」現象の主因)。
+          見た目の小ささはpadding等で調整し、文字サイズだけは
+          モバイル幅では最低16pxを確保してズームを防ぐ。
+        */
+        @media (max-width: 767px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen font-sans">
