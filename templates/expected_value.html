@@ -6,12 +6,12 @@
 {% block header %}
 <div class="flex items-center gap-3">
     <span class="text-2xl md:text-3xl">🧮</span>
-    <h1 class="font-display font-black text-xl md:text-2xl text-yellow-500 tracking-tight">期待値計算</h1>
+    <h1 class="font-display font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">期待値計算</h1>
 </div>
 {% endblock %}
 
 {% block content %}
-    <div class="card bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
+    <div class="card p-5 md:p-6 rounded-xl border border-gray-200 mb-6">
         <p class="text-sm text-gray-400 mb-4">
             現在の回転数から、天井やゾーンなど狙い目のG数まで打った場合の、投資額に対するおおよその期待値(プラスかマイナスか)を計算します。
             設定差や実際の当選確率のブレは考慮しない単純計算です。判断材料の一つとしてご利用ください。
@@ -19,85 +19,85 @@
         <form action="{{ url_for('expected_value.calculate') }}" method="POST" class="flex flex-col gap-4">
             <input type="hidden" name="session_id" value="{{ session_id }}">
             <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-400 mb-1">機種名（任意・AI概算を使う場合は登録機種名と一致させてください）</label>
-                <input type="text" name="machine_name" value="{{ (form_values.machine_name if form_values else machine_name) or '' }}" placeholder="例: ToLOVEるダークネス" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                <label class="block text-sm font-medium text-gray-500 mb-1">機種名（任意・AI概算を使う場合は登録機種名と一致させてください）</label>
+                <input type="text" name="machine_name" value="{{ (form_values.machine_name if form_values else machine_name) or '' }}" placeholder="例: ToLOVEるダークネス" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">現在のG数</label>
-                    <input type="number" step="1" min="0" name="current_games" value="{{ (form_values.current_games if form_values else current_games_prefill) or '' }}" required class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white font-mono focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">現在のG数</label>
+                    <input type="number" step="1" min="0" name="current_games" value="{{ (form_values.current_games if form_values else current_games_prefill) or '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 font-mono focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">狙い目G数（天井/ゾーン）</label>
-                    <input type="number" step="1" min="0" name="target_games" value="{{ form_values.target_games if form_values else '' }}" required class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white font-mono focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">狙い目G数（天井/ゾーン）</label>
+                    <input type="number" step="1" min="0" name="target_games" value="{{ form_values.target_games if form_values else '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 font-mono focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">1Gあたりのコスト（円）</label>
-                    <input type="number" step="0.1" min="0" name="coin_cost_per_game" value="{{ form_values.coin_cost_per_game if form_values else 20 }}" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white font-mono focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
-                    <p class="text-xs text-gray-500 mt-1">20円スロットの目安は20円/G</p>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">1Gあたりのコスト（円）</label>
+                    <input type="number" step="0.1" min="0" name="coin_cost_per_game" value="{{ form_values.coin_cost_per_game if form_values else 20 }}" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 font-mono focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+                    <p class="text-xs text-gray-400 mt-1">20円スロットの目安は20円/G</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">交換レート（円/枚）</label>
-                    <input type="number" step="0.1" min="0" name="exchange_rate" value="{{ form_values.exchange_rate if form_values else '' }}" required class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white font-mono focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
-                    <p class="text-xs text-gray-500 mt-1">例: 20円=5枚交換なら4円/枚</p>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">交換レート（円/枚）</label>
+                    <input type="number" step="0.1" min="0" name="exchange_rate" value="{{ form_values.exchange_rate if form_values else '' }}" required class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 font-mono focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+                    <p class="text-xs text-gray-400 mt-1">例: 20円=5枚交換なら4円/枚</p>
                 </div>
             </div>
 
             <div class="flex flex-col md:flex-row gap-4 md:items-end">
                 <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-400 mb-1">狙い目到達時の期待獲得枚数（枚）</label>
-                    <input type="number" step="1" min="0" name="expected_payout" value="{{ form_values.expected_payout if form_values else '' }}" placeholder="分かれば入力（空欄ならAIが概算）" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white font-mono focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">狙い目到達時の期待獲得枚数（枚）</label>
+                    <input type="number" step="1" min="0" name="expected_payout" value="{{ form_values.expected_payout if form_values else '' }}" placeholder="分かれば入力（空欄ならAIが概算）" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 font-mono focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                 </div>
-                <label class="flex items-center gap-2 text-sm text-gray-300 pb-2">
+                <label class="flex items-center gap-2 text-sm text-gray-600 pb-2">
                     <input type="checkbox" name="use_ai_estimate" {% if form_values and form_values.get('use_ai_estimate') %}checked{% endif %}>
                     値を入力していてもAIに概算し直してもらう
                 </label>
             </div>
 
-            <button type="submit" class="btn-glow bg-gradient-to-b from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-950 font-bold px-8 py-3 rounded-md shadow-md self-start transition">
+            <button type="submit" class="btn-primary bg-gray-900 text-white font-bold px-8 py-3 rounded-md shadow-sm self-start transition">
                 期待値を計算する
             </button>
         </form>
 
         {% if result %}
-        <div class="mt-6 border-t border-gray-700 pt-5">
-            <h3 class="font-display font-bold text-base text-gray-100 mb-2">計算結果</h3>
+        <div class="mt-6 border-t border-gray-200 pt-5">
+            <h3 class="font-display font-bold text-base text-gray-900 mb-2">計算結果</h3>
             {% if result.ai_note %}
-            <p class="text-xs text-blue-400 mb-3">🤖 {{ result.ai_note }}</p>
+            <p class="text-xs text-blue-600 mb-3">🤖 {{ result.ai_note }}</p>
             {% endif %}
 
-            <div class="bg-gray-900/60 border {% if result.is_plus %}border-green-600{% else %}border-red-600{% endif %} rounded-lg p-4 mb-3 flex items-center justify-between">
+            <div class="bg-gray-50 border {% if result.is_plus %}border-green-300{% else %}border-red-300{% endif %} rounded-lg p-4 mb-3 flex items-center justify-between">
                 <div>
-                    <div class="text-gray-500 text-xs">期待値</div>
-                    <div class="{% if result.is_plus %}text-green-400 counter-glow-green{% else %}text-red-400{% endif %} font-mono tabular-nums font-black text-3xl">{{ "%+d" | format(result.expected_value_yen) }}円</div>
+                    <div class="text-gray-400 text-xs">期待値</div>
+                    <div class="{% if result.is_plus %}text-green-600{% else %}text-red-600{% endif %} font-mono tabular-nums font-black text-3xl">{{ "%+d" | format(result.expected_value_yen) }}円</div>
                 </div>
                 <div class="text-4xl">{% if result.is_plus %}📈{% else %}📉{% endif %}</div>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                    <div class="text-gray-500 text-xs">残りG数</div>
-                    <div class="text-gray-100 font-mono tabular-nums font-bold">{{ result.remaining_games | round(0) | int }}G</div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div class="text-gray-400 text-xs">残りG数</div>
+                    <div class="text-gray-900 font-mono tabular-nums font-bold">{{ result.remaining_games | round(0) | int }}G</div>
                 </div>
-                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                    <div class="text-gray-500 text-xs">投資額（目安）</div>
-                    <div class="text-gray-100 font-mono tabular-nums font-bold">{{ result.investment_yen | round(0) | int }}円</div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div class="text-gray-400 text-xs">投資額（目安）</div>
+                    <div class="text-gray-900 font-mono tabular-nums font-bold">{{ result.investment_yen | round(0) | int }}円</div>
                 </div>
-                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                    <div class="text-gray-500 text-xs">期待獲得枚数</div>
-                    <div class="text-gray-100 font-mono tabular-nums font-bold">{{ result.expected_payout | round(0) | int }}枚</div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div class="text-gray-400 text-xs">期待獲得枚数</div>
+                    <div class="text-gray-900 font-mono tabular-nums font-bold">{{ result.expected_payout | round(0) | int }}枚</div>
                 </div>
-                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                    <div class="text-gray-500 text-xs">期待収益（円換算）</div>
-                    <div class="text-gray-100 font-mono tabular-nums font-bold">{{ result.expected_return_yen | round(0) | int }}円</div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div class="text-gray-400 text-xs">期待収益（円換算）</div>
+                    <div class="text-gray-900 font-mono tabular-nums font-bold">{{ result.expected_return_yen | round(0) | int }}円</div>
                 </div>
-                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3 col-span-2 md:col-span-4">
-                    <div class="text-gray-500 text-xs">1Gあたりの期待値</div>
-                    <div class="text-gray-100 font-mono tabular-nums font-bold">{{ "%+.1f" | format(result.expected_value_per_game) }}円/G</div>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 col-span-2 md:col-span-4">
+                    <div class="text-gray-400 text-xs">1Gあたりの期待値</div>
+                    <div class="text-gray-900 font-mono tabular-nums font-bold">{{ "%+.1f" | format(result.expected_value_per_game) }}円/G</div>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-3">
+            <p class="text-xs text-gray-400 mt-3">
                 ※残りG数×1Gコストを投資額、期待獲得枚数×交換レートを期待収益とした単純な差分計算です。
                 設定差・実際の当選確率のブレ・ヤメ操作のロスなどは考慮していません。
             </p>
@@ -105,7 +105,7 @@
         {% endif %}
     </div>
 
-    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
-        ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る
+    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 hover:bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-700 transition">
+        ← <span class="text-blue-600 underline ml-1">データ管理ダッシュボード</span>に戻る
     </a>
 {% endblock %}

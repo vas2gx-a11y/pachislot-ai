@@ -16,6 +16,7 @@ def _build_machine_list():
             "game_flow": rule.get("game_flow", ""),
             "setting_ratios": rule.get("setting_ratios", {}),
             "sources": rule.get("sources", []),
+            "suggestion_items": rule.get("suggestion_items", []),
         }
         for keyword, rule in rules.items()
     ]
@@ -68,6 +69,51 @@ def add_note():
         flash(f"「{keyword}」にメモを追記しました。")
     else:
         flash("メモの追記に失敗しました。")
+
+    return redirect(url_for("machines.machines_page"))
+
+
+@machines_bp.route("/add_suggestion_item", methods=["POST"])
+def add_suggestion_item():
+    keyword = request.form.get("keyword", "").strip()
+    name = request.form.get("item_name", "").strip()
+    item_type = request.form.get("item_type", "count").strip()
+    weight_raw = request.form.get("weight", "0").strip()
+
+    if not keyword:
+        flash("対象の機種が特定できませんでした。")
+        return redirect(url_for("machines.machines_page"))
+
+    if not name:
+        flash("示唆項目の名前を入力してください。")
+        return redirect(url_for("machines.machines_page"))
+
+    try:
+        weight = int(weight_raw)
+    except ValueError:
+        weight = 0
+
+    if common.add_suggestion_item(keyword, name, item_type, weight):
+        flash(f"「{keyword}」に示唆項目「{name}」を登録しました。")
+    else:
+        flash("示唆項目の登録に失敗しました。")
+
+    return redirect(url_for("machines.machines_page"))
+
+
+@machines_bp.route("/remove_suggestion_item", methods=["POST"])
+def remove_suggestion_item():
+    keyword = request.form.get("keyword", "").strip()
+    name = request.form.get("item_name", "").strip()
+
+    if not keyword or not name:
+        flash("削除対象を特定できませんでした。")
+        return redirect(url_for("machines.machines_page"))
+
+    if common.remove_suggestion_item(keyword, name):
+        flash(f"「{keyword}」の示唆項目「{name}」を削除しました。")
+    else:
+        flash("示唆項目の削除に失敗しました。")
 
     return redirect(url_for("machines.machines_page"))
 

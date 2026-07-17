@@ -6,14 +6,15 @@
     <title>{% block title %}パチスロAIデータ管理システム{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        display: ['"Zen Kaku Gothic New"', 'sans-serif'],
+                        sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+                        display: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
                         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
                     },
                 },
@@ -21,112 +22,66 @@
         };
     </script>
     <style>
-        /* 数値カウンター風の質感(実機のデジタル表示を意識した控えめなグロー) */
-        .counter-glow { text-shadow: 0 0 14px rgba(234, 179, 8, 0.35); }
-        .counter-glow-green { text-shadow: 0 0 14px rgba(74, 222, 128, 0.35); }
         ::-webkit-scrollbar { height: 6px; width: 6px; }
-        ::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb { background-color: #d4d4d8; border-radius: 9999px; }
         summary::-webkit-details-marker { display: none; }
-        summary { list-style: none; }
-        ::selection { background: rgba(234, 179, 8, 0.35); color: #fff; }
+        summary { list-style: none; position: relative; }
+        ::selection { background: rgba(24, 24, 27, 0.12); color: #18181b; }
 
-        /* 背景に奥行きを持たせる、控えめな2色のグラデーション(黄と青のホール照明を意識) */
         body {
-            background:
-                radial-gradient(ellipse 1100px 550px at 15% -8%, rgba(234, 179, 8, 0.07), transparent 60%),
-                radial-gradient(ellipse 900px 500px at 105% 0%, rgba(59, 130, 246, 0.06), transparent 55%),
-                #0b0e14;
-            background-attachment: fixed;
+            background: #f4f4f5; /* zinc-100 相当。参考画像の薄いグレー背景 */
         }
 
-        /* カードコンポーネント: グラスモーフィズム(半透明+ぼかし)で奥行きと上質感を出す */
+        /* カードコンポーネント: 白背景+薄い枠線+柔らかい影(参考画像のシンプルなカード) */
         .card {
-            background: linear-gradient(180deg, rgba(31, 41, 55, 0.72), rgba(17, 24, 39, 0.82));
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.04);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-            animation: fadeInUp 0.4s ease both;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 8px -2px rgba(24, 24, 27, 0.06);
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
         }
         a.card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(234, 179, 8, 0.35);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 52px -20px rgba(0, 0, 0, 0.7),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            border-color: #d4d4d8;
+            box-shadow: 0 1px 2px rgba(24, 24, 27, 0.05), 0 8px 20px -6px rgba(24, 24, 27, 0.12);
         }
 
-        /* 見出し(h1)にグラデーション文字を適用し、少し高級感のある印象にする */
-        h1.font-display {
-            background: linear-gradient(135deg, #fde047 0%, #f59e0b 55%, #eab308 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 18px rgba(234, 179, 8, 0.25));
-        }
-
-        /* ヘッダーをスティッキー化し、スクロールしても常にナビにアクセスできるように
-           (背景をぼかしガラス風にして、コンテンツに重なっても読みやすさを保つ) */
+        /* ヘッダーをスティッキー化(白背景+ぼかしで、スクロールしてもナビにアクセスできるように) */
         header {
             position: sticky;
             top: 0;
             z-index: 30;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            background: rgba(11, 14, 20, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            background: rgba(244, 244, 245, 0.85);
         }
 
-        /* ナビの現在地(アクティブ)ピルに、フラットな塗りより上質なグラデーション+発光を追加 */
-        nav a.bg-yellow-600\/90 {
-            background: linear-gradient(135deg, #fbbf24, #d97706);
-            box-shadow: 0 4px 14px -4px rgba(234, 179, 8, 0.5);
-            border-color: transparent;
-        }
-
-        /* 設定確率バー: 光がゆっくり流れる光沢アニメーションでプレミアム感を出す */
+        /* 設定確率バー・スコアバー: 黒基調でフラットに(参考画像のプログレスバーと同じ質感) */
         .prob-bar { position: relative; overflow: hidden; }
-        .prob-bar::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
-            background-size: 200% 100%;
-            animation: shine 2.6s ease-in-out infinite;
-        }
-        @keyframes shine {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
 
-        /* 主要CTAボタン(グラデーション黄色ボタン)にほんのり光沢と押下フィードバック */
-        .btn-glow {
-            box-shadow: 0 4px 14px -4px rgba(234, 179, 8, 0.45);
-            transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
-        }
-        .btn-glow:hover { filter: brightness(1.05); box-shadow: 0 6px 20px -4px rgba(234, 179, 8, 0.55); }
-        .btn-glow:active { transform: scale(0.97); }
+        /* 主要CTAボタン(黒ボタン)の押下フィードバック */
+        .btn-primary { transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+        .btn-primary:hover { background-color: #27272a; }
+        .btn-primary:active { transform: scale(0.98); }
 
         /* ボタン全般に押下時の軽いフィードバック */
-        button:active { transform: scale(0.97); }
+        button:active { transform: scale(0.98); }
 
-        /* フォーム要素のフォーカスに柔らかいグローを追加(枠線だけより視認しやすい) */
+        /* フォーム要素のフォーカスに柔らかいリングを追加 */
         input:focus, textarea:focus, select:focus {
-            box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.15);
+            box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
         }
 
         /* details/summary の開閉に軽いアニメーション感を出す矢印 */
-        summary { position: relative; }
         summary .chev { transition: transform 0.2s ease; display: inline-block; }
         details[open] summary .chev { transform: rotate(90deg); }
 
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card { animation: fadeInUp 0.3s ease both; }
+
         /*
           スマホ対策: input/textarea/select の文字サイズが16px未満だと、
-          iOS Safari等がフォーカス時に画面全体を自動でズームインしてしまう
-          (「ボタンを押すと画面がでっかくなる」現象の主因)。
+          iOS Safari等がフォーカス時に画面全体を自動でズームインしてしまう。
           見た目の小ささはpadding等で調整し、文字サイズだけは
           モバイル幅では最低16pxを確保してズームを防ぐ。
         */
@@ -139,16 +94,23 @@
         /* アニメーションを好まない設定のユーザーには、動きを最小限にする */
         @media (prefers-reduced-motion: reduce) {
             .card { animation: none; }
-            .prob-bar::after { animation: none; }
         }
+
+        /* スマホでの横幅オーバーフロー対策:
+           flex-1(flex: 1 1 0%)は、Tailwindのデフォルトでは min-width が指定されないため、
+           中身(input・長いテキストなど)が縮められず、狭い画面で親の横幅を突き破ることがある。
+           明示的にmin-width: 0を指定して防ぐ。 */
+        .flex-1 { min-width: 0; }
+
+        /* 万一何かがはみ出しても、ページ全体が横スクロールしてしまわないようにする保険 */
+        html, body { overflow-x: hidden; max-width: 100vw; }
+        img, canvas, svg, table { max-width: 100%; }
     </style>
 </head>
-<body class="text-gray-100 min-h-screen font-sans">
+<body class="text-gray-900 min-h-screen font-sans">
     <script>
         // 画像アップロード+AI解析のような時間のかかるフォーム送信に、
         // 「📤 アップロード中 xx%」→「🤖 AI解析中...」の2段階のローディング表示を付ける。
-        // 実際のアップロード進捗(XHRのupload.progressイベント)を使うので、
-        // 画像が大きい・回線が遅い場合でも「固まった」ように見えず、進み具合が分かる。
         function wireAsyncForm(formId, opts) {
             const form = document.getElementById(formId);
             if (!form) return;
@@ -217,28 +179,28 @@
 
 
     <div class="w-full max-w-7xl mx-auto p-4 md:p-6">
-        <header class="mb-6 pb-4 border-b border-gray-800">
+        <header class="mb-6 pb-4 border-b border-gray-200">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 {% block header %}
                 <div class="flex items-center gap-3">
                     <span class="text-2xl md:text-3xl">🎰</span>
-                    <h1 class="font-display font-black text-xl md:text-2xl text-yellow-500 tracking-tight">パチスロAIデータ管理</h1>
+                    <h1 class="font-display font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">パチスロAIデータ管理</h1>
                 </div>
                 {% endblock %}
-                <nav class="flex gap-2 text-sm overflow-x-auto">
+                <nav class="flex gap-1 text-sm overflow-x-auto">
                     <a href="{{ url_for('records.index') }}"
-                       class="shrink-0 px-3 py-2 rounded-md border transition
-                              {% if request.path == '/' or request.path.startswith('/records') %}bg-yellow-600/90 border-yellow-500 text-white font-semibold{% else %}bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-300{% endif %}">
+                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
+                              {% if request.path == '/' or request.path.startswith('/records') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
                         📸 データ管理
                     </a>
                     <a href="{{ url_for('machines.machines_page') }}"
-                       class="shrink-0 px-3 py-2 rounded-md border transition
-                              {% if request.path.startswith('/machines') %}bg-yellow-600/90 border-yellow-500 text-white font-semibold{% else %}bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-300{% endif %}">
+                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
+                              {% if request.path.startswith('/machines') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
                         🎯 機種スペック登録
                     </a>
                     <a href="{{ url_for('expected_value.index') }}"
-                       class="shrink-0 px-3 py-2 rounded-md border transition
-                              {% if request.path.startswith('/expected_value') %}bg-yellow-600/90 border-yellow-500 text-white font-semibold{% else %}bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-300{% endif %}">
+                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
+                              {% if request.path.startswith('/expected_value') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
                         🧮 期待値計算
                     </a>
                 </nav>
@@ -249,7 +211,7 @@
             {% if messages %}
                 <div class="mb-6 flex flex-col gap-2">
                     {% for message in messages %}
-                    <div class="bg-red-900/60 border border-red-600 text-red-200 px-4 py-3 rounded-lg text-sm">
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                         ⚠️ {{ message }}
                     </div>
                     {% endfor %}

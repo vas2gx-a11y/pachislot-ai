@@ -6,26 +6,26 @@
 {% block header %}
 <div class="flex items-center gap-3">
     <span class="text-2xl md:text-3xl">🎯</span>
-    <h1 class="font-display font-black text-xl md:text-2xl text-yellow-500 tracking-tight">機種スペック登録システム</h1>
+    <h1 class="font-display font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">機種スペック登録システム</h1>
 </div>
 {% endblock %}
 
 {% block content %}
-    <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3 mb-6 text-sm text-gray-300">
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-6 text-sm text-gray-600">
         📊 スプレッドシートに直接書き込みたい場合は
-        <a href="{{ spreadsheet_url }}" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 underline">こちらから直接開いて編集</a>
+        <a href="{{ spreadsheet_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-700 underline">こちらから直接開いて編集</a>
         できます。「{{ machines_sheet_name }}」シートの
-        <code class="text-yellow-400">keyword</code> / <code class="text-yellow-400">hint_words</code> / <code class="text-yellow-400">game_flow</code> / <code class="text-yellow-400">setting_ratios</code>
+        <code class="text-amber-700">keyword</code> / <code class="text-amber-700">hint_words</code> / <code class="text-amber-700">game_flow</code> / <code class="text-amber-700">setting_ratios</code>
         の各セルに直接テキストを入力・編集すれば、次回のアクセスから設定予測に反映されます(アプリの再起動は不要です)。
-        <code class="text-yellow-400">setting_ratios</code> はJSON形式(例: <code class="text-gray-400">{"1":{"big":"1/400","reg":"1/800"}}</code>)でも、自由なテキスト(例: 設定6は差枚+200枚想定)でも構いません。
+        <code class="text-amber-700">setting_ratios</code> はJSON形式(例: <code class="text-gray-500">{"1":{"big":"1/400","reg":"1/800"}}</code>)でも、自由なテキスト(例: 設定6は差枚+200枚想定)でも構いません。
     </div>
 
-    <div class="card bg-gray-800 rounded-xl shadow-lg mb-4 border border-gray-700">
+    <div class="card rounded-xl border border-gray-200 mb-4">
         <details open>
-            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-100">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-600/20 text-base">🖼️</span>
+            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-900">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-base">🖼️</span>
                 画像からスペックを登録する
-                <span class="ml-auto text-gray-500 chev">▶</span>
+                <span class="ml-auto text-gray-400 chev">▶</span>
             </summary>
             <div class="px-5 md:px-6 pb-6">
                 <p class="text-sm text-gray-400 mb-4">
@@ -34,19 +34,19 @@
                 <form id="machine-image-form" action="{{ url_for('machines.machines_upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">機種名キーワード（任意）</label>
-                            <input type="text" name="keyword" placeholder="AIが読み取れない場合の補助用（例: ToLOVE）" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">機種名キーワード（任意）</label>
+                            <input type="text" name="keyword" placeholder="AIが読み取れない場合の補助用（例: ToLOVE）" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
                         </div>
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">追加の強示唆ワード（任意・カンマ区切り）</label>
-                            <input type="text" name="hint_words" placeholder="例: 強示唆,高確,チャンス" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">追加の強示唆ワード（任意・カンマ区切り）</label>
+                            <input type="text" name="hint_words" placeholder="例: 強示唆,高確,チャンス" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">スペック画像（必須）</label>
-                        <input type="file" name="spec_image" accept="image/*" required class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">スペック画像（必須）</label>
+                        <input type="file" name="spec_image" accept="image/*" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
                     </div>
-                    <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-8 py-3 rounded-md shadow-md self-start transition">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-md shadow-sm self-start transition">
                         画像を解析して機種データを登録
                     </button>
                 </form>
@@ -60,12 +60,12 @@
         </details>
     </div>
 
-    <div class="card bg-gray-800 rounded-xl shadow-lg mb-4 border border-gray-700">
+    <div class="card rounded-xl border border-gray-200 mb-4">
         <details>
-            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-100">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-600/20 text-base">🔗</span>
+            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-900">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-base">🔗</span>
                 URLからスペックを取り込む
-                <span class="ml-auto text-gray-500 chev">▶</span>
+                <span class="ml-auto text-gray-400 chev">▶</span>
             </summary>
             <div class="px-5 md:px-6 pb-6">
                 <p class="text-sm text-gray-400 mb-4">
@@ -73,20 +73,20 @@
                 </p>
                 <form id="machine-url-form" action="{{ url_for('machines.machines_import_url') }}" method="POST" class="flex flex-col gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">取り込み元URL（必須）</label>
-                        <input type="url" name="spec_url" required placeholder="例: https://p-town.dmm.com/machines/4571" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">取り込み元URL（必須）</label>
+                        <input type="url" name="spec_url" required placeholder="例: https://p-town.dmm.com/machines/4571" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
                     </div>
                     <div class="flex flex-col md:flex-row gap-4">
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">機種名キーワード（任意）</label>
-                            <input type="text" name="url_keyword" placeholder="AIが読み取れない場合の補助用（例: ToLOVE）" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">機種名キーワード（任意）</label>
+                            <input type="text" name="url_keyword" placeholder="AIが読み取れない場合の補助用（例: ToLOVE）" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
                         </div>
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">追加の強示唆ワード（任意・カンマ区切り）</label>
-                            <input type="text" name="url_hint_words" placeholder="例: 強示唆,高確,チャンス" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50">
+                            <label class="block text-sm font-medium text-gray-500 mb-1">追加の強示唆ワード（任意・カンマ区切り）</label>
+                            <input type="text" name="url_hint_words" placeholder="例: 強示唆,高確,チャンス" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200">
                         </div>
                     </div>
-                    <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-8 py-3 rounded-md shadow-md self-start transition">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-md shadow-sm self-start transition">
                         URLを解析して機種データを登録
                     </button>
                 </form>
@@ -100,12 +100,12 @@
         </details>
     </div>
 
-    <div class="card bg-gray-800 rounded-xl shadow-lg mb-6 border border-gray-700">
+    <div class="card rounded-xl border border-gray-200 mb-6">
         <details {% if diagnosis %}open{% endif %}>
-            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-100">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-700 text-base">🔍</span>
+            <summary class="cursor-pointer select-none p-5 md:p-6 flex items-center gap-2 font-display font-bold text-lg text-gray-900">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base">🔍</span>
                 機種名マッチングの診断
-                <span class="ml-auto text-gray-500 chev">▶</span>
+                <span class="ml-auto text-gray-400 chev">▶</span>
             </summary>
             <div class="px-5 md:px-6 pb-6">
                 <p class="text-sm text-gray-400 mb-4">
@@ -113,27 +113,27 @@
                     微妙に違っている(前後の空白・全角半角の違いなど)可能性があります。ここで実際の照合結果を確認できます。
                 </p>
                 <form action="{{ url_for('machines.diagnose') }}" method="GET" class="flex flex-col md:flex-row gap-3">
-                    <input type="text" name="machine_name" value="{{ diagnose_input or '' }}" required placeholder="確認したい機種名(記録に入力したものと同じ文字列)" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
-                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 font-bold px-6 py-2 rounded-md shadow-md whitespace-nowrap transition">診断する</button>
+                    <input type="text" name="machine_name" value="{{ diagnose_input or '' }}" required placeholder="確認したい機種名(記録に入力したものと同じ文字列)" class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-6 py-2 rounded-md shadow-sm whitespace-nowrap transition">診断する</button>
                 </form>
 
                 {% if diagnosis %}
-                <div class="mt-4 bg-gray-900/60 border border-gray-700 rounded-lg p-4 text-sm">
+                <div class="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm">
                     <div class="mb-2">
-                        <span class="text-gray-500">入力された機種名(内部表現):</span>
-                        <code class="text-gray-300 break-all font-mono">{{ diagnosis.input_repr }}</code>
+                        <span class="text-gray-400">入力された機種名(内部表現):</span>
+                        <code class="text-gray-600 break-all font-mono">{{ diagnosis.input_repr }}</code>
                     </div>
                     {% if diagnosis.matched_keyword %}
-                    <div class="text-green-400 font-semibold mb-3">✅ 「{{ diagnosis.matched_keyword }}」のスペックが採用されます</div>
+                    <div class="text-green-700 font-semibold mb-3">✅ 「{{ diagnosis.matched_keyword }}」のスペックが採用されます</div>
                     {% else %}
-                    <div class="text-red-400 font-semibold mb-3">⚠️ 一致する登録機種が見つかりません(スペック無しで推測されます)</div>
+                    <div class="text-red-600 font-semibold mb-3">⚠️ 一致する登録機種が見つかりません(スペック無しで推測されます)</div>
                     {% endif %}
                     {% if diagnosis.candidates %}
-                    <div class="text-xs text-gray-500 mb-2">登録済みキーワード一覧との照合結果:</div>
+                    <div class="text-xs text-gray-400 mb-2">登録済みキーワード一覧との照合結果:</div>
                     <div class="overflow-x-auto">
                         <table class="text-xs border-collapse w-full font-mono">
                             <thead>
-                                <tr class="text-gray-500">
+                                <tr class="text-gray-400">
                                     <th class="text-left pr-4 pb-1">キーワード(内部表現)</th>
                                     <th class="text-left pr-4 pb-1">完全一致</th>
                                     <th class="text-left pb-1">部分一致</th>
@@ -141,7 +141,7 @@
                             </thead>
                             <tbody>
                                 {% for c in diagnosis.candidates %}
-                                <tr class="{% if c.keyword == diagnosis.matched_keyword %}text-green-400{% else %}text-gray-300{% endif %}">
+                                <tr class="{% if c.keyword == diagnosis.matched_keyword %}text-green-700{% else %}text-gray-600{% endif %}">
                                     <td class="pr-4 py-0.5 break-all">{{ c.keyword_repr }}</td>
                                     <td class="pr-4 py-0.5">{{ "○" if c.is_exact_match else "-" }}</td>
                                     <td class="py-0.5">{{ "○" if c.is_substring_match else "-" }}</td>
@@ -151,7 +151,7 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-xs text-gray-500">登録されている機種がまだありません。</div>
+                    <div class="text-xs text-gray-400">登録されている機種がまだありません。</div>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -161,26 +161,26 @@
 
     {{ section_header("📋", "登録済み機種一覧", (machine_list|length ~ "件") if machine_list else None) }}
     {% if machine_list %}
-    <div class="card bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-5 md:p-6 mb-6">
+    <div class="card rounded-xl border border-gray-200 p-5 md:p-6 mb-6">
         <div class="flex flex-col gap-3">
             {% for m in machine_list %}
-            <details class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                <summary class="cursor-pointer select-none font-bold text-yellow-400">{{ m.keyword }}</summary>
-                <div class="mt-2 text-sm text-gray-300">
-                    <div class="mb-1"><span class="text-gray-500">強示唆ワード:</span> {{ m.hint_words | join(", ") if m.hint_words else "登録なし" }}</div>
-                    <div class="mb-2"><span class="text-gray-500">ゲームフロー:</span> {{ m.game_flow if m.game_flow else "登録なし" }}</div>
+            <details class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <summary class="cursor-pointer select-none font-bold text-gray-900">{{ m.keyword }}</summary>
+                <div class="mt-2 text-sm text-gray-600">
+                    <div class="mb-1"><span class="text-gray-400">強示唆ワード:</span> {{ m.hint_words | join(", ") if m.hint_words else "登録なし" }}</div>
+                    <div class="mb-2"><span class="text-gray-400">ゲームフロー:</span> {{ m.game_flow if m.game_flow else "登録なし" }}</div>
                     {% if m.setting_ratios %}
                         {% if m.setting_ratios is mapping %}
                         <div class="overflow-x-auto">
                             <table class="text-xs border-collapse font-mono">
                                 <thead>
-                                    <tr class="text-gray-500 font-sans">
+                                    <tr class="text-gray-400 font-sans">
                                         <th class="pr-4 text-left">設定</th><th class="pr-4 text-left">BIG</th><th class="pr-4 text-left">REG</th><th class="pr-4 text-left">合成</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for setting_no, ratios in m.setting_ratios.items() %}
-                                    <tr class="text-gray-200">
+                                    <tr class="text-gray-700">
                                         <td class="pr-4">設定{{ setting_no }}</td>
                                         <td class="pr-4">{{ ratios.big if ratios.big else "-" }}</td>
                                         <td class="pr-4">{{ ratios.reg if ratios.reg else "-" }}</td>
@@ -191,13 +191,13 @@
                             </table>
                         </div>
                         {% else %}
-                        <div class="text-gray-300 whitespace-pre-wrap">{{ m.setting_ratios }}</div>
+                        <div class="text-gray-600 whitespace-pre-wrap">{{ m.setting_ratios }}</div>
                         {% endif %}
                     {% else %}
-                    <div class="text-gray-500">設定別確率表: 登録なし</div>
+                    <div class="text-gray-400">設定別確率表: 登録なし</div>
                     {% endif %}
                     {% if m.sources %}
-                    <div class="mt-2 pt-2 border-t border-gray-800 text-xs text-gray-500">
+                    <div class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-400">
                         📎 情報源({{ m.sources | length }}件、この機種のデータはこれらを集約したものです):
                         <ul class="mt-1 flex flex-col gap-0.5 font-mono">
                             {% for s in m.sources %}
@@ -206,12 +206,46 @@
                         </ul>
                     </div>
                     {% endif %}
-                    <div class="mt-3 pt-3 border-t border-gray-800">
-                        <div class="text-xs text-gray-500 mb-1">📝 メモを追記する(特にゲームフローに関する内容・高設定挙動の示唆などを想定)</div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <div class="text-xs text-gray-400 mb-2">
+                            🎯 示唆項目(アイキャッチ・トロフィー・穢れ解放など、実戦で重視する判別要素を機種ごとに登録)
+                        </div>
+                        {% if m.suggestion_items %}
+                        <div class="flex flex-col gap-1.5 mb-3">
+                            {% for si in m.suggestion_items %}
+                            <div class="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-md px-3 py-1.5 text-xs">
+                                <div class="min-w-0">
+                                    <span class="text-gray-700 font-semibold">{{ si.name }}</span>
+                                    <span class="text-gray-400 ml-2">{{ "回数入力" if si.type == "count" else "あり/なし" }} ・ 重要度{{ si.weight }}/100</span>
+                                </div>
+                                <form action="{{ url_for('machines.remove_suggestion_item') }}" method="POST">
+                                    <input type="hidden" name="keyword" value="{{ m.keyword }}">
+                                    <input type="hidden" name="item_name" value="{{ si.name }}">
+                                    <button type="submit" class="shrink-0 text-red-500 hover:text-red-600 px-2" title="削除">✕</button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-xs text-gray-400 mb-3">まだ示唆項目が登録されていません。</p>
+                        {% endif %}
+                        <form action="{{ url_for('machines.add_suggestion_item') }}" method="POST" class="flex flex-col md:flex-row gap-2">
+                            <input type="hidden" name="keyword" value="{{ m.keyword }}">
+                            <input type="text" name="item_name" required placeholder="項目名(例: ヤミアイキャッチ)" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400">
+                            <select name="item_type" class="bg-white border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400">
+                                <option value="count">回数入力</option>
+                                <option value="boolean">あり/なし</option>
+                            </select>
+                            <input type="number" name="weight" min="0" max="100" value="10" placeholder="重要度" class="w-full md:w-24 bg-white border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">項目を追加</button>
+                        </form>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <div class="text-xs text-gray-400 mb-1">📝 メモを追記する(特にゲームフローに関する内容・高設定挙動の示唆などを想定)</div>
                         <form action="{{ url_for('machines.add_note') }}" method="POST" class="flex flex-col gap-2">
                             <input type="hidden" name="keyword" value="{{ m.keyword }}">
-                            <textarea name="note" rows="2" placeholder="例: 設定6は差枚+500枚を超えてから複合対応込みで消化が早い印象。〇〇の演出が出たら高設定濃厚" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1.5 md:text-xs text-white focus:outline-none focus:border-yellow-500"></textarea>
-                            <button type="submit" class="self-start bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-5 py-2 md:px-4 md:py-1.5 rounded-md transition">追記する</button>
+                            <textarea name="note" rows="2" placeholder="例: 設定6は差枚+500枚を超えてから複合対応込みで消化が早い印象。〇〇の演出が出たら高設定濃厚" class="w-full bg-white border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1.5 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400"></textarea>
+                            <button type="submit" class="self-start bg-gray-900 hover:bg-gray-800 text-white text-sm md:text-xs font-bold px-5 py-2 md:px-4 md:py-1.5 rounded-md transition">追記する</button>
                         </form>
                     </div>
                 </div>
@@ -223,14 +257,14 @@
     <div class="mb-6">
         {{ empty_state("🎯", "まだ機種が登録されていません。上の「画像から登録」または「URLから取り込む」から始めましょう。") }}
         {% if sheet_diagnostics %}
-        <details class="mt-3 bg-gray-900/60 border border-gray-700 rounded-lg p-3 text-xs">
-            <summary class="cursor-pointer select-none text-gray-400 font-semibold">🔧 詳細情報(表示されない原因の確認用)</summary>
+        <details class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs">
+            <summary class="cursor-pointer select-none text-gray-500 font-semibold">🔧 詳細情報(表示されない原因の確認用)</summary>
             {% if sheet_diagnostics.ok %}
-            <div class="mt-2 text-gray-300 font-mono">
+            <div class="mt-2 text-gray-600 font-mono">
                 <div>シート上の総行数(ヘッダー含む): {{ sheet_diagnostics.total_rows }}</div>
                 <div class="mt-1 break-all">ヘッダー行: {{ sheet_diagnostics.header_row }}</div>
                 {% if sheet_diagnostics.sample_rows %}
-                <div class="mt-2 text-gray-500">先頭数行のサンプル:</div>
+                <div class="mt-2 text-gray-400">先頭数行のサンプル:</div>
                 <ul class="mt-1 flex flex-col gap-0.5">
                     {% for row in sheet_diagnostics.sample_rows %}
                     <li class="break-all">{{ row }}</li>
@@ -238,14 +272,14 @@
                 </ul>
                 {% endif %}
                 {% if sheet_diagnostics.total_rows > 1 %}
-                <div class="mt-2 text-yellow-400">
+                <div class="mt-2 text-amber-700">
                     ⚠️ シートには{{ sheet_diagnostics.total_rows - 1 }}行のデータがあるはずですが、一覧には表示されていません。
                     ヘッダー行の文言(1行目)が期待値(keyword, hint_words, game_flow, setting_ratios, sources)とズレている可能性があります。
                 </div>
                 {% endif %}
             </div>
             {% else %}
-            <div class="mt-2 text-red-400">シートの読み込み自体に失敗しています: {{ sheet_diagnostics.error }}</div>
+            <div class="mt-2 text-red-600">シートの読み込み自体に失敗しています: {{ sheet_diagnostics.error }}</div>
             {% endif %}
         </details>
         {% endif %}
@@ -253,7 +287,7 @@
     {% endif %}
 
 
-    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg border border-gray-700 text-gray-200 transition">
-        ← <span class="text-blue-400 underline ml-1">データ管理ダッシュボード</span>に戻る
+    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 hover:bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-700 transition">
+        ← <span class="text-blue-600 underline ml-1">データ管理ダッシュボード</span>に戻る
     </a>
 {% endblock %}

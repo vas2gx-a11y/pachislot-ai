@@ -50,8 +50,10 @@ def index():
     hall_tendency_preview = ""
     preset_store = ""
     chat_history = []
+    suggestion_items = []
     if preset_machine:
         _, preview_rule = common.find_machine_rule(preset_machine)
+        suggestion_items = preview_rule.get("suggestion_items", [])
         # 継続セッションであれば、そのセッションで既に入力済みの店舗名を引き継いでプレビューに反映する。
         # 対象のセッションはページネーションで表示されていない古いページにある可能性があるため、
         # 必ず all_history(全件)から探す。
@@ -84,6 +86,7 @@ def index():
         total_pages=total_pages,
         total_records=total_records,
         sheet_diagnostics=sheet_diagnostics,
+        suggestion_items=suggestion_items,
     )
 
 
@@ -106,10 +109,24 @@ def upload():
     if not session_id:
         session_id = uuid.uuid4().hex[:12]
 
-    # 登録済みの機種データ(強示唆ワード・ゲームフロー)を先に取得し、画像解析にも活用する
+    # 登録済みの機種データ(強示唆ワード・ゲームフロー・示唆項目)を先に取得し、画像解析にも活用する
     _, machine_rule = common.find_machine_rule(machine_name)
     machine_hint_words = machine_rule.get("hint_words", [])
     machine_game_flow = machine_rule.get("game_flow", "")
+    machine_suggestion_items = machine_rule.get("suggestion_items", [])
+
+    # 示唆項目(アイキャッチ・トロフィー・穢れ解放など)の観測値をフォームから読み取る。
+    # フィールド名は "suggestion__<項目名>" で送られてくる想定(index.htmlのチェックリスト参照)。
+    suggestion_observations = {}
+    for item in machine_suggestion_items:
+        if not isinstance(item, dict):
+            continue
+        item_name = str(item.get("name", "")).strip()
+        if not item_name:
+            continue
+        field_value = request.form.get(f"suggestion__{item_name}", "").strip()
+        if field_value:
+            suggestion_observations[item_name] = field_value
 
     total, big, reg, current, diff = 0, 0, 0, 0, 0
     max_diff, hamari_600, hamari_800, max_renchan = 0, 0, 0, 0
@@ -212,6 +229,7 @@ def upload():
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
         recent_records_count=len(recent_records),
         base64_image=image_for_estimate, mime_type=mime_type_for_estimate,
+        suggestion_observations=suggestion_observations,
     )
 
     record = {
@@ -236,6 +254,7 @@ def upload():
         "hamari_800_plus": hamari_800,
         "max_renchan": max_renchan,
         "graph_shape_tags": ",".join(graph_shape_tags),
+        "suggestion_observations": json.dumps(suggestion_observations, ensure_ascii=False),
     }
     common.save_record(record)
     return redirect(url_for("records.index"))

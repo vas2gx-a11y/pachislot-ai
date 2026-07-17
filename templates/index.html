@@ -9,56 +9,56 @@
         {{ stat_card("総記録数", dashboard_stats.total_records ~ "件") }}
         {{ stat_card("記録した機種数", dashboard_stats.unique_machines ~ "種") }}
         {{ stat_card("セッション数", dashboard_stats.unique_sessions ~ "回") }}
-        {{ stat_card("本日の記録", dashboard_stats.today_count ~ "件", "text-yellow-400") }}
+        {{ stat_card("本日の記録", dashboard_stats.today_count ~ "件", "text-amber-600") }}
     </div>
 
-    <div class="card bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
-        <h2 class="font-display font-bold text-lg text-gray-100 mb-4 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-yellow-600/20 text-base">📸</span>
+    <div class="card p-5 md:p-6 rounded-xl border border-gray-200 mb-6">
+        <h2 class="font-display font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-amber-50 text-base">📸</span>
             データ・状況を追加する
             {% if preset_session %}
-                <span class="text-xs text-blue-400 font-normal font-sans">(継続セッション)</span>
+                <span class="text-xs text-blue-600 font-normal font-sans">(継続セッション)</span>
             {% endif %}
         </h2>
         <form id="upload-form" action="{{ url_for('records.upload') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
             <input type="hidden" name="session_id" value="{{ preset_session }}">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-400 mb-1">機種名</label>
-                    <input type="text" name="machine_name" value="{{ preset_machine }}" required placeholder="例: ToLOVEる" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">機種名</label>
+                    <input type="text" name="machine_name" value="{{ preset_machine }}" required placeholder="例: ToLOVEる" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                 </div>
                 <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-400 mb-1">店舗名（任意）</label>
-                    <input type="text" name="store_name" value="{{ preset_store }}" placeholder="例: ○○ホール △△店" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                    <label class="block text-sm font-medium text-gray-500 mb-1">店舗名（任意）</label>
+                    <input type="text" name="store_name" value="{{ preset_store }}" placeholder="例: ○○ホール △△店" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                 </div>
                 <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-400 mb-1">スクショ画像（任意）</label>
-                    <input type="file" name="image" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-200 hover:file:bg-gray-600 cursor-pointer">
-                    <p class="text-xs text-gray-500 mt-1">台番号は画像から自動で読み取ります(見えていれば)。</p>
+                    <label class="block text-sm font-medium text-gray-500 mb-1">スクショ画像（任意）</label>
+                    <input type="file" name="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                    <p class="text-xs text-gray-400 mt-1">台番号は画像から自動で読み取ります(見えていれば)。</p>
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-400 mb-1">メモ（前日データや打ちながらの状況）</label>
-                <textarea name="user_note" rows="2" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50"></textarea>
+                <label class="block text-sm font-medium text-gray-500 mb-1">メモ（前日データや打ちながらの状況）</label>
+                <textarea name="user_note" rows="2" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300"></textarea>
             </div>
             <div class="flex-1 max-w-xs">
-                <label class="block text-sm font-medium text-gray-400 mb-1">同機種の過去データをどこまで参考にするか</label>
-                <select name="history_days" class="w-full bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
+                <label class="block text-sm font-medium text-gray-500 mb-1">同機種の過去データをどこまで参考にするか</label>
+                <select name="history_days" class="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
                     <option value="0">参照しない</option>
                     <option value="1">前日のみ</option>
                     <option value="7" selected>今週（直近7日）</option>
                     <option value="30">今月（直近30日）</option>
                 </select>
-                <p class="text-xs text-gray-500 mt-1">同じ機種名の他セッション(前日・今週など)のG数・BIG/REG・差枚・メモを参考情報としてAIに渡します。</p>
+                <p class="text-xs text-gray-400 mt-1">同じ機種名の他セッション(前日・今週など)のG数・BIG/REG・差枚・メモを参考情報としてAIに渡します。</p>
             </div>
 
             {% if recent_history_preview %}
-            <details class="bg-gray-900/60 border border-gray-700 rounded-lg p-3" open>
-                <summary class="text-xs font-semibold text-gray-400 cursor-pointer">🗓 この機種の直近7日以内のデータ（参考として自動で分析に使われます）</summary>
+            <details class="bg-gray-50 border border-gray-200 rounded-lg p-3" open>
+                <summary class="text-xs font-semibold text-gray-500 cursor-pointer">🗓 この機種の直近7日以内のデータ（参考として自動で分析に使われます）</summary>
                 {% if hall_tendency_preview %}
-                <div class="text-xs text-yellow-400 font-semibold mt-2 mb-2">📈 傾向分析: {{ hall_tendency_preview }}</div>
+                <div class="text-xs text-amber-700 font-semibold mt-2 mb-2">📈 傾向分析: {{ hall_tendency_preview }}</div>
                 {% endif %}
-                <ul class="text-xs text-gray-300 flex flex-col gap-1 mt-2 font-mono tabular-nums">
+                <ul class="text-xs text-gray-600 flex flex-col gap-1 mt-2 font-mono tabular-nums">
                     {% for r in recent_history_preview %}
                     <li>{{ r.date }}: {{ r.total_games }}G, BIG{{ r.big_count }}回, REG{{ r.reg_count }}回, 差枚{{ r.difference_slabs }}枚{% if r.user_note %}<span class="font-sans text-gray-400"> / {{ r.user_note }}</span>{% endif %}</li>
                     {% endfor %}
@@ -66,10 +66,39 @@
             </details>
             {% endif %}
 
-            <button type="submit" class="btn-glow bg-gradient-to-b from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-950 font-bold px-8 py-3 rounded-md shadow-md self-start transition">
+            {% if suggestion_items %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div class="text-xs font-semibold text-gray-500 mb-2">
+                    🎯 示唆項目チェック(この機種で登録されている、実戦での判別要素)
+                </div>
+                <p class="text-xs text-gray-400 mb-3">プレイ中〜終了後に観測した内容を入力してください。分からない項目は空欄のままでOKです。</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for si in suggestion_items %}
+                    <div class="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-md px-3 py-2">
+                        <label for="suggestion__{{ si.name }}" class="text-sm text-gray-700 min-w-0 truncate">{{ si.name }}</label>
+                        {% if si.type == "boolean" %}
+                        <select id="suggestion__{{ si.name }}" name="suggestion__{{ si.name }}" class="shrink-0 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-sm text-gray-900 focus:outline-none focus:border-gray-400">
+                            <option value="">未入力</option>
+                            <option value="on">あり</option>
+                            <option value="off">なし</option>
+                        </select>
+                        {% else %}
+                        <input id="suggestion__{{ si.name }}" type="number" min="0" name="suggestion__{{ si.name }}" placeholder="回数" class="shrink-0 w-20 bg-gray-50 border border-gray-200 rounded-md px-2 py-1 text-sm text-gray-900 focus:outline-none focus:border-gray-400">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% elif preset_machine %}
+            <div class="bg-gray-50 border border-gray-200 border-dashed rounded-lg p-3 text-xs text-gray-400">
+                🎯 この機種にはまだ示唆項目が登録されていません。機種スペック登録システムから、アイキャッチ・トロフィー・穢れ解放などの判別要素を追加すると、ここにチェックリストが表示されるようになります。
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn-primary bg-gray-900 text-white font-bold px-8 py-3 rounded-md shadow-sm self-start transition">
                 {% if preset_session %}このセッションに追加して再解析{% else %}データを蓄積して解析{% endif %}
             </button>
-            <p class="text-xs text-gray-500">推測結果は設定1〜6それぞれの確率(%)で表示されます。情報が少ないうちは均等に近い数値になるので、「追加分析」で画像やメモを追加していくほど精度が上がります。</p>
+            <p class="text-xs text-gray-400">推測結果は設定1〜6それぞれの確率(%)で表示されます。情報が少ないうちは均等に近い数値になるので、「追加分析」で画像やメモを追加していくほど精度が上がります。</p>
         </form>
         <script>
             wireAsyncForm('upload-form', {
@@ -80,39 +109,39 @@
     </div>
 
     {% if preset_session %}
-    <div class="card bg-gray-800 p-5 md:p-6 rounded-xl shadow-lg mb-6 border border-gray-700">
-        <h2 class="font-display font-bold text-lg text-gray-100 mb-3 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-600/20 text-base">💬</span>
+    <div class="card p-5 md:p-6 rounded-xl border border-gray-200 mb-6">
+        <h2 class="font-display font-bold text-lg text-gray-900 mb-3 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-base">💬</span>
             このセッションについてAIに質問する
         </h2>
-        <p class="text-xs text-gray-500 mb-4">
+        <p class="text-xs text-gray-400 mb-4">
             例:「このまま打ち続けた方がいい?」「高設定っぽい要素はある?」「やめるべきタイミングは?」など、
             このセッションの蓄積データ・機種スペック・直近の推測結果をもとにAIが回答します。
         </p>
         {% if chat_history %}
         <div class="flex flex-col gap-3 mb-4">
             {% for chat in chat_history %}
-            <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-3">
-                <div class="text-sm text-blue-400 font-semibold mb-1">Q. {{ chat.question }}</div>
-                <div class="text-sm text-gray-200 whitespace-pre-wrap">🤖 {{ chat.answer }}</div>
-                <div class="text-xs text-gray-500 mt-1 font-mono">{{ chat.date }}</div>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div class="text-sm text-blue-700 font-semibold mb-1">Q. {{ chat.question }}</div>
+                <div class="text-sm text-gray-700 whitespace-pre-wrap">🤖 {{ chat.answer }}</div>
+                <div class="text-xs text-gray-400 mt-1 font-mono">{{ chat.date }}</div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-500 mb-4">まだ質問はありません。上記の例のように聞いてみてください。</p>
+        <p class="text-sm text-gray-400 mb-4">まだ質問はありません。上記の例のように聞いてみてください。</p>
         {% endif %}
         <form action="{{ url_for('records.ask') }}" method="POST" class="flex flex-col md:flex-row gap-3">
             <input type="hidden" name="session_id" value="{{ preset_session }}">
             <input type="hidden" name="machine_name" value="{{ preset_machine }}">
-            <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500/50">
-            <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-6 py-2 rounded-md shadow-md whitespace-nowrap transition">質問する</button>
+            <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-300">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md shadow-sm whitespace-nowrap transition">質問する</button>
         </form>
     </div>
     {% endif %}
 
-    <a href="{{ url_for('machines.machines_page') }}" class="card flex items-center gap-2 bg-gray-800 hover:bg-gray-750 p-4 rounded-xl shadow-lg mb-6 border border-gray-700 text-gray-200 transition">
-        <span class="text-lg">🎯</span> 機種スペックの登録・確認は<span class="text-blue-400 underline ml-1">機種スペック登録システム</span>へ
+    <a href="{{ url_for('machines.machines_page') }}" class="card flex items-center gap-2 hover:bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 text-gray-700 transition">
+        <span class="text-lg">🎯</span> 機種スペックの登録・確認は<span class="text-blue-600 underline ml-1">機種スペック登録システム</span>へ
     </a>
 
     {{ section_header("📋", "記録一覧", (total_records ~ "件中 " ~ history|length ~ "件を表示") if total_records else None) }}
@@ -120,14 +149,14 @@
     {% if not history %}
     {{ empty_state("🎰", "まだデータがありません。上のフォームから最初の1件を記録しましょう。") }}
     {% if sheet_diagnostics %}
-    <details class="mt-3 bg-gray-900/60 border border-gray-700 rounded-lg p-3 text-xs">
-        <summary class="cursor-pointer select-none text-gray-400 font-semibold">🔧 詳細情報(表示されない原因の確認用)</summary>
+    <details class="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs">
+        <summary class="cursor-pointer select-none text-gray-500 font-semibold">🔧 詳細情報(表示されない原因の確認用)</summary>
         {% if sheet_diagnostics.ok %}
-        <div class="mt-2 text-gray-300 font-mono">
+        <div class="mt-2 text-gray-600 font-mono">
             <div>シート上の総行数(ヘッダー含む): {{ sheet_diagnostics.total_rows }}</div>
             <div class="mt-1 break-all">ヘッダー行: {{ sheet_diagnostics.header_row }}</div>
             {% if sheet_diagnostics.sample_rows %}
-            <div class="mt-2 text-gray-500">先頭数行のサンプル:</div>
+            <div class="mt-2 text-gray-400">先頭数行のサンプル:</div>
             <ul class="mt-1 flex flex-col gap-0.5">
                 {% for row in sheet_diagnostics.sample_rows %}
                 <li class="break-all">{{ row }}</li>
@@ -135,14 +164,14 @@
             </ul>
             {% endif %}
             {% if sheet_diagnostics.total_rows > 1 %}
-            <div class="mt-2 text-yellow-400">
+            <div class="mt-2 text-amber-700">
                 ⚠️ シートには{{ sheet_diagnostics.total_rows - 1 }}行のデータがあるはずですが、一覧には表示されていません。
                 ヘッダー行(1行目)の文言が期待値とズレている可能性があります。
             </div>
             {% endif %}
         </div>
         {% else %}
-        <div class="mt-2 text-red-400">シートの読み込み自体に失敗しています: {{ sheet_diagnostics.error }}</div>
+        <div class="mt-2 text-red-600">シートの読み込み自体に失敗しています: {{ sheet_diagnostics.error }}</div>
         {% endif %}
     </details>
     {% endif %}
@@ -152,47 +181,47 @@
     <div class="flex flex-col gap-3 md:hidden">
         {% for item in history %}
         {% set item_chat = chat_history_by_session.get(item.session_id, []) %}
-        <div class="card bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-4">
+        <div class="card rounded-xl border border-gray-200 p-4">
             <div class="flex justify-between items-start gap-2 mb-2">
                 <div class="min-w-0">
                     <div class="text-xs text-gray-400 truncate font-mono">{{ item.date }}{% if item.store_name %} ・ {{ item.store_name }}{% endif %}</div>
-                    <div class="font-bold text-yellow-400 truncate">{{ item.machine_name }}{% if item.machine_number %} <span class="text-gray-400 font-normal font-mono">(No.{{ item.machine_number }})</span>{% endif %}</div>
+                    <div class="font-bold text-gray-900 truncate">{{ item.machine_name }}{% if item.machine_number %} <span class="text-gray-400 font-normal font-mono">(No.{{ item.machine_number }})</span>{% endif %}</div>
                 </div>
             </div>
 
             <div class="flex gap-4 text-sm mb-2 font-mono tabular-nums items-baseline">
-                <span class="text-gray-200">{{ item.total_games }}G</span>
-                <span class="{% if item.difference_slabs > 0 %}text-green-400 counter-glow-green{% else %}text-gray-200{% endif %} font-bold">{{ item.difference_slabs }}枚</span>
+                <span class="text-gray-700">{{ item.total_games }}G</span>
+                <span class="{% if item.difference_slabs > 0 %}text-green-600{% else %}text-gray-700{% endif %} font-bold">{{ item.difference_slabs }}枚</span>
                 {% if item.max_difference_slabs and item.max_difference_slabs > item.difference_slabs %}
-                <span class="text-xs text-gray-500">(最大{{ item.max_difference_slabs }}枚)</span>
+                <span class="text-xs text-gray-400">(最大{{ item.max_difference_slabs }}枚)</span>
                 {% endif %}
             </div>
             {% if item.graph_shape_tags %}
             <div class="flex flex-wrap gap-1 mb-2">
                 {% for tag in item.graph_shape_tags %}
-                <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{{ tag }}</span>
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ tag }}</span>
                 {% endfor %}
             </div>
             {% endif %}
             <div class="text-sm mb-2">
-                <div class="text-yellow-500">{{ item.user_note }}</div>
+                <div class="text-amber-700">{{ item.user_note }}</div>
                 <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
             </div>
-            <div class="text-sm font-bold text-yellow-400 counter-glow border-t border-gray-700 pt-2 mt-2">
+            <div class="text-sm font-bold text-gray-900 border-t border-gray-100 pt-2 mt-2">
                 推測結果: {{ item.estimation.split('\n')[0] }}
             </div>
             {% if '\n' in item.estimation %}
-            <div class="text-xs text-gray-500 font-mono mt-1">{{ item.estimation.split('\n')[1] }}</div>
+            <div class="text-xs text-gray-400 font-mono mt-1">{{ item.estimation.split('\n')[1] }}</div>
             {% endif %}
             {% if item.setting_probabilities %}
             <div class="flex flex-col gap-0.5 mt-2">
                 {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
                 <div class="flex items-center gap-2 text-xs">
                     <span class="w-10 shrink-0 text-gray-400">設定{{ setting_no }}</span>
-                    <div class="flex-1 bg-gray-700 rounded-full h-2 overflow-hidden">
-                        <div class="prob-bar bg-gradient-to-r from-yellow-600 to-yellow-400 h-2" style="width: {{ pct }}%;"></div>
+                    <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div class="prob-bar bg-gray-900 h-2" style="width: {{ pct }}%;"></div>
                     </div>
-                    <span class="w-9 shrink-0 text-right text-gray-300 font-mono tabular-nums">{{ pct }}%</span>
+                    <span class="w-9 shrink-0 text-right text-gray-600 font-mono tabular-nums">{{ pct }}%</span>
                 </div>
                 {% endfor %}
             </div>
@@ -200,31 +229,31 @@
             {{ score_breakdown(item.category_scores) }}
 
             <!-- 行アクション: 今後ボタンが増えてもここに1行足すだけで済む -->
-            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-700">
+            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
                 {{ icon_action(url_for('records.index', machine_name=item.machine_name, session_id=item.session_id), "📝", "追加分析", "primary") }}
                 {{ icon_action(url_for('expected_value.index', machine_name=item.machine_name, session_id=item.session_id), "🧮", "期待値") }}
                 {% if item.store_name and item.machine_number %}
                 {{ icon_action(url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name), "📊", "グラフ") }}
                 {% endif %}
             </div>
-            <details class="mt-2 pt-2 border-t border-gray-800">
-                <summary class="cursor-pointer select-none text-xs text-blue-400 font-semibold">
+            <details class="mt-2 pt-2 border-t border-gray-100">
+                <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
                     💬 AIに質問する{% if item_chat %} ({{ item_chat|length }}件の質問済み){% endif %}
                 </summary>
                 <div class="mt-2 flex flex-col gap-2">
                     {% if item_chat %}
                     {% for chat in item_chat[-2:] %}
-                    <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-2 text-xs">
-                        <div class="text-blue-400 font-semibold">Q. {{ chat.question }}</div>
-                        <div class="text-gray-300 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 text-xs">
+                        <div class="text-blue-700 font-semibold">Q. {{ chat.question }}</div>
+                        <div class="text-gray-600 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
                     </div>
                     {% endfor %}
                     {% endif %}
                     <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
                         <input type="hidden" name="session_id" value="{{ item.session_id }}">
                         <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
-                        <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-white focus:outline-none focus:border-yellow-500">
-                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
+                        <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400">
+                        <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
                     </form>
                 </div>
             </details>
@@ -233,54 +262,54 @@
     </div>
 
     <!-- PC/タブレット用: テーブルレイアウト（md以上で表示） -->
-    <div class="card hidden md:block bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-x-auto">
+    <div class="card hidden md:block rounded-xl border border-gray-200 overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="bg-gray-900/60 text-gray-400 text-xs uppercase tracking-wide">
+                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                     <th class="p-4">日時</th><th class="p-4">店舗名</th><th class="p-4">機種名</th><th class="p-4">台番号</th><th class="p-4">G数</th><th class="p-4">差枚</th>
-                    <th class="p-4">メモ / AI備考</th><th class="p-4 text-yellow-500">推測結果</th><th class="p-4">操作</th>
+                    <th class="p-4">メモ / AI備考</th><th class="p-4 text-gray-700">推測結果</th><th class="p-4">操作</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-700">
+            <tbody class="divide-y divide-gray-100">
                 {% for item in history %}
                 {% set item_chat = chat_history_by_session.get(item.session_id, []) %}
-                <tr class="hover:bg-gray-750/60 transition text-gray-200">
+                <tr class="hover:bg-gray-50 transition text-gray-700">
                     <td class="p-4 text-sm text-gray-400 whitespace-nowrap font-mono">{{ item.date }}</td>
-                    <td class="p-4 text-sm text-gray-300 whitespace-nowrap">{{ item.store_name }}</td>
-                    <td class="p-4 font-bold text-yellow-400">{{ item.machine_name }}</td>
-                    <td class="p-4 text-sm text-gray-300 whitespace-nowrap font-mono">{{ item.machine_number }}</td>
+                    <td class="p-4 text-sm text-gray-600 whitespace-nowrap">{{ item.store_name }}</td>
+                    <td class="p-4 font-bold text-gray-900">{{ item.machine_name }}</td>
+                    <td class="p-4 text-sm text-gray-600 whitespace-nowrap font-mono">{{ item.machine_number }}</td>
                     <td class="p-4 whitespace-nowrap font-mono tabular-nums">{{ item.total_games }}G</td>
-                    <td class="p-4 whitespace-nowrap font-mono tabular-nums font-bold {% if item.difference_slabs > 0 %}text-green-400 counter-glow-green{% endif %}">
+                    <td class="p-4 whitespace-nowrap font-mono tabular-nums font-bold {% if item.difference_slabs > 0 %}text-green-600{% endif %}">
                         {{ item.difference_slabs }}枚
                         {% if item.max_difference_slabs and item.max_difference_slabs > item.difference_slabs %}
-                        <div class="text-xs text-gray-500 font-normal">(最大{{ item.max_difference_slabs }}枚)</div>
+                        <div class="text-xs text-gray-400 font-normal">(最大{{ item.max_difference_slabs }}枚)</div>
                         {% endif %}
                     </td>
                     <td class="p-4 text-sm">
-                        <div class="text-yellow-500">{{ item.user_note }}</div>
+                        <div class="text-amber-700">{{ item.user_note }}</div>
                         <div class="text-gray-400 text-xs mt-1">🤖 {{ item.other_info }}</div>
                         {% if item.graph_shape_tags %}
                         <div class="flex flex-wrap gap-1 mt-1">
                             {% for tag in item.graph_shape_tags %}
-                            <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{{ tag }}</span>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ tag }}</span>
                             {% endfor %}
                         </div>
                         {% endif %}
                     </td>
-                    <td class="p-4 text-sm font-bold text-yellow-400">
-                        <div class="counter-glow">{{ item.estimation.split('\n')[0] }}</div>
+                    <td class="p-4 text-sm font-bold text-gray-900">
+                        <div>{{ item.estimation.split('\n')[0] }}</div>
                         {% if '\n' in item.estimation %}
-                        <div class="text-xs text-gray-500 font-mono font-normal mt-1">{{ item.estimation.split('\n')[1] }}</div>
+                        <div class="text-xs text-gray-400 font-mono font-normal mt-1">{{ item.estimation.split('\n')[1] }}</div>
                         {% endif %}
                         {% if item.setting_probabilities %}
                         <div class="flex flex-col gap-0.5 mt-2 font-normal min-w-[140px]">
                             {% for setting_no, pct in item.setting_probabilities | dictsort(by='value', reverse=true) %}
                             <div class="flex items-center gap-2 text-xs">
                                 <span class="w-10 shrink-0 text-gray-400">設定{{ setting_no }}</span>
-                                <div class="flex-1 bg-gray-700 rounded-full h-2 overflow-hidden">
-                                    <div class="prob-bar bg-gradient-to-r from-yellow-600 to-yellow-400 h-2" style="width: {{ pct }}%;"></div>
+                                <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                                    <div class="prob-bar bg-gray-900 h-2" style="width: {{ pct }}%;"></div>
                                 </div>
-                                <span class="w-9 shrink-0 text-right text-gray-300 font-mono tabular-nums">{{ pct }}%</span>
+                                <span class="w-9 shrink-0 text-right text-gray-600 font-mono tabular-nums">{{ pct }}%</span>
                             </div>
                             {% endfor %}
                         </div>
@@ -298,26 +327,26 @@
                         </div>
                     </td>
                 </tr>
-                <tr class="bg-gray-900/40">
+                <tr class="bg-gray-50/60">
                     <td colspan="9" class="px-4 pb-3">
                         <details>
-                            <summary class="cursor-pointer select-none text-xs text-blue-400 font-semibold py-1">
+                            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold py-1">
                                 💬 AIに質問する{% if item_chat %} ({{ item_chat|length }}件の質問済み){% endif %}
                             </summary>
                             <div class="mt-2 flex flex-col gap-2 max-w-2xl">
                                 {% if item_chat %}
                                 {% for chat in item_chat[-2:] %}
-                                <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-2 text-xs">
-                                    <div class="text-blue-400 font-semibold">Q. {{ chat.question }}</div>
-                                    <div class="text-gray-300 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
+                                <div class="bg-white border border-gray-200 rounded-lg p-2 text-xs">
+                                    <div class="text-blue-700 font-semibold">Q. {{ chat.question }}</div>
+                                    <div class="text-gray-600 whitespace-pre-wrap mt-1">🤖 {{ chat.answer }}</div>
                                 </div>
                                 {% endfor %}
                                 {% endif %}
                                 <form action="{{ url_for('records.ask') }}" method="POST" class="flex gap-2">
                                     <input type="hidden" name="session_id" value="{{ item.session_id }}">
                                     <input type="hidden" name="machine_name" value="{{ item.machine_name }}">
-                                    <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 bg-gray-900/60 border border-gray-600 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-white focus:outline-none focus:border-yellow-500">
-                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
+                                    <input type="text" name="question" required placeholder="例: このまま打ち続けた方がいい?" class="flex-1 min-w-0 bg-white border border-gray-200 rounded-md px-3 py-2 md:px-2 md:py-1 md:text-xs text-gray-900 focus:outline-none focus:border-gray-400">
+                                    <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white text-sm md:text-xs font-bold px-4 py-2 md:px-3 md:py-1 rounded-md whitespace-nowrap transition">質問</button>
                                 </form>
                             </div>
                         </details>

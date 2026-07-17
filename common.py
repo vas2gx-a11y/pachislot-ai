@@ -92,7 +92,7 @@ HEADERS = [
     "current_games", "difference_slabs", "graph_features",
     "other_info", "user_note", "estimation", "setting_probabilities",
     "max_difference_slabs", "hamari_600_plus", "hamari_800_plus",
-    "max_renchan", "graph_shape_tags", "category_scores",
+    "max_renchan", "graph_shape_tags", "category_scores", "suggestion_observations",
 ]
 
 # machines シートの列構成
@@ -101,7 +101,7 @@ HEADERS = [
 # game_flow: ゲームフロー・システムの説明(AT/ART純増、上乗せ契機など)
 # setting_ratios: 設定1〜6ごとの確率(BIG/REG/合成など)をJSON文字列で格納
 # sources: この機種データがどこから取り込まれたか(画像アップロード/URL)の履歴をJSON文字列で格納
-MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sources"]
+MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sources", "suggestion_items"]
 
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
@@ -309,6 +309,14 @@ def load_records():
                     r["category_scores"] = {}
             else:
                 r["category_scores"] = {}
+            raw_observations = str(r.get("suggestion_observations", "")).strip()
+            if raw_observations:
+                try:
+                    r["suggestion_observations"] = json.loads(raw_observations)
+                except json.JSONDecodeError:
+                    r["suggestion_observations"] = {}
+            else:
+                r["suggestion_observations"] = {}
         records.reverse()  # 新しい順に表示
         _cache_set("records", records)
         return records
@@ -411,11 +419,22 @@ def load_machine_rules():
                     sources = []
             else:
                 sources = []
+            suggestion_items_raw = str(row.get("suggestion_items", "")).strip()
+            if suggestion_items_raw:
+                try:
+                    suggestion_items = json.loads(suggestion_items_raw)
+                    if not isinstance(suggestion_items, list):
+                        suggestion_items = []
+                except json.JSONDecodeError:
+                    suggestion_items = []
+            else:
+                suggestion_items = []
             rules[keyword] = {
                 "hint_words": hint_words,
                 "game_flow": game_flow,
                 "setting_ratios": setting_ratios,
                 "sources": sources,
+                "suggestion_items": suggestion_items,
             }
         _cache_set("machine_rules", rules)
         return rules
@@ -573,6 +592,101 @@ def add_machine_note(keyword, note):
     if not keyword or not note:
         return False
     return save_machine_rule(keyword, [], note, {}, source_label="手動メモ")
+
+
+def _find_machine_row(ws, keyword):
+    """keyword に完全一致する machines シートの行番号(1-indexed)を探す。無ければ None。"""
+    existing_keywords = ws.col_values(1)
+    for i, value in enumerate(existing_keywords[1:], start=2):
+        if str(value).strip() == keyword:
+            return i
+    return None
+
+
+def _load_suggestion_items_raw(ws, row):
+    """指定行の suggestion_items(F列)を生のリストとして読み込む。"""
+    existing_row = ws.row_values(row)
+    if len(existing_row) > 5 and existing_row[5].strip():
+        try:
+            items = json.loads(existing_row[5])
+            if isinstance(items, list):
+                return items
+        except json.JSONDecodeError:
+            pass
+    return []
+
+
+def add_suggestion_item(keyword, name, item_type, weight):
+    """
+    示唆項目(アイキャッチ・トロフィー・穢れ解放・CZ確率など、機種固有の判別要素)を
+    機種スペックに手動登録する。同名の項目が既にあれば上書き(種類・重みを更新)、
+    無ければ追加する。
+
+    keyword: 登録先の機種キーワード(完全一致、既存の機種である必要がある)
+    name: 項目名(例:「ヤミアイキャッチ」「穢れ解放」)
+    item_type: "count"(回数を入力する項目) または "boolean"(あり/なしの項目)
+    weight: 判定における重要度(0〜100の整数。大きいほど設定判別への影響が強い項目として扱う)
+    """
+    keyword = (keyword or "").strip()
+    name = (name or "").strip()
+    if not keyword or not name:
+        return False
+    if item_type not in ("count", "boolean"):
+        item_type = "count"
+    try:
+        weight = max(0, min(int(weight), 100))
+    except (TypeError, ValueError):
+        weight = 0
+
+    try:
+        ws = get_machines_worksheet()
+        target_row = _find_machine_row(ws, keyword)
+        if not target_row:
+            logger.error(f"示唆項目追加エラー: 機種「{keyword}」が見つかりません")
+            return False
+
+        items = _load_suggestion_items_raw(ws, target_row)
+        updated = False
+        for item in items:
+            if isinstance(item, dict) and item.get("name") == name:
+                item["type"] = item_type
+                item["weight"] = weight
+                updated = True
+                break
+        if not updated:
+            items.append({"name": name, "type": item_type, "weight": weight})
+
+        _ensure_min_columns(ws, len(MACHINE_HEADERS))
+        ws.update_cell(target_row, 6, json.dumps(items, ensure_ascii=False))
+        _cache_invalidate("machine_rules")
+        return True
+    except Exception as e:
+        logger.error(f"示唆項目追加エラー: {e}")
+        return False
+
+
+def remove_suggestion_item(keyword, name):
+    """指定した機種から示唆項目を1件削除する。"""
+    keyword = (keyword or "").strip()
+    name = (name or "").strip()
+    if not keyword or not name:
+        return False
+    try:
+        ws = get_machines_worksheet()
+        target_row = _find_machine_row(ws, keyword)
+        if not target_row:
+            return False
+
+        items = _load_suggestion_items_raw(ws, target_row)
+        new_items = [i for i in items if not (isinstance(i, dict) and i.get("name") == name)]
+
+        _ensure_min_columns(ws, len(MACHINE_HEADERS))
+        ws.update_cell(target_row, 6, json.dumps(new_items, ensure_ascii=False))
+        _cache_invalidate("machine_rules")
+        return True
+    except Exception as e:
+        logger.error(f"示唆項目削除エラー: {e}")
+        return False
 
 
 def find_mergeable_keyword(candidate_name, rules):
@@ -1407,11 +1521,12 @@ def _estimate_payout_rate(total_games, difference_slabs, coins_per_game=3):
 
 
 CATEGORY_SCORE_LABELS = {
-    "big_reg_match": ("合算一致", 30),
-    "graph_pattern": ("グラフ", 20),
-    "hamari": ("ハマり", 15),
-    "renchan": ("連チャン", 15),
-    "hall_tendency": ("ホール傾向", 20),
+    "big_reg_match": ("合算一致", 25),
+    "suggestion_items": ("示唆項目", 25),
+    "graph_pattern": ("グラフ", 15),
+    "hamari": ("ハマり", 10),
+    "renchan": ("連チャン", 10),
+    "hall_tendency": ("ホール傾向", 15),
 }
 
 
@@ -1470,11 +1585,42 @@ def category_scores_total(category_scores):
     return sum(b["score"] for b in breakdown), sum(b["max_score"] for b in breakdown)
 
 
+def _format_suggestion_observations(suggestion_items, suggestion_observations):
+    """
+    機種に登録されている示唆項目(アイキャッチ・トロフィー・穢れ解放など)の定義と、
+    今回の記録での観測値を突き合わせて、プロンプト用のテキストに整形する。
+    観測値が無い項目は「未入力」として明示し、AIが「0だから無かった」と
+    誤解しないようにする(入力自体を忘れている可能性があるため)。
+    """
+    if not suggestion_items:
+        return "この機種には示唆項目が登録されていません(機種スペック登録システムから追加できます)"
+
+    lines = []
+    for item in suggestion_items:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name", "")).strip()
+        if not name:
+            continue
+        weight = item.get("weight", 0)
+        item_type = item.get("type", "count")
+        observed = suggestion_observations.get(name)
+        if observed is None or observed == "":
+            observed_text = "未入力"
+        elif item_type == "boolean":
+            observed_text = "あり" if str(observed) in ("1", "true", "True", "on") else "なし"
+        else:
+            observed_text = f"{observed}回"
+        lines.append(f"・{name}(重要度{weight}/100): {observed_text}")
+    return "\n".join(lines) if lines else "この機種には示唆項目が登録されていません"
+
+
 def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
-             recent_records_count=0, base64_image=None, mime_type="image/jpeg"):
+             recent_records_count=0, base64_image=None, mime_type="image/jpeg", suggestion_observations=None):
     """
     machine_name・強示唆ワード・ゲームフロー・設定別確率表・累計データ・
-    過去のメモやAI備考・同機種の直近の来店データ(とその傾向分析)をGeminiに渡し、
+    過去のメモやAI備考・同機種の直近の来店データ(とその傾向分析)・
+    機種固有の示唆項目の観測結果(アイキャッチ・トロフィー・穢れ解放など)をGeminiに渡し、
     設定1〜6それぞれの確率(%)と、日本語の短い判定コメントを生成してもらう。
     base64_image が渡された場合は、今回アップロードされたデータ画面・グラフ画像も
     そのまま添付し、AIに画像を直接見た上で判定させる(グラフの形状や画面内の
@@ -1485,13 +1631,15 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     (=数値そのものが「まだ判別材料が少ない」ことを表す)。
     AI呼び出しに失敗した場合は簡易的なキーワード判定にフォールバックする。
 
-    戻り値: (comment: str, setting_probabilities: {"1": int, ..., "6": int})  ※合計100
+    戻り値: (comment: str, setting_probabilities: {"1": int, ..., "6": int}, category_scores: dict)
     """
     stats = stats or {}
+    suggestion_observations = suggestion_observations or {}
     matched_keyword, rule = find_machine_rule(machine_name)
     hint_words = rule.get("hint_words", [])
     game_flow = rule.get("game_flow", "")
     setting_ratios = rule.get("setting_ratios", {})
+    suggestion_items = rule.get("suggestion_items", [])
     if matched_keyword:
         logger.info(f"設定推測: 「{machine_name}」に機種スペック「{matched_keyword}」を適用")
     else:
@@ -1506,6 +1654,7 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
         total_games, recent_records_count, bool(combined_text and combined_text.strip())
     )
     setting_match_hint = _build_setting_match_hint(setting_ratios, total_games, big_count, reg_count)
+    suggestion_items_text = _format_suggestion_observations(suggestion_items, suggestion_observations)
 
     difference_slabs = stats.get("difference_slabs", 0)
     max_difference_slabs = stats.get("max_difference_slabs", 0) or difference_slabs
@@ -1530,14 +1679,17 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     prompt = f"""
     あなたはパチスロの設定判別をサポートするアシスタントです。
     以下の情報をもとに、この台の設定1〜設定6それぞれである確率(%)を推測してください。
-    判定にあたっては、以下5つのカテゴリごとに根拠の強さを点数化してから、
-    総合的に設定確率を決めてください(点数配分の目安: 合算確率の一致度30点、
-    差枚グラフの推移20点、ハマり回数15点、連チャン15点、ホールの傾向20点、合計100点。
-    データが無い/薄いカテゴリは低めの点数にし、無理に高得点にしないこと)。
+    判定にあたっては、以下6つのカテゴリごとに根拠の強さを点数化してから、
+    総合的に設定確率を決めてください(点数配分の目安: 合算確率の一致度25点、
+    示唆項目(アイキャッチ・トロフィー・穢れ解放など機種固有の判別要素)25点、
+    差枚グラフの推移15点、ハマり回数10点、連チャン10点、ホールの傾向15点、合計100点。
+    データが無い/薄いカテゴリは低めの点数にし、無理に高得点にしないこと。
+    特に「示唆項目」は、実戦で最も重視される要素なので、観測結果があれば重要度に応じて
+    しっかり点数に反映してください)。
 
     必ず以下のJSON形式のみで出力してください。他の文章・前置き・記号は一切不要です。
 
-    {{"category_scores": {{"big_reg_match": 0, "graph_pattern": 0, "hamari": 0, "renchan": 0, "hall_tendency": 0}},
+    {{"category_scores": {{"big_reg_match": 0, "suggestion_items": 0, "graph_pattern": 0, "hamari": 0, "renchan": 0, "hall_tendency": 0}},
       "setting_probabilities": {{"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0}},
       "comment": "20〜40文字程度の日本語コメント"}}
 
@@ -1546,6 +1698,8 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     【この機種のゲームフロー(AT/ART仕様など)】{game_flow if game_flow else "登録なし"}
     【この機種の設定別確率表(スペック表より)】{_format_setting_ratios(setting_ratios)}
     【実測値と設定別理論値の自動比較(Pythonで計算済み、参考値として重視してください)】{setting_match_hint}
+    【示唆項目の観測結果(機種固有・重要度付き、実戦で最も重視される情報)】
+    {suggestion_items_text}
     【今回の累計データ】総回転数: {total_games}G, BIG: {big_count}回 (実測確率 {actual_big_rate}), REG: {reg_count}回 (実測確率 {actual_reg_rate}), 現在の回転数: {stats.get("current_games", 0)}G
     【差枚グラフ関連】最終差枚: {difference_slabs}枚, 最大差枚: {max_difference_slabs}枚, 推定出率: {payout_rate_text}
     【グラフの形状(画像からのAIによる大まかな分類、正確な数値ではない参考情報)】{", ".join(graph_shape_tags) if graph_shape_tags else "情報なし"}
@@ -1567,6 +1721,9 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     ハマり回数・連チャン数が「0」の場合、必ずしも「ハマりが無かった/連チャンが無かった」
     ことを意味せず、単に画面に表示が無くて読み取れなかった可能性もあるため、
     0の場合はそのカテゴリの点数を高くも低くもせず中間程度にとどめてください。
+    示唆項目が「未入力」の場合も同様に、「発生しなかった」とは断定せず中間程度の点数にしてください。
+    重要度(重み)が高い項目が観測されている場合は、それだけで高設定側に大きく傾けて構いません
+    (アイキャッチ・トロフィー・穢れ解放などの示唆項目は、実戦において最も信頼性の高い判別要素です)。
     「同機種・このホールでの直近の傾向分析」(平均差枚・プラス収支率・強示唆ワード出現頻度など)は、
     そのホールがこの台に対して高設定を使いやすいかどうかの実績を示す重要な材料なので、
     単なる免責事項として退けず、確率分布に積極的に反映してください。
