@@ -339,7 +339,7 @@
   rows は build_store_trends() が返す集計行のリスト。
   wide_label は trend_row にそのまま渡す(機種名など長いラベルの表で true にする)。
 #}
-{% macro trend_section(icon, title, description, rows, min_samples=3, scroll=False, wide_label=False) %}
+{% macro trend_section(icon, title, description, rows, min_samples=3, scroll=False, wide_label=False, show_legend=True) %}
 <section class="card card-body">
     <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">{{ icon }}</span>
@@ -361,7 +361,9 @@
         {% endif %}
         {% for row in rows %}{{ trend_row(row, max_abs, min_samples, wide_label) }}{% endfor %}
     </div>
+    {% if show_legend %}
     <p class="hint">薄く表示している区分は{{ min_samples }}件未満で、偶然のブレの可能性が高いものです。</p>
+    {% endif %}
     {% else %}
     <p class="text-sm text-gray-400 mt-3">この切り口で集計できる記録がありません。</p>
     {% endif %}
@@ -397,11 +399,12 @@
 {% endmacro %}
 
 {# 取り込んだホールデータの1セクション(曜日別・日付末尾別など) #}
-{% macro hall_metric_section(icon, title, description, rows, min_samples=3) %}
+{% macro hall_metric_section(icon, title, description, rows, min_samples=3, show_legend=True) %}
 <section class="card card-body">
     <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">{{ icon }}</span>
         <span>{{ title }}</span>
+        {% if rows %}<span class="text-xs text-gray-400 font-normal font-sans">{{ rows | length }}件</span>{% endif %}
     </h2>
     {% if description %}<p class="hint mt-2">{{ description }}</p>{% endif %}
 
@@ -419,7 +422,10 @@
         </div>
         {% for row in rows %}{{ hall_metric_row(row, max_games) }}{% endfor %}
     </div>
+    {% if show_legend %}
+    {# 全体比・薄い行の意味は同じグループ内で何度も繰り返すと冗長なので、グループの最初の表だけに出す #}
     <p class="hint">全体比は、その区分の平均G数が店全体の平均と比べて何%かを表します（100%が平均）。薄い行は{{ min_samples }}日未満です。</p>
+    {% endif %}
     {% else %}
     <p class="text-sm text-gray-400 mt-3">この切り口で集計できるデータがありません。</p>
     {% endif %}

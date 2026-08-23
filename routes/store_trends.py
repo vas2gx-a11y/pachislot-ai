@@ -124,6 +124,9 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
     # 取り込んだホールデータ(店の全台)は、自分の記録より対象期間が長いことが多いので
     # 画面の期間指定とは別に、常に直近1年分を集計する
     daily_trends = common.build_store_daily_trends(store_name, days=365) if store_name else None
+    # 旧イベント日・周年日の傾向は、直近1年だけだと「最近たまたま強い/弱い」を
+    # 「そういうイベントだ」と誤読しやすいため、全期間の集計も並べて比較できるようにする
+    daily_trends_all = common.build_store_daily_trends(store_name, days=0) if store_name else None
     # 台別データは台ごとの傾向を見るためのものなので、画面の期間指定に合わせて集計する
     unit_trends = common.build_store_unit_trends(store_name, days=days) if store_name else None
 
@@ -137,6 +140,7 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
         store_stats=store_stats,
         store_events=store_events,
         daily_trends=daily_trends,
+        daily_trends_all=daily_trends_all,
         unit_trends=unit_trends,
         import_preview=import_preview,
         pasted_text=pasted_text,

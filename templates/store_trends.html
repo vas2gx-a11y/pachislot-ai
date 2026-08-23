@@ -42,6 +42,31 @@
     {% endcall %}
 
     {% if store_name %}
+    {# ページが長いため、主要ブロックへすぐ飛べるように簡易ナビを置く #}
+    <nav class="flex flex-wrap gap-2">
+        <a href="#import-section" class="btn btn-ghost btn-sm">📥 データ取り込み</a>
+        {% if (daily_trends and daily_trends.record_count) or (unit_trends and unit_trends.record_count) %}
+        <a href="#store-data-section" class="btn btn-ghost btn-sm">🏪 店の全台データ</a>
+        {% endif %}
+        {% if trends and trends.record_count %}
+        <a href="#my-records-section" class="btn btn-ghost btn-sm">📊 自分の記録</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    {% if store_name %}
+    {#
+      取り込み系のカードをここに集約する。
+      毎回の閲覧で必ず目に入る位置に5つも入力フォームが並ぶと、
+      肝心の分析結果にたどり着くまでのスクロールが長くなってしまうため、
+      1つの折りたたみにまとめている。何も取り込んでいない状態(初回)だけ開いておく。
+    #}
+    <details id="import-section" class="group" {% if not (store_stats or (daily_trends and daily_trends.record_count) or (unit_trends and unit_trends.record_count)) %}open{% endif %}>
+        <summary class="cursor-pointer select-none flex items-center gap-2 text-sm font-bold text-gray-900 py-1">
+            <span class="chev inline-block text-gray-400">▶</span>
+            <span>📥 データを取り込む</span>
+            <span class="text-xs font-normal text-gray-400">年間データ・旧イベント日・日別・台別・CSV一括</span>
+        </summary>
+        <div class="stack mt-3">
     {#
       店舗全体の年間データ(データサイト等の外部集計)。
       自分の記録から作る集計とは母数がまったく違うので、混ぜずに並べて比較する。
@@ -191,9 +216,7 @@
         </form>
     </details>
     {% endcall %}
-    {% endif %}
 
-    {% if store_name %}
     {#
       店の旧イベント日・周年日の登録。
       ここで登録した日は、下の「店の全台データ」の集計で通常日と比べられるようになる。
@@ -223,9 +246,7 @@
         <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">旧イベント日・周年日を保存</button>
     </form>
     {% endcall %}
-    {% endif %}
 
-    {% if store_name %}
     {#
       ホールデータの貼り付け取り込み。
       データサイトは自動アクセスをブロックしているため、ユーザーが自分のブラウザで開いた
@@ -321,9 +342,7 @@
     </form>
     {% endif %}
     {% endcall %}
-    {% endif %}
 
-    {% if store_name %}
     {#
       台別データ(機種・台番号ごと)の貼り付け取り込み。
       1日分のページを1回の貼り付けで取り込む。列の並びはサイトによって違うので、
@@ -427,9 +446,7 @@
     </form>
     {% endif %}
     {% endcall %}
-    {% endif %}
 
-    {% if store_name %}
     {#
       取り込みツール(tools/anaslo.py)が出すCSVの一括取り込み。
       1行が「1日×1台」なので、このファイル1つから台別データと日別データの両方を作れる。
@@ -522,6 +539,19 @@
     </form>
     {% endif %}
     {% endcall %}
+        </div>
+    </details>
+    {% endif %}
+
+    {% if (daily_trends and daily_trends.record_count) or (unit_trends and unit_trends.record_count) %}
+    {# ここから「店の全台データ」。自分の記録(自分が打った台だけ)とは母数が違うので、
+       見出しの区切りをはっきり付けて混同しないようにする。 #}
+    <div id="store-data-section" class="pt-2 scroll-mt-4">
+        <h2 class="font-display font-extrabold text-lg md:text-xl text-gray-900 flex items-center gap-2">
+            <span>🏪 店の全台データ</span>
+            <span class="chip">取り込みデータ・店の全台が対象</span>
+        </h2>
+    </div>
     {% endif %}
 
     {% if daily_trends and daily_trends.record_count %}
@@ -545,22 +575,35 @@
         </p>
     </section>
 
-    {% if daily_trends.event_vs_normal %}
-    {% set cmp = daily_trends.event_vs_normal %}
+    {% if daily_trends.event_vs_normal or (daily_trends_all and daily_trends_all.event_vs_normal) %}
     <section>
         <h2 class="font-display font-bold text-base md:text-lg text-gray-900 mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-pink-50 text-base shrink-0">🎊</span>
             <span>旧イベント日・周年日 vs 通常日</span>
         </h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-            {{ stat_card("旧イベ等の稼働", (cmp.games_ratio | round(0) | int) ~ "%",
-                         "text-green-600" if cmp.games_ratio >= 100 else "text-red-600") }}
-            {{ stat_card("平均G数の差", ("%+d" | format(cmp.games_gap | round(0) | int)) ~ "G") }}
-            {{ stat_card("平均差枚の差", ("%+d" | format(cmp.diff_gap | round(0) | int) ~ "枚") if cmp.diff_gap is not none else "データなし",
-                         "text-green-600" if cmp.diff_gap and cmp.diff_gap > 0 else "text-red-600") }}
-            {{ stat_card("旧イベ等の日数", cmp.event.count ~ "日") }}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for period_label, period_trends in [("直近1年", daily_trends), ("全期間", daily_trends_all)] %}
+            <div>
+                <div class="text-xs font-bold text-gray-400 mb-1.5">{{ period_label }}
+                    {% if period_trends %}<span class="font-normal">（{{ period_trends.first_date }}〜{{ period_trends.last_date }}）</span>{% endif %}
+                </div>
+                {% if period_trends and period_trends.event_vs_normal %}
+                {% set cmp = period_trends.event_vs_normal %}
+                <div class="grid grid-cols-2 gap-2 md:gap-3">
+                    {{ stat_card("旧イベ等の稼働", (cmp.games_ratio | round(0) | int) ~ "%",
+                                 "text-green-600" if cmp.games_ratio >= 100 else "text-red-600") }}
+                    {{ stat_card("平均G数の差", ("%+d" | format(cmp.games_gap | round(0) | int)) ~ "G") }}
+                    {{ stat_card("平均差枚の差", ("%+d" | format(cmp.diff_gap | round(0) | int) ~ "枚") if cmp.diff_gap is not none else "データなし",
+                                 "text-green-600" if cmp.diff_gap and cmp.diff_gap > 0 else "text-red-600") }}
+                    {{ stat_card("旧イベ等の日数", cmp.event.count ~ "日") }}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400">この期間では比較できるデータがありません。</p>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        <p class="hint">「旧イベ等の稼働」は通常日の平均G数を100%とした比率です。差枚は値のある日だけで平均しています。</p>
+        <p class="hint">「旧イベ等の稼働」は通常日の平均G数を100%とした比率です。差枚は値のある日だけで平均しています。直近1年と全期間で差が大きい場合、最近になってイベントの傾向が変わった可能性があります。</p>
     </section>
     {% endif %}
 
@@ -570,17 +613,25 @@
              daily_trends.by_weekday, daily_trends.min_samples) }}
         {{ hall_metric_section("🔢", "日付末尾別の稼働（店の全台）",
              "「7の付く日」のような周期イベントがあれば、その末尾の稼働が跳ねます。",
-             daily_trends.by_day_suffix, daily_trends.min_samples) }}
+             daily_trends.by_day_suffix, daily_trends.min_samples, false) }}
     </div>
 
-    {% if daily_trends.by_event_category or daily_trends.by_event_rule %}
+    {% if daily_trends.by_event_category or daily_trends.by_event_rule or (daily_trends_all and (daily_trends_all.by_event_category or daily_trends_all.by_event_rule)) %}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-        {{ hall_metric_section("🎊", "旧イベ/周年/通常の内訳（店の全台）",
+        {{ hall_metric_section("🎊", "旧イベ/周年/通常の内訳（直近1年・店の全台）",
              "登録した旧イベント日・周年日と、それ以外の通常日を比べます。",
-             daily_trends.by_event_category, daily_trends.min_samples) }}
-        {{ hall_metric_section("📅", "イベント日の種類別（店の全台）",
+             daily_trends.by_event_category, daily_trends.min_samples, false) }}
+        {{ hall_metric_section("🎊", "旧イベ/周年/通常の内訳（全期間・店の全台）",
+             "同じ内訳を、取り込んだデータの全期間で見た場合です。直近1年の結果と比べて傾向が変わっていないか確認できます。",
+             daily_trends_all.by_event_category if daily_trends_all else [], daily_trends.min_samples, false) }}
+    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        {{ hall_metric_section("📅", "イベント日の種類別（直近1年・店の全台）",
              "登録した個々のルール（「ゾロ目日」「9月9日」など）ごとの稼働です。",
-             daily_trends.by_event_rule, daily_trends.min_samples) }}
+             daily_trends.by_event_rule, daily_trends.min_samples, false) }}
+        {{ hall_metric_section("📅", "イベント日の種類別（全期間・店の全台）",
+             "同じ内訳を、取り込んだデータの全期間で見た場合です。",
+             daily_trends_all.by_event_rule if daily_trends_all else [], daily_trends.min_samples, false) }}
     </div>
     {% elif store_events is none %}
     <p class="hint">旧イベント日・周年日を登録すると、ここに通常日との比較が表示されます。上の「旧イベント日・周年日を登録」から登録してください。</p>
@@ -612,19 +663,26 @@
 
         {{ trend_section("📍", "端台（角台の候補）とそれ以外",
              "同じ日・同じ機種の台番号の連番の両端を「端台」として集計しています。島の切れ目と機種の切れ目がズレている場合は、実際の角台と一致しないことがあります。",
-             unit_trends.by_edge, unit_trends.min_samples) }}
+             unit_trends.by_edge, unit_trends.min_samples, false, false, false) }}
 
         {{ trend_section("🎰", "機種別（店の全台）",
              "その店がどの機種に設定を入れているかを、自分の記録ではなく店の全台データで見ます。",
-             unit_trends.by_machine, unit_trends.min_samples, true, true) }}
+             unit_trends.by_machine, unit_trends.min_samples, true, true, false) }}
 
         {{ trend_section("🏅", "好調な台トップ20",
              "台番号ごとの平均差枚が高い順です。複数日ぶん取り込むほど、狙い台の候補として意味を持ちます。",
-             unit_trends.top_units, unit_trends.min_samples, true, true) }}
+             unit_trends.top_units, unit_trends.min_samples, true, true, false) }}
     </div>
     {% endif %}
 
     {% if trends and trends.record_count %}
+    {# ここから「自分の記録」。上の「店の全台データ」と混同しないよう、見出しの区切りを付ける。 #}
+    <div id="my-records-section" class="pt-2 scroll-mt-4">
+        <h2 class="font-display font-extrabold text-lg md:text-xl text-gray-900 flex items-center gap-2">
+            <span>📊 自分の記録</span>
+            <span class="chip">自分が打った台のみ</span>
+        </h2>
+    </div>
     {% set overall = trends.overall %}
 
     {# 上の年間データ(店の全台)と混同しないよう、自分の記録の集計であることを明記する #}
@@ -705,20 +763,20 @@
 
         {{ trend_section("🗓", "曜日別",
              "曜日ごとの平均差枚。土日と平日で使い分けているホールを見つける用途です。",
-             trends.by_weekday, trends.min_samples) }}
+             trends.by_weekday, trends.min_samples, false, false, false) }}
 
         {{ trend_section("🔢", "日付の末尾別",
              "「7の付く日」「ゾロ目の日」のような周期イベントの有無を見ます。",
-             trends.by_day_suffix, trends.min_samples) }}
+             trends.by_day_suffix, trends.min_samples, false, false, false) }}
 
         {{ trend_section("🎰", "機種別",
              "その店がどの機種に設定を入れているかの目安。件数が多い機種ほど信頼できます。",
-             trends.by_machine, trends.min_samples, true, true) }}
+             trends.by_machine, trends.min_samples, true, true, false) }}
     </div>
 
     {{ trend_section("🔟", "台番号の末尾別",
          "台番号を入力した記録だけが対象です。末尾を揃えて設定を入れるホールかどうかの目安になります。",
-         trends.by_number_suffix, trends.min_samples) }}
+         trends.by_number_suffix, trends.min_samples, false, false, false) }}
 
     {% if trends.repdigit %}
     {% call card("🎯", "ゾロ目台（111・222 など）", None, "bg-gray-100",
