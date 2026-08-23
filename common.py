@@ -131,6 +131,15 @@ STORE_UNITS_HEADERS = [
     "art_count",
 ]
 
+# store_events シートの列構成(店舗ごとの旧イベント日・周年日)
+# 「毎月11日が強い」「9月9日が周年」といった店のクセを、日別データの集計に反映するために持つ。
+# ルールは人が読める文字列のまま保存し、使うときに解析する
+# (ルールの書き方を後から増やしても、シートを作り直さずに済むようにするため)
+STORE_EVENTS_SHEET_NAME = os.environ.get("STORE_EVENTS_SHEET_NAME", "store_events")
+STORE_EVENTS_HEADERS = [
+    "store_name", "event_days", "anniversary_days", "note", "source", "updated_at",
+]
+
 # store_stats シートの列構成(店舗ごとの年間データ)
 # データサイト等で公開されている「店舗単位の集計値」を1店舗1行で保持する。
 # 自分の記録から作る集計(build_store_trends)とは別物なので、シートを分けている。
@@ -254,6 +263,30 @@ def get_chat_worksheet():
     elif current_headers != CHAT_HEADERS:
         logger.warning(
             f"chat_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {CHAT_HEADERS})"
+        )
+    return ws
+
+
+def get_store_events_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(STORE_EVENTS_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=STORE_EVENTS_SHEET_NAME, rows=200, cols=len(STORE_EVENTS_HEADERS))
+        ws.append_row(STORE_EVENTS_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(STORE_EVENTS_HEADERS)
+    elif current_headers != STORE_EVENTS_HEADERS and current_headers == STORE_EVENTS_HEADERS[:len(current_headers)]:
+        _ensure_min_columns(ws, len(STORE_EVENTS_HEADERS))
+        for i, header in enumerate(STORE_EVENTS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != STORE_EVENTS_HEADERS:
+        logger.warning(
+            f"store_eventsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_EVENTS_HEADERS})"
         )
     return ws
 
@@ -2933,6 +2966,239 @@ def _summarize_daily_rows(rows, overall_avg_games=None):
     }
 
 
+# ---------------------------------------------------------------------------
+# 旧イベント日・周年日
+# ---------------------------------------------------------------------------
+# ホールデータサイトに載っている表記をそのまま貼れるように、書き方を何通りか受け付ける。
+#   ゾロ目日 / 月日がゾロ目日 / 1のつく日 / 毎月7日 / 9月9日
+_EVENT_ZOROME_RE = re.compile(r"^ゾロ目日?$")
+_EVENT_MD_ZOROME_RE = re.compile(r"^月日(が)?ゾロ目日?$")
+_EVENT_DIGIT_RE = re.compile(r"^(\d)の[付つ]く日$")
+_EVENT_MONTH_DAY_RE = re.compile(r"^(\d{1,2})月(\d{1,2})日$")
+_EVENT_DAY_RE = re.compile(r"^(?:毎月)?(\d{1,2})日$")
+# ゾロ目日として扱う日(31日は「3と1」でゾロ目にならないため入れない)
+_ZOROME_DAYS = (11, 22)
+
+
+def parse_event_day_rules(text):
+    """
+    旧イベント日・周年日の指定テキストを、判定用のルールに変換する。
+
+    戻り値: (rules, unknown)
+      rules: [{"type", "value", "label"}, ...]
+      unknown: 解釈できなかった語(画面で知らせて書き直してもらうため)
+    """
+    if not text or not str(text).strip():
+        return [], []
+
+    # 「ゾロ目日(11日、22日)」のようにカッコ内に具体日が書かれている表記に合わせ、
+    # カッコも区切り文字として扱う
+    normalized = re.sub(r"[（）()]", "、", str(text))
+    tokens = [t.strip() for t in re.split(r"[、,／/\n\r\t]+", normalized) if t.strip()]
+
+    rules = []
+    unknown = []
+    seen = set()
+
+    def _add(rule_type, value, label):
+        key = (rule_type, value)
+        if key in seen:
+            return
+        seen.add(key)
+        rules.append({"type": rule_type, "value": value, "label": label})
+
+    for token in tokens:
+        cleaned = token.replace(" ", "").replace("　", "")
+        if _EVENT_ZOROME_RE.match(cleaned):
+            _add("zorome", None, "ゾロ目日")
+            continue
+        if _EVENT_MD_ZOROME_RE.match(cleaned):
+            _add("md_zorome", None, "月日ゾロ目")
+            continue
+        matched = _EVENT_DIGIT_RE.match(cleaned)
+        if matched:
+            digit = int(matched.group(1))
+            _add("digit", digit, f"{digit}のつく日")
+            continue
+        matched = _EVENT_MONTH_DAY_RE.match(cleaned)
+        if matched:
+            month, day = int(matched.group(1)), int(matched.group(2))
+            if 1 <= month <= 12 and 1 <= day <= 31:
+                _add("date", (month, day), f"{month}月{day}日")
+                continue
+        matched = _EVENT_DAY_RE.match(cleaned)
+        if matched:
+            day = int(matched.group(1))
+            if 1 <= day <= 31:
+                _add("day", day, f"毎月{day}日")
+                continue
+        unknown.append(token)
+
+    return rules, unknown
+
+
+def _rule_matches_date(rule, day):
+    """1つのルールがその日付に当てはまるか"""
+    rule_type = rule["type"]
+    if rule_type == "zorome":
+        return day.day in _ZOROME_DAYS
+    if rule_type == "md_zorome":
+        return day.month == day.day
+    if rule_type == "digit":
+        return str(rule["value"]) in str(day.day)
+    if rule_type == "day":
+        return day.day == rule["value"]
+    if rule_type == "date":
+        return (day.month, day.day) == tuple(rule["value"])
+    return False
+
+
+def matched_event_labels(day, rules):
+    """その日に当てはまるルールのラベルを返す"""
+    return [r["label"] for r in rules if _rule_matches_date(r, day)]
+
+
+def describe_event_rules(rules):
+    """ルールを画面表示用の文字列にする"""
+    return "、".join(r["label"] for r in rules) if rules else ""
+
+
+def load_store_events():
+    """
+    store_events シートを読み込み、{店舗名: 設定} の辞書で返す。
+    読めない場合は空辞書(この機能が使えないだけで他は今まで通り動かす)。
+    """
+    cached = _cache_get("store_events")
+    if cached is not None:
+        return cached
+
+    try:
+        ws = get_store_events_worksheet()
+        rows = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"店舗イベント日の読み込みエラー: {e}")
+        return {}
+
+    events_by_store = {}
+    for row in rows:
+        store_name = str(row.get("store_name", "")).strip()
+        if not store_name:
+            continue
+        event_text = str(row.get("event_days", "")).strip()
+        anniversary_text = str(row.get("anniversary_days", "")).strip()
+        event_rules, event_unknown = parse_event_day_rules(event_text)
+        anniversary_rules, anniversary_unknown = parse_event_day_rules(anniversary_text)
+        events_by_store[store_name] = {
+            "store_name": store_name,
+            "event_days": event_text,
+            "anniversary_days": anniversary_text,
+            "event_rules": event_rules,
+            "anniversary_rules": anniversary_rules,
+            "unknown": event_unknown + anniversary_unknown,
+            "note": str(row.get("note", "")).strip(),
+            "source": str(row.get("source", "")).strip(),
+            "updated_at": str(row.get("updated_at", "")).strip(),
+        }
+
+    _cache_set("store_events", events_by_store)
+    return events_by_store
+
+
+def save_store_events(store_name, event_days="", anniversary_days="", note="", source=""):
+    """
+    店舗の旧イベント日・周年日を保存する(1店舗1行。既に行があれば上書き)。
+    戻り値: (成功したか, メッセージ)
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return False, "店舗名が空のため保存できません。"
+
+    event_rules, event_unknown = parse_event_day_rules(event_days)
+    anniversary_rules, anniversary_unknown = parse_event_day_rules(anniversary_days)
+    unknown = event_unknown + anniversary_unknown
+
+    try:
+        ws = get_store_events_worksheet()
+        existing = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"店舗イベント日の読み込みエラー(保存前): {e}")
+        return False, "シートの読み込みに失敗しました。時間をおいてお試しください。"
+
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    values = [store_name, event_days.strip(), anniversary_days.strip(),
+              note.strip(), source, now_text]
+
+    target_row = None
+    for index, row in enumerate(existing, start=2):
+        if str(row.get("store_name", "")).strip() == store_name:
+            target_row = index
+            break
+
+    try:
+        if target_row:
+            ws.update([values], f"A{target_row}")
+        else:
+            ws.append_row(values)
+    except Exception as e:
+        logger.error(f"店舗イベント日の保存エラー: {e}")
+        return False, "イベント日の保存に失敗しました。時間をおいてお試しください。"
+
+    _cache_invalidate("store_events")
+    message = f"「{store_name}」の旧イベント日・周年日を保存しました。"
+    if event_rules or anniversary_rules:
+        message += f"(旧イベ: {describe_event_rules(event_rules) or 'なし'} / 周年: {describe_event_rules(anniversary_rules) or 'なし'})"
+    if unknown:
+        message += f" 読み取れなかった指定: {'、'.join(unknown)}"
+    return True, message
+
+
+_EVENT_CATEGORY_LABELS = {"event": "旧イベント日", "anniversary": "周年日", "normal": "通常日"}
+
+
+def _event_category_rows(parsed_dates, events, overall):
+    """旧イベント日 / 周年日 / 通常日 の3つに分けて集計する(日は重複して属することがある)"""
+    buckets = {"event": [], "anniversary": [], "normal": []}
+    for day, row in parsed_dates:
+        is_event = any(_rule_matches_date(r, day) for r in events["event_rules"])
+        is_anniversary = any(_rule_matches_date(r, day) for r in events["anniversary_rules"])
+        if is_event:
+            buckets["event"].append(row)
+        if is_anniversary:
+            buckets["anniversary"].append(row)
+        if not is_event and not is_anniversary:
+            buckets["normal"].append(row)
+
+    rows = []
+    for key in ("event", "anniversary", "normal"):
+        summary = _summarize_daily_rows(buckets[key], overall_avg_games=overall["avg_games"])
+        if summary is None:
+            continue
+        summary["key"] = key
+        summary["label"] = _EVENT_CATEGORY_LABELS[key]
+        rows.append(summary)
+    return rows
+
+
+def _event_rule_rows(parsed_dates, events, overall):
+    """設定したルールごとの集計(「11日だけ強い」のような差を見るため)"""
+    rows = []
+    seen = set()
+    for rule in list(events["event_rules"]) + list(events["anniversary_rules"]):
+        if rule["label"] in seen:
+            continue
+        seen.add(rule["label"])
+        group = [row for day, row in parsed_dates if _rule_matches_date(rule, day)]
+        summary = _summarize_daily_rows(group, overall_avg_games=overall["avg_games"])
+        if summary is None:
+            continue
+        summary["key"] = rule["label"]
+        summary["label"] = rule["label"]
+        rows.append(summary)
+    # 稼働の高い順。G数が無い行は後ろに送る
+    rows.sort(key=lambda r: (r["avg_games"] is None, -(r["avg_games"] or 0)))
+    return rows
+
+
 def build_store_daily_trends(store_name, days=365):
     """
     取り込んだ店舗の日別データを、曜日別・日付末尾別に集計する。
@@ -2985,6 +3251,15 @@ def build_store_daily_trends(store_name, days=365):
     trends["by_weekday"] = _group(lambda dt: dt.weekday(), lambda k: f"{WEEKDAY_LABELS[k]}曜", lambda row: row["key"])
     trends["by_day_suffix"] = _group(lambda dt: dt.day % 10, lambda k: f"末尾{k}の日", lambda row: row["key"])
 
+    # 旧イベント日・周年日が登録されていれば、その日と通常日を比べられるようにする
+    events = load_store_events().get(store_name)
+    trends["events"] = events
+    trends["by_event_category"] = []
+    trends["by_event_rule"] = []
+    if events and (events["event_rules"] or events["anniversary_rules"]):
+        trends["by_event_category"] = _event_category_rows(parsed_dates, events, overall)
+        trends["by_event_rule"] = _event_rule_rows(parsed_dates, events, overall)
+
     def _best(rows_, key):
         eligible = [r for r in rows_ if r["enough_samples"] and r.get(key) is not None]
         return max(eligible, key=lambda r: r[key]) if eligible else None
@@ -2993,7 +3268,23 @@ def build_store_daily_trends(store_name, days=365):
         "busiest_weekday": _best(trends["by_weekday"], "avg_games"),
         "busiest_day_suffix": _best(trends["by_day_suffix"], "avg_games"),
         "best_diff_day_suffix": _best(trends["by_day_suffix"], "avg_diff"),
+        "busiest_event_rule": _best(trends["by_event_rule"], "avg_games"),
     }
+
+    # 「旧イベ日は通常日よりどれだけ動くか」は一番知りたい所なので、差を先に出しておく
+    by_key = {row["key"]: row for row in trends["by_event_category"]}
+    event_row, normal_row = by_key.get("event"), by_key.get("normal")
+    if event_row and normal_row and event_row["avg_games"] and normal_row["avg_games"]:
+        trends["event_vs_normal"] = {
+            "event": event_row,
+            "normal": normal_row,
+            "games_ratio": event_row["avg_games"] / normal_row["avg_games"] * 100,
+            "games_gap": event_row["avg_games"] - normal_row["avg_games"],
+            "diff_gap": (event_row["avg_diff"] - normal_row["avg_diff"])
+                        if (event_row["avg_diff"] is not None and normal_row["avg_diff"] is not None) else None,
+        }
+    else:
+        trends["event_vs_normal"] = None
     return trends
 
 
@@ -3026,6 +3317,18 @@ def describe_store_daily_trends(trends, limit=10):
 
     lines.append(_rows_text("曜日別", trends.get("by_weekday", [])))
     lines.append(_rows_text("日付末尾別", trends.get("by_day_suffix", [])))
+
+    if trends.get("by_event_category"):
+        lines.append(_rows_text("旧イベント日/周年日/通常日", trends["by_event_category"]))
+    if trends.get("by_event_rule"):
+        lines.append(_rows_text("イベント日の種類別", trends["by_event_rule"]))
+    comparison = trends.get("event_vs_normal")
+    if comparison:
+        piece = (f"旧イベント日の稼働は通常日の{comparison['games_ratio']:.0f}%"
+                 f"({comparison['games_gap']:+.0f}G)")
+        if comparison["diff_gap"] is not None:
+            piece += f", 平均差枚の差は{comparison['diff_gap']:+.0f}枚"
+        lines.append(piece)
     return "\n".join(lines)
 
 

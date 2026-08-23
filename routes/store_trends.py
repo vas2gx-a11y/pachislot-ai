@@ -119,6 +119,8 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
 
     trends = common.build_store_trends(store_name, days=days) if store_name else None
     store_stats = common.load_store_stats().get(store_name) if store_name else None
+    # 旧イベント日・周年日の設定(登録フォームの初期値と、解析結果の表示に使う)
+    store_events = common.load_store_events().get(store_name) if store_name else None
     # 取り込んだホールデータ(店の全台)は、自分の記録より対象期間が長いことが多いので
     # 画面の期間指定とは別に、常に直近1年分を集計する
     daily_trends = common.build_store_daily_trends(store_name, days=365) if store_name else None
@@ -133,6 +135,7 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
         period_choices=PERIOD_CHOICES,
         trends=trends,
         store_stats=store_stats,
+        store_events=store_events,
         daily_trends=daily_trends,
         unit_trends=unit_trends,
         import_preview=import_preview,
@@ -260,6 +263,41 @@ def save_stats():
         avg_diff=common.parse_number(request.form.get("avg_diff")),
         avg_games=common.parse_number(request.form.get("avg_games")),
         win_rate=common.parse_number(request.form.get("win_rate")),
+        note=request.form.get("note", ""),
+        source="手入力",
+    )
+    flash(message)
+    return _back_to(store_name, days)
+
+
+@store_trends_bp.route("/save_events", methods=["POST"])
+def save_events():
+    """
+    店舗の旧イベント日・周年日を登録する。
+
+    ここで登録した日は、取り込んだ日別データの集計で
+    「旧イベント日 / 周年日 / 通常日」に分けて比べられるようになる。
+    """
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+
+    if not store_name:
+        flash("店舗を選んでから保存してください。")
+        return _back_to(store_name, days)
+
+    event_days = request.form.get("event_days", "")
+    anniversary_days = request.form.get("anniversary_days", "")
+
+    # どちらも空のまま保存すると設定を消すことになるので、消したい意図か確かめる
+    if not event_days.strip() and not anniversary_days.strip():
+        flash("旧イベント日か周年日のどちらかを入力してください。"
+              "(空のまま保存すると設定が消えます)")
+        return _back_to(store_name, days)
+
+    ok, message = common.save_store_events(
+        store_name,
+        event_days=event_days,
+        anniversary_days=anniversary_days,
         note=request.form.get("note", ""),
         source="手入力",
     )

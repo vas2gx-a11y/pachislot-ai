@@ -195,6 +195,38 @@
 
     {% if store_name %}
     {#
+      店の旧イベント日・周年日の登録。
+      ここで登録した日は、下の「店の全台データ」の集計で通常日と比べられるようになる。
+      書き方はデータサイトの表記(「ゾロ目日(11日、22日)」など)をそのまま貼れるようにしている。
+    #}
+    {% call card("🎊", "旧イベント日・周年日を登録", None, "bg-pink-50",
+         "データサイトに載っている「旧イベント日」「周年日」の欄をそのまま貼り付けてください。登録すると、下の「店の全台データ」でイベント日と通常日の稼働を比べられます。") %}
+    <form action="{{ url_for('store_trends.save_events') }}" method="POST" class="flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+                <label class="label" for="event_days">旧イベント日</label>
+                <textarea id="event_days" name="event_days" rows="2" placeholder="例: ゾロ目日(11日、22日)、月日がゾロ目日、1のつく日" class="input font-mono text-xs">{{ store_events.event_days if store_events else '' }}</textarea>
+            </div>
+            <div>
+                <label class="label" for="anniversary_days">周年日</label>
+                <textarea id="anniversary_days" name="anniversary_days" rows="2" placeholder="例: 9月9日" class="input font-mono text-xs">{{ store_events.anniversary_days if store_events else '' }}</textarea>
+            </div>
+        </div>
+        <p class="hint">
+            「、」区切りで複数指定できます。「ゾロ目日」「月日がゾロ目日」「◯のつく日」「毎月◯日」「◯月◯日」の書き方に対応しています。
+        </p>
+        {% if store_events and store_events.unknown %}
+        <p class="text-xs text-amber-700">読み取れなかった指定: {{ store_events.unknown | join("、") }}</p>
+        {% endif %}
+        <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">旧イベント日・周年日を保存</button>
+    </form>
+    {% endcall %}
+    {% endif %}
+
+    {% if store_name %}
+    {#
       ホールデータの貼り付け取り込み。
       データサイトは自動アクセスをブロックしているため、ユーザーが自分のブラウザで開いた
       表をコピーして貼り付けてもらう。いきなり保存せず、解析結果を確認してから保存する。
@@ -513,6 +545,25 @@
         </p>
     </section>
 
+    {% if daily_trends.event_vs_normal %}
+    {% set cmp = daily_trends.event_vs_normal %}
+    <section>
+        <h2 class="font-display font-bold text-base md:text-lg text-gray-900 mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-pink-50 text-base shrink-0">🎊</span>
+            <span>旧イベント日・周年日 vs 通常日</span>
+        </h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+            {{ stat_card("旧イベ等の稼働", (cmp.games_ratio | round(0) | int) ~ "%",
+                         "text-green-600" if cmp.games_ratio >= 100 else "text-red-600") }}
+            {{ stat_card("平均G数の差", ("%+d" | format(cmp.games_gap | round(0) | int)) ~ "G") }}
+            {{ stat_card("平均差枚の差", ("%+d" | format(cmp.diff_gap | round(0) | int) ~ "枚") if cmp.diff_gap is not none else "データなし",
+                         "text-green-600" if cmp.diff_gap and cmp.diff_gap > 0 else "text-red-600") }}
+            {{ stat_card("旧イベ等の日数", cmp.event.count ~ "日") }}
+        </div>
+        <p class="hint">「旧イベ等の稼働」は通常日の平均G数を100%とした比率です。差枚は値のある日だけで平均しています。</p>
+    </section>
+    {% endif %}
+
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         {{ hall_metric_section("🗓", "曜日別の稼働（店の全台）",
              "平均G数が高い曜日ほど、店が力を入れている可能性があります。",
@@ -521,6 +572,19 @@
              "「7の付く日」のような周期イベントがあれば、その末尾の稼働が跳ねます。",
              daily_trends.by_day_suffix, daily_trends.min_samples) }}
     </div>
+
+    {% if daily_trends.by_event_category or daily_trends.by_event_rule %}
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        {{ hall_metric_section("🎊", "旧イベ/周年/通常の内訳（店の全台）",
+             "登録した旧イベント日・周年日と、それ以外の通常日を比べます。",
+             daily_trends.by_event_category, daily_trends.min_samples) }}
+        {{ hall_metric_section("📅", "イベント日の種類別（店の全台）",
+             "登録した個々のルール（「ゾロ目日」「9月9日」など）ごとの稼働です。",
+             daily_trends.by_event_rule, daily_trends.min_samples) }}
+    </div>
+    {% elif store_events is none %}
+    <p class="hint">旧イベント日・周年日を登録すると、ここに通常日との比較が表示されます。上の「旧イベント日・周年日を登録」から登録してください。</p>
+    {% endif %}
     {% endif %}
 
     {% if unit_trends and unit_trends.record_count %}
