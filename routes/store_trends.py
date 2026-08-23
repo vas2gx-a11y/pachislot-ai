@@ -20,7 +20,7 @@ def _parse_days(raw):
     return days if days in {d for _, d in PERIOD_CHOICES} else DEFAULT_DAYS
 
 
-def _render(store_name, days, ai_summary=""):
+def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""):
     stores = common.list_store_names()
 
     # 店舗が未指定なら、記録が一番多い店舗を初期表示にする(毎回選び直す手間を省く)
@@ -29,6 +29,9 @@ def _render(store_name, days, ai_summary=""):
 
     trends = common.build_store_trends(store_name, days=days) if store_name else None
     store_stats = common.load_store_stats().get(store_name) if store_name else None
+    # 取り込んだホールデータ(店の全台)は、自分の記録より対象期間が長いことが多いので
+    # 画面の期間指定とは別に、常に直近1年分を集計する
+    daily_trends = common.build_store_daily_trends(store_name, days=365) if store_name else None
 
     return render_template(
         "store_trends.html",
@@ -38,6 +41,9 @@ def _render(store_name, days, ai_summary=""):
         period_choices=PERIOD_CHOICES,
         trends=trends,
         store_stats=store_stats,
+        daily_trends=daily_trends,
+        import_preview=import_preview,
+        pasted_text=pasted_text,
         ai_summary=ai_summary,
     )
 
@@ -65,7 +71,10 @@ def ai_summary():
         return _render(store_name, days)
 
     store_stats = common.load_store_stats().get(store_name)
-    summary, error = common.summarize_store_trends_with_gemini(trends, store_stats=store_stats)
+    daily_trends = common.build_store_daily_trends(store_name, days=365)
+    summary, error = common.summarize_store_trends_with_gemini(
+        trends, store_stats=store_stats, daily_trends=daily_trends
+    )
     if error:
         flash(error)
     return _render(store_name, days, ai_summary=summary)
@@ -157,4 +166,45 @@ def save_stats():
         source="手入力",
     )
     flash(message)
+    return _back_to(store_name, days)
+
+
+@store_trends_bp.route("/import_daily", methods=["POST"])
+def import_daily():
+    """
+    ホールデータサイトの一覧表をコピーして貼り付けたテキストを解析し、
+    店舗の日別データとして一括登録する。
+
+    いきなり保存すると、貼り付け形式が想定と違ったときに変な値がシートに入ってしまうため、
+    1回目は解析結果のプレビューを返し、内容を確認してから保存する2段階にしている。
+    """
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+    pasted_text = request.form.get("pasted_text", "")
+    confirmed = request.form.get("confirm") == "1"
+
+    if not store_name:
+        flash("取り込み先の店舗を選んでください。")
+        return _render(store_name, days)
+
+    if not pasted_text.strip():
+        flash("ホールデータの表をコピーして貼り付けてください。")
+        return _render(store_name, days)
+
+    rows, report = common.parse_hall_daily_text(pasted_text)
+    if not rows:
+        flash("貼り付けたテキストから日別データを読み取れませんでした。"
+              "日付・総差枚・平均差枚・平均G数・勝率が並んだ表をそのままコピーしてください。")
+        return _render(store_name, days, pasted_text=pasted_text)
+
+    if not confirmed:
+        # プレビュー(まだ保存しない)
+        return _render(store_name, days, pasted_text=pasted_text,
+                       import_preview={"rows": rows[:10], "report": report, "total": len(rows)})
+
+    ok, message, _counts = common.save_store_daily_rows(store_name, rows)
+    flash(message)
+    if ok and report["skipped"]:
+        flash(f"列が足りずに読み飛ばした行が{report['skipped']}件あります。"
+              f"表の一部だけをコピーしていないか確認してください。")
     return _back_to(store_name, days)

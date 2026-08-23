@@ -225,12 +225,15 @@ def upload():
                 machine_number = str(r.get("machine_number", "")).strip()
                 break
 
-    # 店舗の年間データ(登録済みの場合)も、ホールの傾向を測る材料としてAIに渡す
+    # 店舗の年間データ・取り込んだホールデータも、ホールの傾向を測る材料としてAIに渡す
     store_stats_text = ""
     if store_name:
         store_stats = common.load_store_stats().get(store_name)
         if store_stats:
             store_stats_text = common.describe_store_stats(store_stats)
+        day_context = common.describe_store_day_context(store_name)
+        if day_context:
+            store_stats_text = (store_stats_text + " / " if store_stats_text else "") + day_context
 
     estimation_comment, setting_probabilities, category_scores = common.estimate(
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,

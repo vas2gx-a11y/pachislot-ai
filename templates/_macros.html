@@ -336,3 +336,61 @@
     {% endif %}
 </section>
 {% endmacro %}
+
+{#
+  取り込んだホールデータ(店の全台)の1行。
+  主役は「平均G数=その日の稼働の高さ」で、全体平均に対する比率(全体比)が高い区分ほど
+  イベント日の可能性が高い、という読み方をする。
+  差枚・勝率はサイト側で空欄の日が多いため、有効日数を併記して過信させない。
+#}
+{% macro hall_metric_row(row, max_games) %}
+{% set width = (row.avg_games / max_games * 100) if (max_games and row.avg_games) else 0 %}
+<div class="flex items-center gap-1.5 md:gap-2 py-1 text-xs {% if not row.enough_samples %}opacity-60{% endif %}">
+    <span class="w-16 md:w-24 shrink-0 truncate text-gray-600" title="{{ row.label }}">{{ row.label }}</span>
+    <div class="hidden sm:block flex-1 min-w-[40px] bg-gray-100 rounded-full h-2 overflow-hidden">
+        <div class="prob-bar h-2 {% if row.games_index and row.games_index >= 105 %}bg-green-600{% elif row.games_index and row.games_index < 95 %}bg-gray-300{% else %}bg-gray-900{% endif %}" style="width: {{ width }}%;"></div>
+    </div>
+    <span class="w-14 md:w-16 shrink-0 text-right font-mono tabular-nums text-gray-900">
+        {{ (row.avg_games | round(0) | int ~ "G") if row.avg_games is not none else "—" }}
+    </span>
+    <span class="w-12 md:w-14 shrink-0 text-right font-mono tabular-nums font-bold
+        {% if row.games_index and row.games_index >= 105 %}text-green-600{% elif row.games_index and row.games_index < 95 %}text-gray-400{% else %}text-gray-600{% endif %}">
+        {{ (row.games_index | round(0) | int ~ "%") if row.games_index is not none else "—" }}
+    </span>
+    <span class="hidden md:inline-block w-20 shrink-0 text-right font-mono tabular-nums
+        {% if row.avg_diff and row.avg_diff > 0 %}text-green-600{% elif row.avg_diff and row.avg_diff < 0 %}text-red-600{% else %}text-gray-400{% endif %}">
+        {{ ("%+d" | format(row.avg_diff | round(0) | int) ~ "枚") if row.avg_diff is not none else "—" }}
+    </span>
+    <span class="w-10 md:w-12 shrink-0 text-right text-gray-400 font-mono tabular-nums">{{ row.count }}日</span>
+</div>
+{% endmacro %}
+
+{# 取り込んだホールデータの1セクション(曜日別・日付末尾別など) #}
+{% macro hall_metric_section(icon, title, description, rows, min_samples=3) %}
+<section class="card card-body">
+    <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">{{ icon }}</span>
+        <span>{{ title }}</span>
+    </h2>
+    {% if description %}<p class="hint mt-2">{{ description }}</p>{% endif %}
+
+    {% if rows %}
+    {% set games_values = rows | map(attribute='avg_games') | reject('none') | list %}
+    {% set max_games = games_values | max if games_values else 0 %}
+    <div class="mt-3">
+        <div class="flex items-center gap-1.5 md:gap-2 pb-1 mb-1 border-b border-gray-100 text-[10px] text-gray-400">
+            <span class="w-16 md:w-24 shrink-0">区分</span>
+            <span class="hidden sm:block flex-1 min-w-[40px]">稼働</span>
+            <span class="w-14 md:w-16 shrink-0 text-right">平均G数</span>
+            <span class="w-12 md:w-14 shrink-0 text-right">全体比</span>
+            <span class="hidden md:inline-block w-20 shrink-0 text-right">平均差枚</span>
+            <span class="w-10 md:w-12 shrink-0 text-right">日数</span>
+        </div>
+        {% for row in rows %}{{ hall_metric_row(row, max_games) }}{% endfor %}
+    </div>
+    <p class="hint">全体比は、その区分の平均G数が店全体の平均と比べて何%かを表します（100%が平均）。薄い行は{{ min_samples }}日未満です。</p>
+    {% else %}
+    <p class="text-sm text-gray-400 mt-3">この切り口で集計できるデータがありません。</p>
+    {% endif %}
+</section>
+{% endmacro %}

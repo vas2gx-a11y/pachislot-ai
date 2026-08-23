@@ -3,7 +3,7 @@ import json
 import logging
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
@@ -106,6 +106,15 @@ MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sour
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
 CHAT_HEADERS = ["session_id", "date", "question", "answer"]
+
+# store_daily シートの列構成(店舗の日別データ)
+# ホールデータサイトの「日付ごとの総差枚・平均差枚・平均G数・勝率」を貼り付けで取り込む。
+# store_stats(店舗ごと1行の年間サマリー)と違い、1店舗×1日で1行になる。
+STORE_DAILY_SHEET_NAME = os.environ.get("STORE_DAILY_SHEET_NAME", "store_daily")
+STORE_DAILY_HEADERS = [
+    "store_name", "date", "total_diff", "avg_diff", "avg_games", "win_rate",
+    "win_units", "total_units", "source", "updated_at",
+]
 
 # store_stats シートの列構成(店舗ごとの年間データ)
 # データサイト等で公開されている「店舗単位の集計値」を1店舗1行で保持する。
@@ -255,6 +264,30 @@ def get_store_stats_worksheet():
     elif current_headers != STORE_STATS_HEADERS:
         logger.warning(
             f"store_statsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_STATS_HEADERS})"
+        )
+    return ws
+
+
+def get_store_daily_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(STORE_DAILY_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=STORE_DAILY_SHEET_NAME, rows=2000, cols=len(STORE_DAILY_HEADERS))
+        ws.append_row(STORE_DAILY_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(STORE_DAILY_HEADERS)
+    elif current_headers != STORE_DAILY_HEADERS and current_headers == STORE_DAILY_HEADERS[:len(current_headers)]:
+        _ensure_min_columns(ws, len(STORE_DAILY_HEADERS))
+        for i, header in enumerate(STORE_DAILY_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != STORE_DAILY_HEADERS:
+        logger.warning(
+            f"store_dailyシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_DAILY_HEADERS})"
         )
     return ws
 
@@ -2302,7 +2335,7 @@ def describe_store_trends(trends):
     return "\n".join(lines)
 
 
-def summarize_store_trends_with_gemini(trends, store_stats=None):
+def summarize_store_trends_with_gemini(trends, store_stats=None, daily_trends=None):
     """
     集計結果をもとに、店舗の傾向についてのコメントをAIに書いてもらう。
 
@@ -2337,7 +2370,13 @@ def summarize_store_trends_with_gemini(trends, store_stats=None):
     【店舗全体の年間データ(データサイト等の外部集計。店の全台が対象なので、
     上のユーザー自身の記録より母数がはるかに大きい実績値)】
     {describe_store_stats(store_stats)}
-    年間データが登録されている場合は、店全体の水準(平均差枚・勝率)と、
+
+    【取り込んだホールデータの日別集計(店の全台が対象。平均G数=稼働の高さで、
+    全体比が高い曜日・日付はイベント日である可能性がある。差枚・勝率は
+    サイト側で空欄の日が多く、有効日数が少ない項目は参考程度に扱うこと)】
+    {describe_store_daily_trends(daily_trends)}
+
+    年間データやホールデータが登録されている場合は、店全体の水準(稼働・平均差枚・勝率)と、
     ユーザー自身の記録の水準がどれくらいズレているかにも1行触れてください。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
@@ -2576,3 +2615,400 @@ def analyze_store_stats_image_with_gemini(base64_image, mime_type="image/jpeg"):
         "win_rate": _to_number(parsed.get("win_rate")),
         "note": str(parsed.get("note", "") or "").strip(),
     }
+
+
+# ---------------------------------------------------------------------------
+# ホールデータ(店舗の日別データ)の貼り付け取り込み
+# ---------------------------------------------------------------------------
+# ホールデータサイトは自動アクセスをブロックしている(Cloudflareのボット判定)ため、
+# サーバー側から直接取得することはできない。代わりに、ユーザーが自分のブラウザで
+# 開いた一覧表をコピーして貼り付け、それを解析して一括登録する。
+#
+# 想定する貼り付け形式(1日1レコード。タブ区切りでも1セル1行でも解析できる):
+#   2026/07/22(水)  +12,271  +11  5,053  42.2%(466/1104)
+#   2026/07/21(火)  –        –    3,805  –
+# 列の順番は「日付 / 総差枚 / 平均差枚 / 平均G数 / 勝率」を前提にしている。
+
+# 日付トークン(末尾の曜日カッコは任意)
+_HALL_DATE_RE = re.compile(
+    r"^(\d{4})[/\-.年](\d{1,2})[/\-.月](\d{1,2})日?(?:[（(][^)）]*[)）])?$"
+)
+# 勝率トークン(例: "42.2%(466/1104)")
+_HALL_WIN_RATE_RE = re.compile(r"^([0-9]+(?:\.[0-9]+)?)\s*%(?:\s*[（(](\d+)\s*/\s*(\d+)[)）])?$")
+# 「データなし」を表す記号(ダッシュ各種)
+_HALL_EMPTY_TOKENS = {"-", "–", "—", "―", "ー", "‐", "−", "･", "・", "?", "？", "N/A", "n/a"}
+
+# 1行として受け付ける値の上限(想定外の並びを取り込まないための保険)
+_HALL_MAX_VALUES_PER_ROW = 8
+
+
+def _is_empty_token(token):
+    return token.strip() in _HALL_EMPTY_TOKENS or not token.strip()
+
+
+def parse_hall_daily_text(text, max_rows=2000):
+    """
+    ホールデータ一覧をコピーしたテキストを解析し、日別データの行に変換する。
+
+    戻り値: (rows, report)
+      rows: [{"date": "YYYY-MM-DD", "total_diff": float|None, "avg_diff": float|None,
+              "avg_games": float|None, "win_rate": float|None,
+              "win_units": int|None, "total_units": int|None}, ...] 日付の新しい順
+      report: {"parsed": 取り込める行数, "skipped": 列が足りず読み飛ばした行数,
+               "skipped_samples": [読み飛ばした行の例], "with_diff": 差枚が入っている行数,
+               "first_date", "last_date", "duplicates": 同じ日付が重複していた数}
+    """
+    report = {"parsed": 0, "skipped": 0, "skipped_samples": [], "with_diff": 0,
+              "first_date": "", "last_date": "", "duplicates": 0}
+    if not text or not text.strip():
+        return [], report
+
+    # タブ・空白のどちらで区切られていても、また1セル1行で貼られていても扱えるように、
+    # いったん全部を「トークンの列」にほどいてから、日付トークンを区切りとして組み直す
+    tokens = []
+    for line in text.splitlines():
+        for token in re.split(r"[\t　 ]+", line.strip()):
+            if token:
+                tokens.append(token)
+
+    groups = []  # [(日付文字列, [値トークン...])]
+    for token in tokens:
+        matched = _HALL_DATE_RE.match(token)
+        if matched:
+            year, month, day = (int(g) for g in matched.groups())
+            try:
+                date_str = datetime(year, month, day).strftime("%Y-%m-%d")
+            except ValueError:
+                continue  # 2026/02/31 のような不正な日付は無視する
+            groups.append((date_str, []))
+        elif groups and len(groups[-1][1]) < _HALL_MAX_VALUES_PER_ROW:
+            groups[-1][1].append(token)
+
+    rows_by_date = {}
+    for date_str, values in groups:
+        win_rate = win_units = total_units = None
+        numeric_tokens = []
+        for value in values:
+            win_matched = _HALL_WIN_RATE_RE.match(value)
+            if win_matched:
+                win_rate = float(win_matched.group(1))
+                if win_matched.group(2) and win_matched.group(3):
+                    win_units = int(win_matched.group(2))
+                    total_units = int(win_matched.group(3))
+            else:
+                numeric_tokens.append(value)
+
+        # 「総差枚 / 平均差枚 / 平均G数」の3つが揃っていない行は、
+        # どの値がどの列なのかを推測することになるため、取り込まずに報告する
+        if len(numeric_tokens) < 3:
+            report["skipped"] += 1
+            if len(report["skipped_samples"]) < 5:
+                report["skipped_samples"].append(f"{date_str} {' '.join(values)}".strip())
+            continue
+
+        def _value(token):
+            return None if _is_empty_token(token) else parse_number(token)
+
+        row = {
+            "date": date_str,
+            "total_diff": _value(numeric_tokens[0]),
+            "avg_diff": _value(numeric_tokens[1]),
+            "avg_games": _value(numeric_tokens[2]),
+            "win_rate": win_rate,
+            "win_units": win_units,
+            "total_units": total_units,
+        }
+        # 明らかに桁がおかしい値は取り込まない(貼り付けミス・列ズレの検出)
+        if row["avg_games"] is not None and not (0 <= row["avg_games"] <= 100000):
+            row["avg_games"] = None
+        if row["win_rate"] is not None and not (0 <= row["win_rate"] <= 100):
+            row["win_rate"] = None
+
+        if not any(row[k] is not None for k in ("total_diff", "avg_diff", "avg_games", "win_rate")):
+            report["skipped"] += 1
+            if len(report["skipped_samples"]) < 5:
+                report["skipped_samples"].append(f"{date_str} (数値なし)")
+            continue
+
+        if date_str in rows_by_date:
+            report["duplicates"] += 1
+        rows_by_date[date_str] = row
+        if len(rows_by_date) >= max_rows:
+            break
+
+    rows = sorted(rows_by_date.values(), key=lambda r: r["date"], reverse=True)
+    report["parsed"] = len(rows)
+    report["with_diff"] = sum(1 for r in rows if r["total_diff"] is not None or r["avg_diff"] is not None)
+    if rows:
+        report["first_date"] = rows[-1]["date"]
+        report["last_date"] = rows[0]["date"]
+    return rows, report
+
+
+def load_store_daily(store_name=""):
+    """
+    store_daily シートを読み込む。store_name を指定するとその店舗の行だけを返す。
+    日付の新しい順。読み込みに失敗した場合は空リスト。
+    """
+    cached = _cache_get("store_daily")
+    if cached is None:
+        try:
+            ws = get_store_daily_worksheet()
+            raw_rows = ws.get_all_records()
+        except Exception as e:
+            logger.error(f"店舗日別データの読み込みエラー: {e}")
+            return []
+
+        cached = []
+        for row in raw_rows:
+            name = str(row.get("store_name", "")).strip()
+            date_str = str(row.get("date", "")).strip()
+            if not name or not date_str:
+                continue
+            cached.append({
+                "store_name": name,
+                "date": date_str,
+                "total_diff": _to_number(row.get("total_diff")),
+                "avg_diff": _to_number(row.get("avg_diff")),
+                "avg_games": _to_number(row.get("avg_games")),
+                "win_rate": _to_number(row.get("win_rate")),
+                "win_units": _to_number(row.get("win_units")),
+                "total_units": _to_number(row.get("total_units")),
+                "source": str(row.get("source", "")).strip(),
+            })
+        cached.sort(key=lambda r: r["date"], reverse=True)
+        _cache_set("store_daily", cached)
+
+    if not store_name:
+        return cached
+    return [r for r in cached if r["store_name"] == store_name]
+
+
+def save_store_daily_rows(store_name, rows, source="貼り付け取り込み"):
+    """
+    日別データをまとめて保存する(同じ店舗×同じ日付は上書き)。
+
+    1回の取り込みで1000行以上になることがあるため、1行ずつ書かずに
+    「既存データ + 今回分」をマージしてシート全体を1回で書き換える。
+    戻り値: (成功したか, メッセージ, {"added": 新規, "updated": 上書き})
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return False, "店舗名が空のため保存できません。", {}
+    if not rows:
+        return False, "取り込める行がありませんでした。", {}
+
+    try:
+        ws = get_store_daily_worksheet()
+        existing = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"店舗日別データの読み込みエラー(保存前): {e}")
+        return False, "シートの読み込みに失敗しました。時間をおいてお試しください。", {}
+
+    merged = {}
+    for row in existing:
+        name = str(row.get("store_name", "")).strip()
+        date_str = str(row.get("date", "")).strip()
+        if not name or not date_str:
+            continue
+        merged[(name, date_str)] = [
+            name, date_str,
+            row.get("total_diff", ""), row.get("avg_diff", ""), row.get("avg_games", ""),
+            row.get("win_rate", ""), row.get("win_units", ""), row.get("total_units", ""),
+            str(row.get("source", "")), str(row.get("updated_at", "")),
+        ]
+
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    added = updated = 0
+    for row in rows:
+        key = (store_name, row["date"])
+        if key in merged:
+            updated += 1
+        else:
+            added += 1
+        merged[key] = [
+            store_name, row["date"],
+            "" if row.get("total_diff") is None else row["total_diff"],
+            "" if row.get("avg_diff") is None else row["avg_diff"],
+            "" if row.get("avg_games") is None else row["avg_games"],
+            "" if row.get("win_rate") is None else row["win_rate"],
+            "" if row.get("win_units") is None else row["win_units"],
+            "" if row.get("total_units") is None else row["total_units"],
+            source, now_text,
+        ]
+
+    values = [list(STORE_DAILY_HEADERS)]
+    for key in sorted(merged, key=lambda k: (k[0], k[1])):
+        values.append(merged[key])
+
+    try:
+        # 行数が足りないと書き込めないため、先にシートを必要な大きさへ広げる
+        ws.resize(rows=max(len(values), 2), cols=len(STORE_DAILY_HEADERS))
+        ws.update(values, "A1")
+    except Exception as e:
+        logger.error(f"店舗日別データの保存エラー: {e}")
+        return False, "日別データの保存に失敗しました。時間をおいてお試しください。", {}
+
+    _cache_invalidate("store_daily")
+    return True, f"「{store_name}」の日別データを{added + updated}日分保存しました(新規{added}日 / 上書き{updated}日)。", {
+        "added": added, "updated": updated,
+    }
+
+
+def _summarize_daily_rows(rows, overall_avg_games=None):
+    """
+    日別データのかたまりから、平均G数・平均差枚・勝率の平均を出す。
+    項目ごとに「値が入っている日数」が違う(差枚は空欄の日が多い)ため、
+    それぞれの有効日数も併せて返し、画面で母数が分かるようにする。
+    """
+    if not rows:
+        return None
+
+    def _mean(key):
+        values = [r[key] for r in rows if r.get(key) is not None]
+        return (sum(values) / len(values), len(values)) if values else (None, 0)
+
+    avg_games, games_days = _mean("avg_games")
+    avg_diff, diff_days = _mean("avg_diff")
+    win_rate, win_days = _mean("win_rate")
+    total_diffs = [r["total_diff"] for r in rows if r.get("total_diff") is not None]
+
+    return {
+        "count": len(rows),
+        "avg_games": avg_games,
+        "games_days": games_days,
+        "avg_diff": avg_diff,
+        "diff_days": diff_days,
+        "win_rate": win_rate,
+        "win_days": win_days,
+        "total_diff_sum": sum(total_diffs) if total_diffs else None,
+        # 全体平均に対する稼働の高さ(100が平均)。イベント日らしさの目安になる。
+        "games_index": (avg_games / overall_avg_games * 100) if (avg_games and overall_avg_games) else None,
+        "enough_samples": len(rows) >= TREND_MIN_SAMPLES,
+    }
+
+
+def build_store_daily_trends(store_name, days=365):
+    """
+    取り込んだ店舗の日別データを、曜日別・日付末尾別に集計する。
+
+    自分の記録(build_store_trends)と違い、こちらは店の全台が対象の数字。
+    ただし差枚・勝率はサイト側で空欄の日が多いため、稼働(平均G数)を主軸に、
+    値がある日だけで平均を出す。
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return None
+
+    rows = load_store_daily(store_name)
+    if days > 0:
+        limit_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        rows = [r for r in rows if r["date"] >= limit_date]
+
+    trends = {"store_name": store_name, "days": days, "record_count": len(rows),
+              "min_samples": TREND_MIN_SAMPLES}
+    if not rows:
+        trends["overall"] = None
+        return trends
+
+    overall = _summarize_daily_rows(rows)
+    trends["overall"] = overall
+    trends["first_date"] = rows[-1]["date"]
+    trends["last_date"] = rows[0]["date"]
+    trends["recent"] = rows[:30]
+
+    parsed_dates = []
+    for r in rows:
+        try:
+            parsed_dates.append((datetime.strptime(r["date"], "%Y-%m-%d"), r))
+        except ValueError:
+            continue
+
+    def _group(key_func, label_func, sort_key):
+        buckets = {}
+        for dt, r in parsed_dates:
+            buckets.setdefault(key_func(dt), []).append(r)
+        result = []
+        for key, group_rows in buckets.items():
+            summary = _summarize_daily_rows(group_rows, overall_avg_games=overall["avg_games"])
+            summary["key"] = key
+            summary["label"] = label_func(key)
+            result.append(summary)
+        result.sort(key=sort_key)
+        return result
+
+    trends["by_weekday"] = _group(lambda dt: dt.weekday(), lambda k: f"{WEEKDAY_LABELS[k]}曜", lambda row: row["key"])
+    trends["by_day_suffix"] = _group(lambda dt: dt.day % 10, lambda k: f"末尾{k}の日", lambda row: row["key"])
+
+    def _best(rows_, key):
+        eligible = [r for r in rows_ if r["enough_samples"] and r.get(key) is not None]
+        return max(eligible, key=lambda r: r[key]) if eligible else None
+
+    trends["highlights"] = {
+        "busiest_weekday": _best(trends["by_weekday"], "avg_games"),
+        "busiest_day_suffix": _best(trends["by_day_suffix"], "avg_games"),
+        "best_diff_day_suffix": _best(trends["by_day_suffix"], "avg_diff"),
+    }
+    return trends
+
+
+def describe_store_daily_trends(trends, limit=10):
+    """取り込んだ日別データの集計を、AIプロンプト用のテキストにまとめる。"""
+    if not trends or not trends.get("record_count"):
+        return "登録なし"
+
+    overall = trends["overall"]
+    lines = [
+        f"対象: {trends.get('first_date', '')}〜{trends.get('last_date', '')} の{trends['record_count']}日分"
+        f"(店の全台が対象の外部データ)",
+        f"全体: 平均G数{overall['avg_games']:.0f}G({overall['games_days']}日分)"
+        + (f", 平均差枚{overall['avg_diff']:+.0f}枚({overall['diff_days']}日分)" if overall["avg_diff"] is not None else ", 平均差枚はデータなし")
+        + (f", 勝率{overall['win_rate']:.1f}%({overall['win_days']}日分)" if overall["win_rate"] is not None else ""),
+    ]
+
+    def _rows_text(title, rows):
+        if not rows:
+            return f"{title}: データなし"
+        parts = []
+        for row in rows[:limit]:
+            piece = f"{row['label']}: 平均G数{row['avg_games']:.0f}G/{row['count']}日" if row["avg_games"] is not None else f"{row['label']}: G数データなし/{row['count']}日"
+            if row.get("games_index") is not None:
+                piece += f"(全体比{row['games_index']:.0f}%)"
+            if row.get("avg_diff") is not None:
+                piece += f", 平均差枚{row['avg_diff']:+.0f}枚({row['diff_days']}日)"
+            parts.append(piece)
+        return f"{title}: " + " / ".join(parts)
+
+    lines.append(_rows_text("曜日別", trends.get("by_weekday", [])))
+    lines.append(_rows_text("日付末尾別", trends.get("by_day_suffix", [])))
+    return "\n".join(lines)
+
+
+def describe_store_day_context(store_name, when=None):
+    """
+    「今日はこの店にとってどういう日か」を、取り込んだホールデータから1行にまとめる。
+
+    設定推測のプロンプトに添えて、曜日・日付末尾ごとの稼働の高さ(全体比)を
+    ホールの傾向を測る材料として渡すために使う。
+    データが無い場合は空文字を返す(プロンプトに余計な行を増やさない)。
+    """
+    trends = build_store_daily_trends(store_name, days=365)
+    if not trends or not trends.get("record_count"):
+        return ""
+
+    when = when or datetime.now()
+    weekday_row = next((r for r in trends.get("by_weekday", []) if r["key"] == when.weekday()), None)
+    suffix_row = next((r for r in trends.get("by_day_suffix", []) if r["key"] == when.day % 10), None)
+
+    parts = []
+    if weekday_row and weekday_row.get("games_index") is not None:
+        parts.append(f"{weekday_row['label']}の稼働は店全体平均の{weekday_row['games_index']:.0f}%"
+                     f"(平均{weekday_row['avg_games']:.0f}G / {weekday_row['count']}日分)")
+    if suffix_row and suffix_row.get("games_index") is not None:
+        parts.append(f"{suffix_row['label']}の稼働は{suffix_row['games_index']:.0f}%"
+                     f"(平均{suffix_row['avg_games']:.0f}G / {suffix_row['count']}日分)")
+    if not parts:
+        return ""
+
+    return (f"{when.strftime('%Y-%m-%d')}時点: " + " / ".join(parts)
+            + "(稼働が高い日はイベント等で設定を使っている可能性があるが、稼働だけでは設定は分からない)")
