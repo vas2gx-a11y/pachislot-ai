@@ -3227,6 +3227,9 @@ def build_store_daily_trends(store_name, days=365):
     trends["first_date"] = rows[-1]["date"]
     trends["last_date"] = rows[0]["date"]
     trends["recent"] = rows[:30]
+    # 「実際に何日分・どの日が取り込めているか」を画面で確認できるよう、
+    # 集計対象になった行をそのまま(新しい日付順)持たせておく
+    trends["rows"] = rows
 
     parsed_dates = []
     for r in rows:

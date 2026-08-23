@@ -573,6 +573,40 @@
             サイト側で総差枚・平均差枚・勝率が空欄の日が多いため、差枚系は値のある日だけで平均しています（{{ d_overall.diff_days }}日分）。
             全日そろっている平均G数（稼働）が、イベント日を探すときの主な手がかりになります。
         </p>
+
+        {# 「実際に何日分・どの日が取り込めているか」を確認できるよう、日ごとの明細を折りたたみで出す #}
+        <details class="mt-3">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+                <span class="chev inline-block mr-1">▶</span>🔍 日ごとの取り込み内容を見る（{{ daily_trends.record_count }}日）
+            </summary>
+            <div class="mt-3 max-h-96 overflow-y-auto pr-1">
+                <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                    <thead>
+                        <tr class="text-gray-400 text-left sticky top-0 bg-white">
+                            <th class="pr-3 pb-1">日付</th>
+                            <th class="pr-3 pb-1 text-right">総差枚</th>
+                            <th class="pr-3 pb-1 text-right">平均差枚</th>
+                            <th class="pr-3 pb-1 text-right">平均G数</th>
+                            <th class="pr-3 pb-1 text-right">勝率</th>
+                            <th class="pb-1 text-left font-sans">取り込み方法</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        {% for row in daily_trends.rows %}
+                        <tr>
+                            <td class="pr-3 py-0.5">{{ row.date }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.total_diff | round(0) | int)) if row.total_diff is not none else "—" }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.avg_diff | round(0) | int)) if row.avg_diff is not none else "—" }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ (row.avg_games | round(0) | int) if row.avg_games is not none else "—" }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ ("%.1f" | format(row.win_rate) ~ "%") if row.win_rate is not none else "—" }}</td>
+                            <td class="py-0.5 text-left font-sans text-gray-400">{{ row.source or "—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="hint">「–」は取り込み元のデータサイト側で空欄になっていた項目です。平均G数は全日そろっていることが多く、差枚・勝率は一部の日しか公開されていません。</p>
+        </details>
     </section>
 
     {% if daily_trends.event_vs_normal or (daily_trends_all and daily_trends_all.event_vs_normal) %}
