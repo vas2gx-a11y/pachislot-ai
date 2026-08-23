@@ -2169,8 +2169,12 @@ def parse_record_datetime(record):
 
 def list_store_names(records=None):
     """
-    記録に登場する店舗名を、記録件数の多い順に返す。
-    戻り値: [{"name": 店舗名, "count": 件数}, ...]
+    アプリ内に何らかのデータがある店舗名を、記録件数の多い順に返す。
+
+    記録(自分が打った台のログ)だけでなく、店舗全体の年間データ・旧イベント日・
+    日別データ・台別データのどれかに登録があれば一覧に含める。
+    まだ自分の記録が無くても、外部データだけ先に取り込んでいる店舗を選べるようにするため。
+    戻り値: [{"name": 店舗名, "count": 件数}, ...](記録が無い店舗は件数0)
     """
     if records is None:
         records = load_records()
@@ -2182,10 +2186,230 @@ def list_store_names(records=None):
             continue
         counts[name] = counts.get(name, 0) + 1
 
+    for name in _store_names_from_other_sheets():
+        counts.setdefault(name, 0)
+
     return [
         {"name": name, "count": count}
         for name, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
     ]
+
+
+def _store_names_from_other_sheets():
+    """store_stats・store_events・store_daily・store_units に登場する店舗名の集合"""
+    names = set()
+    try:
+        names.update(load_store_stats().keys())
+    except Exception as e:
+        logger.error(f"店舗名一覧の取得エラー(store_stats): {e}")
+    try:
+        names.update(load_store_events().keys())
+    except Exception as e:
+        logger.error(f"店舗名一覧の取得エラー(store_events): {e}")
+    try:
+        for row in load_store_daily():
+            name = str(row.get("store_name", "")).strip()
+            if name:
+                names.add(name)
+    except Exception as e:
+        logger.error(f"店舗名一覧の取得エラー(store_daily): {e}")
+    try:
+        for row in load_store_units():
+            name = str(row.get("store_name", "")).strip()
+            if name:
+                names.add(name)
+    except Exception as e:
+        logger.error(f"店舗名一覧の取得エラー(store_units): {e}")
+    return names
+
+
+def _column_letter(n):
+    """1-indexedの列番号をA1記法の列文字に変換する(店舗名変更でセル範囲を指定するため)"""
+    letters = ""
+    while n > 0:
+        n, rem = divmod(n - 1, 26)
+        letters = chr(65 + rem) + letters
+    return letters
+
+
+def _rename_store_single_row(ws, old_name, new_name):
+    """
+    store_stats・store_events のような「1店舗1行」のシートで店舗名を変更する。
+
+    移行先(new_name)に既に行がある場合は、その内容を優先してそのまま残し、
+    移行元(old_name)の行は削除するだけにする(数値やルールをどちらが正しいか
+    自動で判断できないため、安全側に倒して上書きしない)。
+
+    戻り値: "moved"(そのままリネーム) / "dropped"(移行先の既存行を優先し、移行元は削除)
+            / None(移行元の行が無かった)
+    """
+    try:
+        records = ws.get_all_records()
+        header = ws.row_values(1)
+    except Exception as e:
+        logger.error(f"店舗名変更エラー(1行シート読み込み): {e}")
+        return None
+    if "store_name" not in header:
+        return None
+
+    old_row = None  # シート上の実際の行番号(ヘッダーがrow1なのでrow2から)
+    new_exists = False
+    for i, row in enumerate(records, start=2):
+        name = str(row.get("store_name", "")).strip()
+        if name == old_name and old_row is None:
+            old_row = i
+        if name == new_name:
+            new_exists = True
+
+    if old_row is None:
+        return None
+
+    try:
+        if new_exists:
+            ws.delete_rows(old_row)
+            return "dropped"
+        col = header.index("store_name") + 1
+        ws.update_cell(old_row, col, new_name)
+        return "moved"
+    except Exception as e:
+        logger.error(f"店舗名変更エラー(1行シート更新): {e}")
+        return None
+
+
+def _rename_store_rows(ws, headers, key_fields, old_name, new_name):
+    """
+    store_daily・store_units のような「1店舗に複数行」あるシートで店舗名を変更する。
+
+    移行先に既に同じキー(日付・台番号など)の行があった場合は、updated_atが
+    新しい方を残す(タイムスタンプが無ければ、後から処理した側=移行してきた行を優先)。
+    シート全体を1回で書き換えるので、行数が多くても書き込みは1回で済む。
+
+    戻り値: store_name を書き換えた行数(0なら移行元のデータが無かった)
+    """
+    try:
+        raw_rows = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"店舗名変更エラー(複数行シート読み込み): {e}")
+        return 0
+
+    idx = {h: i for i, h in enumerate(headers)}
+    if "store_name" not in idx:
+        return 0
+    updated_idx = idx.get("updated_at")
+
+    merged = {}
+    order = []
+    changed = 0
+    for row in raw_rows:
+        values = [str(row.get(h, "")) for h in headers]
+        if values[idx["store_name"]] == old_name:
+            values[idx["store_name"]] = new_name
+            changed += 1
+        key = tuple(values[idx[f]] for f in key_fields)
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = values
+            order.append(key)
+        elif updated_idx is not None and values[updated_idx] >= existing[updated_idx]:
+            merged[key] = values
+
+    if changed == 0:
+        return 0
+
+    values_out = [list(headers)] + [merged[k] for k in order]
+    try:
+        ws.resize(rows=max(len(values_out), 2), cols=len(headers))
+        ws.update(values_out, "A1")
+    except Exception as e:
+        logger.error(f"店舗名変更エラー(複数行シート書き込み): {e}")
+        return 0
+    return changed
+
+
+def rename_store(old_name, new_name):
+    """
+    店舗名を変更する。records(自分の記録)・store_stats・store_events・
+    store_daily・store_units の5つのシートすべてで store_name を書き換える。
+
+    変更先の名前に既に別のデータがある場合(表記ゆれで2つの店名に分かれていたものを
+    統合するケース)は、日別・台別データは新しい方(updated_at)を残し、
+    年間データ・旧イベント日は移行先の既存内容を優先する。
+    戻り値: (成功したか, メッセージ)
+    """
+    old_name = (old_name or "").strip()
+    new_name = (new_name or "").strip()
+    if not old_name:
+        return False, "変更前の店舗名を選んでください。"
+    if not new_name:
+        return False, "変更後の店舗名を入力してください。"
+    if old_name == new_name:
+        return False, "変更前と変更後が同じ店舗名です。"
+
+    notes = []
+
+    # 1. records(自分の記録): store_name列のセルだけを書き換える(行の削除・追加はしない)
+    try:
+        ws = get_records_worksheet()
+        values = ws.get_all_values()
+    except Exception as e:
+        logger.error(f"店舗名変更エラー(records読み込み): {e}")
+        return False, "記録シートの読み込みに失敗しました。時間をおいてお試しください。"
+
+    if values:
+        header = values[0]
+        if "store_name" in header:
+            col_index = header.index("store_name")
+            col_letter = _column_letter(col_index + 1)
+            updates = []
+            for i, row in enumerate(values[1:], start=2):
+                if col_index < len(row) and row[col_index] == old_name:
+                    updates.append({"range": f"{col_letter}{i}", "values": [[new_name]]})
+            if updates:
+                try:
+                    ws.batch_update(updates)
+                    notes.append(f"自分の記録{len(updates)}件")
+                except Exception as e:
+                    logger.error(f"店舗名変更エラー(records書き込み): {e}")
+                    return False, "記録シートの更新に失敗しました。時間をおいてお試しください。"
+    _cache_invalidate("records")
+
+    # 2. store_stats(1店舗1行)
+    stats_result = _rename_store_single_row(get_store_stats_worksheet(), old_name, new_name)
+    if stats_result == "moved":
+        notes.append("年間データ")
+    elif stats_result == "dropped":
+        notes.append("年間データ(移行先に既存データがあったため移行元は破棄)")
+    _cache_invalidate("store_stats")
+
+    # 3. store_events(1店舗1行)
+    events_result = _rename_store_single_row(get_store_events_worksheet(), old_name, new_name)
+    if events_result == "moved":
+        notes.append("旧イベント日・周年日")
+    elif events_result == "dropped":
+        notes.append("旧イベント日・周年日(移行先に既存データがあったため移行元は破棄)")
+    _cache_invalidate("store_events")
+
+    # 4. store_daily(1店舗に複数行)
+    changed_daily = _rename_store_rows(
+        get_store_daily_worksheet(), STORE_DAILY_HEADERS, ["store_name", "date"], old_name, new_name
+    )
+    if changed_daily:
+        notes.append(f"日別データ{changed_daily}日分")
+    _cache_invalidate("store_daily")
+
+    # 5. store_units(1店舗に複数行)
+    changed_units = _rename_store_rows(
+        get_store_units_worksheet(), STORE_UNITS_HEADERS,
+        ["store_name", "date", "machine_number"], old_name, new_name,
+    )
+    if changed_units:
+        notes.append(f"台別データ{changed_units}件")
+    _cache_invalidate("store_units")
+
+    if not notes:
+        return False, f"「{old_name}」のデータが見つかりませんでした。"
+
+    return True, f"「{old_name}」を「{new_name}」に変更しました({' / '.join(notes)})。"
 
 
 def _dedupe_daily_records(records):
@@ -3699,6 +3923,10 @@ def load_store_units(store_name=""):
                 "difference_slabs": _to_number(row.get("difference_slabs")),
                 "big_count": _to_number(row.get("big_count")),
                 "reg_count": _to_number(row.get("reg_count")),
+                # art_count はCSV取り込みでのみ入る(貼り付け取り込みには列が無い)。
+                # source はどの方法で取り込んだ行かを画面で確認するために持つ。
+                "art_count": _to_number(row.get("art_count")),
+                "source": str(row.get("source", "")).strip(),
             })
         cached.sort(key=lambda r: (r["date"], r["machine_number"]), reverse=True)
         _cache_set("store_units", cached)
@@ -3855,9 +4083,78 @@ def _mark_edge_units(rows):
     return rows
 
 
+def _format_date_with_weekday(date_str):
+    """"2026-08-22" → "2026-08-22(土)"(曜日が分かると日別の並びが読み取りやすいため)"""
+    try:
+        day = datetime.strptime(date_str, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return date_str
+    return f"{date_str}({WEEKDAY_LABELS[day.weekday()]})"
+
+
+# 1機種あたりに表示する台数の上限(全台出すとページが極端に重くなるため)
+_UNIT_DETAIL_LIMIT = 40
+
+
+def _unit_rows_by_date(rows):
+    """
+    「どの日を何台ぶん取り込めているか」を確認するための日別明細。
+    集計値だけでは分からない取り込み漏れ(台数が極端に少ない日など)に気付けるようにする。
+    """
+    by_date = {}
+    for row in rows:
+        by_date.setdefault(row["date"], []).append(row)
+
+    details = []
+    for date_str, group in sorted(by_date.items(), reverse=True):
+        summary = _summarize_unit_rows(group)
+        summary["date"] = date_str
+        summary["label"] = _format_date_with_weekday(date_str)
+        summary["machine_count"] = len({r.get("machine_name") for r in group if r.get("machine_name")})
+        summary["source"] = next((r.get("source", "") for r in group if r.get("source")), "")
+        details.append(summary)
+    return details
+
+
+def _unit_machine_details(rows):
+    """
+    機種ごとに、その機種の台番号別成績を持たせる(画面で機種を開いて中身を見るため)。
+    台数が多い機種はページが重くなるので、平均差枚の高い順に上限まで絞る。
+    """
+    by_machine = {}
+    for row in rows:
+        name = row.get("machine_name") or "機種名なし"
+        by_machine.setdefault(name, []).append(row)
+
+    details = []
+    for name, group in by_machine.items():
+        by_number = {}
+        for row in group:
+            by_number.setdefault(row["machine_number"], []).append(row)
+
+        units = []
+        for number, unit_rows in by_number.items():
+            unit_summary = _summarize_unit_rows(unit_rows)
+            unit_summary["key"] = number
+            unit_summary["label"] = f"No.{number}"
+            unit_summary["is_edge"] = any(r.get("is_edge") for r in unit_rows)
+            units.append(unit_summary)
+        units.sort(key=lambda u: -u["avg_diff"])
+
+        summary = _summarize_unit_rows(group)
+        summary["machine_name"] = name
+        summary["unit_count"] = len(by_number)
+        summary["units"] = units[:_UNIT_DETAIL_LIMIT]
+        summary["truncated"] = max(0, len(units) - _UNIT_DETAIL_LIMIT)
+        details.append(summary)
+
+    details.sort(key=lambda m: -m["avg_diff"])
+    return details
+
+
 def build_store_unit_trends(store_name, days=90):
     """
-    取り込んだ台別データから、台番号末尾・端台(角台の候補)・機種・台番号ごとの傾向を集計する。
+    取り込んだ台別データから、台番号末尾・端台(角台の候補)・機種・日付・台番号ごとの傾向を集計する。
     """
     store_name = (store_name or "").strip()
     if not store_name:
@@ -3914,11 +4211,19 @@ def build_store_unit_trends(store_name, days=90):
         lambda r: r.get("machine_name") or None,
         lambda key, _rows: key,
     )
+    # 日ごとの成績(どの日を取り込めているかと、その日の店全体の出方を見る)
+    trends["by_date"] = _grouped(
+        lambda r: r["date"],
+        lambda key, _rows: _format_date_with_weekday(key),
+        sort_key=lambda row: row["key"],
+    )
     # 台番号ごとの成績(複数日ぶんまとめて、平均差枚の高い順)
     trends["top_units"] = _grouped(
         lambda r: r["machine_number"],
         lambda key, group_rows: f"No.{key}" + (f" {group_rows[0].get('machine_name', '')}" if group_rows[0].get("machine_name") else ""),
     )[:20]
+    trends["by_date_detail"] = _unit_rows_by_date(rows)
+    trends["machine_details"] = _unit_machine_details(rows)
 
     def _best(rows_):
         eligible = [r for r in rows_ if r["enough_samples"]]

@@ -163,6 +163,24 @@ def index():
     return _render(store_name, days)
 
 
+@store_trends_bp.route("/rename_store", methods=["POST"])
+def rename_store():
+    """
+    店舗名を変更する(記録・年間データ・旧イベント日・日別データ・台別データの全てに反映)。
+
+    「新しい店舗を追加」も同じ仕組みで実現している(まだデータの無い店名を選んだ状態は
+    ページ上はただの未選択と区別が付かないため、専用の追加処理は無い。テキストで
+    店名を入力してこの画面に来た時点で、以降にデータを保存すればその店名で作られる)。
+    """
+    old_name = request.form.get("old_name", "").strip()
+    new_name = request.form.get("new_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+
+    ok, message = common.rename_store(old_name, new_name)
+    flash(message)
+    return _back_to(new_name if ok else old_name, days)
+
+
 @store_trends_bp.route("/ai_summary", methods=["GET", "POST"])
 def ai_summary():
     """集計結果をAIに総評してもらう(ボタンを押したときだけAPIを呼ぶ)"""

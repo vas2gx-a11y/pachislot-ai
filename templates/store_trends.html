@@ -20,7 +20,7 @@
             <label class="label" for="store_name">店舗</label>
             <select id="store_name" name="store_name" class="input">
                 {% for s in stores %}
-                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}（記録{{ s.count }}件）</option>
+                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
                 {% endfor %}
             </select>
         </div>
@@ -36,9 +36,55 @@
     </form>
     {% else %}
     <p class="text-sm text-gray-500">
-        店舗名が入力された記録がまだありません。データ管理画面で記録するときに店舗名を入力すると、ここで店舗ごとの傾向を集計できるようになります。
+        店舗名が入力された記録がまだありません。データ管理画面で記録するときに店舗名を入力するか、下から店舗を追加すると、ここで店舗ごとの傾向を集計できるようになります。
     </p>
     {% endif %}
+
+    {# 店舗名の追加・変更。記録件数に関わらず常に出す(記録が0件の状態でも新規追加はできる必要があるため) #}
+    <details class="mt-3">
+        <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+            <span class="chev inline-block mr-1">▶</span>🏷️ 店舗名を追加・変更する
+        </summary>
+        <div class="mt-3 flex flex-col gap-4">
+            <div>
+                <div class="text-xs font-bold text-gray-700 mb-1">新しい店舗を追加</div>
+                <form action="{{ url_for('store_trends.index') }}" method="GET" class="flex flex-col sm:flex-row gap-2">
+                    <input type="hidden" name="days" value="{{ days }}">
+                    <input type="text" name="store_name" placeholder="例: ○○ホール △△店" required class="input flex-1">
+                    <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap self-start sm:self-auto">この店舗を選択</button>
+                </form>
+                <p class="hint">
+                    まだ記録が無い店舗名でも選択できます。選択した状態で年間データ・旧イベント日・
+                    ホールデータなどを1つでも登録すると、以降は上の一覧にも表示されるようになります。
+                </p>
+            </div>
+
+            {% if stores %}
+            <div class="pt-3 border-t border-gray-100">
+                <div class="text-xs font-bold text-gray-700 mb-1">店舗名を変更する</div>
+                <form action="{{ url_for('store_trends.rename_store') }}" method="POST"
+                      class="flex flex-col sm:flex-row gap-2"
+                      onsubmit="return confirm('「' + this.old_name.value + '」のデータをすべて「' + this.new_name.value + '」に変更します。元に戻すには、もう一度この画面で逆方向に変更してください。よろしいですか?');">
+                    <input type="hidden" name="days" value="{{ days }}">
+                    <select name="old_name" class="input flex-1" required>
+                        {% for s in stores %}
+                        <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="self-center text-gray-400 text-sm shrink-0">→</span>
+                    <input type="text" name="new_name" placeholder="変更後の店舗名" required class="input flex-1">
+                    <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap self-start sm:self-auto">変更する</button>
+                </form>
+                <p class="hint">
+                    記録・年間データ・旧イベント日・日別データ・台別データ、すべての店舗名が変わります。
+                    「大宮楽園」→「楽園大宮店」のような表記ゆれの統合にも使えます
+                    (変更後の名前に既にデータがある場合、年間データ・旧イベント日は変更後の内容を優先し、
+                    日別・台別データは新しい方のデータを残します)。
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
     {% endcall %}
 
     {% if store_name %}
@@ -688,12 +734,52 @@
             {{ stat_card("プラスの台", (u_overall.plus_rate | round(0) | int) ~ "%") }}
         </div>
         <p class="hint">差枚が入っている台{{ u_overall.diff_count }}件で平均しています。台番号の末尾や端台のクセは、日数を重ねるほど当てになります。</p>
+
+        {# 日別データと同じく、どの日を何台ぶん取り込めているかを確認できるようにする #}
+        <details class="mt-3">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+                <span class="chev inline-block mr-1">▶</span>🔍 日ごとの取り込み内容を見る（{{ unit_trends.day_count }}日）
+            </summary>
+            <div class="mt-3 max-h-96 overflow-y-auto pr-1">
+                <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                    <thead>
+                        <tr class="text-gray-400 text-left sticky top-0 bg-white">
+                            <th class="pr-3 pb-1">日付</th>
+                            <th class="pr-3 pb-1 text-right">台数</th>
+                            <th class="pr-3 pb-1 text-right">機種数</th>
+                            <th class="pr-3 pb-1 text-right">平均差枚</th>
+                            <th class="pr-3 pb-1 text-right">プラス率</th>
+                            <th class="pr-3 pb-1 text-right">平均G数</th>
+                            <th class="pb-1 text-left font-sans">取り込み方法</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        {% for row in unit_trends.by_date_detail %}
+                        <tr>
+                            <td class="pr-3 py-0.5">{{ row.label }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ row.count }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ row.machine_count }}</td>
+                            <td class="pr-3 py-0.5 text-right {% if row.avg_diff > 0 %}text-green-600{% elif row.avg_diff < 0 %}text-red-600{% endif %}">{{ "%+d" | format(row.avg_diff | round(0) | int) }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ row.plus_rate | round(0) | int }}%</td>
+                            <td class="pr-3 py-0.5 text-right">{{ row.avg_games | round(0) | int }}</td>
+                            <td class="py-0.5 text-left font-sans text-gray-400">{{ row.source or "—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="hint">台数が他の日より極端に少ない日は、取り込みが途中で切れている可能性があります。</p>
+        </details>
     </section>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        {{ trend_section("📅", "日別の出方（店の全台）",
+             "取り込んだ日ごとの平均差枚です。特定の日だけ全体が跳ねていれば、その日に設定を使っている可能性があります。",
+             unit_trends.by_date, unit_trends.min_samples, true) }}
+
         {{ trend_section("🔟", "台番号の末尾別（店の全台）",
              "末尾を揃えて設定を入れているホールかどうかを、実際の差枚で見ます。",
-             unit_trends.by_number_suffix, unit_trends.min_samples) }}
+             unit_trends.by_number_suffix, unit_trends.min_samples, false, false, false) }}
 
         {{ trend_section("📍", "端台（角台の候補）とそれ以外",
              "同じ日・同じ機種の台番号の連番の両端を「端台」として集計しています。島の切れ目と機種の切れ目がズレている場合は、実際の角台と一致しないことがあります。",
@@ -707,6 +793,65 @@
              "台番号ごとの平均差枚が高い順です。複数日ぶん取り込むほど、狙い台の候補として意味を持ちます。",
              unit_trends.top_units, unit_trends.min_samples, true, true, false) }}
     </div>
+
+    {# 機種を開くと、その機種の台番号ごとの成績が見られるようにする
+       (「この機種のどの台に入っているか」まで踏み込んで見たいときのため) #}
+    {% if unit_trends.machine_details %}
+    <section class="card card-body">
+        <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">🔎</span>
+            <span>機種ごとの台一覧（店の全台）</span>
+            <span class="text-xs text-gray-400 font-normal font-sans">{{ unit_trends.machine_details | length }}機種</span>
+        </h2>
+        <p class="hint mt-2">機種名をクリックすると、その機種の台番号ごとの成績が開きます。平均差枚の高い機種順に並んでいます。</p>
+        <div class="mt-3 max-h-96 overflow-y-auto pr-1 divide-y divide-gray-100">
+            {% for m in unit_trends.machine_details %}
+            <details class="py-1 {% if not m.enough_samples %}opacity-60{% endif %}">
+                <summary class="cursor-pointer select-none flex items-center gap-2 text-xs py-0.5">
+                    <span class="chev inline-block text-gray-400 shrink-0">▶</span>
+                    <span class="flex-1 min-w-0 text-gray-700 break-words">{{ m.machine_name }}</span>
+                    <span class="shrink-0 font-mono tabular-nums font-bold {% if m.avg_diff > 0 %}text-green-600{% elif m.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+                        {{ "%+d" | format(m.avg_diff | round(0) | int) }}
+                    </span>
+                    <span class="shrink-0 w-20 text-right text-gray-400 font-mono tabular-nums">{{ m.unit_count }}台 {{ m.plus_rate | round(0) | int }}%</span>
+                </summary>
+                <div class="mt-1 mb-2 pl-5">
+                    <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                        <thead>
+                            <tr class="text-gray-400 text-left">
+                                <th class="pr-3 pb-1">台番号</th>
+                                <th class="pr-3 pb-1 text-right">平均差枚</th>
+                                <th class="pr-3 pb-1 text-right">最高</th>
+                                <th class="pr-3 pb-1 text-right">最低</th>
+                                <th class="pr-3 pb-1 text-right">平均G数</th>
+                                <th class="pb-1 text-right">日数/プラス</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-gray-700">
+                            {% for u in m.units %}
+                            <tr>
+                                <td class="pr-3 py-0.5">
+                                    {{ u.label }}{% if u.is_edge %}<span class="text-gray-400 font-sans"> 端</span>{% endif %}
+                                </td>
+                                <td class="pr-3 py-0.5 text-right {% if u.avg_diff > 0 %}text-green-600{% elif u.avg_diff < 0 %}text-red-600{% endif %}">{{ "%+d" | format(u.avg_diff | round(0) | int) }}</td>
+                                <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.best_diff | round(0) | int) }}</td>
+                                <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.worst_diff | round(0) | int) }}</td>
+                                <td class="pr-3 py-0.5 text-right">{{ u.avg_games | round(0) | int }}</td>
+                                <td class="py-0.5 text-right text-gray-400">{{ u.count }}日 {{ u.plus_rate | round(0) | int }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if m.truncated %}
+                    <p class="hint">平均差枚の高い{{ m.units | length }}台を表示しています（他{{ m.truncated }}台）。</p>
+                    {% endif %}
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+        <p class="hint">「端」は端台（角台の候補）です。日数が少ない機種は薄く表示しています。</p>
+    </section>
+    {% endif %}
     {% endif %}
 
     {% if trends and trends.record_count %}

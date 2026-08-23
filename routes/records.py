@@ -78,6 +78,8 @@ def index():
         preset_machine=preset_machine,
         preset_session=preset_session,
         preset_store=preset_store,
+        # 店舗名の入力欄で既存の店名を候補表示するため(表記ゆれによる店舗の分裂を防ぐ)
+        store_names=common.list_store_names(all_history),
         recent_history_preview=recent_history_preview,
         hall_tendency_preview=hall_tendency_preview,
         chat_history=chat_history,

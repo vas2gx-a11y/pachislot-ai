@@ -26,7 +26,13 @@
             </div>
             <div>
                 <label class="label" for="store_name">店舗名（任意）</label>
-                <input id="store_name" type="text" name="store_name" value="{{ preset_store }}" placeholder="例: ○○ホール △△店" class="input">
+                <input id="store_name" type="text" name="store_name" value="{{ preset_store }}" placeholder="例: ○○ホール △△店" list="store_name_list" class="input">
+                {# 表記ゆれ(「大宮楽園」/「楽園大宮店」など)で店舗が分裂しないよう、既存の店名を候補表示する #}
+                <datalist id="store_name_list">
+                    {% for s in store_names %}
+                    <option value="{{ s.name }}"></option>
+                    {% endfor %}
+                </datalist>
             </div>
             <div>
                 <label class="label" for="image">スクショ画像（任意）</label>
