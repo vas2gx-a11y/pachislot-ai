@@ -10,16 +10,28 @@
 #   tools/anaslo_import.sh "~/Downloads/ana-slo.com-2026-08-22-.../"
 #   tools/anaslo_import.sh "~/Downloads/ana-slo.com-.../" 楽園大宮店   (店名を明示したい場合)
 #
-# 出力先: data/anaslo_<店名>.csv (日別ページを取り込むたびに追記・重複は上書き)
+# 出力先: data/anaslo_<店名>.csv (日別ページを取り込むたびに追記・重複は上書き。蓄積用の作業ファイル)
 #         data/units_<店名>_<日付>.txt   (台別データの取り込み用)
 #         data/paste_<店名>.txt          (日別データの取り込み用。CSVと一覧を合成)
+#
+# アプリに取り込む用のファイル(units・paste・CSV)は、
+# 探しに行かなくて済むよう ~/Downloads/pachislot_import/ にもコピーし、
+# 最後にFinderで開く。data/側はCSVを蓄積していく作業場所として残す。
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ANASLO="$APP_ROOT/tools/anaslo.py"
 DATA_DIR="$APP_ROOT/data"
-mkdir -p "$DATA_DIR"
+DOWNLOAD_DIR="$HOME/Downloads/pachislot_import"
+mkdir -p "$DATA_DIR" "$DOWNLOAD_DIR"
+
+# 取り込み用ファイルを ~/Downloads/pachislot_import/ にもコピーする
+_deliver() {
+    for f in "$@"; do
+        [ -f "$f" ] && cp "$f" "$DOWNLOAD_DIR/"
+    done
+}
 
 if [ $# -lt 1 ]; then
     echo "使い方: $0 <保存したフォルダのパス> [店名]" >&2
@@ -59,11 +71,16 @@ if grep -q '<table id="all_data_table"' "$HTML"; then
 
     DATE="$(python3 - "$HTML" <<'PY'
 import re, sys
-t = open(sys.argv[1], encoding="utf-8", errors="ignore").read(2000)
+# <title>は<head>の中でも後ろの方(6-7KB程度)にあることがあるため、多めに読む
+t = open(sys.argv[1], encoding="utf-8", errors="ignore").read(200000)
 m = re.search(r"<title>\s*(\d{4})/(\d{1,2})/(\d{1,2})", t)
 print(f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}" if m else "")
 PY
 )"
+    if [ -z "$DATE" ]; then
+        echo "エラー: ページのタイトルから日付を判定できませんでした。" >&2
+        exit 1
+    fi
     UNITS_OUT="$DATA_DIR/units_${STORE}_${DATE}.txt"
     python3 "$ANASLO" units --csv "$CSV" --date "$DATE" --out "$UNITS_OUT"
 
@@ -77,8 +94,10 @@ PY
         python3 "$ANASLO" daily --csv "$CSV" --out "$DAILY_OUT"
     fi
 
+    _deliver "$UNITS_OUT" "$DAILY_OUT" "$CSV"
+
     echo
-    echo "できたファイル:"
+    echo "できたファイル(Downloadsにもコピーしました):"
     echo "  台別データ取り込み用: $UNITS_OUT"
     echo "  日別データ取り込み用: $DAILY_OUT"
     echo "  分析用CSV(蓄積分):   $CSV"
@@ -101,8 +120,10 @@ elif grep -q 'date-table' "$HTML"; then
     # 次に日別ページを取り込んだときに合成できるよう、一覧ページ自体も控えておく
     cp "$HTML" "$DATA_DIR/list_${STORE}.html"
 
+    _deliver "$DAILY_OUT"
+
     echo
-    echo "できたファイル:"
+    echo "できたファイル(Downloadsにもコピーしました):"
     echo "  日別データ取り込み用: $DAILY_OUT"
 
 else
@@ -113,4 +134,8 @@ else
 fi
 
 echo
+echo "コピー先: $DOWNLOAD_DIR"
 echo "あとはアプリの店舗傾向ページで、上記ファイルを取り込んでください。"
+
+# Finderで自動的に開く(macOS以外・GUIが無い環境ではエラーを無視する)
+open "$DOWNLOAD_DIR" 2>/dev/null || true
