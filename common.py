@@ -1998,3 +1998,320 @@ def estimate_expected_payout_with_gemini(machine_name, target_games, current_gam
         logger.error(f"期待獲得枚数AI概算: 解析エラー: {e}")
 
     return None, "AIによる概算に失敗しました。手動で入力してください。"
+
+
+# ---------------------------------------------------------------------------
+# 店舗の傾向分析
+# ---------------------------------------------------------------------------
+# 「この店はいつ・どの機種に設定を入れているか」を、蓄積した記録から集計する。
+# 判定の材料はあくまで自分が打った記録だけなので、件数が少ない区分は
+# 平均差枚が大きく振れる。UI側で件数を必ず併記し、少数データを
+# 「傾向」と誤読しないようにすること。
+WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"]
+
+# この件数以上ある区分だけを「注目ポイント」として拾う(少数データのブレ対策)
+TREND_MIN_SAMPLES = 3
+
+
+def parse_record_datetime(record):
+    """記録の date 列を datetime に変換する(壊れている行は None)。"""
+    raw = str(record.get("date", "")).strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def list_store_names(records=None):
+    """
+    記録に登場する店舗名を、記録件数の多い順に返す。
+    戻り値: [{"name": 店舗名, "count": 件数}, ...]
+    """
+    if records is None:
+        records = load_records()
+
+    counts = {}
+    for r in records:
+        name = str(r.get("store_name", "")).strip()
+        if not name:
+            continue
+        counts[name] = counts.get(name, 0) + 1
+
+    return [
+        {"name": name, "count": count}
+        for name, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
+
+
+def _dedupe_daily_records(records):
+    """
+    「同一台番号・同じ日」の記録は、その日の最新1件だけを残す。
+    (同じ台を1日に複数回記録している場合、そのままだと同じ台の結果を
+    二重に数えてしまい、平均差枚が実態からずれるため。
+    台番号が未入力の記録は、機種名+日付でまとめる簡易対応とする。)
+    """
+    latest_by_group = {}
+    for record_dt, r in records:
+        machine_number = str(r.get("machine_number", "")).strip()
+        machine_name = str(r.get("machine_name", "")).strip()
+        key = (machine_number or f"name:{machine_name}", record_dt.strftime("%Y-%m-%d"))
+        existing = latest_by_group.get(key)
+        if existing is None or record_dt > existing[0]:
+            latest_by_group[key] = (record_dt, r)
+    return sorted(latest_by_group.values(), key=lambda x: x[0], reverse=True)
+
+
+def _summarize_group(records):
+    """記録のかたまり(1グループ)の平均差枚・プラス率などを計算する。"""
+    n = len(records)
+    if n == 0:
+        return None
+    diffs = [_to_int(r.get("difference_slabs", 0)) for r in records]
+    games = [_to_int(r.get("total_games", 0)) for r in records]
+    plus_count = sum(1 for d in diffs if d > 0)
+    return {
+        "count": n,
+        "avg_diff": sum(diffs) / n,
+        "total_diff": sum(diffs),
+        "best_diff": max(diffs),
+        "worst_diff": min(diffs),
+        "plus_count": plus_count,
+        "plus_rate": plus_count / n * 100,
+        "avg_games": sum(games) / n,
+        "enough_samples": n >= TREND_MIN_SAMPLES,
+    }
+
+
+def _grouped_summaries(pairs, key_func, label_func=None, sort_key=None):
+    """
+    (datetime, record) のリストを key_func でグルーピングし、区分ごとの集計を返す。
+    key_func が None を返した記録はその集計から除外する(台番号未入力など)。
+    """
+    groups = {}
+    for record_dt, r in pairs:
+        key = key_func(record_dt, r)
+        if key is None:
+            continue
+        groups.setdefault(key, []).append(r)
+
+    rows = []
+    for key, records in groups.items():
+        summary = _summarize_group(records)
+        summary["key"] = key
+        summary["label"] = label_func(key) if label_func else str(key)
+        rows.append(summary)
+
+    if sort_key:
+        rows.sort(key=sort_key)
+    else:
+        rows.sort(key=lambda row: -row["avg_diff"])
+    return rows
+
+
+def _pick_highlight(rows, best=True):
+    """
+    件数が十分ある区分の中から、平均差枚が最も高い(または低い)ものを1つ返す。
+    十分な件数の区分が無ければ None(「傾向あり」と言い切れないため)。
+    """
+    eligible = [row for row in rows if row["enough_samples"]]
+    if not eligible:
+        return None
+    return max(eligible, key=lambda row: row["avg_diff"]) if best else min(eligible, key=lambda row: row["avg_diff"])
+
+
+def build_store_trends(store_name, days=90):
+    """
+    1店舗ぶんの記録を、日別・曜日別・日付末尾別・機種別・台番号末尾別に集計する。
+
+    days: 何日ぶんの記録を対象にするか(0以下なら全期間)
+    戻り値: 集計結果の辞書。対象の記録が1件も無い場合は record_count=0 の辞書を返す。
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return None
+
+    now = datetime.now()
+    pairs = []
+    for r in load_records():
+        if str(r.get("store_name", "")).strip() != store_name:
+            continue
+        record_dt = parse_record_datetime(r)
+        if record_dt is None:
+            continue
+        if days > 0 and (now - record_dt).days > days:
+            continue
+        pairs.append((record_dt, r))
+
+    pairs = _dedupe_daily_records(pairs)
+    records = [r for _, r in pairs]
+
+    trends = {
+        "store_name": store_name,
+        "days": days,
+        "record_count": len(records),
+        "overall": _summarize_group(records),
+        "min_samples": TREND_MIN_SAMPLES,
+    }
+    if not records:
+        return trends
+
+    trends["first_date"] = min(dt for dt, _ in pairs).strftime("%Y-%m-%d")
+    trends["last_date"] = max(dt for dt, _ in pairs).strftime("%Y-%m-%d")
+    trends["unique_days"] = len({dt.strftime("%Y-%m-%d") for dt, _ in pairs})
+
+    # 日別: 新しい日付が上に来るように並べる(イベント日の当たりを探す用途)
+    trends["by_date"] = _grouped_summaries(
+        pairs,
+        key_func=lambda dt, r: dt.strftime("%Y-%m-%d"),
+        sort_key=lambda row: row["key"],
+    )
+    trends["by_date"].reverse()
+
+    # 曜日別: 月〜日の並びを固定する
+    trends["by_weekday"] = _grouped_summaries(
+        pairs,
+        key_func=lambda dt, r: dt.weekday(),
+        label_func=lambda key: f"{WEEKDAY_LABELS[key]}曜",
+        sort_key=lambda row: row["key"],
+    )
+
+    # 日付末尾別: 「毎月7の付く日」のような周期イベントを探す用途
+    trends["by_day_suffix"] = _grouped_summaries(
+        pairs,
+        key_func=lambda dt, r: dt.day % 10,
+        label_func=lambda key: f"末尾{key}の日",
+        sort_key=lambda row: row["key"],
+    )
+
+    # 機種別: その店がどの機種に設定を入れているかを見る用途
+    trends["by_machine"] = _grouped_summaries(
+        pairs,
+        key_func=lambda dt, r: str(r.get("machine_name", "")).strip() or None,
+    )
+
+    # 台番号末尾別: 台番号が入力されている記録のみが対象
+    def _number_suffix(dt, r):
+        number = str(r.get("machine_number", "")).strip()
+        return int(number[-1]) if number.isdigit() else None
+
+    trends["by_number_suffix"] = _grouped_summaries(
+        pairs,
+        key_func=_number_suffix,
+        label_func=lambda key: f"末尾{key}",
+        sort_key=lambda row: row["key"],
+    )
+
+    # ゾロ目台(111・222など、桁がすべて同じ台番号)は島の角や看板台として
+    # 扱われることがあるため、末尾別とは別枠で集計する
+    def _repdigit(dt, r):
+        number = str(r.get("machine_number", "")).strip()
+        if number.isdigit() and len(number) >= 2 and len(set(number)) == 1:
+            return "repdigit"
+        return None
+
+    repdigit_rows = _grouped_summaries(pairs, key_func=_repdigit, label_func=lambda key: "ゾロ目台")
+    trends["repdigit"] = repdigit_rows[0] if repdigit_rows else None
+
+    # 注目ポイント: 件数が十分ある区分だけから拾う
+    trends["highlights"] = {
+        "best_weekday": _pick_highlight(trends["by_weekday"]),
+        "worst_weekday": _pick_highlight(trends["by_weekday"], best=False),
+        "best_day_suffix": _pick_highlight(trends["by_day_suffix"]),
+        "best_machine": _pick_highlight(trends["by_machine"]),
+        "worst_machine": _pick_highlight(trends["by_machine"], best=False),
+        "best_number_suffix": _pick_highlight(trends["by_number_suffix"]),
+    }
+    return trends
+
+
+def _describe_trend_rows(title, rows, limit=10):
+    """集計結果をAIプロンプト用の1行テキストにする。"""
+    if not rows:
+        return f"【{title}】データなし"
+    parts = [
+        f"{row['label']}: 平均差枚{row['avg_diff']:+.0f}枚/{row['count']}件/プラス率{row['plus_rate']:.0f}%"
+        for row in rows[:limit]
+    ]
+    return f"【{title}】" + " / ".join(parts)
+
+
+def describe_store_trends(trends):
+    """build_store_trends() の結果を、AIに渡す・ログに残すためのテキストにまとめる。"""
+    if not trends or not trends.get("record_count"):
+        return "対象の記録がありません。"
+
+    overall = trends["overall"]
+    lines = [
+        f"【店舗】{trends['store_name']}",
+        f"【対象期間】{trends.get('first_date', '')}〜{trends.get('last_date', '')} "
+        f"(記録{trends['record_count']}件 / 実際に打った日数{trends.get('unique_days', 0)}日)",
+        f"【全体】平均差枚{overall['avg_diff']:+.0f}枚 / プラス率{overall['plus_rate']:.0f}% "
+        f"({overall['plus_count']}/{overall['count']}回) / 平均{overall['avg_games']:.0f}G",
+        _describe_trend_rows("日別(直近)", trends.get("by_date", []), limit=14),
+        _describe_trend_rows("曜日別", trends.get("by_weekday", [])),
+        _describe_trend_rows("日付末尾別", trends.get("by_day_suffix", [])),
+        _describe_trend_rows("機種別", trends.get("by_machine", []), limit=12),
+        _describe_trend_rows("台番号末尾別", trends.get("by_number_suffix", [])),
+    ]
+    repdigit = trends.get("repdigit")
+    if repdigit:
+        lines.append(
+            f"【ゾロ目台】平均差枚{repdigit['avg_diff']:+.0f}枚/{repdigit['count']}件/"
+            f"プラス率{repdigit['plus_rate']:.0f}%"
+        )
+    return "\n".join(lines)
+
+
+def summarize_store_trends_with_gemini(trends):
+    """
+    集計結果をもとに、店舗の傾向についてのコメントをAIに書いてもらう。
+
+    注意: 元データは「自分が打った記録」だけなので、母数が小さい区分は
+    偶然のブレである可能性が高い。プロンプト側でもその点を明示し、
+    断定させないようにしている。
+    戻り値: (summary: str, error: str)
+    """
+    if not trends or not trends.get("record_count"):
+        return "", "集計対象の記録がありません。"
+
+    prompt = f"""
+    あなたはパチスロのホール取材・データ分析に詳しいアナリストです。
+    以下は、あるユーザーが1つの店舗で自分が打った台の記録だけを集計したものです。
+    このデータから読み取れる「その店舗の傾向」を日本語で説明してください。
+
+    重要な前提:
+    - これは店の全台データではなく、ユーザーが打った台のみの偏ったサンプルです。
+    - 件数({trends['min_samples']}件未満)が少ない区分は偶然のブレの可能性が高いので、
+      傾向として断定せず「サンプルが少ない」と明記してください。
+    - 存在しない数値を作らず、以下のデータに書かれている数値だけを使ってください。
+
+    出力形式(プレーンテキスト、箇条書き3〜5行、合計300文字程度):
+    - 全体の傾向を1行
+    - 狙い目になりそうな日・曜日・機種・台番号の傾向を2〜3行(根拠の数値を添えて)
+    - 判断に注意が必要な点(サンプル数の偏りなど)を1行
+
+    {describe_store_trends(trends)}
+    """
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+        text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if not text:
+            return "", "AIからの回答が空でした。もう一度お試しください。"
+        return text, ""
+    except requests.exceptions.Timeout:
+        logger.error("店舗傾向AI総評: タイムアウト")
+        return "", "AIの応答がタイムアウトしました。もう一度お試しください。"
+    except requests.exceptions.RequestException as e:
+        logger.error(f"店舗傾向AI総評: 通信エラー: {e}")
+        return "", "AIとの通信に失敗しました。時間をおいてお試しください。"
+    except (KeyError, IndexError, ValueError, TypeError) as e:
+        logger.error(f"店舗傾向AI総評: 解析エラー: {e}")
+        return "", "AIの回答を解析できませんでした。もう一度お試しください。"

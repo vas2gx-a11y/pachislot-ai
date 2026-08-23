@@ -1,17 +1,18 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state %}
+{% from "_macros.html" import empty_state, back_link %}
 
 {% block title %}台データの推移グラフ{% endblock %}
 
 {% block header %}
-<div class="flex items-center gap-3">
-    <span class="text-2xl md:text-3xl">📊</span>
-    <h1 class="font-display font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">台データの推移グラフ</h1>
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">📊</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">台データの推移グラフ</h1>
 </div>
 {% endblock %}
 
 {% block content %}
-    <div class="card p-5 md:p-6 rounded-xl border border-gray-200 mb-6">
+<div class="stack">
+    <div class="card card-body">
         <div class="mb-4">
             <div class="text-xs text-gray-400">{{ store_name }} ・ 台番号 {{ machine_number }}</div>
             <div class="font-bold text-gray-900 text-lg">{{ machine_name }}</div>
@@ -21,13 +22,15 @@
         </div>
 
         {% if history and history|length >= 2 %}
-        <div class="mb-8">
-            <div class="text-sm font-semibold text-gray-700 mb-2">🎮 総回転数(G数)の推移</div>
-            <canvas id="gamesChart" height="90"></canvas>
-        </div>
-        <div>
-            <div class="text-sm font-semibold text-gray-700 mb-2">💰 差枚の推移</div>
-            <canvas id="diffChart" height="90"></canvas>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+                <div class="text-sm font-semibold text-gray-700 mb-2">🎮 総回転数(G数)の推移</div>
+                <canvas id="gamesChart" height="90"></canvas>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-gray-700 mb-2">💰 差枚の推移</div>
+                <canvas id="diffChart" height="90"></canvas>
+            </div>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -87,7 +90,7 @@
             });
         </script>
 
-        <div class="mt-8 border-t border-gray-200 pt-4 overflow-x-auto">
+        <div class="mt-6 border-t border-gray-200 pt-4 overflow-x-auto">
             <table class="w-full text-left text-sm border-collapse font-mono tabular-nums">
                 <thead>
                     <tr class="text-gray-400 text-xs uppercase">
@@ -112,7 +115,6 @@
         {% endif %}
     </div>
 
-    <a href="{{ url_for('records.index') }}" class="card flex items-center gap-2 hover:bg-gray-50 p-4 rounded-xl border border-gray-200 text-gray-700 transition">
-        ← <span class="text-blue-600 underline ml-1">データ管理ダッシュボード</span>に戻る
-    </a>
+    {{ back_link(url_for('records.index'), "データ管理ダッシュボードに戻る") }}
+</div>
 {% endblock %}

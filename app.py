@@ -6,6 +6,7 @@ import common
 from routes.records import records_bp
 from routes.machines import machines_bp
 from routes.expected_value import expected_value_bp
+from routes.store_trends import store_trends_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
@@ -14,6 +15,7 @@ app.config["MAX_CONTENT_LENGTH"] = common.MAX_UPLOAD_SIZE
 app.register_blueprint(records_bp)
 app.register_blueprint(machines_bp)
 app.register_blueprint(expected_value_bp)
+app.register_blueprint(store_trends_bp)
 
 # テンプレート側でスコア内訳を組み立てるために、common.py の変換関数を
 # Jinjaのグローバル関数として登録しておく(ロジックの二重管理を避けるため)

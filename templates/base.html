@@ -22,6 +22,24 @@
         };
     </script>
     <style>
+        /*
+          レイアウトの土台。
+          ページ固有のスタイルをテンプレート側にベタ書きせず、
+          ここで定義したコンポーネントクラス(.card / .input / .btn など)を使う。
+          Tailwindのユーティリティは後から読み込まれるため、
+          個別に上書きしたいときはテンプレート側でユーティリティを足せばよい。
+        */
+
+        :root {
+            /* 画面の余白・角丸を1か所で管理して、ページ間のばらつきを防ぐ */
+            --page-gutter: 1rem;
+            --radius-card: 0.75rem;
+            --radius-control: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            :root { --page-gutter: 1.5rem; }
+        }
+
         ::-webkit-scrollbar { height: 6px; width: 6px; }
         ::-webkit-scrollbar-thumb { background-color: #d4d4d8; border-radius: 9999px; }
         summary::-webkit-details-marker { display: none; }
@@ -32,9 +50,42 @@
             background: #f4f4f5; /* zinc-100 相当。参考画像の薄いグレー背景 */
         }
 
-        /* カードコンポーネント: 白背景+薄い枠線+柔らかい影(参考画像のシンプルなカード) */
+        /* ページ共通の横幅・左右余白(ヘッダーと本文で必ず同じ値を使う) */
+        .page-container {
+            width: 100%;
+            max-width: 80rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: var(--page-gutter);
+            padding-right: var(--page-gutter);
+        }
+
+        /*
+          ヘッダーは画面幅いっぱいのスティッキーバーにする。
+          (以前はコンテナ内側でstickyにしていたため、上の余白部分に
+           スクロールした本文が透けて見えてしまっていた)
+        */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(244, 244, 245, 0.88);
+            border-bottom: 1px solid #e4e4e7;
+        }
+
+        /* 縦方向のリズム: セクション間の間隔をページごとに書かずに統一する */
+        .stack > * + * { margin-top: 1.25rem; }
+        @media (min-width: 768px) {
+            .stack > * + * { margin-top: 1.5rem; }
+        }
+
+        /* カードコンポーネント: 白背景+薄い枠線+柔らかい影 */
         .card {
             background: #ffffff;
+            border: 1px solid #e4e4e7;
+            border-radius: var(--radius-card);
             box-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 1px 8px -2px rgba(24, 24, 27, 0.06);
             transition: box-shadow 0.15s ease, border-color 0.15s ease;
         }
@@ -42,32 +93,104 @@
             border-color: #d4d4d8;
             box-shadow: 0 1px 2px rgba(24, 24, 27, 0.05), 0 8px 20px -6px rgba(24, 24, 27, 0.12);
         }
-
-        /* ヘッダーをスティッキー化(白背景+ぼかしで、スクロールしてもナビにアクセスできるように) */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 30;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            background: rgba(244, 244, 245, 0.85);
+        /* カード内側の標準パディング(カード自身に付ける場合に使う) */
+        .card-body { padding: 1rem; }
+        @media (min-width: 768px) {
+            .card-body { padding: 1.5rem; }
         }
 
-        /* 設定確率バー・スコアバー: 黒基調でフラットに(参考画像のプログレスバーと同じ質感) */
-        .prob-bar { position: relative; overflow: hidden; }
+        /* カードの中に置く一段落ちたブロック(補足情報・入力グループなど) */
+        .panel {
+            background: #fafafa;
+            border: 1px solid #e4e4e7;
+            border-radius: var(--radius-control);
+            padding: 0.75rem;
+        }
+        .panel-dashed { border-style: dashed; }
 
-        /* 主要CTAボタン(黒ボタン)の押下フィードバック */
-        .btn-primary { transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
-        .btn-primary:hover { background-color: #27272a; }
-        .btn-primary:active { transform: scale(0.98); }
-
-        /* ボタン全般に押下時の軽いフィードバック */
-        button:active { transform: scale(0.98); }
-
-        /* フォーム要素のフォーカスに柔らかいリングを追加 */
-        input:focus, textarea:focus, select:focus {
+        /* フォーム要素: ページごとにクラス文字列を書き分けず、見た目を必ず揃える */
+        .label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #71717a;
+            margin-bottom: 0.25rem;
+        }
+        .hint {
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: #a1a1aa;
+            margin-top: 0.25rem;
+        }
+        .input {
+            width: 100%;
+            background: #fafafa;
+            border: 1px solid #e4e4e7;
+            border-radius: var(--radius-control);
+            padding: 0.5rem 0.75rem;
+            color: #18181b;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .input:focus {
+            outline: none;
+            border-color: #a1a1aa;
             box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
         }
+        .input-sm { padding: 0.3125rem 0.5rem; font-size: 0.8125rem; }
+        .input-file {
+            width: 100%;
+            font-size: 0.875rem;
+            color: #71717a;
+            cursor: pointer;
+        }
+        .input-file::file-selector-button {
+            margin-right: 1rem;
+            padding: 0.5rem 1rem;
+            border: 0;
+            border-radius: var(--radius-control);
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: #f4f4f5;
+            color: #3f3f46;
+            cursor: pointer;
+        }
+        .input-file:hover::file-selector-button { background: #e4e4e7; }
+
+        /* ボタン: 役割ごとに3種類だけに絞る(主要操作=黒 / AI系=青 / 補助=白) */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            border-radius: var(--radius-control);
+            padding: 0.625rem 1.5rem;
+            white-space: nowrap;
+            transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #18181b; color: #ffffff; box-shadow: 0 1px 2px rgba(24, 24, 27, 0.12); }
+        .btn-primary:hover { background: #27272a; }
+        .btn-accent { background: #2563eb; color: #ffffff; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.18); }
+        .btn-accent:hover { background: #1d4ed8; }
+        .btn-ghost { background: #ffffff; color: #3f3f46; border: 1px solid #e4e4e7; }
+        .btn-ghost:hover { background: #fafafa; border-color: #d4d4d8; }
+        .btn-sm { padding: 0.375rem 0.875rem; font-size: 0.8125rem; }
+
+        /* 小さいタグ表示(グラフ形状タグなど) */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            background: #f4f4f5;
+            color: #52525b;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+
+        /* 設定確率バー・スコアバー: 黒基調でフラットに */
+        .prob-bar { position: relative; overflow: hidden; }
 
         /* details/summary の開閉に軽いアニメーション感を出す矢印 */
         summary .chev { transition: transform 0.2s ease; display: inline-block; }
@@ -102,12 +225,18 @@
            明示的にmin-width: 0を指定して防ぐ。 */
         .flex-1 { min-width: 0; }
 
-        /* 万一何かがはみ出しても、ページ全体が横スクロールしてしまわないようにする保険 */
-        html, body { overflow-x: hidden; max-width: 100vw; }
+        /* 万一何かがはみ出しても、ページ全体が横スクロールしてしまわないようにする保険。
+           overflow-x: hidden にすると position: sticky のヘッダーが効かなくなるため、
+           スクロール位置に影響しない clip を使う(未対応ブラウザ向けに hidden を先に書く)。 */
+        html, body { max-width: 100vw; }
+        html, body { overflow-x: hidden; }
+        @supports (overflow-x: clip) {
+            html, body { overflow-x: clip; }
+        }
         img, canvas, svg, table { max-width: 100%; }
     </style>
 </head>
-<body class="text-gray-900 min-h-screen font-sans">
+<body class="text-gray-900 min-h-screen font-sans antialiased">
     <script>
         // 画像アップロード+AI解析のような時間のかかるフォーム送信に、
         // 「📤 アップロード中 xx%」→「🤖 AI解析中...」の2段階のローディング表示を付ける。
@@ -177,39 +306,49 @@
         }
     </script>
 
+    {% macro nav_links() %}
+        {% set items = [
+            (url_for('records.index'), '📸', 'データ管理', request.path == '/' or request.path.startswith('/records')),
+            (url_for('machines.machines_page'), '🎯', '機種スペック', request.path.startswith('/machines')),
+            (url_for('expected_value.index'), '🧮', '期待値計算', request.path.startswith('/expected_value')),
+            (url_for('store_trends.index'), '🏢', '店舗傾向', request.path.startswith('/store_trends')),
+        ] %}
+        {% for url, icon, label, is_active in items %}
+        <a href="{{ url }}"
+           class="shrink-0 px-3 py-1.5 rounded-md transition font-medium
+                  {% if is_active %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
+            <span aria-hidden="true">{{ icon }}</span> {{ label }}
+        </a>
+        {% endfor %}
+    {% endmacro %}
 
-    <div class="w-full max-w-7xl mx-auto p-4 md:p-6">
-        <header class="mb-6 pb-4 border-b border-gray-200">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                {% block header %}
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl md:text-3xl">🎰</span>
-                    <h1 class="font-display font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">パチスロAIデータ管理</h1>
-                </div>
-                {% endblock %}
-                <nav class="flex gap-1 text-sm overflow-x-auto">
-                    <a href="{{ url_for('records.index') }}"
-                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
-                              {% if request.path == '/' or request.path.startswith('/records') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
-                        📸 データ管理
-                    </a>
-                    <a href="{{ url_for('machines.machines_page') }}"
-                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
-                              {% if request.path.startswith('/machines') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
-                        🎯 機種スペック登録
-                    </a>
-                    <a href="{{ url_for('expected_value.index') }}"
-                       class="shrink-0 px-3 py-2 rounded-md transition font-medium
-                              {% if request.path.startswith('/expected_value') %}bg-gray-900 text-white{% else %}text-gray-600 hover:bg-gray-200/70{% endif %}">
-                        🧮 期待値計算
-                    </a>
-                </nav>
-            </div>
-        </header>
+    <header class="site-header">
+        <div class="page-container flex items-center justify-between gap-4 py-2 md:py-3">
+            {% block header %}
+            <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 min-w-0">
+                <span class="text-xl md:text-2xl shrink-0">🎰</span>
+                <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">パチスロAIデータ管理</h1>
+            </a>
+            {% endblock %}
 
+            {#
+              ナビゲーション。
+              PCではヘッダー右側に、スマホでは横スクロールするピル型タブとして表示する。
+              (以前はヘッダーが縦積みになり、スマホで上部の占有面積が大きかった)
+            #}
+            <nav class="hidden md:flex gap-1 text-sm shrink-0">
+                {{ nav_links() }}
+            </nav>
+        </div>
+        <nav class="md:hidden page-container flex gap-1 text-sm overflow-x-auto pb-1.5">
+            {{ nav_links() }}
+        </nav>
+    </header>
+
+    <main class="page-container py-5 md:py-8">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                <div class="mb-6 flex flex-col gap-2">
+                <div class="mb-5 flex flex-col gap-2">
                     {% for message in messages %}
                     <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                         ⚠️ {{ message }}
@@ -220,6 +359,6 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
 </body>
 </html>
