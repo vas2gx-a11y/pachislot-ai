@@ -24,7 +24,7 @@
             <label class="label" for="store_name">店舗</label>
             <select id="store_name" name="store_name" class="input">
                 {% for s in stores %}
-                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
+                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.is_new %}（未登録）{% elif s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
                 {% endfor %}
             </select>
         </div>

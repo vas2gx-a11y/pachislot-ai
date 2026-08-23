@@ -20,7 +20,7 @@
             <label class="label" for="store_name">店舗</label>
             <select id="store_name" name="store_name" class="input">
                 {% for s in stores %}
-                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
+                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.is_new %}（未登録）{% elif s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
                 {% endfor %}
             </select>
         </div>
@@ -48,14 +48,14 @@
         <div class="mt-3 flex flex-col gap-4">
             <div>
                 <div class="text-xs font-bold text-gray-700 mb-1">新しい店舗を追加</div>
-                <form action="{{ url_for('store_trends.index') }}" method="GET" class="flex flex-col sm:flex-row gap-2">
+                <form action="{{ url_for('store_trends.add_store') }}" method="POST" class="flex flex-col sm:flex-row gap-2">
                     <input type="hidden" name="days" value="{{ days }}">
                     <input type="text" name="store_name" placeholder="例: ○○ホール △△店" required class="input flex-1">
-                    <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap self-start sm:self-auto">この店舗を選択</button>
+                    <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap self-start sm:self-auto">この店舗を追加</button>
                 </form>
                 <p class="hint">
-                    まだ記録が無い店舗名でも選択できます。選択した状態で年間データ・旧イベント日・
-                    ホールデータなどを1つでも登録すると、以降は上の一覧にも表示されるようになります。
+                    追加すると上の店舗一覧に入り、その店舗が選ばれた状態になります。
+                    続けて年間データ・旧イベント日・ホールデータなどを登録してください。
                 </p>
             </div>
 

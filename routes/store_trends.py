@@ -108,10 +108,24 @@ def _parse_days(raw):
     return days if days in {d for _, d in PERIOD_CHOICES} else DEFAULT_DAYS
 
 
+def _stores_for_select(store_name):
+    """
+    店舗プルダウン用の一覧。
+
+    まだデータが1件も無い店舗を選んでいる場合、そのままだと選択肢に存在せず
+    プルダウンが別の店舗を指してしまい、「追加したのに切り替わらない」ように見える。
+    選択中の店舗は必ず選択肢に含める。
+    """
+    stores = common.list_store_names()
+    if store_name and not any(s["name"] == store_name for s in stores):
+        stores = stores + [{"name": store_name, "count": 0, "is_new": True}]
+    return stores
+
+
 def _render(store_name, days, ai_summary="", import_preview=None, pasted_text="",
             unit_import_preview=None, pasted_units_text="", unit_date="",
             csv_import_preview=None):
-    stores = common.list_store_names()
+    stores = _stores_for_select(store_name)
 
     # 店舗が未指定なら、記録が一番多い店舗を初期表示にする(毎回選び直す手間を省く)
     if not store_name and stores:
@@ -159,7 +173,7 @@ def _render_my_records(store_name, days, ai_summary=""):
     店の全台データ(取り込み分)とは母数がまったく違い、同じ画面に並べると
     どちらの数字を見ているのか分かりにくくなるため、ページを分けている。
     """
-    stores = common.list_store_names()
+    stores = _stores_for_select(store_name)
     if not store_name and stores:
         store_name = stores[0]["name"]
 
@@ -196,6 +210,32 @@ def my_records():
     store_name = request.args.get("store_name", "").strip()
     days = _parse_days(request.args.get("days", DEFAULT_DAYS))
     return _render_my_records(store_name, days)
+
+
+@store_trends_bp.route("/add_store", methods=["POST"])
+def add_store():
+    """
+    店舗を新しく登録する。
+
+    店舗名は専用のマスタを持たず「どこかのシートに登場するか」で一覧を作っているため、
+    追加した直後に何も登録しないままページを離れると店名が消えてしまう。
+    それを避けるため、旧イベント日のシートに空の行を作って店名だけ先に登録しておく。
+    """
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+
+    if not store_name:
+        flash("追加する店舗名を入力してください。")
+        return _back_to("", days)
+
+    if any(s["name"] == store_name for s in common.list_store_names()):
+        flash(f"「{store_name}」はすでに登録されています。")
+        return _back_to(store_name, days)
+
+    ok, message = common.save_store_events(store_name, event_days="", anniversary_days="",
+                                           note="", source="店舗追加")
+    flash(f"店舗「{store_name}」を追加しました。" if ok else message)
+    return _back_to(store_name, days)
 
 
 @store_trends_bp.route("/rename_store", methods=["POST"])
