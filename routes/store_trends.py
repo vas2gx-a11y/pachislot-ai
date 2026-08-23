@@ -122,9 +122,8 @@ def _stores_for_select(store_name):
     return stores
 
 
-def _render(store_name, days, ai_summary="", import_preview=None, pasted_text="",
-            unit_import_preview=None, pasted_units_text="", unit_date="",
-            csv_import_preview=None):
+def _render(store_name, days):
+    """店舗傾向のページ(見るためのページ。取り込みのフォームは import_page 側)"""
     stores = _stores_for_select(store_name)
 
     # 店舗が未指定なら、記録が一番多い店舗を初期表示にする(毎回選び直す手間を省く)
@@ -156,13 +155,6 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
         daily_trends=daily_trends,
         daily_trends_all=daily_trends_all,
         unit_trends=unit_trends,
-        import_preview=import_preview,
-        pasted_text=pasted_text,
-        unit_import_preview=unit_import_preview,
-        pasted_units_text=pasted_units_text,
-        csv_import_preview=csv_import_preview,
-        unit_date=unit_date or datetime.now().strftime("%Y-%m-%d"),
-        ai_summary=ai_summary,
     )
 
 
@@ -190,12 +182,43 @@ def _render_my_records(store_name, days, ai_summary=""):
     )
 
 
-def _back_to(store_name, days):
-    return redirect(url_for("store_trends.index", store_name=store_name, days=days))
+def _render_import(store_name, days, import_preview=None, pasted_text="",
+                   unit_import_preview=None, pasted_units_text="", unit_date="",
+                   csv_import_preview=None):
+    """
+    データ取り込みページ。
+
+    取り込みのフォームだけを集めたページなので、集計は年間データとの比較に使う
+    自分の記録ぶんだけに絞る(日別・台別の集計は傾向ページの担当)。
+    """
+    stores = _stores_for_select(store_name)
+    if not store_name and stores:
+        store_name = stores[0]["name"]
+
+    return render_template(
+        "store_import.html",
+        stores=stores,
+        store_name=store_name,
+        days=days,
+        # 年間データのカードで「自分の記録との比較」を出すために使う
+        trends=common.build_store_trends(store_name, days=days) if store_name else None,
+        store_stats=common.load_store_stats().get(store_name) if store_name else None,
+        store_events=common.load_store_events().get(store_name) if store_name else None,
+        import_preview=import_preview,
+        pasted_text=pasted_text,
+        unit_import_preview=unit_import_preview,
+        pasted_units_text=pasted_units_text,
+        csv_import_preview=csv_import_preview,
+        unit_date=unit_date or datetime.now().strftime("%Y-%m-%d"),
+    )
 
 
 def _back_to_my_records(store_name, days):
     return redirect(url_for("store_trends.my_records", store_name=store_name, days=days))
+
+
+def _back_to_import(store_name, days):
+    return redirect(url_for("store_trends.import_page", store_name=store_name, days=days))
 
 
 @store_trends_bp.route("/")
@@ -210,6 +233,14 @@ def my_records():
     store_name = request.args.get("store_name", "").strip()
     days = _parse_days(request.args.get("days", DEFAULT_DAYS))
     return _render_my_records(store_name, days)
+
+
+@store_trends_bp.route("/import")
+def import_page():
+    """データ取り込みのページ(メニューから直接開く入口)"""
+    store_name = request.args.get("store_name", "").strip()
+    days = _parse_days(request.args.get("days", DEFAULT_DAYS))
+    return _render_import(store_name, days)
 
 
 @store_trends_bp.route("/ai_summary", methods=["GET", "POST"])
@@ -262,11 +293,11 @@ def upload_stats():
 
     if not file or file.filename == "":
         flash("年間データの画像を選択してください。")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     if not common.allowed_file(file.filename):
         flash("対応していないファイル形式です(jpg / jpeg / png / webp のみ)")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     ext = file.filename.rsplit(".", 1)[1].lower()
     mime_type = "image/png" if ext == "png" else "image/webp" if ext == "webp" else "image/jpeg"
@@ -275,13 +306,13 @@ def upload_stats():
     parsed = common.analyze_store_stats_image_with_gemini(base64_image, mime_type)
     if not parsed:
         flash("画像の解析に失敗しました。もう一度お試しいただくか、下の入力欄に手入力してください。")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     # 画面で店舗が選ばれていない場合に限り、画像から読み取った店名を使う
     target_store = store_name or parsed.get("store_name", "").strip()
     if not target_store:
         flash("保存先の店舗が特定できませんでした。店舗を選んでから、もう一度お試しください。")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     ai_store_name = parsed.get("store_name", "").strip()
     if ai_store_name and store_name and ai_store_name != store_name:
@@ -291,7 +322,7 @@ def upload_stats():
     read_values = [k for k in ("total_diff", "avg_diff", "avg_games", "win_rate") if parsed.get(k) is not None]
     if not read_values:
         flash("画像から数値を読み取れませんでした。下の入力欄に手入力してください。")
-        return _back_to(target_store, days)
+        return _back_to_import(target_store, days)
 
     ok, message = common.save_store_stats(
         target_store,
@@ -308,7 +339,7 @@ def upload_stats():
         missing = {"total_diff": "総差枚", "avg_diff": "平均差枚", "avg_games": "平均G数", "win_rate": "勝率"}
         not_read = [label for key, label in missing.items() if key not in read_values]
         flash(f"画像から読み取れなかった項目({'、'.join(not_read)})があります。下の入力欄で補ってください。")
-    return _back_to(target_store, days)
+    return _back_to_import(target_store, days)
 
 
 @store_trends_bp.route("/save_stats", methods=["POST"])
@@ -319,7 +350,7 @@ def save_stats():
 
     if not store_name:
         flash("店舗を選んでから保存してください。")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     ok, message = common.save_store_stats(
         store_name,
@@ -332,7 +363,7 @@ def save_stats():
         source="手入力",
     )
     flash(message)
-    return _back_to(store_name, days)
+    return _back_to_import(store_name, days)
 
 
 @store_trends_bp.route("/save_events", methods=["POST"])
@@ -348,7 +379,7 @@ def save_events():
 
     if not store_name:
         flash("店舗を選んでから保存してください。")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     event_days = request.form.get("event_days", "")
     anniversary_days = request.form.get("anniversary_days", "")
@@ -357,7 +388,7 @@ def save_events():
     if not event_days.strip() and not anniversary_days.strip():
         flash("旧イベント日か周年日のどちらかを入力してください。"
               "(空のまま保存すると設定が消えます)")
-        return _back_to(store_name, days)
+        return _back_to_import(store_name, days)
 
     ok, message = common.save_store_events(
         store_name,
@@ -367,7 +398,7 @@ def save_events():
         source="手入力",
     )
     flash(message)
-    return _back_to(store_name, days)
+    return _back_to_import(store_name, days)
 
 
 @store_trends_bp.route("/import_daily", methods=["GET", "POST"])
@@ -382,7 +413,7 @@ def import_daily():
     if request.method == "GET":
         # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
         # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
-        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+        return _back_to_import(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
 
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
@@ -391,7 +422,7 @@ def import_daily():
 
     if not store_name:
         flash("取り込み先の店舗を選んでください。")
-        return _render(store_name, days)
+        return _render_import(store_name, days)
 
     # ファイルが選ばれていればそちらを優先する。
     # データ一覧をまるごと取り込むと1000日分を超えることがあり、
@@ -401,22 +432,22 @@ def import_daily():
         text, error = _read_uploaded_text(uploaded)
         if error:
             flash(error)
-            return _render(store_name, days, pasted_text=pasted_text)
+            return _render_import(store_name, days, pasted_text=pasted_text)
         pasted_text = text
 
     if not pasted_text.strip():
         flash("ホールデータの表を貼り付けるか、テキストファイルを選んでください。")
-        return _render(store_name, days)
+        return _render_import(store_name, days)
 
     rows, report = common.parse_hall_daily_text(pasted_text, max_rows=MAX_IMPORT_ROWS)
     if not rows:
         flash("貼り付けたテキストから日別データを読み取れませんでした。"
               "日付・総差枚・平均差枚・平均G数・勝率が並んだ表をそのままコピーしてください。")
-        return _render(store_name, days, pasted_text=pasted_text)
+        return _render_import(store_name, days, pasted_text=pasted_text)
 
     if not confirmed:
         # プレビュー(まだ保存しない)
-        return _render(store_name, days, pasted_text=pasted_text,
+        return _render_import(store_name, days, pasted_text=pasted_text,
                        import_preview={"rows": rows[:10], "report": report, "total": len(rows)})
 
     ok, message, _counts = common.save_store_daily_rows(store_name, rows)
@@ -424,7 +455,7 @@ def import_daily():
     if ok and report["skipped"]:
         flash(f"列が足りずに読み飛ばした行が{report['skipped']}件あります。"
               f"表の一部だけをコピーしていないか確認してください。")
-    return _back_to(store_name, days)
+    return _back_to_import(store_name, days)
 
 
 @store_trends_bp.route("/import_csv", methods=["GET", "POST"])
@@ -442,7 +473,7 @@ def import_csv():
     if request.method == "GET":
         # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
         # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
-        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+        return _back_to_import(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
 
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
@@ -451,23 +482,23 @@ def import_csv():
 
     if not store_name:
         flash("取り込み先の店舗を選んでください。")
-        return _render(store_name, days)
+        return _render_import(store_name, days)
 
     if confirmed:
         text = _read_stash(token)
         if not text:
             flash("確認中のファイルが見つかりませんでした(時間が経つと破棄されます)。"
                   "もう一度ファイルを選んでください。")
-            return _render(store_name, days)
+            return _render_import(store_name, days)
     else:
         uploaded = request.files.get("csv_file")
         if not uploaded or not uploaded.filename:
             flash("取り込むCSVファイルを選んでください。")
-            return _render(store_name, days)
+            return _render_import(store_name, days)
         text, error = _read_uploaded_text(uploaded)
         if error:
             flash(error)
-            return _render(store_name, days)
+            return _render_import(store_name, days)
 
     units_by_date, daily_rows, report = common.parse_anaslo_csv_text(text)
     if not units_by_date:
@@ -475,7 +506,7 @@ def import_csv():
         flash("CSVから台別データを読み取れませんでした。"
               "date / machine_number の列があるか確認してください"
               "(tools/anaslo.py の parse で作ったCSVをそのまま選んでください)。")
-        return _render(store_name, days)
+        return _render_import(store_name, days)
 
     # 店舗の取り違えは後から直しにくいので、CSVの店名が選択中と違えば知らせる
     csv_stores = [n for n in report.get("store_names", []) if n and n != store_name]
@@ -485,7 +516,7 @@ def import_csv():
 
     if not confirmed:
         new_token = _stash_upload(text)
-        return _render(store_name, days, csv_import_preview={
+        return _render_import(store_name, days, csv_import_preview={
             "report": report, "daily": daily_rows[:8], "token": new_token,
         })
 
@@ -499,7 +530,7 @@ def import_csv():
         )
         flash(message_daily)
     _drop_stash(token)
-    return _back_to(store_name, days)
+    return _back_to_import(store_name, days)
 
 
 @store_trends_bp.route("/import_units", methods=["GET", "POST"])
@@ -514,7 +545,7 @@ def import_units():
     if request.method == "GET":
         # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
         # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
-        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+        return _back_to_import(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
 
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
@@ -524,13 +555,13 @@ def import_units():
 
     if not store_name:
         flash("取り込み先の店舗を選んでください。")
-        return _render(store_name, days)
+        return _render_import(store_name, days)
 
     try:
         datetime.strptime(unit_date, "%Y-%m-%d")
     except ValueError:
         flash("台別データは日付ごとのデータなので、対象の日付を YYYY-MM-DD 形式で指定してください。")
-        return _render(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
+        return _render_import(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
 
     # 日別データと同じく、ファイルが選ばれていればそちらを優先する
     # (1日分でも1000台を超える店があり、貼り付け欄では扱いきれないため)
@@ -539,21 +570,21 @@ def import_units():
         text, error = _read_uploaded_text(uploaded)
         if error:
             flash(error)
-            return _render(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
+            return _render_import(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
         pasted_units_text = text
 
     if not pasted_units_text.strip():
         flash("台別データの表を貼り付けるか、テキストファイルを選んでください。")
-        return _render(store_name, days, unit_date=unit_date)
+        return _render_import(store_name, days, unit_date=unit_date)
 
     rows, report = common.parse_hall_unit_text(pasted_units_text, max_rows=MAX_IMPORT_UNIT_ROWS)
     if not rows:
         flash("貼り付けたテキストから台別データを読み取れませんでした。"
               "台番号・G数・差枚などが並んだ表を、見出し行を含めてコピーしてください。")
-        return _render(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
+        return _render_import(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date)
 
     if not confirmed:
-        return _render(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date,
+        return _render_import(store_name, days, pasted_units_text=pasted_units_text, unit_date=unit_date,
                        unit_import_preview={"rows": rows[:12], "report": report,
                                             "total": len(rows), "date": unit_date})
 
@@ -562,4 +593,4 @@ def import_units():
     if ok and report["skipped"]:
         flash(f"読み取れずに飛ばした行が{report['skipped']}件あります。"
               f"見出し行を含めてコピーすると、列の対応をより正確に判定できます。")
-    return _back_to(store_name, days)
+    return _back_to_import(store_name, days)

@@ -84,6 +84,12 @@ NAV = [
                 "description": "取り込んだホールデータから、曜日・イベント日・機種・台番号ごとの傾向を見ます。",
             },
             {
+                "endpoint": "store_trends.import_page",
+                "label": "データ取り込み",
+                "icon": "📥",
+                "description": "年間データ・旧イベント日・日別データ・台別データ・CSVをまとめて取り込みます。",
+            },
+            {
                 "endpoint": "calendar.index",
                 "label": "イベントカレンダー",
                 "icon": "📅",

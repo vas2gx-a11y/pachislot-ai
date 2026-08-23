@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, empty_state, back_link %}
+
+{% block title %}データ取り込み{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">📥</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">データ取り込み</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+{#
+  取り込み系の入力フォームだけを集めたページ。
+
+  以前は店舗傾向のページの中に折りたたみで置いていたが、
+  「見るページ」と「入れるページ」が同じだと、分析結果にたどり着くまでが長くなり、
+  取り込み手順もメニューから直接たどれなかったため、独立したページに分けている。
+  保存・プレビューのあとは必ずこのページに戻る。
+#}
+<div class="stack">
+    {% call card("🏪", "取り込み先の店舗", None, "bg-gray-100",
+         "取り込んだデータはここで選んだ店舗のものとして保存されます。データサイト側の店名と表記が違っていても、選択中の店舗として扱います。") %}
+    {% if stores %}
+    <form action="{{ url_for('store_trends.import_page') }}" method="GET" class="flex flex-col md:flex-row gap-3 md:items-end">
+        {# 取り込み後に店舗傾向へ戻ったとき、見ていた集計期間を保つ #}
+        <input type="hidden" name="days" value="{{ days }}">
+        <div class="flex-1">
+            <label class="label" for="store_name">店舗</label>
+            <select id="store_name" name="store_name" class="input" onchange="this.form.submit()">
+                {% for s in stores %}
+                <option value="{{ s.name }}" {% if s.name == store_name %}selected{% endif %}>{{ s.name }}{% if s.is_new %}（未登録）{% elif s.count %}（記録{{ s.count }}件）{% else %}（記録なし）{% endif %}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-full md:w-auto">この店舗に取り込む</button>
+    </form>
+    <p class="hint mt-3">
+        店舗の追加・名前の変更・表記ゆれの統合は
+        <a href="{{ url_for('stores.index') }}" class="text-blue-600 underline">🏪 店舗管理</a>
+        から行えます。
+    </p>
+    {% else %}
+    <p class="text-sm text-gray-500">
+        店舗がまだ1つも登録されていません。
+        <a href="{{ url_for('stores.index') }}" class="text-blue-600 underline">🏪 店舗管理</a>
+        から店舗を追加すると、ここでデータを取り込めるようになります。
+    </p>
+    {% endif %}
+    {% endcall %}
+
+    {% if store_name %}
+    {#
+      店舗全体の年間データ(データサイト等の外部集計)。
+      自分の記録から作る集計とは母数がまったく違うので、混ぜずに並べて比較する。
+    #}
+    {% call card("🏬", "店舗全体の年間データ", store_stats.period_label if store_stats and store_stats.period_label else None, "bg-gray-100",
+         "データサイトなどで公開されている、店舗単位の集計値です。スクショを読み込ませるか、下の欄に直接入力して登録できます。登録すると設定推測とAI総評にも渡されます。") %}
+
+    {% if store_stats %}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <div class="panel">
+            <div class="text-gray-400 text-xs">総差枚</div>
+            <div class="font-mono tabular-nums font-bold text-lg {% if store_stats.total_diff and store_stats.total_diff > 0 %}text-green-600{% elif store_stats.total_diff and store_stats.total_diff < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                {{ ("{:+,.0f}".format(store_stats.total_diff)) if store_stats.total_diff is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">平均差枚</div>
+            <div class="font-mono tabular-nums font-bold text-lg {% if store_stats.avg_diff and store_stats.avg_diff > 0 %}text-green-600{% elif store_stats.avg_diff and store_stats.avg_diff < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                {{ ("{:+,.0f}".format(store_stats.avg_diff)) if store_stats.avg_diff is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">平均G数</div>
+            <div class="font-mono tabular-nums font-bold text-lg text-gray-900">
+                {{ ("{:,.0f}".format(store_stats.avg_games) ~ "G") if store_stats.avg_games is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">勝率</div>
+            <div class="font-mono tabular-nums font-bold text-lg text-gray-900">
+                {{ ("%.1f" | format(store_stats.win_rate) ~ "%") if store_stats.win_rate is not none else "—" }}
+            </div>
+        </div>
+    </div>
+
+    {% if store_stats.note %}<p class="hint">📝 {{ store_stats.note }}</p>{% endif %}
+    <p class="hint">
+        {% if store_stats.source %}取り込み方法: {{ store_stats.source }}　{% endif %}
+        {% if store_stats.updated_at %}最終更新: {{ store_stats.updated_at }}{% endif %}
+    </p>
+
+    {% if trends and trends.record_count %}
+    {# 自分の記録との比較。母数が違うので「ズレ」を見る目安として扱う #}
+    <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+            <thead>
+                <tr class="text-[10px] text-gray-400 text-left">
+                    <th class="pb-1 pr-3">項目</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">自分の記録<span class="hidden sm:inline">（{{ trends.record_count }}件）</span></th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">年間データ</th>
+                    <th class="pb-1 text-right">差</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono tabular-nums">
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">平均差枚</td>
+                    <td class="py-1.5 pr-3 text-right">{{ "%+d" | format(trends.overall.avg_diff | round(0) | int) }}枚</td>
+                    <td class="py-1.5 pr-3 text-right">{{ ("%+d" | format(store_stats.avg_diff | round(0) | int) ~ "枚") if store_stats.avg_diff is not none else "—" }}</td>
+                    <td class="py-1.5 text-right {% if store_stats.avg_diff is not none and trends.overall.avg_diff - store_stats.avg_diff > 0 %}text-green-600{% elif store_stats.avg_diff is not none %}text-red-600{% endif %}">
+                        {{ ("%+d" | format((trends.overall.avg_diff - store_stats.avg_diff) | round(0) | int) ~ "枚") if store_stats.avg_diff is not none else "—" }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">平均G数</td>
+                    <td class="py-1.5 pr-3 text-right">{{ trends.overall.avg_games | round(0) | int }}G</td>
+                    <td class="py-1.5 pr-3 text-right">{{ (store_stats.avg_games | round(0) | int ~ "G") if store_stats.avg_games is not none else "—" }}</td>
+                    <td class="py-1.5 text-right text-gray-500">
+                        {{ ("%+d" | format((trends.overall.avg_games - store_stats.avg_games) | round(0) | int) ~ "G") if store_stats.avg_games is not none else "—" }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">プラス率 / 勝率</td>
+                    <td class="py-1.5 pr-3 text-right">{{ trends.overall.plus_rate | round(0) | int }}%</td>
+                    <td class="py-1.5 pr-3 text-right">{{ ("%.1f" | format(store_stats.win_rate) ~ "%") if store_stats.win_rate is not none else "—" }}</td>
+                    <td class="py-1.5 text-right {% if store_stats.win_rate is not none and trends.overall.plus_rate - store_stats.win_rate > 0 %}text-green-600{% elif store_stats.win_rate is not none %}text-red-600{% endif %}">
+                        {{ ("%+.1f" | format(trends.overall.plus_rate - store_stats.win_rate) ~ "pt") if store_stats.win_rate is not none else "—" }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">
+        「自分の記録」は選択中の期間・自分が打った台だけの集計、「年間データ」は店の全台が対象の集計です。
+        母数が大きく違うため、優劣ではなく「自分の引きや台選びが店の平均とどれくらいズレているか」の目安として見てください。
+    </p>
+    {% endif %}
+
+    {% else %}
+    <p class="text-sm text-gray-500">この店舗の年間データはまだ登録されていません。下のいずれかの方法で登録してください。</p>
+    {% endif %}
+
+    {# 取り込み1: データサイトのスクショをAIに読ませる #}
+    <form id="store-stats-form" action="{{ url_for('store_trends.upload_stats') }}" method="POST" enctype="multipart/form-data" class="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div>
+            <label class="label" for="stats_image">🖼️ データサイトのスクショから読み取る</label>
+            <input id="stats_image" type="file" name="stats_image" accept="image/*" required class="input-file">
+            <p class="hint">総差枚・平均差枚・平均G数・勝率が写っている画面をアップロードしてください。読み取り結果は下の欄で修正できます。</p>
+        </div>
+        <button type="submit" class="btn btn-accent w-full sm:w-auto self-start">画像を解析して登録</button>
+    </form>
+    <script>
+        wireAsyncForm('store-stats-form', {
+            uploadingText: '画像アップロード中',
+            processingText: 'AIが数値を読み取っています...'
+        });
+    </script>
+
+    {# 取り込み2: 手入力・AIの読み取り結果の修正 #}
+    <details class="mt-3" {% if not store_stats %}open{% endif %}>
+        <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+            <span class="chev inline-block mr-1">▶</span>✏️ 手入力する / 読み取り結果を修正する
+        </summary>
+        <form action="{{ url_for('store_trends.save_stats') }}" method="POST" class="mt-3 flex flex-col gap-3">
+            <input type="hidden" name="store_name" value="{{ store_name }}">
+            <input type="hidden" name="days" value="{{ days }}">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="label" for="total_diff">総差枚（枚）</label>
+                    <input id="total_diff" type="text" inputmode="numeric" name="total_diff" value="{{ (store_stats.total_diff | round(0) | int) if store_stats and store_stats.total_diff is not none else '' }}" placeholder="例: -125000" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="avg_diff">平均差枚（枚）</label>
+                    <input id="avg_diff" type="text" inputmode="numeric" name="avg_diff" value="{{ (store_stats.avg_diff | round(1)) if store_stats and store_stats.avg_diff is not none else '' }}" placeholder="例: -120" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="avg_games">平均G数</label>
+                    <input id="avg_games" type="text" inputmode="numeric" name="avg_games" value="{{ (store_stats.avg_games | round(0) | int) if store_stats and store_stats.avg_games is not none else '' }}" placeholder="例: 3200" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="win_rate">勝率（%）</label>
+                    <input id="win_rate" type="text" inputmode="decimal" name="win_rate" value="{{ (store_stats.win_rate | round(1)) if store_stats and store_stats.win_rate is not none else '' }}" placeholder="例: 42.5" class="input font-mono">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="label" for="period_label">対象期間</label>
+                    <input id="period_label" type="text" name="period_label" value="{{ store_stats.period_label if store_stats else '' }}" placeholder="例: 2025年 / 直近1年" class="input">
+                </div>
+                <div>
+                    <label class="label" for="note">備考（任意）</label>
+                    <input id="note" type="text" name="note" value="{{ store_stats.note if store_stats else '' }}" placeholder="例: スロット全台・営業日数350日" class="input">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">年間データを保存</button>
+        </form>
+    </details>
+    {% endcall %}
+
+    {#
+      店の旧イベント日・周年日の登録。
+      ここで登録した日は、下の「店の全台データ」の集計で通常日と比べられるようになる。
+      書き方はデータサイトの表記(「ゾロ目日(11日、22日)」など)をそのまま貼れるようにしている。
+    #}
+    {% call card("🎊", "旧イベント日・周年日を登録", None, "bg-pink-50",
+         "データサイトに載っている「旧イベント日」「周年日」の欄をそのまま貼り付けてください。登録すると、下の「店の全台データ」でイベント日と通常日の稼働を比べられます。") %}
+    <form action="{{ url_for('store_trends.save_events') }}" method="POST" class="flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+                <label class="label" for="event_days">旧イベント日</label>
+                <textarea id="event_days" name="event_days" rows="2" placeholder="例: ゾロ目日(11日、22日)、月日がゾロ目日、1のつく日" class="input font-mono text-xs">{{ store_events.event_days if store_events else '' }}</textarea>
+            </div>
+            <div>
+                <label class="label" for="anniversary_days">周年日</label>
+                <textarea id="anniversary_days" name="anniversary_days" rows="2" placeholder="例: 9月9日" class="input font-mono text-xs">{{ store_events.anniversary_days if store_events else '' }}</textarea>
+            </div>
+        </div>
+        <p class="hint">
+            「、」区切りで複数指定できます。「ゾロ目日」「月日がゾロ目日」「◯のつく日」「毎月◯日」「◯月◯日」の書き方に対応しています。
+        </p>
+        {% if store_events and store_events.unknown %}
+        <p class="text-xs text-amber-700">読み取れなかった指定: {{ store_events.unknown | join("、") }}</p>
+        {% endif %}
+        <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">旧イベント日・周年日を保存</button>
+    </form>
+    {% endcall %}
+
+    {#
+      ホールデータの貼り付け取り込み。
+      データサイトは自動アクセスをブロックしているため、ユーザーが自分のブラウザで開いた
+      表をコピーして貼り付けてもらう。いきなり保存せず、解析結果を確認してから保存する。
+    #}
+    {% call card("📋", "ホールデータを貼り付けて一括取り込み", None, "bg-amber-50",
+         "データサイトの「日付 / 総差枚 / 平均差枚 / 平均G数 / 勝率」の表をブラウザで選択してコピーし、下の欄に貼り付けてください。1年分でも一度に取り込めます。") %}
+
+    {% if import_preview %}
+    {# 保存前の確認: 想定と違う形式で貼られていないかをここで気づけるようにする #}
+    <div class="panel">
+        <div class="text-sm font-bold text-gray-900">解析結果の確認</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-center">
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">取り込む日数</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ import_preview.total }}日</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">期間</div>
+                <div class="font-mono tabular-nums text-xs text-gray-900 pt-1">{{ import_preview.report.first_date }}<br>〜{{ import_preview.report.last_date }}</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">差枚データあり</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ import_preview.report.with_diff }}日</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">読み飛ばし</div>
+                <div class="font-mono tabular-nums font-bold {% if import_preview.report.skipped %}text-amber-600{% else %}text-gray-900{% endif %}">{{ import_preview.report.skipped }}行</div>
+            </div>
+        </div>
+
+        <div class="mt-3 overflow-x-auto">
+            <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                <thead>
+                    <tr class="text-gray-400 text-left">
+                        <th class="pr-3 pb-1">日付</th><th class="pr-3 pb-1 text-right">総差枚</th>
+                        <th class="pr-3 pb-1 text-right">平均差枚</th><th class="pr-3 pb-1 text-right">平均G数</th>
+                        <th class="pb-1 text-right">勝率</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700">
+                    {% for row in import_preview.rows %}
+                    <tr>
+                        <td class="pr-3 py-0.5">{{ row.date }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.total_diff | round(0) | int)) if row.total_diff is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.avg_diff | round(0) | int)) if row.avg_diff is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ (row.avg_games | round(0) | int) if row.avg_games is not none else "—" }}</td>
+                        <td class="py-0.5 text-right">{{ ("%.1f" | format(row.win_rate) ~ "%") if row.win_rate is not none else "—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="hint">先頭{{ import_preview.rows | length }}日分を表示しています。日付と数値の対応が合っていれば保存してください。</p>
+
+        {% if import_preview.report.skipped_samples %}
+        <div class="mt-2 text-xs text-amber-700">
+            読み飛ばした行の例: {{ import_preview.report.skipped_samples | join(" / ") }}
+        </div>
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for('store_trends.import_daily') }}" method="POST" class="mt-3 flex flex-col sm:flex-row gap-2">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <input type="hidden" name="pasted_text" value="{{ pasted_text }}">
+        <input type="hidden" name="confirm" value="1">
+        <button type="submit" class="btn btn-primary">この内容で保存する</button>
+        <a href="{{ url_for('store_trends.import_page', store_name=store_name, days=days) }}" class="btn btn-ghost">やり直す</a>
+    </form>
+
+    {% else %}
+    <form action="{{ url_for('store_trends.import_daily') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div>
+            <label class="label" for="daily_file">テキストファイルから取り込む</label>
+            <input type="file" id="daily_file" name="daily_file" accept=".txt,.csv,.tsv" class="input">
+            <p class="hint">
+                日付ごとの行が並んだ txt / csv / tsv を選べます。数年分をまとめて取り込むときは、
+                貼り付けよりこちらの方が確実です。ファイルを選ぶと下の貼り付け欄より優先されます。
+            </p>
+        </div>
+        <div>
+            <label class="label" for="pasted_text">または、ホールデータの表を貼り付け</label>
+            <textarea id="pasted_text" name="pasted_text" rows="6" placeholder="例:&#10;2026/07/22(水)	+12,271	+11	5,053	42.2%(466/1104)&#10;2026/07/21(火)	–	–	3,805	–" class="input font-mono text-xs">{{ pasted_text }}</textarea>
+            <p class="hint">
+                日付・総差枚・平均差枚・平均G数・勝率の並びで読み取ります。「–」の欄はデータなしとして扱います。
+                タブ区切りでも、1項目1行の形でも取り込めます。保存前に内容を確認できます。
+            </p>
+        </div>
+        <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">解析して内容を確認</button>
+    </form>
+    {% endif %}
+    {% endcall %}
+
+    {#
+      台別データ(機種・台番号ごと)の貼り付け取り込み。
+      1日分のページを1回の貼り付けで取り込む。列の並びはサイトによって違うので、
+      見出し行が含まれていればそこから列を判定する(見出しが無い場合は
+      台番号/G数/差枚/BB/RB の並びとみなす)。
+    #}
+    {% call card("🎰", "台別データを貼り付けて取り込み（1日分）", None, "bg-amber-50",
+         "日付をクリックした先の「機種・台番号ごと」の表を、見出し行を含めてコピーして貼り付けてください。台番号の末尾や端台のクセを実データで見るために使います。") %}
+
+    {% if unit_import_preview %}
+    <div class="panel">
+        <div class="text-sm font-bold text-gray-900">解析結果の確認（{{ unit_import_preview.date }}）</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-center">
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">取り込む台数</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ unit_import_preview.total }}台</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">機種数</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ unit_import_preview.report.machines | length }}</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">差枚データあり</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ unit_import_preview.report.with_diff }}台</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">読み飛ばし</div>
+                <div class="font-mono tabular-nums font-bold {% if unit_import_preview.report.skipped %}text-amber-600{% else %}text-gray-900{% endif %}">{{ unit_import_preview.report.skipped }}行</div>
+            </div>
+        </div>
+
+        <p class="hint">
+            列の判定: {% if unit_import_preview.report.header_found %}貼り付けの見出し行から判定しました（{{ unit_import_preview.report.columns | join(" / ") }}）{% else %}見出し行が見つからなかったため、台番号 / G数 / 差枚 / BB / RB の並びとして読み取りました{% endif %}
+        </p>
+
+        <div class="mt-2 overflow-x-auto">
+            <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                <thead>
+                    <tr class="text-gray-400 text-left">
+                        <th class="pr-3 pb-1">台番号</th><th class="pr-3 pb-1">機種名</th>
+                        <th class="pr-3 pb-1 text-right">G数</th><th class="pr-3 pb-1 text-right">差枚</th>
+                        <th class="pr-3 pb-1 text-right">BB</th><th class="pb-1 text-right">RB</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700">
+                    {% for row in unit_import_preview.rows %}
+                    <tr>
+                        <td class="pr-3 py-0.5">{{ row.machine_number }}</td>
+                        <td class="pr-3 py-0.5 font-sans max-w-[10rem] truncate">{{ row.machine_name or "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ (row.total_games | round(0) | int) if row.total_games is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.difference_slabs | round(0) | int)) if row.difference_slabs is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ (row.big_count | round(0) | int) if row.big_count is not none else "—" }}</td>
+                        <td class="py-0.5 text-right">{{ (row.reg_count | round(0) | int) if row.reg_count is not none else "—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="hint">先頭{{ unit_import_preview.rows | length }}台分を表示しています。台番号と数値の対応が合っていれば保存してください。</p>
+        {% if unit_import_preview.report.skipped_samples %}
+        <div class="mt-2 text-xs text-amber-700">読み飛ばした行の例: {{ unit_import_preview.report.skipped_samples | join(" / ") }}</div>
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for('store_trends.import_units') }}" method="POST" class="mt-3 flex flex-col sm:flex-row gap-2">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <input type="hidden" name="unit_date" value="{{ unit_import_preview.date }}">
+        <input type="hidden" name="pasted_units_text" value="{{ pasted_units_text }}">
+        <input type="hidden" name="confirm" value="1">
+        <button type="submit" class="btn btn-primary">この内容で保存する</button>
+        <a href="{{ url_for('store_trends.import_page', store_name=store_name, days=days) }}" class="btn btn-ghost">やり直す</a>
+    </form>
+
+    {% else %}
+    <form action="{{ url_for('store_trends.import_units') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div class="md:w-56">
+            <label class="label" for="unit_date">対象の日付</label>
+            <input id="unit_date" type="date" name="unit_date" value="{{ unit_date }}" required class="input font-mono">
+            <p class="hint">貼り付ける台別データがどの日のものかを指定します。</p>
+        </div>
+        <div>
+            <label class="label" for="units_file">テキストファイルから取り込む</label>
+            <input type="file" id="units_file" name="units_file" accept=".txt,.csv,.tsv" class="input">
+            <p class="hint">
+                台数の多い店は1日分でも1000台を超えるため、貼り付けよりファイルの方が確実です。
+                ファイルを選ぶと下の貼り付け欄より優先されます。
+            </p>
+        </div>
+        <div>
+            <label class="label" for="pasted_units_text">または、台別データの表を貼り付け</label>
+            <textarea id="pasted_units_text" name="pasted_units_text" rows="6" placeholder="例:&#10;マイジャグラーV&#10;台番号	G数	差枚	BB	RB&#10;123	5,053	+1,200	18	12&#10;124	3,880	-640	9	11" class="input font-mono text-xs">{{ pasted_units_text }}</textarea>
+            <p class="hint">
+                機種名の見出し行があれば、その下の台はその機種として取り込みます。
+                見出し行（台番号 / G数 / 差枚 / BB / RB など）も一緒にコピーすると、列の対応を正しく判定できます。
+            </p>
+        </div>
+        <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">解析して内容を確認</button>
+    </form>
+    {% endif %}
+    {% endcall %}
+
+    {#
+      取り込みツール(tools/anaslo.py)が出すCSVの一括取り込み。
+      1行が「1日×1台」なので、このファイル1つから台別データと日別データの両方を作れる。
+      日をまたいだデータが入っていても、そのまま全部取り込める。
+    #}
+    {% call card("📥", "CSVから一括取り込み（台別＋日別）", None, "bg-emerald-50",
+         "tools/anaslo.py で作ったCSVを選ぶと、台別データと日別データを同時に登録します。複数日がまとまっていてもそのまま取り込めます。") %}
+
+    {% if csv_import_preview %}
+    <div class="panel">
+        <div class="text-sm font-bold text-gray-900">解析結果の確認</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-center">
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">日数</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ csv_import_preview.report.dates }}日</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">台数（のべ）</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ csv_import_preview.report.units }}台</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">機種数</div>
+                <div class="font-mono tabular-nums font-bold text-gray-900">{{ csv_import_preview.report.machines }}</div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-md py-2">
+                <div class="text-[10px] text-gray-400">読み飛ばし</div>
+                <div class="font-mono tabular-nums font-bold {% if csv_import_preview.report.skipped %}text-amber-600{% else %}text-gray-900{% endif %}">{{ csv_import_preview.report.skipped }}行</div>
+            </div>
+        </div>
+        <p class="hint mt-2">
+            期間: {{ csv_import_preview.report.first_date }} 〜 {{ csv_import_preview.report.last_date }}
+            ／ ART回数が入っている台: {{ csv_import_preview.report.with_art }}台
+        </p>
+
+        <div class="mt-3 overflow-x-auto">
+            <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                <thead>
+                    <tr class="text-gray-400 text-left">
+                        <th class="pr-3 pb-1">日付</th><th class="pr-3 pb-1 text-right">総差枚</th>
+                        <th class="pr-3 pb-1 text-right">平均差枚</th><th class="pr-3 pb-1 text-right">平均G数</th>
+                        <th class="pb-1 text-right">勝率</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700">
+                    {% for row in csv_import_preview.daily %}
+                    <tr>
+                        <td class="pr-3 py-0.5">{{ row.date }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.total_diff | round(0) | int)) if row.total_diff is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ ("%+d" | format(row.avg_diff | round(0) | int)) if row.avg_diff is not none else "—" }}</td>
+                        <td class="pr-3 py-0.5 text-right">{{ (row.avg_games | round(0) | int) if row.avg_games is not none else "—" }}</td>
+                        <td class="py-0.5 text-right">{{ ("%.1f" | format(row.win_rate) ~ "%") if row.win_rate is not none else "—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="hint">
+            日別データはこのCSVの台別データから計算したものです。先頭{{ csv_import_preview.daily | length }}日分を表示しています。
+        </p>
+        {% if csv_import_preview.report.skipped_samples %}
+        <div class="mt-2 text-xs text-amber-700">
+            読み飛ばした行の例: {{ csv_import_preview.report.skipped_samples | join(" / ") }}
+        </div>
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for('store_trends.import_csv') }}" method="POST" class="mt-3 flex flex-col sm:flex-row gap-2">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <input type="hidden" name="upload_token" value="{{ csv_import_preview.token }}">
+        <input type="hidden" name="confirm" value="1">
+        <button type="submit" class="btn btn-primary">この内容で保存する</button>
+        <a href="{{ url_for('store_trends.import_page', store_name=store_name, days=days) }}" class="btn btn-ghost">やり直す</a>
+    </form>
+
+    {% else %}
+    <form action="{{ url_for('store_trends.import_csv') }}" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div>
+            <label class="label" for="csv_file">取り込みCSVを選択</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv,.txt,.tsv" required class="input">
+            <p class="hint">
+                列は date / store_name / machine_number / machine_name / games / diff / bb / rb / art の並びです。
+                日付が行ごとに入っているので、何日分まとまっていても1回で取り込めます。
+                台別データと日別データの両方が同時に登録されます。
+            </p>
+        </div>
+        <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">解析して内容を確認</button>
+    </form>
+    {% endif %}
+    {% endcall %}    {% else %}
+    {{ empty_state("📥", "取り込み先の店舗を選ぶと、取り込みのフォームが表示されます。") }}
+    {% endif %}
+
+    <a href="{{ url_for('store_trends.index', store_name=store_name, days=days) }}"
+       class="card flex items-center gap-2 hover:bg-gray-50 p-4 text-sm text-gray-700 transition">
+        <span aria-hidden="true">📈</span>
+        <span class="text-blue-600 underline">取り込んだデータの傾向を見る</span>
+    </a>
+    {{ back_link(url_for('calendar.index', store_name=store_name), "イベントカレンダーで確認する") }}
+</div>
+{% endblock %}
