@@ -1,0 +1,53 @@
+{#
+    機種ごとの台一覧（店の全台）。
+
+    ページ内で一番大きい部分（大型店の1年分で数百KB）なので、傾向ページ本体には含めず、
+    画面で開かれたときに store_trends.machine_details から読み込む。
+    JSが使えない場合は ?details=1 付きで開くと、傾向ページに直接埋め込まれる。
+#}
+    <div class="mt-3 max-h-96 overflow-y-auto pr-1 divide-y divide-gray-100">
+        {% for m in unit_trends.machine_details %}
+        <details class="py-1 {% if not m.enough_samples %}opacity-60{% endif %}">
+            <summary class="cursor-pointer select-none flex items-center gap-2 text-xs py-0.5">
+                <span class="chev inline-block text-gray-400 shrink-0">▶</span>
+                <span class="flex-1 min-w-0 text-gray-700 break-words">{{ m.machine_name }}</span>
+                <span class="shrink-0 font-mono tabular-nums font-bold {% if m.avg_diff > 0 %}text-green-600{% elif m.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+                    {{ "%+d" | format(m.avg_diff | round(0) | int) }}
+                </span>
+                <span class="shrink-0 w-20 text-right text-gray-400 font-mono tabular-nums">{{ m.unit_count }}台 {{ m.plus_rate | round(0) | int }}%</span>
+            </summary>
+            <div class="mt-1 mb-2 pl-5">
+                <table class="w-full text-xs border-collapse font-mono tabular-nums">
+                    <thead>
+                        <tr class="text-gray-400 text-left">
+                            <th class="pr-3 pb-1">台番号</th>
+                            <th class="pr-3 pb-1 text-right">平均差枚</th>
+                            <th class="pr-3 pb-1 text-right">最高</th>
+                            <th class="pr-3 pb-1 text-right">最低</th>
+                            <th class="pr-3 pb-1 text-right">平均G数</th>
+                            <th class="pb-1 text-right">日数/プラス</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        {% for u in m.units %}
+                        <tr>
+                            <td class="pr-3 py-0.5">
+                                {{ u.label }}{% if u.is_edge %}<span class="text-gray-400 font-sans"> 端</span>{% endif %}
+                            </td>
+                            <td class="pr-3 py-0.5 text-right {% if u.avg_diff > 0 %}text-green-600{% elif u.avg_diff < 0 %}text-red-600{% endif %}">{{ "%+d" | format(u.avg_diff | round(0) | int) }}</td>
+                            <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.best_diff | round(0) | int) }}</td>
+                            <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.worst_diff | round(0) | int) }}</td>
+                            <td class="pr-3 py-0.5 text-right">{{ u.avg_games | round(0) | int }}</td>
+                            <td class="py-0.5 text-right text-gray-400">{{ u.count }}日 {{ u.plus_rate | round(0) | int }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if m.truncated %}
+                <p class="hint">平均差枚の高い{{ m.units | length }}台を表示しています（他{{ m.truncated }}台）。</p>
+                {% endif %}
+            </div>
+        </details>
+        {% endfor %}
+    </div>
+    <p class="hint">「端」は端台（角台の候補）です。日数が少ない機種は薄く表示しています。</p>

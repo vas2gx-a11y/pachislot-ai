@@ -22,11 +22,22 @@ logger = logging.getLogger(__name__)
 # 軽量インメモリキャッシュ
 # ---------------------------------------------------------------------------
 # 記録一覧・機種マスタ・Q&A履歴はページを開くたびにスプレッドシートへ読みに行くと、
-# データが増えるほど表示が重くなる主因になる。短いTTL(既定20秒)でキャッシュし、
+# データが増えるほど表示が重くなる主因になる。TTL(既定5分)の間はメモリから返し、
 # 自分の書き込み操作(save_record等)の直後は該当キーを即座に無効化することで、
 # 「保存した内容がすぐ反映されない」という不整合を避けつつ読み込み回数を減らす。
+#
+# TTLを長め(20秒→5分)にしているのは、店舗の切り替えのように「同じデータを読み直して
+# 集計し直すだけ」の操作でスプレッドシートへの往復が毎回発生していたため。
+# アプリ側の保存はすべて _cache_invalidate() を通るので、この画面から入れたデータが
+# 古いまま見えることはない。スプレッドシートを直接編集した場合だけ最大TTLぶん遅れるので、
+# その場合は URL に ?refresh=1 を付ける(画面の「最新に更新」)と即座に読み直せる。
 _cache = {}
-_CACHE_TTL_SECONDS = 20
+_CACHE_TTL_SECONDS = int(os.environ.get("CACHE_TTL_SECONDS", "300"))
+
+# 読み込み済みデータの世代番号。シートから読み直した時と、書き込みで捨てた時に進む。
+# 集計結果のキャッシュ(_derived_cache)はこの番号をキーに含めているので、
+# 元データが変わればまとめて無効になる。
+_data_version = 0
 
 
 def _cache_get(key):
@@ -41,11 +52,58 @@ def _cache_get(key):
 
 
 def _cache_set(key, value, ttl=_CACHE_TTL_SECONDS):
+    global _data_version
     _cache[key] = (value, time.time() + ttl)
+    _data_version += 1
 
 
 def _cache_invalidate(key):
+    global _data_version
     _cache.pop(key, None)
+    _data_version += 1
+
+
+def refresh_caches():
+    """キャッシュを全部捨てて、次のアクセスでシートから読み直させる。"""
+    global _data_version
+    _cache.clear()
+    _derived_cache.clear()
+    _data_version += 1
+
+
+# ---------------------------------------------------------------------------
+# 集計結果のキャッシュ
+# ---------------------------------------------------------------------------
+# 店舗の傾向ページは、店舗を切り替えるたびに数千〜数万行を読み直して集計している。
+# 元データが変わっていなければ結果も変わらないので、
+#   「関数名 + 引数 + データの世代 + 日付」
+# をキーに結果を持っておき、切り替えを繰り返しても集計をやり直さないようにする。
+# 世代が変わった時点で古い分はまとめて捨てるため、メモリは増え続けない。
+_derived_cache = {}
+_derived_cache_version = None
+
+
+def _cached_by_data_version(func):
+    """元データが変わるまでのあいだ、同じ引数の集計結果を使い回すデコレータ"""
+    def wrapper(*args, **kwargs):
+        global _derived_cache_version
+        if _derived_cache_version != _data_version:
+            _derived_cache.clear()
+            _derived_cache_version = _data_version
+        # 「直近90日」のような相対期間は日付をまたぐと意味が変わるので、キーに日付を入れる
+        key = (func.__name__, datetime.now().strftime("%Y-%m-%d"),
+               args, tuple(sorted(kwargs.items())))
+        if key in _derived_cache:
+            return _derived_cache[key]
+        value = func(*args, **kwargs)
+        _derived_cache[key] = value
+        return value
+
+    wrapper.__name__ = func.__name__
+    wrapper.__doc__ = func.__doc__
+    # キャッシュを通さずに計算したい場合のために、元の関数も残しておく
+    wrapper.uncached = func
+    return wrapper
 
 # --- Gemini設定 ---
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -2554,6 +2612,7 @@ def _pick_highlight(rows, best=True):
     return max(eligible, key=lambda row: row["avg_diff"]) if best else min(eligible, key=lambda row: row["avg_diff"])
 
 
+@_cached_by_data_version
 def build_store_trends(store_name, days=90):
     """
     1店舗ぶんの記録を、日別・曜日別・日付末尾別・機種別・台番号末尾別に集計する。
@@ -3489,6 +3548,7 @@ def _event_rule_rows(parsed_dates, events, overall):
     return rows
 
 
+@_cached_by_data_version
 def build_store_daily_trends(store_name, days=365):
     """
     取り込んだ店舗の日別データを、曜日別・日付末尾別に集計する。
@@ -4218,9 +4278,14 @@ def _unit_machine_details(rows):
     return details
 
 
-def build_store_unit_trends(store_name, days=90):
+@_cached_by_data_version
+def build_store_unit_trends(store_name, days=90, include_machine_details=True):
     """
     取り込んだ台別データから、台番号末尾・端台(角台の候補)・機種・日付・台番号ごとの傾向を集計する。
+
+    include_machine_details=False にすると「機種ごとの台一覧」を作らない。
+    この一覧だけでHTMLの8割を占めるほど大きくなるため、傾向ページ本体では省き、
+    画面で開かれたときに別リクエストで読み込む(store_trends.machine_details)。
     """
     store_name = (store_name or "").strip()
     if not store_name:
@@ -4289,7 +4354,9 @@ def build_store_unit_trends(store_name, days=90):
         lambda key, group_rows: f"No.{key}" + (f" {group_rows[0].get('machine_name', '')}" if group_rows[0].get("machine_name") else ""),
     )[:20]
     trends["by_date_detail"] = _unit_rows_by_date(rows)
-    trends["machine_details"] = _unit_machine_details(rows)
+    trends["machine_details"] = _unit_machine_details(rows) if include_machine_details else None
+    # 一覧を作らない場合でも「開けるかどうか」と件数は画面に出したいので、機種数だけ持たせる
+    trends["machine_count"] = len({r.get("machine_name") or "機種名なし" for r in rows})
 
     def _best(rows_):
         eligible = [r for r in rows_ if r["enough_samples"]]

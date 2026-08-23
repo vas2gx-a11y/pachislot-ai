@@ -1,3 +1,4 @@
+import gzip
 import os
 
 from flask import Flask, request, url_for
@@ -28,6 +29,55 @@ app.register_blueprint(nav_bp)
 # Jinjaのグローバル関数として登録しておく(ロジックの二重管理を避けるため)
 app.jinja_env.globals["describe_category_scores"] = common.describe_category_scores
 app.jinja_env.globals["category_scores_total"] = common.category_scores_total
+
+
+# ---------------------------------------------------------------------------
+# レスポンスのgzip圧縮
+# ---------------------------------------------------------------------------
+# 店舗の傾向ページのように表が多いページはHTMLが1MB近くになる。中身はクラス名の
+# 繰り返しがほとんどなので、gzipすれば数十KBまで縮む(実測 1052KB → 45KB)。
+# 回線の細いスマホでの読み込み時間に直結するため、テキスト系のレスポンスは圧縮して返す。
+# 小さいレスポンスは圧縮しても得しない(むしろCPUの無駄)ので下限を設けている。
+GZIP_MIN_SIZE = 1024
+GZIP_LEVEL = 6
+
+
+@app.after_request
+def compress_response(response):
+    if "gzip" not in request.headers.get("Accept-Encoding", "").lower():
+        return response
+    # ファイル送信などのストリーミング応答は get_data() すると壊れるので触らない
+    if response.direct_passthrough or response.headers.get("Content-Encoding"):
+        return response
+    if not (200 <= response.status_code < 300):
+        return response
+
+    content_type = (response.content_type or "").split(";")[0].strip()
+    if not (content_type.startswith("text/")
+            or content_type in {"application/json", "application/javascript", "image/svg+xml"}):
+        return response
+
+    data = response.get_data()
+    if len(data) < GZIP_MIN_SIZE:
+        return response
+
+    response.set_data(gzip.compress(data, GZIP_LEVEL))
+    response.headers["Content-Encoding"] = "gzip"
+    response.headers["Content-Length"] = response.content_length
+    response.headers.add("Vary", "Accept-Encoding")
+    return response
+
+
+@app.before_request
+def handle_cache_refresh():
+    """
+    ?refresh=1 が付いていたらキャッシュを捨てて、シートから読み直させる。
+
+    アプリから保存したデータはその場でキャッシュを無効化しているので通常は不要だが、
+    スプレッドシートを直接編集したときの反映待ち(最大TTLぶん)を飛ばすために使う。
+    """
+    if request.args.get("refresh"):
+        common.refresh_caches()
 
 
 def _endpoint_path(endpoint):

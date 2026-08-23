@@ -44,6 +44,11 @@
         店舗の追加・名前の変更・表記ゆれの統合は
         <a href="{{ url_for('stores.index') }}" class="text-blue-600 underline">🏪 店舗管理</a>
         からまとめて行えます。
+        {# 読み込んだデータはしばらくメモリに持っている(切り替えを速くするため)。
+           スプレッドシートを直接編集したときは、ここから読み直せるようにしておく。 #}
+        スプレッドシートを直接編集した内容がまだ出ていないときは
+        <a href="{{ url_for('store_trends.index', store_name=store_name, days=days, refresh=1) }}"
+           class="text-blue-600 underline">🔄 最新に更新</a>。
     </p>
     {% endcall %}
 
@@ -279,61 +284,38 @@
     </div>
 
     {# 機種を開くと、その機種の台番号ごとの成績が見られるようにする
-       (「この機種のどの台に入っているか」まで踏み込んで見たいときのため) #}
-    {% if unit_trends.machine_details %}
-    <section class="card card-body">
+       (「この機種のどの台に入っているか」まで踏み込んで見たいときのため)
+
+       この一覧はHTMLがページ全体の8割を占めるほど大きく、店舗を切り替えるたびに
+       毎回送り直すのは無駄なので、既定では中身を送らず、開かれたときに読み込む。 #}
+    {% if unit_trends and unit_trends.machine_count %}
+    <section class="card card-body" id="machine-details">
         <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">🔎</span>
             <span>機種ごとの台一覧（店の全台）</span>
-            <span class="text-xs text-gray-400 font-normal font-sans">{{ unit_trends.machine_details | length }}機種</span>
+            <span class="text-xs text-gray-400 font-normal font-sans">{{ unit_trends.machine_count }}機種</span>
         </h2>
         <p class="hint mt-2">機種名をクリックすると、その機種の台番号ごとの成績が開きます。平均差枚の高い機種順に並んでいます。</p>
-        <div class="mt-3 max-h-96 overflow-y-auto pr-1 divide-y divide-gray-100">
-            {% for m in unit_trends.machine_details %}
-            <details class="py-1 {% if not m.enough_samples %}opacity-60{% endif %}">
-                <summary class="cursor-pointer select-none flex items-center gap-2 text-xs py-0.5">
-                    <span class="chev inline-block text-gray-400 shrink-0">▶</span>
-                    <span class="flex-1 min-w-0 text-gray-700 break-words">{{ m.machine_name }}</span>
-                    <span class="shrink-0 font-mono tabular-nums font-bold {% if m.avg_diff > 0 %}text-green-600{% elif m.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
-                        {{ "%+d" | format(m.avg_diff | round(0) | int) }}
-                    </span>
-                    <span class="shrink-0 w-20 text-right text-gray-400 font-mono tabular-nums">{{ m.unit_count }}台 {{ m.plus_rate | round(0) | int }}%</span>
-                </summary>
-                <div class="mt-1 mb-2 pl-5">
-                    <table class="w-full text-xs border-collapse font-mono tabular-nums">
-                        <thead>
-                            <tr class="text-gray-400 text-left">
-                                <th class="pr-3 pb-1">台番号</th>
-                                <th class="pr-3 pb-1 text-right">平均差枚</th>
-                                <th class="pr-3 pb-1 text-right">最高</th>
-                                <th class="pr-3 pb-1 text-right">最低</th>
-                                <th class="pr-3 pb-1 text-right">平均G数</th>
-                                <th class="pb-1 text-right">日数/プラス</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-gray-700">
-                            {% for u in m.units %}
-                            <tr>
-                                <td class="pr-3 py-0.5">
-                                    {{ u.label }}{% if u.is_edge %}<span class="text-gray-400 font-sans"> 端</span>{% endif %}
-                                </td>
-                                <td class="pr-3 py-0.5 text-right {% if u.avg_diff > 0 %}text-green-600{% elif u.avg_diff < 0 %}text-red-600{% endif %}">{{ "%+d" | format(u.avg_diff | round(0) | int) }}</td>
-                                <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.best_diff | round(0) | int) }}</td>
-                                <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.worst_diff | round(0) | int) }}</td>
-                                <td class="pr-3 py-0.5 text-right">{{ u.avg_games | round(0) | int }}</td>
-                                <td class="py-0.5 text-right text-gray-400">{{ u.count }}日 {{ u.plus_rate | round(0) | int }}%</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% if m.truncated %}
-                    <p class="hint">平均差枚の高い{{ m.units | length }}台を表示しています（他{{ m.truncated }}台）。</p>
-                    {% endif %}
-                </div>
-            </details>
-            {% endfor %}
-        </div>
-        <p class="hint">「端」は端台（角台の候補）です。日数が少ない機種は薄く表示しています。</p>
+        {% if unit_trends.machine_details %}
+        {# ?details=1 で開いた場合(JSなしの経路)は、そのままページに埋め込む #}
+        {% include "_store_machine_details.html" %}
+        {% else %}
+        <details class="mt-3" data-lazy-details
+                 data-lazy-url="{{ url_for('store_trends.machine_details', store_name=store_name, days=days) }}">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+                <span class="chev inline-block mr-1">▶</span>🔎 機種ごとの台一覧を開く（{{ unit_trends.machine_count }}機種）
+            </summary>
+            <div data-lazy-body class="mt-3">
+                <p class="hint">読み込み中...</p>
+            </div>
+        </details>
+        <noscript>
+            <p class="hint mt-3">
+                <a href="{{ url_for('store_trends.index', store_name=store_name, days=days, details=1) }}#machine-details"
+                   class="text-blue-600 underline">機種ごとの台一覧を表示する</a>
+            </p>
+        </noscript>
+        {% endif %}
     </section>
     {% endif %}
     {% endif %}
@@ -356,4 +338,27 @@
 
     {{ back_link(url_for('records.index'), "データ管理ダッシュボードに戻る") }}
 </div>
+
+<script>
+    // 中身の大きいブロック(機種ごとの台一覧)は、開かれたときに初めて読み込む。
+    // ページ本体のHTMLを小さく保つための仕組みで、開くのは1回だけ読み込む。
+    (function () {
+        var blocks = document.querySelectorAll('details[data-lazy-details]');
+        Array.prototype.forEach.call(blocks, function (block) {
+            var loaded = false;
+            block.addEventListener('toggle', function () {
+                if (!block.open || loaded) return;
+                loaded = true;
+                var body = block.querySelector('[data-lazy-body]');
+                fetch(block.getAttribute('data-lazy-url'), { headers: { 'X-Requested-With': 'fetch' } })
+                    .then(function (res) { return res.text(); })
+                    .then(function (html) { body.innerHTML = html; })
+                    .catch(function () {
+                        loaded = false;
+                        body.innerHTML = '<p class="hint">読み込みに失敗しました。もう一度開いてみてください。</p>';
+                    });
+            });
+        });
+    })();
+</script>
 {% endblock %}

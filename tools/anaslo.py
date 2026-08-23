@@ -60,6 +60,26 @@ _GRAPH_RE = re.compile(
     re.S,
 )
 _ROW_RE = re.compile(r"<tr>(.*?)</tr>", re.S)
+
+# 表の列構成は店舗によって変わる(ART/AT機を置いていない店はART列そのものが無い)ため、
+# 見出し行のラベルから列位置を判定する。ラベルは完全一致で見る
+# ("BB" と "BB確率" のように、部分一致だと取り違える組み合わせがあるため)。
+_COLUMN_ALIASES = [
+    ("machine_name", ("機種名",)),
+    ("machine_number", ("台番号", "台番")),
+    ("games", ("G数", "ゲーム数", "総回転数")),
+    ("diff", ("差枚", "差枚数")),
+    ("bb", ("BB", "BIG")),
+    ("rb", ("RB", "REG")),
+    ("art", ("ART", "AT")),
+    ("total_rate", ("合成確率",)),
+    ("bb_rate", ("BB確率", "BIG確率")),
+    ("rb_rate", ("RB確率", "REG確率")),
+    ("art_rate", ("ART確率", "AT確率")),
+]
+
+# 見出し行が読めなかったときの保険。従来からある11列レイアウトの並び。
+_LEGACY_COLUMNS = {name: index for index, (name, _) in enumerate(_COLUMN_ALIASES)}
 _CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.S)
 _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -83,6 +103,26 @@ WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"]
 # ---------------------------------------------------------------------------
 # HTML解析
 # ---------------------------------------------------------------------------
+def _column_map(cells):
+    """見出し行のセルから {項目: 列位置} を作る。機種名か台番号が無ければ見出しではない"""
+    columns = {}
+    for index, cell in enumerate(cells):
+        label = cell.replace(" ", "").replace("\u3000", "")
+        for name, aliases in _COLUMN_ALIASES:
+            if name not in columns and label in aliases:
+                columns[name] = index
+                break
+    if "machine_name" not in columns or "machine_number" not in columns:
+        return None
+    return columns
+
+
+def _cell(cells, columns, name):
+    """列位置表を使って1セル取り出す。その列が無いページでは None"""
+    index = columns.get(name)
+    return cells[index] if index is not None else None
+
+
 def _text(cell_html):
     """セルのHTMLから中身のテキストだけを取り出す"""
     return html.unescape(_TAG_RE.sub("", cell_html)).replace(" ", " ").strip()
@@ -204,28 +244,38 @@ def parse_day_html(html_text, store_name="", target_date="", source_name=""):
     graphs = parse_graphs(html_text)
 
     rows = []
+    columns = None
     for row_html in _ROW_RE.findall(table_match.group(0)):
         cells = [_text(c) for c in _CELL_RE.findall(row_html)]
-        # 見出し行(機種名/台番号...)や列数の足りない行は捨てる
-        if len(cells) < 11 or cells[0] == "機種名":
+        if not cells:
             continue
-        machine_number = parse_int(cells[1])
+        # 見出し行なら列位置を覚えて次へ。見出しが無いページは従来の11列とみなす
+        header = _column_map(cells)
+        if header is not None:
+            columns = header
+            continue
+        if columns is None:
+            columns = _LEGACY_COLUMNS
+        # 平均行や列数の足りない行は捨てる
+        if len(cells) <= max(columns.values()):
+            continue
+        machine_number = parse_int(_cell(cells, columns, "machine_number"))
         if machine_number is None:
             continue
         rows.append({
             "date": day,
             "store_name": store,
             "machine_number": machine_number,
-            "machine_name": cells[0],
-            "games": parse_int(cells[2]),
-            "diff": parse_int(cells[3]),
-            "bb": parse_int(cells[4]),
-            "rb": parse_int(cells[5]),
-            "art": parse_int(cells[6]),
-            "total_rate": parse_rate(cells[7]),
-            "bb_rate": parse_rate(cells[8]),
-            "rb_rate": parse_rate(cells[9]),
-            "art_rate": parse_rate(cells[10]),
+            "machine_name": _cell(cells, columns, "machine_name"),
+            "games": parse_int(_cell(cells, columns, "games")),
+            "diff": parse_int(_cell(cells, columns, "diff")),
+            "bb": parse_int(_cell(cells, columns, "bb")),
+            "rb": parse_int(_cell(cells, columns, "rb")),
+            "art": parse_int(_cell(cells, columns, "art")),
+            "total_rate": parse_rate(_cell(cells, columns, "total_rate")),
+            "bb_rate": parse_rate(_cell(cells, columns, "bb_rate")),
+            "rb_rate": parse_rate(_cell(cells, columns, "rb_rate")),
+            "art_rate": parse_rate(_cell(cells, columns, "art_rate")),
         })
         # グラフが取れた台には、その形から計算した値を足す(取れなければ空欄のまま)
         rows[-1].update(graphs.get(machine_number, {}))
