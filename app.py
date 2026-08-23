@@ -9,6 +9,7 @@ from routes.machines import machines_bp
 from routes.expected_value import expected_value_bp
 from routes.store_trends import store_trends_bp
 from routes.stores import stores_bp
+from routes.calendar import calendar_bp
 from routes.nav import nav_bp
 
 app = Flask(__name__)
@@ -20,6 +21,7 @@ app.register_blueprint(machines_bp)
 app.register_blueprint(expected_value_bp)
 app.register_blueprint(store_trends_bp)
 app.register_blueprint(stores_bp)
+app.register_blueprint(calendar_bp)
 app.register_blueprint(nav_bp)
 
 # テンプレート側でスコア内訳を組み立てるために、common.py の変換関数を
@@ -68,6 +70,8 @@ def inject_navigation():
     return {
         "nav_categories": navigation.NAV,
         "nav_visible_items": navigation.visible_items,
+        "nav_mobile_primary": navigation.mobile_primary(),
+        "nav_mobile_overflow": navigation.mobile_overflow(),
         "nav_active_category": active_category,
         "nav_active_item": active_item,
     }

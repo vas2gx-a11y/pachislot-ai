@@ -4364,3 +4364,411 @@ def describe_store_unit_history(store_name, machine_number, days=90, limit=5):
         plus_rate = sum(1 for d in diffs if d > 0) / len(diffs) * 100
         summary += f": 平均差枚{sum(diffs) / len(diffs):+.0f}枚, プラスの日{plus_rate:.0f}%"
     return f"{summary} / 直近: {recent}"
+
+
+# ---------------------------------------------------------------------------
+# イベントカレンダー(月別)
+# ---------------------------------------------------------------------------
+# 旧イベント日・周年日は store_events に「毎月7日」「ゾロ目日」といった
+# ルールの文字列で入っているため、そのままでは「今月のどの日か」が分からない。
+# ここでルールをその月の実際の日付に展開し、取り込んだ日別データ・台別データ・
+# 自分の記録を同じ日に紐付けて、1か月ぶんのカレンダーとして組み立てる。
+#
+# 集計(build_store_daily_trends)が「イベント日はならすとどうなのか」を見るものなのに対し、
+# こちらは「この日は何の日で、実際どうだったか」を1日単位で見るためのもの。
+
+# 店舗ごとの色。カレンダー上でどの店の予定かを一目で見分けるために使う。
+# 割り当ては「全店舗の並び順」で決めるため、絞り込みを切り替えても色は変わらない。
+CALENDAR_STORE_COLORS = [
+    {"key": "blue",    "dot": "#2563eb", "bg": "#eff6ff", "text": "#1d4ed8", "border": "#bfdbfe"},
+    {"key": "rose",    "dot": "#e11d48", "bg": "#fff1f2", "text": "#be123c", "border": "#fecdd3"},
+    {"key": "emerald", "dot": "#059669", "bg": "#ecfdf5", "text": "#047857", "border": "#a7f3d0"},
+    {"key": "amber",   "dot": "#d97706", "bg": "#fffbeb", "text": "#b45309", "border": "#fde68a"},
+    {"key": "violet",  "dot": "#7c3aed", "bg": "#f5f3ff", "text": "#6d28d9", "border": "#ddd6fe"},
+    {"key": "cyan",    "dot": "#0891b2", "bg": "#ecfeff", "text": "#0e7490", "border": "#a5f3fc"},
+    {"key": "orange",  "dot": "#ea580c", "bg": "#fff7ed", "text": "#c2410c", "border": "#fed7aa"},
+    {"key": "slate",   "dot": "#475569", "bg": "#f8fafc", "text": "#334155", "border": "#cbd5e1"},
+]
+
+# カレンダーは日曜始まりで並べる(WEEKDAY_LABELS は月曜始まりなので別に持つ)
+CALENDAR_WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"]
+
+# マスに出すマークの種類。周年日 > 旧イベント日 > データあり > 自分の記録のみ、の優先順。
+_CALENDAR_KINDS = {
+    "anniversary": {"label": "周年日", "icon": "🎂", "order": 0},
+    "event": {"label": "旧イベント日", "icon": "🎯", "order": 1},
+    "data": {"label": "データあり", "icon": "📈", "order": 2},
+    "record": {"label": "自分の記録", "icon": "📝", "order": 3},
+}
+
+
+def _calendar_short_name(name, limit=8):
+    """
+    カレンダーの狭いマスに収めるための短縮名。
+    マス側でもCSSで省略されるが、極端に長い店名だとイベント名まで押し出されるため、
+    ここで先に上限をかけておく(元の名前は title 属性で確認できる)。
+    """
+    text = str(name or "").strip()
+    return text if len(text) <= limit else text[:limit] + "…"
+
+
+def _month_bounds(year, month):
+    """その月の初日・翌月初日・前月初日を返す"""
+    first = datetime(year, month, 1)
+    next_first = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+    prev_first = datetime(year - 1, 12, 1) if month == 1 else datetime(year, month - 1, 1)
+    return first, next_first, prev_first
+
+
+def normalize_calendar_month(year=None, month=None):
+    """URLで渡された年月を検証する(数字でない・範囲外なら今月に戻す)"""
+    now = datetime.now()
+    try:
+        year, month = int(year), int(month)
+    except (TypeError, ValueError):
+        return now.year, now.month
+    if not (1 <= month <= 12) or not (1970 <= year <= 2999):
+        return now.year, now.month
+    return year, month
+
+
+def _calendar_targets(store_names=None):
+    """
+    カレンダーに出す店舗と、店舗ごとの色を決める。
+
+    store_names が空なら全店舗(総合カレンダー)。
+    色は全店舗の並び順で割り当てるので、絞り込んでも同じ店には同じ色が付く。
+    戻り値: (全店舗名, 対象店舗名, {店舗名: 色})
+    """
+    all_stores = [s["name"] for s in list_store_names()]
+    known = set(all_stores)
+
+    wanted = [str(n).strip() for n in (store_names or []) if str(n).strip()]
+    if wanted:
+        wanted_set = set(wanted)
+        targets = [n for n in all_stores if n in wanted_set]
+        # まだどのシートにも出てこない店舗を指定された場合も、空のまま表示できるようにする
+        targets += [n for n in wanted if n not in known]
+    else:
+        targets = list(all_stores)
+
+    ordered = all_stores + [n for n in targets if n not in known]
+    color_by_store = {
+        name: CALENDAR_STORE_COLORS[i % len(CALENDAR_STORE_COLORS)]
+        for i, name in enumerate(ordered)
+    }
+    return all_stores, targets, color_by_store
+
+
+def _calendar_entry(store_name, day, day_key, rules, color, daily, units, records, store_avg_games):
+    """
+    カレンダーの1マスに入れる「1店舗ぶんの予定」を作る。
+    出すものが何も無い日は None を返し、マスを空のままにする。
+    """
+    event_rules, anniversary_rules = rules
+    event_labels = matched_event_labels(day, event_rules)
+    anniversary_labels = matched_event_labels(day, anniversary_rules)
+    if not (event_labels or anniversary_labels or daily or units or records):
+        return None
+
+    unit_summary = _summarize_unit_rows(units) if units else None
+
+    def _pick(daily_key, unit_key):
+        """日別データを優先し、無ければ台別データから求めた値を使う"""
+        if daily and daily.get(daily_key) is not None:
+            return daily[daily_key]
+        return unit_summary[unit_key] if unit_summary else None
+
+    avg_games = _pick("avg_games", "avg_games")
+    avg_diff = _pick("avg_diff", "avg_diff")
+    base_games = store_avg_games.get(store_name)
+
+    if anniversary_labels:
+        kind = "anniversary"
+    elif event_labels:
+        kind = "event"
+    elif daily or units:
+        kind = "data"
+    else:
+        kind = "record"
+
+    return {
+        "store_name": store_name,
+        "short_name": _calendar_short_name(store_name),
+        "color": color,
+        "kind": kind,
+        "kind_label": _CALENDAR_KINDS[kind]["label"],
+        "kind_icon": _CALENDAR_KINDS[kind]["icon"],
+        "order": _CALENDAR_KINDS[kind]["order"],
+        "event_labels": event_labels,
+        "anniversary_labels": anniversary_labels,
+        # マスに出す用(周年日を先に出す)
+        "labels": anniversary_labels + event_labels,
+        "avg_games": avg_games,
+        "avg_diff": avg_diff,
+        "win_rate": daily.get("win_rate") if daily else None,
+        "total_diff": daily.get("total_diff") if daily else (unit_summary["total_diff"] if unit_summary else None),
+        # その店の平均稼働を100としたときの、その日の稼働(イベント日らしさの目安)
+        "games_index": (avg_games / base_games * 100) if (avg_games and base_games) else None,
+        "unit_count": len(units),
+        "record_count": len(records),
+        "has_daily": bool(daily),
+        "has_data": bool(daily or units),
+    }
+
+
+def build_event_calendar(year=None, month=None, store_names=None):
+    """
+    月別イベントカレンダーの表示データを組み立てる。
+
+    店舗ごとの旧イベント日・周年日ルールをこの月の日付に展開し、
+    同じ日の日別データ(店の全台)・台別データ・自分の記録を紐付ける。
+    store_names を省略すると全店舗をまとめた総合カレンダーになる。
+
+    戻り値: {"year", "month", "label", "weeks"(週×7マス), "stores"(凡例),
+             "prev"/"next"/"today"(月移動用), "summary", ...}
+    """
+    year, month = normalize_calendar_month(year, month)
+    first, next_first, prev_first = _month_bounds(year, month)
+    last_day = next_first - timedelta(days=1)
+
+    all_stores, targets, color_by_store = _calendar_targets(store_names)
+    target_set = set(targets)
+
+    events_by_store = load_store_events()
+    rules_by_store = {}
+    for name in targets:
+        setting = events_by_store.get(name) or {}
+        rules_by_store[name] = (setting.get("event_rules") or [],
+                                setting.get("anniversary_rules") or [])
+
+    start_key, end_key = first.strftime("%Y-%m-%d"), last_day.strftime("%Y-%m-%d")
+
+    # その月の日別データと、店ごとの平均稼働(全期間)をまとめて拾う。
+    # 平均稼働は「その日はいつもより動いたのか」を出すための基準として使う。
+    daily_index = {}
+    games_by_store = {}
+    for row in load_store_daily():
+        name = row["store_name"]
+        if row.get("avg_games") is not None:
+            games_by_store.setdefault(name, []).append(row["avg_games"])
+        if name in target_set and start_key <= row["date"] <= end_key:
+            daily_index[(name, row["date"])] = row
+    store_avg_games = {n: sum(v) / len(v) for n, v in games_by_store.items() if v}
+
+    unit_index = {}
+    for row in load_store_units():
+        name = row["store_name"]
+        if name in target_set and start_key <= row["date"] <= end_key:
+            unit_index.setdefault((name, row["date"]), []).append(row)
+
+    record_index = {}
+    for record in load_records():
+        name = str(record.get("store_name", "")).strip()
+        if name not in target_set:
+            continue
+        when = parse_record_datetime(record)
+        if not when:
+            continue
+        key = when.strftime("%Y-%m-%d")
+        if start_key <= key <= end_key:
+            record_index.setdefault((name, key), []).append(record)
+
+    # 日曜始まりで並べるため、月初の前に前月ぶんの空マスを入れる
+    lead = (first.weekday() + 1) % 7
+    grid_start = first - timedelta(days=lead)
+    cell_count = lead + (next_first - first).days
+    week_count = -(-cell_count // 7)
+
+    today_key = datetime.now().strftime("%Y-%m-%d")
+    weeks = []
+    event_days = 0
+    data_days = 0
+    record_days = 0
+
+    for w in range(week_count):
+        week = []
+        for i in range(7):
+            day = grid_start + timedelta(days=w * 7 + i)
+            key = day.strftime("%Y-%m-%d")
+            in_month = (day.year, day.month) == (year, month)
+
+            entries = []
+            if in_month:
+                for name in targets:
+                    entry = _calendar_entry(
+                        name, day, key, rules_by_store[name],
+                        color_by_store.get(name, CALENDAR_STORE_COLORS[0]),
+                        daily_index.get((name, key)),
+                        unit_index.get((name, key)) or [],
+                        record_index.get((name, key)) or [],
+                        store_avg_games,
+                    )
+                    if entry:
+                        entries.append(entry)
+                entries.sort(key=lambda e: (e["order"], e["store_name"]))
+
+            has_event = any(e["event_labels"] or e["anniversary_labels"] for e in entries)
+            has_data = any(e["has_data"] for e in entries)
+            record_count = sum(e["record_count"] for e in entries)
+            if in_month:
+                event_days += 1 if has_event else 0
+                data_days += 1 if has_data else 0
+                record_days += 1 if record_count else 0
+
+            week.append({
+                "date": key,
+                "day": day.day,
+                "in_month": in_month,
+                "weekday": (day.weekday() + 1) % 7,
+                "weekday_label": CALENDAR_WEEKDAY_LABELS[(day.weekday() + 1) % 7],
+                "is_today": key == today_key,
+                "entries": entries,
+                "has_event": has_event,
+                "has_data": has_data,
+                "record_count": record_count,
+            })
+        weeks.append(week)
+
+    # 凡例(どの色がどの店か / その店に登録されているルール)
+    legend = []
+    for name in targets:
+        setting = events_by_store.get(name) or {}
+        legend.append({
+            "name": name,
+            "short_name": _calendar_short_name(name, limit=10),
+            "color": color_by_store.get(name, CALENDAR_STORE_COLORS[0]),
+            "event_days": describe_event_rules(setting.get("event_rules") or []),
+            "anniversary_days": describe_event_rules(setting.get("anniversary_rules") or []),
+            "has_rules": bool(setting.get("event_rules") or setting.get("anniversary_rules")),
+            "avg_games": store_avg_games.get(name),
+        })
+
+    now = datetime.now()
+    return {
+        "year": year,
+        "month": month,
+        "label": f"{year}年{month}月",
+        "weekday_labels": CALENDAR_WEEKDAY_LABELS,
+        "weeks": weeks,
+        "prev": {"year": prev_first.year, "month": prev_first.month},
+        "next": {"year": next_first.year, "month": next_first.month},
+        "today": {"year": now.year, "month": now.month, "date": today_key},
+        "is_current_month": (now.year, now.month) == (year, month),
+        "stores": legend,
+        "all_stores": all_stores,
+        "is_all_stores": not [n for n in (store_names or []) if str(n).strip()],
+        "summary": {
+            "store_count": len(targets),
+            "event_days": event_days,
+            "data_days": data_days,
+            "record_days": record_days,
+            "stores_without_rules": [s["name"] for s in legend if not s["has_rules"]],
+        },
+    }
+
+
+def _calendar_machine_rows(unit_rows):
+    """その日の台別データを機種ごとにまとめる(平均差枚の高い順)"""
+    by_machine = {}
+    for row in unit_rows:
+        by_machine.setdefault(row.get("machine_name") or "機種名なし", []).append(row)
+
+    rows = []
+    for name, group in by_machine.items():
+        summary = _summarize_unit_rows(group)
+        summary["machine_name"] = name
+        summary["unit_count"] = len({r["machine_number"] for r in group})
+        rows.append(summary)
+    rows.sort(key=lambda m: -m["avg_diff"])
+    return rows
+
+
+def build_calendar_day_detail(date_str, store_names=None):
+    """
+    カレンダーで選んだ1日の詳細を組み立てる(ポップアップ・詳細欄に出す中身)。
+
+    その日が店にとって何の日か(旧イベント日・周年日)と、
+    実際にどうだったか(稼働・差枚・好調機種・自分の記録)を店舗ごとに並べる。
+    日付が不正なら None、その日に出すものが無ければ stores が空のまま返す。
+    """
+    try:
+        day = datetime.strptime(str(date_str or "").strip(), "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return None
+
+    key = day.strftime("%Y-%m-%d")
+    _all_stores, targets, color_by_store = _calendar_targets(store_names)
+    target_set = set(targets)
+    events_by_store = load_store_events()
+
+    # その店の平均稼働(全期間)を基準に、その日が高いか低いかを出す
+    daily_rows = load_store_daily()
+    games_by_store = {}
+    for row in daily_rows:
+        if row.get("avg_games") is not None:
+            games_by_store.setdefault(row["store_name"], []).append(row["avg_games"])
+    store_avg_games = {n: sum(v) / len(v) for n, v in games_by_store.items() if v}
+
+    daily_by_store = {r["store_name"]: r for r in daily_rows if r["date"] == key}
+    units_by_store = {}
+    for row in load_store_units():
+        if row["date"] == key and row["store_name"] in target_set:
+            units_by_store.setdefault(row["store_name"], []).append(row)
+
+    records_by_store = {}
+    for record in load_records():
+        name = str(record.get("store_name", "")).strip()
+        if name not in target_set:
+            continue
+        when = parse_record_datetime(record)
+        if when and when.strftime("%Y-%m-%d") == key:
+            records_by_store.setdefault(name, []).append(record)
+
+    stores = []
+    for name in targets:
+        setting = events_by_store.get(name) or {}
+        event_labels = matched_event_labels(day, setting.get("event_rules") or [])
+        anniversary_labels = matched_event_labels(day, setting.get("anniversary_rules") or [])
+        daily = daily_by_store.get(name) if name in target_set else None
+        units = units_by_store.get(name) or []
+        records = records_by_store.get(name) or []
+        if not (event_labels or anniversary_labels or daily or units or records):
+            continue
+
+        unit_summary = _summarize_unit_rows(units) if units else None
+        avg_games = (daily.get("avg_games") if daily and daily.get("avg_games") is not None
+                     else (unit_summary["avg_games"] if unit_summary else None))
+        base_games = store_avg_games.get(name)
+        machines = _calendar_machine_rows(units)
+        diffs = [r for r in units if r.get("difference_slabs") is not None]
+
+        stores.append({
+            "store_name": name,
+            "color": color_by_store.get(name, CALENDAR_STORE_COLORS[0]),
+            "event_labels": event_labels,
+            "anniversary_labels": anniversary_labels,
+            "note": setting.get("note", ""),
+            "daily": daily,
+            "unit_summary": unit_summary,
+            "unit_count": len({r["machine_number"] for r in units}),
+            # 機種は多いと読みにくいので、好調・不調の両端だけ出す
+            "best_machines": machines[:5],
+            "worst_machines": list(reversed(machines[-3:])) if len(machines) > 5 else [],
+            "best_unit": max(diffs, key=lambda r: r["difference_slabs"]) if diffs else None,
+            "records": records,
+            "avg_games": avg_games,
+            "store_avg_games": base_games,
+            "games_index": (avg_games / base_games * 100) if (avg_games and base_games) else None,
+        })
+
+    return {
+        "date": key,
+        "label": _format_date_with_weekday(key),
+        "weekday_label": CALENDAR_WEEKDAY_LABELS[(day.weekday() + 1) % 7],
+        "is_today": key == datetime.now().strftime("%Y-%m-%d"),
+        "year": day.year,
+        "month": day.month,
+        "stores": stores,
+        "store_count": len(stores),
+    }

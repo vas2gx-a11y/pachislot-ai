@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, empty_state, back_link, stat_card %}
+
+{% block title %}イベントカレンダー{% endblock %}
+
+{% block styles %}
+<style>
+    /*
+      カレンダー本体。
+      1マスに入る情報量が画面幅で大きく変わるため、
+      スマホでは「色の点」だけ、PCでは「店名+イベント名」まで出す。
+    */
+    .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 2px;
+        background: #e4e4e7; /* マスの隙間が罫線に見えるようにする */
+        border: 1px solid #e4e4e7;
+        border-radius: var(--radius-control);
+        overflow: hidden;
+    }
+    .cal-head {
+        background: #fafafa;
+        text-align: center;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: #71717a;
+        padding: 0.375rem 0;
+    }
+    .cal-cell {
+        display: block;
+        background: #ffffff;
+        min-height: 4.25rem;
+        padding: 0.25rem;
+        text-align: left;
+        transition: background-color 0.12s ease;
+    }
+    @media (min-width: 768px) {
+        .cal-cell { min-height: 7rem; padding: 0.375rem; }
+    }
+    .cal-cell:hover { background: #f4f4f5; }
+    /* 前月・翌月のマスは操作対象外なので、薄く落とす */
+    .cal-cell.is-outside { background: #fafafa; color: #d4d4d8; pointer-events: none; }
+    .cal-cell.is-today { box-shadow: inset 0 0 0 2px #18181b; }
+    .cal-cell.is-selected { background: #f4f4f5; box-shadow: inset 0 0 0 2px #2563eb; }
+    /* イベントがある日は上辺に色を出して、一覧の中で目に留まるようにする */
+    .cal-cell.has-event { border-top: 3px solid #d97706; padding-top: calc(0.25rem - 3px); }
+    @media (min-width: 768px) {
+        .cal-cell.has-event { padding-top: calc(0.375rem - 3px); }
+    }
+
+    .cal-daynum { font-size: 0.75rem; font-weight: 700; line-height: 1.2; }
+    .cal-cell.is-sun .cal-daynum { color: #e11d48; }
+    .cal-cell.is-sat .cal-daynum { color: #2563eb; }
+    .cal-head.is-sun { color: #e11d48; }
+    .cal-head.is-sat { color: #2563eb; }
+
+    .cal-dot { display: inline-block; width: 0.4375rem; height: 0.4375rem; border-radius: 9999px; }
+    .cal-chip {
+        display: block;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        padding: 0.0625rem 0.25rem;
+        font-size: 0.625rem;
+        line-height: 1.35;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 日付を選んだときのポップアップ(JSが使えない場合はページ下部の詳細欄を使う) */
+    .cal-modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+    @media (min-width: 768px) { .cal-modal { align-items: center; } }
+    .cal-modal[hidden] { display: none; }
+    .cal-modal-backdrop { position: absolute; inset: 0; background: rgba(24, 24, 27, 0.45); }
+    .cal-modal-panel {
+        position: relative;
+        width: 100%;
+        max-width: 44rem;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border-radius: var(--radius-card) var(--radius-card) 0 0;
+    }
+    @media (min-width: 768px) { .cal-modal-panel { border-radius: var(--radius-card); } }
+</style>
+{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">📅</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">イベントカレンダー</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+{# 月を移動するときに、選んでいる店舗の絞り込みを保つためのパラメータ #}
+{% set filter_args = {"store_name": store_names} %}
+
+<div class="stack">
+    {% call card("🔎", "表示する店舗", None, "bg-blue-50",
+         "総合カレンダーでは登録されている全店舗のイベント日が1つのカレンダーに並びます。店舗を選ぶと、その店だけの予定と稼働に絞り込めます。") %}
+    <form method="GET" action="{{ url_for('calendar.index') }}" class="flex flex-col sm:flex-row gap-2">
+        {# 絞り込みを変えても同じ月を見続けられるようにする #}
+        <input type="hidden" name="year" value="{{ calendar.year }}">
+        <input type="hidden" name="month" value="{{ calendar.month }}">
+        <select name="store_name" class="input flex-1" onchange="this.form.submit()">
+            <option value="" {% if calendar.is_all_stores %}selected{% endif %}>全店舗（総合カレンダー）</option>
+            {% for name in calendar.all_stores %}
+            <option value="{{ name }}" {% if name == store_name %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost whitespace-nowrap self-start sm:self-auto">表示する</button>
+    </form>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+        {{ stat_card("表示中の店舗", calendar.summary.store_count ~ "店") }}
+        {{ stat_card("今月のイベント日", calendar.summary.event_days ~ "日", "text-amber-600") }}
+        {{ stat_card("データのある日", calendar.summary.data_days ~ "日", "text-blue-600") }}
+        {{ stat_card("自分の記録がある日", calendar.summary.record_days ~ "日") }}
+    </div>
+    {% endcall %}
+
+    {% call card("📅", calendar.label, "日付をタップすると、その日の詳細が出ます", "bg-amber-50", None) %}
+    {# 月の切り替え。今月から離れているときだけ「今月へ」を出す #}
+    <div class="flex items-center justify-between gap-2 mb-3">
+        <a href="{{ url_for('calendar.index', year=calendar.prev.year, month=calendar.prev.month, **filter_args) }}"
+           class="btn btn-ghost btn-sm">◀ 前月</a>
+        <div class="text-center min-w-0">
+            <div class="font-display font-extrabold text-base md:text-lg text-gray-900">{{ calendar.label }}</div>
+            {% if not calendar.is_current_month %}
+            <a href="{{ url_for('calendar.index', **filter_args) }}" class="text-xs text-blue-600 underline">今月へ戻る</a>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('calendar.index', year=calendar.next.year, month=calendar.next.month, **filter_args) }}"
+           class="btn btn-ghost btn-sm">次月 ▶</a>
+    </div>
+
+    <div class="cal-grid" id="cal-grid">
+        {% for label in calendar.weekday_labels %}
+        <div class="cal-head {% if loop.index0 == 0 %}is-sun{% elif loop.index0 == 6 %}is-sat{% endif %}">{{ label }}</div>
+        {% endfor %}
+
+        {% for week in calendar.weeks %}
+        {% for cell in week %}
+        {% if not cell.in_month %}
+        <div class="cal-cell is-outside"><span class="cal-daynum">{{ cell.day }}</span></div>
+        {% else %}
+        <a href="{{ url_for('calendar.index', year=calendar.year, month=calendar.month, date=cell.date, **filter_args) }}#day-detail"
+           data-date="{{ cell.date }}"
+           data-detail-url="{{ url_for('calendar.day', date_str=cell.date, **filter_args) }}"
+           class="cal-cell
+                  {% if cell.weekday == 0 %}is-sun{% elif cell.weekday == 6 %}is-sat{% endif %}
+                  {% if cell.is_today %}is-today{% endif %}
+                  {% if cell.has_event %}has-event{% endif %}
+                  {% if detail and detail.date == cell.date %}is-selected{% endif %}">
+            <div class="flex items-center justify-between gap-1">
+                <span class="cal-daynum">{{ cell.day }}</span>
+                {% if cell.record_count %}<span class="text-[10px] text-gray-400" title="自分の記録{{ cell.record_count }}件">📝</span>{% endif %}
+            </div>
+
+            {% if cell.entries %}
+            {# スマホ: 店名まで入れると読めなくなるので、色の点だけで「何かある日」を示す #}
+            <div class="flex flex-wrap gap-0.5 mt-1 md:hidden">
+                {% for e in cell.entries[:6] %}
+                <span class="cal-dot" style="background: {{ e.color.dot }}"></span>
+                {% endfor %}
+            </div>
+
+            {# PC: 店名とイベント名まで出す #}
+            <div class="hidden md:flex flex-col gap-0.5 mt-1">
+                {% for e in cell.entries[:3] %}
+                <span class="cal-chip"
+                      style="background: {{ e.color.bg }}; color: {{ e.color.text }}; border-color: {{ e.color.border }};"
+                      title="{{ e.store_name }}{% if e.labels %} / {{ e.labels | join('、') }}{% endif %}">
+                    {{ e.kind_icon }} {{ e.short_name }}{% if e.labels %} {{ e.labels[0] }}{% endif %}
+                </span>
+                {% endfor %}
+                {% if cell.entries | length > 3 %}
+                <span class="text-[10px] text-gray-400 pl-0.5">ほか{{ cell.entries | length - 3 }}店</span>
+                {% endif %}
+
+                {# 1店舗に絞り込んでいるときは、その日の稼働・差枚まで出す #}
+                {% if calendar.summary.store_count == 1 and cell.entries[0].has_data %}
+                <span class="text-[10px] font-mono tabular-nums text-gray-500 pl-0.5">
+                    {% if cell.entries[0].avg_games %}{{ "%.0f"|format(cell.entries[0].avg_games) }}G{% endif %}
+                    {% if cell.entries[0].avg_diff is not none %}
+                    <span class="{% if cell.entries[0].avg_diff > 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">{{ "%+.0f"|format(cell.entries[0].avg_diff) }}</span>
+                    {% endif %}
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </a>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </div>
+
+    {# 凡例。色と店の対応、その店に登録されているイベント日のルールをまとめて出す #}
+    {% if calendar.stores %}
+    <div class="panel mt-3">
+        <div class="text-[10px] text-gray-400 mb-2">店舗の色と、登録されているイベント日</div>
+        <div class="flex flex-col gap-1.5">
+            {% for s in calendar.stores %}
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ s.color.dot }}"></span>
+                <span class="font-bold text-gray-900">{{ s.name }}</span>
+                {% if s.event_days %}<span class="chip">🎯 {{ s.event_days }}</span>{% endif %}
+                {% if s.anniversary_days %}<span class="chip">🎂 {{ s.anniversary_days }}</span>{% endif %}
+                {% if not s.has_rules %}
+                <span class="text-gray-400">イベント日は未登録</span>
+                <a href="{{ url_for('store_trends.index', store_name=s.name) }}" class="text-blue-600 underline">登録する</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <p class="hint mt-2">
+            🎂 周年日 ／ 🎯 旧イベント日 ／ 📈 ホールデータのみ ／ 📝 自分の記録あり。
+            マスの上辺に色が付いている日がイベント日、太枠が今日です。
+        </p>
+    </div>
+    {% endif %}
+
+    {% if not calendar.stores %}
+    {{ empty_state("🏪", "店舗がまだ登録されていません。「店舗の管理」から店舗を追加してください。") }}
+    {% elif calendar.summary.event_days == 0 %}
+    <p class="hint mt-3">
+        この月に当てはまるイベント日がありません。
+        イベント日は「店舗傾向」の画面で「毎月7日」「ゾロ目日」のように登録できます。
+    </p>
+    {% endif %}
+    {% endcall %}
+
+    {# 日付を選んだときの詳細(JSが使えない場合の表示先も兼ねる) #}
+    <section id="day-detail" class="card card-body">
+        {% if detail %}
+        {% include "_calendar_day.html" %}
+        {% else %}
+        <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">🔍</span>
+            <span>日付の詳細</span>
+        </h2>
+        <p class="hint mt-2">カレンダーの日付を選ぶと、その日のイベント日・稼働・自分の記録をここに表示します。</p>
+        {% endif %}
+    </section>
+
+    {{ back_link(url_for('store_trends.index'), "店舗の傾向分析に戻る") }}
+</div>
+
+{# ポップアップ本体。中身は日付を選んだときにサーバーから読み込む #}
+<div class="cal-modal" id="cal-modal" hidden role="dialog" aria-modal="true" aria-labelledby="cal-modal-title">
+    <div class="cal-modal-backdrop" data-cal-close></div>
+    <div class="cal-modal-panel">
+        <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100">
+            <h2 id="cal-modal-title" class="font-display font-bold text-base text-gray-900 truncate">日付の詳細</h2>
+            <button type="button" class="btn btn-ghost btn-sm" data-cal-close>閉じる</button>
+        </div>
+        <div class="overflow-y-auto p-4" id="cal-modal-body">
+            <p class="hint">読み込み中...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // カレンダーの日付を選んだときの動き。
+    // リンク自体はページ遷移で詳細を出せるようにしてあるので、
+    // ここではそれを横取りして、同じ内容をポップアップで見せるだけにする
+    // (JSが動かない環境でも詳細が見られる状態を保つため)。
+    (function () {
+        var grid = document.getElementById('cal-grid');
+        var modal = document.getElementById('cal-modal');
+        if (!grid || !modal) return;
+
+        var body = document.getElementById('cal-modal-body');
+        var title = document.getElementById('cal-modal-title');
+        var lastFocused = null;
+
+        function open() {
+            lastFocused = document.activeElement;
+            modal.hidden = false;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+            modal.hidden = true;
+            document.body.style.overflow = '';
+            if (lastFocused && lastFocused.focus) lastFocused.focus();
+        }
+
+        grid.addEventListener('click', function (event) {
+            var link = event.target.closest('a[data-detail-url]');
+            if (!link) return;
+            event.preventDefault();
+
+            title.textContent = '📅 ' + link.getAttribute('data-date');
+            body.innerHTML = '<p class="hint">読み込み中...</p>';
+            open();
+
+            fetch(link.getAttribute('data-detail-url'), { headers: { 'X-Requested-With': 'fetch' } })
+                .then(function (res) { return res.text(); })
+                .then(function (html) { body.innerHTML = html; })
+                .catch(function () {
+                    // 通信に失敗したら、詳細がページ内に出る通常のリンク遷移に切り替える
+                    window.location.href = link.href;
+                });
+        });
+
+        modal.addEventListener('click', function (event) {
+            if (event.target.closest('[data-cal-close]')) close();
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.hidden) close();
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,145 @@
+{#
+  カレンダーで選んだ1日の詳細。
+
+  ページ下部の詳細欄と、日付をクリックしたときのポップアップの両方が
+  このテンプレートを読み込む(表示の書式を1か所にまとめるため)。
+    detail   : common.build_calendar_day_detail() の戻り値
+    embedded : True ならポップアップの中身として描画する(日付の見出しはモーダル側が出す)
+#}
+{% macro metric(label, value, sub=None, accent="text-gray-900") %}
+<div class="panel">
+    <div class="text-[10px] text-gray-400">{{ label }}</div>
+    <div class="font-mono font-bold text-sm tabular-nums {{ accent }}">{{ value }}</div>
+    {% if sub %}<div class="text-[10px] text-gray-400">{{ sub }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% if not embedded %}
+<h3 class="font-display font-bold text-base text-gray-900 mb-3">
+    📅 {{ detail.label }}{% if detail.is_today %}<span class="chip ml-2">今日</span>{% endif %}
+</h3>
+{% endif %}
+
+{% if not detail.stores %}
+<div class="panel panel-dashed text-center text-sm text-gray-500 py-6">
+    この日に登録されているイベント日・データはありません。
+</div>
+{% else %}
+<div class="flex flex-col gap-3">
+    {% for s in detail.stores %}
+    <div class="rounded-lg border p-3" style="border-color: {{ s.color.border }}; background: {{ s.color.bg }};">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ s.color.dot }}"></span>
+            <span class="font-bold text-sm text-gray-900 break-words">{{ s.store_name }}</span>
+            {% for label in s.anniversary_labels %}
+            <span class="chip bg-white" style="color: {{ s.color.text }}">🎂 {{ label }}</span>
+            {% endfor %}
+            {% for label in s.event_labels %}
+            <span class="chip bg-white" style="color: {{ s.color.text }}">🎯 {{ label }}</span>
+            {% endfor %}
+            {% if not s.anniversary_labels and not s.event_labels %}
+            <span class="chip bg-white text-gray-400">通常日</span>
+            {% endif %}
+        </div>
+        {% if s.note %}<p class="hint mt-1">📝 {{ s.note }}</p>{% endif %}
+
+        {# 店の全台データ(取り込み分)。稼働は店の平均と比べて見る #}
+        {% if s.daily or s.unit_summary %}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+            {{ metric("平均G数",
+                      "%.0f G"|format(s.avg_games) if s.avg_games else "—",
+                      ("店平均比 %.0f%%"|format(s.games_index)) if s.games_index else None,
+                      "text-blue-700" if (s.games_index and s.games_index >= 110) else "text-gray-900") }}
+            {{ metric("平均差枚",
+                      "%+.0f 枚"|format(s.daily.avg_diff) if (s.daily and s.daily.avg_diff is not none)
+                        else ("%+.0f 枚"|format(s.unit_summary.avg_diff) if s.unit_summary else "—"),
+                      ("差枚のある台 %d 台"|format(s.unit_summary.diff_count)) if s.unit_summary else None,
+                      "text-emerald-700" if ((s.daily.avg_diff if s.daily and s.daily.avg_diff is not none
+                        else (s.unit_summary.avg_diff if s.unit_summary else 0)) > 0) else "text-rose-700") }}
+            {{ metric("勝率",
+                      "%.1f%%"|format(s.daily.win_rate) if (s.daily and s.daily.win_rate is not none)
+                        else ("%.1f%%"|format(s.unit_summary.plus_rate) if s.unit_summary else "—"),
+                      ("%d / %d 台"|format(s.daily.win_units, s.daily.total_units))
+                        if (s.daily and s.daily.win_units is not none and s.daily.total_units) else "台別データから") }}
+            {{ metric("総差枚",
+                      "%+.0f 枚"|format(s.daily.total_diff) if (s.daily and s.daily.total_diff is not none)
+                        else ("%+.0f 枚"|format(s.unit_summary.total_diff) if s.unit_summary else "—"),
+                      ("台別データ %d 台"|format(s.unit_count)) if s.unit_count else None) }}
+        </div>
+        {% else %}
+        <p class="hint mt-2">この日のホールデータはまだ取り込まれていません。</p>
+        {% endif %}
+
+        {# 機種ごとの出方。全部出すと長くなるので、良かった順の上位と、下位だけに絞る #}
+        {% if s.best_machines %}
+        <div class="mt-3 bg-white rounded-md border border-gray-100 overflow-x-auto">
+            <table class="w-full text-xs border-collapse">
+                <thead>
+                    <tr class="text-[10px] text-gray-400 text-left border-b border-gray-100">
+                        <th class="p-2">この日よかった機種</th>
+                        <th class="p-2 text-right whitespace-nowrap">台数</th>
+                        <th class="p-2 text-right whitespace-nowrap">平均G数</th>
+                        <th class="p-2 text-right whitespace-nowrap">平均差枚</th>
+                        <th class="p-2 text-right whitespace-nowrap">プラス率</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in s.best_machines %}
+                    <tr>
+                        <td class="p-2 font-bold text-gray-900 break-words">{{ m.machine_name }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums text-gray-500">{{ m.unit_count }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums">{{ "%.0f"|format(m.avg_games) }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums font-bold {% if m.avg_diff > 0 %}text-emerald-700{% else %}text-rose-700{% endif %}">
+                            {{ "%+.0f"|format(m.avg_diff) }}
+                        </td>
+                        <td class="p-2 text-right font-mono tabular-nums text-gray-500">{{ "%.0f%%"|format(m.plus_rate) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for m in s.worst_machines %}
+                    <tr class="bg-gray-50/60">
+                        <td class="p-2 text-gray-500 break-words">{{ m.machine_name }} <span class="text-[10px] text-gray-400">(下位)</span></td>
+                        <td class="p-2 text-right font-mono tabular-nums text-gray-400">{{ m.unit_count }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums text-gray-400">{{ "%.0f"|format(m.avg_games) }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums text-rose-600">{{ "%+.0f"|format(m.avg_diff) }}</td>
+                        <td class="p-2 text-right font-mono tabular-nums text-gray-400">{{ "%.0f%%"|format(m.plus_rate) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if s.best_unit and s.best_unit.difference_slabs is not none %}
+        <p class="hint mt-1">
+            この日の最高差枚: <strong class="text-gray-700">No.{{ s.best_unit.machine_number }}</strong>
+            {{ s.best_unit.machine_name }} <span class="font-mono">{{ "%+.0f"|format(s.best_unit.difference_slabs) }}枚</span>
+        </p>
+        {% endif %}
+        {% endif %}
+
+        {# 自分が打った台の記録(あれば) #}
+        {% if s.records %}
+        <div class="mt-3">
+            <div class="text-[10px] text-gray-400 mb-1">この日の自分の記録（{{ s.records | length }}件）</div>
+            <div class="flex flex-col gap-1">
+                {% for r in s.records %}
+                <div class="bg-white rounded-md border border-gray-100 px-2 py-1.5 text-xs flex flex-wrap items-center gap-x-2">
+                    <span class="font-bold text-gray-900">{{ r.machine_name or "機種名なし" }}</span>
+                    {% if r.machine_number %}<span class="chip">No.{{ r.machine_number }}</span>{% endif %}
+                    {% if r.total_games %}<span class="font-mono text-gray-500 tabular-nums">{{ r.total_games }}G</span>{% endif %}
+                    {# 差枚は load_records() で必ず数値になっている(未入力は0) #}
+                    <span class="font-mono tabular-nums font-bold {% if r.difference_slabs > 0 %}text-emerald-700{% else %}text-rose-700{% endif %}">
+                        {{ "%+d"|format(r.difference_slabs) }}枚
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            <a href="{{ url_for('store_trends.index', store_name=s.store_name) }}" class="text-blue-600 underline">この店の傾向を見る</a>
+            <a href="{{ url_for('calendar.index', store_name=s.store_name, year=detail.year, month=detail.month, date=detail.date) }}" class="text-blue-600 underline">この店だけのカレンダー</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
