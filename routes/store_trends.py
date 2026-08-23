@@ -159,9 +159,14 @@ def index():
     return _render(store_name, days)
 
 
-@store_trends_bp.route("/ai_summary", methods=["POST"])
+@store_trends_bp.route("/ai_summary", methods=["GET", "POST"])
 def ai_summary():
     """集計結果をAIに総評してもらう(ボタンを押したときだけAPIを呼ぶ)"""
+    if request.method == "GET":
+        # この画面は結果をリダイレクトせずそのまま表示するため、アドレスバーにこのURLが残る。
+        # 更新や「戻る」でGETが飛んでくると405になってしまうので、一覧に戻す。
+        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
 
@@ -305,7 +310,7 @@ def save_events():
     return _back_to(store_name, days)
 
 
-@store_trends_bp.route("/import_daily", methods=["POST"])
+@store_trends_bp.route("/import_daily", methods=["GET", "POST"])
 def import_daily():
     """
     ホールデータサイトの一覧表をコピーして貼り付けたテキストを解析し、
@@ -314,6 +319,11 @@ def import_daily():
     いきなり保存すると、貼り付け形式が想定と違ったときに変な値がシートに入ってしまうため、
     1回目は解析結果のプレビューを返し、内容を確認してから保存する2段階にしている。
     """
+    if request.method == "GET":
+        # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
+        # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
+        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
     pasted_text = request.form.get("pasted_text", "")
@@ -357,7 +367,7 @@ def import_daily():
     return _back_to(store_name, days)
 
 
-@store_trends_bp.route("/import_csv", methods=["POST"])
+@store_trends_bp.route("/import_csv", methods=["GET", "POST"])
 def import_csv():
     """
     ホールデータ取り込みツール(tools/anaslo.py)が出すCSVを取り込む。
@@ -369,6 +379,11 @@ def import_csv():
     行数が多いため確認画面ではファイルを持ち回さず、サーバー側に一時保存して
     トークンで参照する(貼り付け取り込みと違い、hiddenフィールドには収まらないため)。
     """
+    if request.method == "GET":
+        # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
+        # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
+        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
     confirmed = request.form.get("confirm") == "1"
@@ -427,7 +442,7 @@ def import_csv():
     return _back_to(store_name, days)
 
 
-@store_trends_bp.route("/import_units", methods=["POST"])
+@store_trends_bp.route("/import_units", methods=["GET", "POST"])
 def import_units():
     """
     日別詳細ページ(機種・台番号ごとのデータ)をコピーして貼り付けたテキストを解析し、
@@ -436,6 +451,11 @@ def import_units():
     列の並びはサイトによって違うため、貼り付けに見出し行が含まれていれば
     そこから列を判定する。日別データと同じく、保存前にプレビューで確認する。
     """
+    if request.method == "GET":
+        # プレビュー画面はリダイレクトせずこのURLのまま表示するため、
+        # 更新や「戻る」でGETが飛んでくると405になる。一覧に戻す。
+        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
     unit_date = request.form.get("unit_date", "").strip()
