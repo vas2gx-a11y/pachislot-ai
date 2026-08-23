@@ -50,6 +50,13 @@ _ROW_RE = re.compile(r"<tr>(.*?)</tr>", re.S)
 _CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.S)
 _TAG_RE = re.compile(r"<[^>]+>")
 
+# 店舗の「データ一覧」ページ(日付・総差枚・平均差枚・平均G数・勝率の一覧)
+_LIST_STORE_RE = re.compile(r"<title>\s*(.+?)\s+データ一覧")
+_LIST_CELL_RE = re.compile(r'<div class="table-data-cell">(.*?)</div>', re.S)
+_LIST_DATE_RE = re.compile(r"(\d{4})/(\d{1,2})/(\d{1,2})")
+# データなしを表す記号(アプリ側 common.py の _HALL_EMPTY_TOKENS と揃えている)
+EMPTY_TOKENS = {"-", "–", "—", "―", "ー", "‐", "−", "?", "？", "N/A", "n/a", ""}
+
 # 日付と店名の取得元(どれか1つ当たればよい)
 _TITLE_RE = re.compile(r"<title>\s*(\d{4})/(\d{1,2})/(\d{1,2})\s+(.+?)\s+データまとめ")
 _CANONICAL_RE = re.compile(
@@ -168,6 +175,138 @@ def parse_day_html(html_text, store_name="", target_date="", source_name=""):
     if not rows:
         raise ValueError("表は見つかりましたが、データ行が0件でした。")
     return rows
+
+
+def parse_list_html(html_text, store_name=""):
+    """
+    店舗の「データ一覧」ページ(例: 楽園大宮店 データ一覧)のHTMLから、
+    日付ごとの 総差枚 / 平均差枚 / 平均G数 / 勝率 を取り出す。
+
+    このページは表示上の値をそのまま持っているだけなので、アナスロ側が「–」にしている
+    欄はこちらでも取れない(実際、総差枚・平均差枚・勝率はごく一部の日にしか入っていない)。
+    値は文字列のまま返し、埋まっているかどうかの判断は呼び出し側に任せる。
+    """
+    store = store_name
+    if not store:
+        matched = _LIST_STORE_RE.search(html_text)
+        store = matched.group(1).strip() if matched else ""
+
+    rows = []
+    for chunk in html_text.split('<div class="table-row"')[1:]:
+        cells = [_text(c) for c in _LIST_CELL_RE.findall(chunk)]
+        if len(cells) < 5:
+            continue  # 見出し行(table-header-cell)はここで落ちる
+        matched = _LIST_DATE_RE.search(cells[0])
+        if not matched:
+            continue
+        year, month, day = (int(g) for g in matched.groups())
+        try:
+            date_str = date(year, month, day).isoformat()
+        except ValueError:
+            continue
+        rows.append({
+            "date": date_str,
+            "store_name": store,
+            "total_diff": cells[1],
+            "avg_diff": cells[2],
+            "avg_games": cells[3],
+            "win_rate": cells[4],
+        })
+
+    # 保存したページには同じ表がPC用・スマホ用で二重に入っていることがあるため、
+    # 日付で名寄せする(値が入っている方を優先して残す)
+    by_date = {}
+    for row in rows:
+        existing = by_date.get(row["date"])
+        if existing is None or (not _is_filled(existing["total_diff"]) and _is_filled(row["total_diff"])):
+            by_date[row["date"]] = row
+
+    return sorted(by_date.values(), key=lambda r: r["date"], reverse=True), store
+
+
+def _is_filled(value):
+    return str(value).strip() not in EMPTY_TOKENS
+
+
+def daily_rows_from_units(rows):
+    """
+    日別ページ由来の台データ(parseで作ったCSV)から、日ごとの店舗全体の値を作る。
+
+    アナスロが一覧ページに出している「平均G数」と同じ定義(全台の単純平均)で計算しているので、
+    一覧側に「–」で欠けている 総差枚・平均差枚・勝率 をこちらで埋められる。
+    """
+    by_date = {}
+    for row in rows:
+        by_date.setdefault(row.get("date"), []).append(row)
+
+    daily = []
+    for date_str, members in by_date.items():
+        diffs = [r["diff"] for r in members if r.get("diff") is not None]
+        games = [r["games"] for r in members if r.get("games") is not None]
+        if not diffs or not games:
+            continue
+        wins = sum(1 for d in diffs if d > 0)
+        daily.append({
+            "date": date_str,
+            "store_name": members[0].get("store_name", ""),
+            "total_diff": f"{sum(diffs):+,}",
+            "avg_diff": f"{round(sum(diffs) / len(diffs)):+,}",
+            "avg_games": f"{round(sum(games) / len(games)):,}",
+            "win_rate": f"{100 * wins / len(diffs):.1f}%({wins}/{len(diffs)})",
+        })
+    daily.sort(key=lambda r: r["date"], reverse=True)
+    return daily
+
+
+def to_unit_paste_text(rows, date_str=""):
+    """
+    台別データを、アプリの「台別データの取り込み」欄に貼り付けられる形にする。
+
+    アプリ側の parse_hall_unit_text は
+      ・見出し行(台番号 G数 差枚 BB RB)で列を判定し
+      ・数値でない短い行を機種名の見出しとみなす
+    という読み方をするので、機種ごとにまとめて 機種名 → その機種の台 の順に並べる。
+
+    ART回数はアプリの台別データに列がないため出力しない(BB/RBのみ)。
+    AT機は差枚とG数で見ることになる。
+    """
+    selected = [r for r in rows if not date_str or r.get("date") == date_str]
+    if not selected:
+        return "", {}
+
+    by_machine = {}
+    for row in sorted(selected, key=lambda r: r.get("machine_number") or 0):
+        by_machine.setdefault(row.get("machine_name") or "不明", []).append(row)
+
+    lines = ["台番号\tG数\t差枚\tBB\tRB"]
+    for machine_name, members in by_machine.items():
+        lines.append(machine_name)
+        for row in members:
+            lines.append("\t".join([
+                str(row.get("machine_number") or ""),
+                f"{row['games']:,}" if row.get("games") is not None else "-",
+                f"{row['diff']:+,}" if row.get("diff") is not None else "-",
+                str(row.get("bb") if row.get("bb") is not None else "-"),
+                str(row.get("rb") if row.get("rb") is not None else "-"),
+            ]))
+
+    report = {"units": len(selected), "machines": len(by_machine),
+              "date": date_str or selected[0].get("date", "")}
+    return "\n".join(lines), report
+
+
+def to_paste_text(rows):
+    """
+    アプリの店舗傾向ページ(日別データ取り込み)に貼り付けられる形のテキストにする。
+    列は 日付 / 総差枚 / 平均差枚 / 平均G数 / 勝率 のタブ区切り。
+    """
+    lines = []
+    for row in rows:
+        day = _to_date(row["date"])
+        label = f"{day.strftime('%Y/%m/%d')}({WEEKDAY_LABELS[day.weekday()]})"
+        cells = [row.get(k) for k in ("total_diff", "avg_diff", "avg_games", "win_rate")]
+        lines.append("\t".join([label] + [c if _is_filled(c) else "-" for c in cells]))
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -436,6 +575,107 @@ def cmd_parse(args):
     return 0
 
 
+def cmd_daily(args):
+    """一覧ページ(と日別データCSV)から、アプリに貼り付ける日別データを作る"""
+    rows_by_date = {}
+    store = args.store
+
+    if args.list:
+        path = os.path.expanduser(args.list)
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            list_rows, list_store = parse_list_html(f.read(), store_name=args.store)
+        if not list_rows:
+            print(f"{path} から日別一覧を読み取れませんでした。", file=sys.stderr)
+            return 1
+        store = store or list_store
+        filled = sum(1 for r in list_rows if _is_filled(r["total_diff"]))
+        print(f"[一覧ページ] {store}: {len(list_rows)}日分 "
+              f"({list_rows[-1]['date']} 〜 {list_rows[0]['date']}) / "
+              f"うち総差枚が入っているのは {filled}日")
+        for row in list_rows:
+            rows_by_date[row["date"]] = row
+
+    if args.csv:
+        unit_rows = load_csv(args.csv)
+        daily = daily_rows_from_units(unit_rows)
+        if not daily:
+            print(f"{args.csv} から日別の集計を作れませんでした。", file=sys.stderr)
+        else:
+            store = store or daily[0]["store_name"]
+            print(f"[日別ページ] {len(daily)}日分を計算 "
+                  f"({daily[-1]['date']} 〜 {daily[0]['date']})")
+            # 日別ページ由来は全項目が埋まっているので、一覧ページの値より優先する
+            for row in daily:
+                rows_by_date[row["date"]] = row
+
+    if not rows_by_date:
+        print("--list か --csv のどちらかを指定してください。", file=sys.stderr)
+        return 1
+
+    rows = sorted(rows_by_date.values(), key=lambda r: r["date"], reverse=True)
+    if args.days:
+        rows = rows[:args.days]
+
+    text = to_paste_text(rows)
+    filled = sum(1 for r in rows if _is_filled(r["total_diff"]))
+    print(f"\n合計 {len(rows)}日分 / 総差枚まで入っているのは {filled}日分")
+
+    if args.out:
+        directory = os.path.dirname(os.path.abspath(args.out))
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(text + "\n")
+        print(f"{args.out} に書き出しました。")
+        print("店舗傾向ページの「日別データの取り込み」欄に、このファイルの中身を貼り付けてください。")
+    else:
+        print("--- ここから貼り付け ---")
+        print(text)
+    return 0
+
+
+def cmd_units(args):
+    """日別ページのデータから、アプリに貼り付ける台別データを作る"""
+    rows = load_csv(args.csv) if args.csv else []
+
+    if args.html:
+        path = os.path.expanduser(args.html)
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            rows.extend(parse_day_html(f.read(), store_name=args.store, source_name=path))
+
+    if not rows:
+        print("--csv か --html のどちらかを指定してください。", file=sys.stderr)
+        return 1
+
+    dates = sorted({r["date"] for r in rows}, reverse=True)
+    # 台別データは1日ぶんずつ登録する作りなので、日付を1つに決める
+    target_date = args.date or dates[0]
+    if target_date not in dates:
+        print(f"{target_date} のデータがありません。含まれている日付: {', '.join(dates[:10])}",
+              file=sys.stderr)
+        return 1
+    if not args.date and len(dates) > 1:
+        print(f"[注意] {len(dates)}日分のデータがあるため、最新の {target_date} を使いました。"
+              f"他の日は --date で指定してください。")
+
+    text, report = to_unit_paste_text(rows, date_str=target_date)
+    print(f"{report['date']}: {report['units']}台 / {report['machines']}機種")
+
+    if args.out:
+        directory = os.path.dirname(os.path.abspath(args.out))
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(text + "\n")
+        print(f"{args.out} に書き出しました。")
+        print(f"店舗傾向ページの「台別データの取り込み」欄で日付に {report['date']} を指定し、"
+              f"このファイルを取り込んでください。")
+    else:
+        print("--- ここから貼り付け ---")
+        print(text)
+    return 0
+
+
 def cmd_agg(args):
     rows = load_csv(args.csv)
     if not rows:
@@ -500,6 +740,22 @@ def main():
     p_parse.add_argument("--append", action="store_true", help="既存CSVに追記(重複は上書き)")
     p_parse.add_argument("--delay", type=float, default=3.0, help="URL取得の間隔(秒)")
     p_parse.set_defaults(func=cmd_parse)
+
+    p_daily = sub.add_parser("daily", help="アプリに貼り付ける日別データを作る")
+    p_daily.add_argument("--list", default="", help="保存した「データ一覧」ページのindex.html")
+    p_daily.add_argument("--csv", default="", help="parseで作った台別CSV(あれば総差枚まで埋まる)")
+    p_daily.add_argument("--store", default="", help="店舗名を明示する")
+    p_daily.add_argument("--days", type=int, default=0, help="新しい方からN日分だけ出す")
+    p_daily.add_argument("--out", default="", help="貼り付け用テキストの出力先")
+    p_daily.set_defaults(func=cmd_daily)
+
+    p_units = sub.add_parser("units", help="アプリに貼り付ける台別データを作る(1日分)")
+    p_units.add_argument("--csv", default="", help="parseで作った台別CSV")
+    p_units.add_argument("--html", default="", help="保存した日別ページのHTML(CSVを作らず直接変換する)")
+    p_units.add_argument("--date", default="", help="対象日 YYYY-MM-DD(省略時は一番新しい日)")
+    p_units.add_argument("--store", default="", help="店舗名を明示する")
+    p_units.add_argument("--out", default="", help="貼り付け用テキストの出力先")
+    p_units.set_defaults(func=cmd_units)
 
     p_agg = sub.add_parser("agg", help="CSVを集計する")
     p_agg.add_argument("csv", help="parseで作ったCSV")

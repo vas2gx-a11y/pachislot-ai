@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import json
 import logging
@@ -114,6 +116,19 @@ STORE_DAILY_SHEET_NAME = os.environ.get("STORE_DAILY_SHEET_NAME", "store_daily")
 STORE_DAILY_HEADERS = [
     "store_name", "date", "total_diff", "avg_diff", "avg_games", "win_rate",
     "win_units", "total_units", "source", "updated_at",
+]
+
+# store_units シートの列構成(店舗の台別データ)
+# ホールデータサイトの日別詳細ページ(機種・台番号ごとのG数/差枚/BB/RB)を貼り付けで取り込む。
+# 1店舗×1日×1台で1行になる。
+STORE_UNITS_SHEET_NAME = os.environ.get("STORE_UNITS_SHEET_NAME", "store_units")
+STORE_UNITS_HEADERS = [
+    "store_name", "date", "machine_name", "machine_number",
+    "total_games", "difference_slabs", "big_count", "reg_count",
+    "source", "updated_at",
+    # art_count は後から足した列。既存シートのヘッダーが前方一致のまま自動で移行できるよう、
+    # 意味の並びとしては reg_count の隣が自然だが、あえて末尾に置いている。
+    "art_count",
 ]
 
 # store_stats シートの列構成(店舗ごとの年間データ)
@@ -288,6 +303,30 @@ def get_store_daily_worksheet():
     elif current_headers != STORE_DAILY_HEADERS:
         logger.warning(
             f"store_dailyシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_DAILY_HEADERS})"
+        )
+    return ws
+
+
+def get_store_units_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(STORE_UNITS_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=STORE_UNITS_SHEET_NAME, rows=5000, cols=len(STORE_UNITS_HEADERS))
+        ws.append_row(STORE_UNITS_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(STORE_UNITS_HEADERS)
+    elif current_headers != STORE_UNITS_HEADERS and current_headers == STORE_UNITS_HEADERS[:len(current_headers)]:
+        _ensure_min_columns(ws, len(STORE_UNITS_HEADERS))
+        for i, header in enumerate(STORE_UNITS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != STORE_UNITS_HEADERS:
+        logger.warning(
+            f"store_unitsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_UNITS_HEADERS})"
         )
     return ws
 
@@ -2335,7 +2374,7 @@ def describe_store_trends(trends):
     return "\n".join(lines)
 
 
-def summarize_store_trends_with_gemini(trends, store_stats=None, daily_trends=None):
+def summarize_store_trends_with_gemini(trends, store_stats=None, daily_trends=None, unit_trends=None):
     """
     集計結果をもとに、店舗の傾向についてのコメントをAIに書いてもらう。
 
@@ -2376,8 +2415,14 @@ def summarize_store_trends_with_gemini(trends, store_stats=None, daily_trends=No
     サイト側で空欄の日が多く、有効日数が少ない項目は参考程度に扱うこと)】
     {describe_store_daily_trends(daily_trends)}
 
+    【取り込んだ台別データの集計(店の全台が対象。台番号末尾や「端台(角台の候補)」ごとの
+    平均差枚。端台の判定は、同じ日・同じ機種の台番号の連番の両端という近似なので、
+    実際の島の角とはズレることがある点に注意)】
+    {describe_store_unit_trends(unit_trends)}
+
     年間データやホールデータが登録されている場合は、店全体の水準(稼働・平均差枚・勝率)と、
     ユーザー自身の記録の水準がどれくらいズレているかにも1行触れてください。
+    台別データがある場合は、狙う価値のありそうな台番号の特徴(末尾・端台・機種)にも1行触れてください。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {"Content-Type": "application/json"}
@@ -3012,3 +3057,633 @@ def describe_store_day_context(store_name, when=None):
 
     return (f"{when.strftime('%Y-%m-%d')}時点: " + " / ".join(parts)
             + "(稼働が高い日はイベント等で設定を使っている可能性があるが、稼働だけでは設定は分からない)")
+
+
+# ---------------------------------------------------------------------------
+# 台別データ(機種・台番号ごと)の貼り付け取り込み
+# ---------------------------------------------------------------------------
+# 日別詳細ページには「機種名の見出し + 台番号ごとの行」が並んでいる。
+# サイトによって列の並びが違うため、見出し行があればそこから列の対応を読み取り、
+# 見出しが無い場合だけ既定の並び(台番号/G数/差枚/BB/RB)を使う。
+
+# 見出し行から列を特定するための表記ゆれ一覧(先に書いたものが優先)
+_UNIT_COLUMN_ALIASES = [
+    ("machine_number", ("台番号", "台番", "台No", "台no", "番号", "台")),
+    ("total_games", ("総回転数", "総G数", "ゲーム数", "回転数", "G数", "G")),
+    ("difference_slabs", ("差枚数", "差枚", "差玉", "出玉")),
+    ("big_count", ("BB回数", "BIG回数", "BB", "BIG", "ビッグ")),
+    ("reg_count", ("RB回数", "REG回数", "RB", "REG", "レギュラー")),
+]
+# 見出しが無いときに使う既定の並び
+_UNIT_DEFAULT_COLUMNS = ["machine_number", "total_games", "difference_slabs", "big_count", "reg_count"]
+# 画面に「どの列をどう読んだか」を出すための表示名
+_UNIT_FIELD_LABELS = {
+    "machine_number": "台番号", "total_games": "G数", "difference_slabs": "差枚",
+    "big_count": "BB", "reg_count": "RB",
+}
+
+# 機種名の見出しとして扱わない行(サイトの共通パーツや集計行)
+_UNIT_NOISE_WORDS = (
+    "スポンサーリンク", "広告", "合計", "平均", "総台数", "検索", "ホーム", "HOME",
+    "ページ", "ランキング", "詳細", "戻る", "データ一覧", "前日", "翌日",
+)
+_UNIT_MAX_MACHINE_NAME_LEN = 40
+
+
+def _split_row_tokens(line):
+    """1行をセルのリストに分ける(タブ優先。タブが無ければ2個以上の空白か単一空白で分ける)"""
+    if "\t" in line:
+        return [t.strip() for t in line.split("\t") if t.strip()]
+    if re.search(r"[ 　]{2,}", line):
+        return [t.strip() for t in re.split(r"[ 　]{2,}", line) if t.strip()]
+    return [t.strip() for t in re.split(r"[ 　]+", line) if t.strip()]
+
+
+def _match_unit_header(tokens):
+    """
+    見出し行なら列名のリストを返す(例: ["machine_number","total_games",...])。
+    見出しでなければ None。
+    """
+    if len(tokens) < 2:
+        return None
+    columns = []
+    matched = 0
+    for token in tokens:
+        cleaned = token.replace(" ", "").replace("　", "")
+        found = None
+        for field, aliases in _UNIT_COLUMN_ALIASES:
+            if any(alias == cleaned for alias in aliases):
+                found = field
+                break
+        if found is None:
+            for field, aliases in _UNIT_COLUMN_ALIASES:
+                if any(alias in cleaned for alias in aliases):
+                    found = field
+                    break
+        columns.append(found)
+        if found:
+            matched += 1
+    # 見出し行とみなす条件を厳しめにしている。
+    # 列名の判定は部分一致も見ているため("G数"に対する"G"など)、
+    # 英字を含む機種名("ビッグドリーム THE GOLDEN PUSHER" など)が
+    # 見出し行として誤検出され、以降の列の対応が全部ずれてしまうのを防ぐ。
+    # 実際の見出し行はほぼ全てのセルが既知の列名になり、台番号の列を必ず含む。
+    if matched >= 3 and matched >= len(tokens) * 0.75 and "machine_number" in columns:
+        return columns
+    return None
+
+
+def _looks_like_unit_row(tokens):
+    """台番号ではじまり、数値が2つ以上並ぶ行かどうか"""
+    if len(tokens) < 3:
+        return False
+    first = tokens[0].replace(",", "").replace("番", "")
+    if not first.isdigit() or not (0 < int(first) <= 9999):
+        return False
+    numeric_count = sum(1 for t in tokens[1:] if parse_number(t) is not None)
+    return numeric_count >= 2
+
+
+def parse_hall_unit_text(text, max_rows=3000):
+    """
+    日別詳細ページ(機種・台番号ごとのデータ)をコピーしたテキストを解析する。
+
+    戻り値: (rows, report)
+      rows: [{"machine_name", "machine_number", "total_games", "difference_slabs",
+              "big_count", "reg_count"}, ...] 台番号順
+      report: {"parsed", "skipped", "skipped_samples", "machines", "columns",
+               "header_found", "with_diff"}
+    """
+    def _column_labels(columns):
+        return [_UNIT_FIELD_LABELS.get(c, "使わない列") for c in columns]
+
+    report = {"parsed": 0, "skipped": 0, "skipped_samples": [], "machines": [],
+              "columns": _column_labels(_UNIT_DEFAULT_COLUMNS), "header_found": False, "with_diff": 0}
+    if not text or not text.strip():
+        return [], report
+
+    columns = list(_UNIT_DEFAULT_COLUMNS)
+    current_machine = ""
+    machines = []
+    rows_by_number = {}
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        tokens = _split_row_tokens(line)
+        if not tokens:
+            continue
+
+        header = _match_unit_header(tokens)
+        if header:
+            columns = header
+            report["header_found"] = True
+            report["columns"] = _column_labels(header)
+            continue
+
+        if _looks_like_unit_row(tokens):
+            row = {"machine_name": current_machine, "machine_number": "",
+                   "total_games": None, "difference_slabs": None,
+                   "big_count": None, "reg_count": None}
+            for index, token in enumerate(tokens):
+                field = columns[index] if index < len(columns) else None
+                if not field or field == "-":
+                    continue
+                if field == "machine_number":
+                    row["machine_number"] = token.replace(",", "").replace("番", "").strip()
+                else:
+                    row[field] = parse_number(token)
+            if not row["machine_number"]:
+                row["machine_number"] = tokens[0].replace(",", "").strip()
+            # G数も差枚も読めない行は、列がズレている可能性が高いので取り込まない
+            if row["total_games"] is None and row["difference_slabs"] is None:
+                report["skipped"] += 1
+                if len(report["skipped_samples"]) < 5:
+                    report["skipped_samples"].append(line[:60])
+                continue
+            rows_by_number[row["machine_number"]] = row
+            if len(rows_by_number) >= max_rows:
+                break
+            continue
+
+        # 数値行でも見出し行でもない短いテキストは、機種名の見出しとみなす
+        if len(line) <= _UNIT_MAX_MACHINE_NAME_LEN and not any(w in line for w in _UNIT_NOISE_WORDS):
+            if re.search(r"[^\d\s,.\-+%/–—]", line):
+                current_machine = line
+                if current_machine not in machines:
+                    machines.append(current_machine)
+                continue
+
+        report["skipped"] += 1
+        if len(report["skipped_samples"]) < 5:
+            report["skipped_samples"].append(line[:60])
+
+    rows = sorted(rows_by_number.values(),
+                  key=lambda r: (int(r["machine_number"]) if r["machine_number"].isdigit() else 99999))
+    report["parsed"] = len(rows)
+    report["machines"] = machines
+    report["with_diff"] = sum(1 for r in rows if r["difference_slabs"] is not None)
+    return rows, report
+
+
+# アナスロ取り込みCSV(tools/anaslo.py が出す形)の列名。表記ゆれも拾えるようにしている。
+_ANASLO_CSV_ALIASES = {
+    "date": "date", "日付": "date",
+    "store_name": "store_name", "店舗名": "store_name", "店名": "store_name",
+    "machine_number": "machine_number", "台番号": "machine_number", "台番": "machine_number",
+    "machine_name": "machine_name", "機種名": "machine_name",
+    "games": "total_games", "total_games": "total_games", "g数": "total_games", "回転数": "total_games",
+    "diff": "difference_slabs", "difference_slabs": "difference_slabs", "差枚": "difference_slabs",
+    "bb": "big_count", "big_count": "big_count",
+    "rb": "reg_count", "reg_count": "reg_count",
+    "art": "art_count", "art_count": "art_count",
+}
+
+
+def parse_anaslo_csv_text(text, max_rows=60000):
+    """
+    ホールデータ取り込みツール(tools/anaslo.py)が出すCSVを解析する。
+
+    1行が「1日×1台」なので、これ1つから台別データと日別データの両方を作れる。
+    日別の値(総差枚・平均差枚・平均G数・勝率)は台別データから計算する。
+
+    戻り値: (units_by_date, daily_rows, report)
+      units_by_date: {"YYYY-MM-DD": [台別データの行, ...]}
+      daily_rows: 日別データの行(日付の新しい順)
+    """
+    report = {"units": 0, "dates": 0, "machines": 0, "skipped": 0, "skipped_samples": [],
+              "first_date": "", "last_date": "", "with_art": 0, "store_names": []}
+    if not text or not text.strip():
+        return {}, [], report
+
+    # utf-8-sig で読んだ場合に残るBOMと、CRLFの取り扱いを揃えてから csv に渡す
+    reader = csv.DictReader(io.StringIO(text.lstrip("\ufeff")))
+    if not reader.fieldnames:
+        return {}, [], report
+
+    columns = {}
+    for name in reader.fieldnames:
+        key = (name or "").strip().lstrip("\ufeff").lower()
+        if key in _ANASLO_CSV_ALIASES:
+            columns[name] = _ANASLO_CSV_ALIASES[key]
+    if "date" not in columns.values() or "machine_number" not in columns.values():
+        return {}, [], report
+
+    units_by_date = {}
+    machines = set()
+    store_names = set()
+
+    for raw in reader:
+        row = {}
+        for name, field in columns.items():
+            row[field] = (raw.get(name) or "").strip()
+
+        date_str = _normalize_anaslo_date(row.get("date", ""))
+        number = row.get("machine_number", "").replace(",", "")
+        if not date_str or not number.isdigit():
+            report["skipped"] += 1
+            if len(report["skipped_samples"]) < 5:
+                report["skipped_samples"].append(f"{row.get('date', '')} {row.get('machine_number', '')}".strip())
+            continue
+
+        unit = {
+            "machine_name": row.get("machine_name", ""),
+            "machine_number": number,
+            "total_games": parse_number(row.get("total_games")),
+            "difference_slabs": parse_number(row.get("difference_slabs")),
+            "big_count": parse_number(row.get("big_count")),
+            "reg_count": parse_number(row.get("reg_count")),
+            "art_count": parse_number(row.get("art_count")),
+        }
+        # G数も差枚も無い行は、列がずれているか空行なので取り込まない
+        if unit["total_games"] is None and unit["difference_slabs"] is None:
+            report["skipped"] += 1
+            if len(report["skipped_samples"]) < 5:
+                report["skipped_samples"].append(f"{date_str} {number} (数値なし)")
+            continue
+
+        units_by_date.setdefault(date_str, {})[number] = unit
+        if unit["machine_name"]:
+            machines.add(unit["machine_name"])
+        if unit["art_count"]:
+            report["with_art"] += 1
+        if row.get("store_name"):
+            store_names.add(row["store_name"])
+        if sum(len(v) for v in units_by_date.values()) >= max_rows:
+            break
+
+    # 同じ日×同じ台番号は後の行で上書きされるので、ここで並べ直す
+    units_by_date = {
+        date_str: sorted(units.values(), key=lambda u: int(u["machine_number"]))
+        for date_str, units in units_by_date.items()
+    }
+
+    daily_rows = [_daily_row_from_units(date_str, units)
+                  for date_str, units in units_by_date.items()]
+    daily_rows.sort(key=lambda r: r["date"], reverse=True)
+
+    dates = sorted(units_by_date)
+    report["units"] = sum(len(v) for v in units_by_date.values())
+    report["dates"] = len(dates)
+    report["machines"] = len(machines)
+    report["store_names"] = sorted(store_names)
+    if dates:
+        report["first_date"], report["last_date"] = dates[0], dates[-1]
+    return units_by_date, daily_rows, report
+
+
+def _normalize_anaslo_date(value):
+    """"2026-08-22" や "2026/08/22(土)" を "YYYY-MM-DD" に揃える"""
+    matched = re.search(r"(\d{4})[/\-.年](\d{1,2})[/\-.月](\d{1,2})", value or "")
+    if not matched:
+        return ""
+    year, month, day = (int(g) for g in matched.groups())
+    try:
+        return datetime(year, month, day).strftime("%Y-%m-%d")
+    except ValueError:
+        return ""
+
+
+def _daily_row_from_units(date_str, units):
+    """
+    その日の台別データから、店舗全体の日別データを作る。
+
+    平均G数・平均差枚は全台の単純平均、勝率は差枚がプラスだった台の割合。
+    これはホールデータサイトが一覧に出している値と同じ定義になっている。
+    """
+    diffs = [u["difference_slabs"] for u in units if u.get("difference_slabs") is not None]
+    games = [u["total_games"] for u in units if u.get("total_games") is not None]
+    wins = sum(1 for d in diffs if d > 0)
+    return {
+        "date": date_str,
+        "total_diff": sum(diffs) if diffs else None,
+        "avg_diff": round(sum(diffs) / len(diffs)) if diffs else None,
+        "avg_games": round(sum(games) / len(games)) if games else None,
+        "win_rate": round(100 * wins / len(diffs), 1) if diffs else None,
+        "win_units": wins if diffs else None,
+        "total_units": len(diffs) if diffs else None,
+    }
+
+
+def load_store_units(store_name=""):
+    """store_units シートを読み込む(日付の新しい順)。読み込み失敗時は空リスト。"""
+    cached = _cache_get("store_units")
+    if cached is None:
+        try:
+            ws = get_store_units_worksheet()
+            raw_rows = ws.get_all_records()
+        except Exception as e:
+            logger.error(f"台別データの読み込みエラー: {e}")
+            return []
+
+        cached = []
+        for row in raw_rows:
+            name = str(row.get("store_name", "")).strip()
+            date_str = str(row.get("date", "")).strip()
+            number = str(row.get("machine_number", "")).strip()
+            if not name or not date_str or not number:
+                continue
+            cached.append({
+                "store_name": name,
+                "date": date_str,
+                "machine_name": str(row.get("machine_name", "")).strip(),
+                "machine_number": number,
+                "total_games": _to_number(row.get("total_games")),
+                "difference_slabs": _to_number(row.get("difference_slabs")),
+                "big_count": _to_number(row.get("big_count")),
+                "reg_count": _to_number(row.get("reg_count")),
+            })
+        cached.sort(key=lambda r: (r["date"], r["machine_number"]), reverse=True)
+        _cache_set("store_units", cached)
+
+    if not store_name:
+        return cached
+    return [r for r in cached if r["store_name"] == store_name]
+
+
+def save_store_unit_rows(store_name, date_str, rows, source="貼り付け取り込み"):
+    """台別データを1日分保存する(中身は複数日版と同じ処理)"""
+    date_str = (date_str or "").strip()
+    if not date_str:
+        return False, "対象の日付を指定してください。", {}
+    ok, message, counts = save_store_unit_rows_multi(store_name, {date_str: rows}, source=source)
+    if ok:
+        message = (f"「{store_name}」{date_str}の台別データを{counts['added'] + counts['updated']}台分"
+                   f"保存しました(新規{counts['added']}台 / 上書き{counts['updated']}台)。")
+    return ok, message, counts
+
+
+def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取り込み"):
+    """
+    台別データを複数日ぶんまとめて保存する(同じ店舗×日付×台番号は上書き)。
+
+    1日分で1000台を超えることがあり、日ごとにシートを書き換えると
+    取り込む日数だけ全体の書き込みが走ってしまうため、何日分でも1回の書き込みにまとめる。
+    戻り値: (成功したか, メッセージ, {"added", "updated", "dates"})
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return False, "店舗名が空のため保存できません。", {}
+    rows_by_date = {d: r for d, r in (rows_by_date or {}).items() if d and r}
+    if not rows_by_date:
+        return False, "取り込める行がありませんでした。", {}
+
+    try:
+        ws = get_store_units_worksheet()
+        existing = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"台別データの読み込みエラー(保存前): {e}")
+        return False, "シートの読み込みに失敗しました。時間をおいてお試しください。", {}
+
+    merged = {}
+    for row in existing:
+        key = (str(row.get("store_name", "")).strip(), str(row.get("date", "")).strip(),
+               str(row.get("machine_number", "")).strip())
+        if not all(key):
+            continue
+        merged[key] = [
+            key[0], key[1], str(row.get("machine_name", "")), key[2],
+            row.get("total_games", ""), row.get("difference_slabs", ""),
+            row.get("big_count", ""), row.get("reg_count", ""),
+            str(row.get("source", "")), str(row.get("updated_at", "")),
+            row.get("art_count", ""),
+        ]
+
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    added = updated = 0
+    for date_str, rows in rows_by_date.items():
+        for row in rows:
+            key = (store_name, date_str, str(row["machine_number"]))
+            if key in merged:
+                updated += 1
+            else:
+                added += 1
+            merged[key] = [
+                store_name, date_str, row.get("machine_name", ""), str(row["machine_number"]),
+                "" if row.get("total_games") is None else row["total_games"],
+                "" if row.get("difference_slabs") is None else row["difference_slabs"],
+                "" if row.get("big_count") is None else row["big_count"],
+                "" if row.get("reg_count") is None else row["reg_count"],
+                source, now_text,
+                "" if row.get("art_count") is None else row["art_count"],
+            ]
+
+    values = [list(STORE_UNITS_HEADERS)]
+    for key in sorted(merged, key=lambda k: (k[0], k[1], int(k[2]) if k[2].isdigit() else 99999)):
+        values.append(merged[key])
+
+    try:
+        ws.resize(rows=max(len(values), 2), cols=len(STORE_UNITS_HEADERS))
+        ws.update(values, "A1")
+    except Exception as e:
+        logger.error(f"台別データの保存エラー: {e}")
+        return False, "台別データの保存に失敗しました。時間をおいてお試しください。", {}
+
+    _cache_invalidate("store_units")
+    dates = sorted(rows_by_date)
+    return True, (f"「{store_name}」の台別データを{len(dates)}日分・{added + updated}台分"
+                  f"保存しました(新規{added}台 / 上書き{updated}台)。"), {
+        "added": added, "updated": updated, "dates": dates,
+    }
+
+
+def _summarize_unit_rows(rows):
+    """
+    台別データのかたまりを集計する。
+    差枚が空欄の台があるため、平均差枚・勝率は「差枚が入っている台」だけで計算し、
+    その母数(diff_count)も返す。表示・マクロは自分の記録の集計と同じ形に合わせてある。
+    """
+    if not rows:
+        return None
+    diffs = [r["difference_slabs"] for r in rows if r.get("difference_slabs") is not None]
+    games = [r["total_games"] for r in rows if r.get("total_games") is not None]
+    plus_count = sum(1 for d in diffs if d > 0)
+    return {
+        "count": len(rows),
+        "diff_count": len(diffs),
+        "avg_diff": (sum(diffs) / len(diffs)) if diffs else 0,
+        "total_diff": sum(diffs) if diffs else 0,
+        "best_diff": max(diffs) if diffs else 0,
+        "worst_diff": min(diffs) if diffs else 0,
+        "plus_count": plus_count,
+        "plus_rate": (plus_count / len(diffs) * 100) if diffs else 0,
+        "avg_games": (sum(games) / len(games)) if games else 0,
+        "enough_samples": len(diffs) >= TREND_MIN_SAMPLES,
+    }
+
+
+def _mark_edge_units(rows):
+    """
+    「端台(角台の候補)」に印を付ける。
+
+    角台かどうかは台番号だけでは確定できないため、同じ日・同じ機種の台番号を
+    連番のかたまりに分け、その両端を端台とみなす近似で判定する。
+    (島の切れ目と機種の切れ目が一致しない場合はズレるので、あくまで目安)
+    3台以上のかたまりだけを対象にする(2台以下だと全部が端になってしまうため)。
+    """
+    groups = {}
+    for row in rows:
+        if not str(row.get("machine_number", "")).isdigit():
+            row["is_edge"] = None
+            continue
+        groups.setdefault((row["date"], row.get("machine_name", "")), []).append(row)
+
+    for group_rows in groups.values():
+        group_rows.sort(key=lambda r: int(r["machine_number"]))
+        run = [group_rows[0]]
+        runs = [run]
+        for previous, current in zip(group_rows, group_rows[1:]):
+            if int(current["machine_number"]) - int(previous["machine_number"]) == 1:
+                run.append(current)
+            else:
+                run = [current]
+                runs.append(run)
+        for one_run in runs:
+            if len(one_run) < 3:
+                for row in one_run:
+                    row["is_edge"] = None  # 判定できるだけの並びが無い
+                continue
+            for index, row in enumerate(one_run):
+                row["is_edge"] = index in (0, len(one_run) - 1)
+    return rows
+
+
+def build_store_unit_trends(store_name, days=90):
+    """
+    取り込んだ台別データから、台番号末尾・端台(角台の候補)・機種・台番号ごとの傾向を集計する。
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return None
+
+    rows = [dict(r) for r in load_store_units(store_name)]
+    if days > 0:
+        limit_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        rows = [r for r in rows if r["date"] >= limit_date]
+
+    trends = {"store_name": store_name, "days": days, "record_count": len(rows),
+              "min_samples": TREND_MIN_SAMPLES}
+    if not rows:
+        trends["overall"] = None
+        return trends
+
+    _mark_edge_units(rows)
+    dates = sorted({r["date"] for r in rows})
+    trends["overall"] = _summarize_unit_rows(rows)
+    trends["first_date"] = dates[0]
+    trends["last_date"] = dates[-1]
+    trends["day_count"] = len(dates)
+    trends["unit_count"] = len({r["machine_number"] for r in rows})
+
+    def _grouped(key_func, label_func, sort_key=None, min_count=1):
+        buckets = {}
+        for row in rows:
+            key = key_func(row)
+            if key is None:
+                continue
+            buckets.setdefault(key, []).append(row)
+        result = []
+        for key, group_rows in buckets.items():
+            if len(group_rows) < min_count:
+                continue
+            summary = _summarize_unit_rows(group_rows)
+            summary["key"] = key
+            summary["label"] = label_func(key, group_rows)
+            result.append(summary)
+        result.sort(key=sort_key or (lambda row: -row["avg_diff"]))
+        return result
+
+    trends["by_number_suffix"] = _grouped(
+        lambda r: int(r["machine_number"][-1]) if r["machine_number"].isdigit() else None,
+        lambda key, _rows: f"末尾{key}",
+        sort_key=lambda row: row["key"],
+    )
+    trends["by_edge"] = _grouped(
+        lambda r: r.get("is_edge"),
+        lambda key, _rows: "端台(角台の候補)" if key else "島の中ほど",
+        sort_key=lambda row: 0 if row["key"] else 1,
+    )
+    trends["by_machine"] = _grouped(
+        lambda r: r.get("machine_name") or None,
+        lambda key, _rows: key,
+    )
+    # 台番号ごとの成績(複数日ぶんまとめて、平均差枚の高い順)
+    trends["top_units"] = _grouped(
+        lambda r: r["machine_number"],
+        lambda key, group_rows: f"No.{key}" + (f" {group_rows[0].get('machine_name', '')}" if group_rows[0].get("machine_name") else ""),
+    )[:20]
+
+    def _best(rows_):
+        eligible = [r for r in rows_ if r["enough_samples"]]
+        return max(eligible, key=lambda r: r["avg_diff"]) if eligible else None
+
+    trends["highlights"] = {
+        "best_suffix": _best(trends["by_number_suffix"]),
+        "best_machine": _best(trends["by_machine"]),
+        "edge": next((r for r in trends["by_edge"] if r["key"]), None),
+        "middle": next((r for r in trends["by_edge"] if not r["key"]), None),
+    }
+    return trends
+
+
+def describe_store_unit_trends(trends, limit=10):
+    """台別データの集計を、AIプロンプト用のテキストにまとめる。"""
+    if not trends or not trends.get("record_count"):
+        return "登録なし"
+
+    overall = trends["overall"]
+    lines = [
+        f"対象: {trends['first_date']}〜{trends['last_date']} の{trends['day_count']}日分 / "
+        f"のべ{trends['record_count']}台(実台数{trends['unit_count']}台)",
+        f"全体: 平均差枚{overall['avg_diff']:+.0f}枚, プラス率{overall['plus_rate']:.0f}%, "
+        f"平均{overall['avg_games']:.0f}G(差枚が入っている台{overall['diff_count']}件)",
+    ]
+
+    def _rows_text(title, rows):
+        if not rows:
+            return f"{title}: データなし"
+        parts = [
+            f"{row['label']}: 平均差枚{row['avg_diff']:+.0f}枚/{row['count']}台/プラス率{row['plus_rate']:.0f}%"
+            for row in rows[:limit]
+        ]
+        return f"{title}: " + " / ".join(parts)
+
+    lines.append(_rows_text("台番号末尾別", trends.get("by_number_suffix", [])))
+    lines.append(_rows_text("端台(角台の候補)と島の中ほど", trends.get("by_edge", [])))
+    lines.append(_rows_text("機種別", trends.get("by_machine", [])))
+    lines.append(_rows_text("好調な台(平均差枚の高い順)", trends.get("top_units", [])[:5]))
+    return "\n".join(lines)
+
+
+def describe_store_unit_history(store_name, machine_number, days=90, limit=5):
+    """
+    特定の台(店舗×台番号)の、取り込んだ台別データでの直近の成績を1行にまとめる。
+    設定推測のプロンプトに添えて「この台はこの店でどういう扱いの台か」を材料にする。
+    データが無い場合は空文字。
+    """
+    store_name = (store_name or "").strip()
+    machine_number = str(machine_number or "").strip()
+    if not store_name or not machine_number:
+        return ""
+
+    limit_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d") if days > 0 else ""
+    rows = [
+        r for r in load_store_units(store_name)
+        if r["machine_number"] == machine_number and (not limit_date or r["date"] >= limit_date)
+    ]
+    if not rows:
+        return ""
+
+    diffs = [r["difference_slabs"] for r in rows if r.get("difference_slabs") is not None]
+    recent = " / ".join(
+        f"{r['date']}: {r['total_games']:.0f}G 差枚{r['difference_slabs']:+.0f}枚"
+        if r.get("total_games") is not None and r.get("difference_slabs") is not None
+        else f"{r['date']}: データ一部なし"
+        for r in rows[:limit]
+    )
+    summary = f"No.{machine_number}のホールデータ実績({len(rows)}日分)"
+    if diffs:
+        plus_rate = sum(1 for d in diffs if d > 0) / len(diffs) * 100
+        summary += f": 平均差枚{sum(diffs) / len(diffs):+.0f}枚, プラスの日{plus_rate:.0f}%"
+    return f"{summary} / 直近: {recent}"

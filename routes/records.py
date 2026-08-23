@@ -234,6 +234,10 @@ def upload():
         day_context = common.describe_store_day_context(store_name)
         if day_context:
             store_stats_text = (store_stats_text + " / " if store_stats_text else "") + day_context
+        # 取り込んだ台別データに、まさにこの台の実績があれば一緒に渡す
+        unit_history = common.describe_store_unit_history(store_name, machine_number)
+        if unit_history:
+            store_stats_text = (store_stats_text + " / " if store_stats_text else "") + unit_history
 
     estimation_comment, setting_probabilities, category_scores = common.estimate(
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
