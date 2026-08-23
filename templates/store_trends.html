@@ -94,9 +94,7 @@
         {% if (daily_trends and daily_trends.record_count) or (unit_trends and unit_trends.record_count) %}
         <a href="#store-data-section" class="btn btn-ghost btn-sm">🏪 店の全台データ</a>
         {% endif %}
-        {% if trends and trends.record_count %}
-        <a href="#my-records-section" class="btn btn-ghost btn-sm">📊 自分の記録</a>
-        {% endif %}
+        <a href="{{ url_for('store_trends.my_records', store_name=store_name, days=days) }}" class="btn btn-ghost btn-sm">📊 自分の記録</a>
     </nav>
     {% endif %}
     {% if store_name %}
@@ -854,138 +852,20 @@
     {% endif %}
     {% endif %}
 
-    {% if trends and trends.record_count %}
-    {# ここから「自分の記録」。上の「店の全台データ」と混同しないよう、見出しの区切りを付ける。 #}
-    <div id="my-records-section" class="pt-2 scroll-mt-4">
-        <h2 class="font-display font-extrabold text-lg md:text-xl text-gray-900 flex items-center gap-2">
-            <span>📊 自分の記録</span>
-            <span class="chip">自分が打った台のみ</span>
-        </h2>
-    </div>
-    {% set overall = trends.overall %}
-
-    {# 上の年間データ(店の全台)と混同しないよう、自分の記録の集計であることを明記する #}
-    {% set ns = namespace(period='') %}
-    {% for label, value in period_choices %}{% if value == days %}{% set ns.period = label %}{% endif %}{% endfor %}
-    <section>
-    <h2 class="font-display font-bold text-base md:text-lg text-gray-900 mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">📊</span>
-        <span>自分の記録の集計</span>
-        <span class="text-xs text-gray-400 font-normal font-sans">{{ ns.period }}・自分が打った台のみ</span>
-    </h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-        {{ stat_card("対象記録数", trends.record_count ~ "件") }}
-        {{ stat_card("平均差枚", "%+d" | format(overall.avg_diff | round(0) | int) ~ "枚",
-                     "text-green-600" if overall.avg_diff > 0 else "text-red-600") }}
-        {{ stat_card("プラス率", (overall.plus_rate | round(0) | int) ~ "%") }}
-        {{ stat_card("打った日数", trends.unique_days ~ "日") }}
-    </div>
-    </section>
-
-    {% set h = trends.highlights %}
-    {% if h.best_weekday or h.best_day_suffix or h.best_machine or h.best_number_suffix %}
-    {% call card("💡", "注目ポイント", None, "bg-amber-50",
-         "記録が" ~ trends.min_samples ~ "件以上ある区分の中で、平均差枚が最も高い/低いものです。該当が無い項目は、まだ判断できるだけの件数が溜まっていません。") %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {% for label, row, tone in [
-            ("出ている曜日", h.best_weekday, "good"),
-            ("出ていない曜日", h.worst_weekday, "bad"),
-            ("出ている日付末尾", h.best_day_suffix, "good"),
-            ("出ている機種", h.best_machine, "good"),
-            ("出ていない機種", h.worst_machine, "bad"),
-            ("出ている台番号末尾", h.best_number_suffix, "good"),
-        ] %}
-        {% if row %}
-        <div class="panel flex items-center justify-between gap-3">
-            <div class="min-w-0">
-                <div class="text-[10px] text-gray-400">{{ label }}</div>
-                <div class="text-sm font-bold text-gray-900 truncate">{{ row.label }}</div>
-            </div>
-            <div class="shrink-0 text-right">
-                <div class="font-mono tabular-nums font-bold {% if row.avg_diff > 0 %}text-green-600{% elif row.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
-                    {{ "%+d" | format(row.avg_diff | round(0) | int) }}枚
-                </div>
-                <div class="text-[10px] text-gray-400 font-mono tabular-nums">{{ row.count }}件 / プラス率{{ row.plus_rate | round(0) | int }}%</div>
-            </div>
-        </div>
-        {% endif %}
-        {% endfor %}
-    </div>
-    {% endcall %}
-    {% endif %}
-
-    {# AI総評: 集計は常に表示し、AI呼び出しはボタンを押したときだけ行う #}
-    {% call card("🤖", "AIによる総評", None, "bg-blue-50",
-         "上の集計結果をAIに渡して、狙い目になりそうな条件と注意点を文章にしてもらいます。押したときだけAIを呼び出します。") %}
-    {% if ai_summary %}
-    <div class="panel whitespace-pre-wrap text-sm text-gray-700 mb-3">{{ ai_summary }}</div>
-    {% endif %}
-    <form id="store-ai-form" action="{{ url_for('store_trends.ai_summary') }}" method="POST">
-        <input type="hidden" name="store_name" value="{{ store_name }}">
-        <input type="hidden" name="days" value="{{ days }}">
-        <button type="submit" class="btn btn-accent w-full sm:w-auto">
-            {% if ai_summary %}もう一度AIに総評してもらう{% else %}AIに総評してもらう{% endif %}
-        </button>
-    </form>
-    <script>
-        wireAsyncForm('store-ai-form', {
-            uploadingText: '送信中',
-            processingText: 'AIが傾向をまとめています...'
-        });
-    </script>
-    {% endcall %}
-
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-        {{ trend_section("📅", "日別（イベント日の当たりを探す）",
-             "日付ごとの平均差枚。特定の日だけ突出していれば、その日に設定を使っている可能性があります。",
-             trends.by_date, trends.min_samples, true) }}
-
-        {{ trend_section("🗓", "曜日別",
-             "曜日ごとの平均差枚。土日と平日で使い分けているホールを見つける用途です。",
-             trends.by_weekday, trends.min_samples, false, false, false) }}
-
-        {{ trend_section("🔢", "日付の末尾別",
-             "「7の付く日」「ゾロ目の日」のような周期イベントの有無を見ます。",
-             trends.by_day_suffix, trends.min_samples, false, false, false) }}
-
-        {{ trend_section("🎰", "機種別",
-             "その店がどの機種に設定を入れているかの目安。件数が多い機種ほど信頼できます。",
-             trends.by_machine, trends.min_samples, true, true, false) }}
-    </div>
-
-    {{ trend_section("🔟", "台番号の末尾別",
-         "台番号を入力した記録だけが対象です。末尾を揃えて設定を入れるホールかどうかの目安になります。",
-         trends.by_number_suffix, trends.min_samples, false, false, false) }}
-
-    {% if trends.repdigit %}
-    {% call card("🎯", "ゾロ目台（111・222 など）", None, "bg-gray-100",
-         "桁がすべて同じ台番号の記録だけを集計したものです。角台かどうかは台番号だけでは判別できないため、ここには含まれていません。") %}
-    <div class="grid grid-cols-3 gap-2 text-center">
-        <div class="panel py-2">
-            <div class="text-[10px] text-gray-400">平均差枚</div>
-            <div class="font-mono tabular-nums font-bold {% if trends.repdigit.avg_diff > 0 %}text-green-600{% elif trends.repdigit.avg_diff < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
-                {{ "%+d" | format(trends.repdigit.avg_diff | round(0) | int) }}
-            </div>
-        </div>
-        <div class="panel py-2">
-            <div class="text-[10px] text-gray-400">プラス率</div>
-            <div class="font-mono tabular-nums font-bold text-gray-900">{{ trends.repdigit.plus_rate | round(0) | int }}%</div>
-        </div>
-        <div class="panel py-2">
-            <div class="text-[10px] text-gray-400">記録件数</div>
-            <div class="font-mono tabular-nums font-bold text-gray-900">{{ trends.repdigit.count }}</div>
-        </div>
-    </div>
-    {% endcall %}
-    {% endif %}
-
-    <p class="hint">
-        ※ 同じ台を同じ日に複数回記録している場合は、その日の最新1件だけを集計しています。
-        集計対象は{{ trends.first_date }}〜{{ trends.last_date }}の記録です。
-    </p>
-
-    {% elif store_name %}
-    {{ empty_state("🏢", "この店舗・期間の記録がまだありません。期間を「全期間」に広げるか、データ管理画面から記録を追加してください。") }}
+    {% if store_name %}
+    {# 自分の記録の集計は別ページに分けている(このページは店の全台データが主役なので、
+       母数の違うデータが同じ画面に続くと読み間違えやすいため) #}
+    <a href="{{ url_for('store_trends.my_records', store_name=store_name, days=days) }}"
+       class="card flex items-center justify-between gap-3 p-4 hover:bg-gray-50 transition">
+        <span class="min-w-0">
+            <span class="font-display font-bold text-gray-900 flex items-center gap-2">
+                <span>📊 自分の記録を見る</span>
+                <span class="chip">自分が打った台のみ</span>
+            </span>
+            <span class="hint block">日別・曜日別・機種別の集計、注目ポイント、AIによる総評はこちら。</span>
+        </span>
+        <span class="text-blue-600 shrink-0" aria-hidden="true">→</span>
+    </a>
     {% endif %}
 
     {{ back_link(url_for('records.index'), "データ管理ダッシュボードに戻る") }}

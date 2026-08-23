@@ -152,8 +152,36 @@ def _render(store_name, days, ai_summary="", import_preview=None, pasted_text=""
     )
 
 
+def _render_my_records(store_name, days, ai_summary=""):
+    """
+    自分の記録の集計ページ。
+
+    店の全台データ(取り込み分)とは母数がまったく違い、同じ画面に並べると
+    どちらの数字を見ているのか分かりにくくなるため、ページを分けている。
+    """
+    stores = common.list_store_names()
+    if not store_name and stores:
+        store_name = stores[0]["name"]
+
+    trends = common.build_store_trends(store_name, days=days) if store_name else None
+
+    return render_template(
+        "store_trends_my.html",
+        stores=stores,
+        store_name=store_name,
+        days=days,
+        period_choices=PERIOD_CHOICES,
+        trends=trends,
+        ai_summary=ai_summary,
+    )
+
+
 def _back_to(store_name, days):
     return redirect(url_for("store_trends.index", store_name=store_name, days=days))
+
+
+def _back_to_my_records(store_name, days):
+    return redirect(url_for("store_trends.my_records", store_name=store_name, days=days))
 
 
 @store_trends_bp.route("/")
@@ -161,6 +189,13 @@ def index():
     store_name = request.args.get("store_name", "").strip()
     days = _parse_days(request.args.get("days", DEFAULT_DAYS))
     return _render(store_name, days)
+
+
+@store_trends_bp.route("/my_records")
+def my_records():
+    store_name = request.args.get("store_name", "").strip()
+    days = _parse_days(request.args.get("days", DEFAULT_DAYS))
+    return _render_my_records(store_name, days)
 
 
 @store_trends_bp.route("/rename_store", methods=["POST"])
@@ -183,11 +218,18 @@ def rename_store():
 
 @store_trends_bp.route("/ai_summary", methods=["GET", "POST"])
 def ai_summary():
-    """集計結果をAIに総評してもらう(ボタンを押したときだけAPIを呼ぶ)"""
+    """
+    集計結果をAIに総評してもらう(ボタンを押したときだけAPIを呼ぶ)。
+
+    総評は自分の記録を主役に、店の全台データを補足として渡す形なので、
+    結果は自分の記録ページに表示する。
+    """
     if request.method == "GET":
         # この画面は結果をリダイレクトせずそのまま表示するため、アドレスバーにこのURLが残る。
-        # 更新や「戻る」でGETが飛んでくると405になってしまうので、一覧に戻す。
-        return _back_to(request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS)))
+        # 更新や「戻る」でGETが飛んでくると405になってしまうので、元のページに戻す。
+        return _back_to_my_records(
+            request.args.get("store_name", ""), _parse_days(request.args.get("days", DEFAULT_DAYS))
+        )
 
     store_name = request.form.get("store_name", "").strip()
     days = _parse_days(request.form.get("days", DEFAULT_DAYS))
@@ -195,7 +237,7 @@ def ai_summary():
     trends = common.build_store_trends(store_name, days=days) if store_name else None
     if not trends or not trends.get("record_count"):
         flash("この条件では集計できる記録がないため、AI総評を作成できません。")
-        return _render(store_name, days)
+        return _render_my_records(store_name, days)
 
     store_stats = common.load_store_stats().get(store_name)
     daily_trends = common.build_store_daily_trends(store_name, days=365)
@@ -205,7 +247,7 @@ def ai_summary():
     )
     if error:
         flash(error)
-    return _render(store_name, days, ai_summary=summary)
+    return _render_my_records(store_name, days, ai_summary=summary)
 
 
 @store_trends_bp.route("/upload_stats", methods=["POST"])
