@@ -616,11 +616,11 @@
 
         {{ trend_section("🎰", "機種別（店の全台）",
              "その店がどの機種に設定を入れているかを、自分の記録ではなく店の全台データで見ます。",
-             unit_trends.by_machine, unit_trends.min_samples, true) }}
+             unit_trends.by_machine, unit_trends.min_samples, true, true) }}
 
         {{ trend_section("🏅", "好調な台トップ20",
              "台番号ごとの平均差枚が高い順です。複数日ぶん取り込むほど、狙い台の候補として意味を持ちます。",
-             unit_trends.top_units, unit_trends.min_samples, true) }}
+             unit_trends.top_units, unit_trends.min_samples, true, true) }}
     </div>
     {% endif %}
 
@@ -713,7 +713,7 @@
 
         {{ trend_section("🎰", "機種別",
              "その店がどの機種に設定を入れているかの目安。件数が多い機種ほど信頼できます。",
-             trends.by_machine, trends.min_samples, true) }}
+             trends.by_machine, trends.min_samples, true, true) }}
     </div>
 
     {{ trend_section("🔟", "台番号の末尾別",

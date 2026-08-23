@@ -284,9 +284,35 @@
   バーは0を中央にした左右振り分けで、プラスは緑・マイナスは赤。
   max_abs は同じ表の中で一番大きい |平均差枚|(バーの幅を揃えるための基準)。
   件数が少ない区分は数字が偶然で振れるため、薄く表示して件数を必ず併記する。
+
+  wide_label: 機種名など長い文字列がラベルになる表では true にする。
+  固定幅の1列に収めて truncate すると文字が切れて読めなくなるため、
+  ラベルをバーと同じ行に置かず、上段にフル幅で折り返し表示する2行レイアウトに切り替える。
 #}
-{% macro trend_row(row, max_abs, min_samples=3) %}
+{% macro trend_row(row, max_abs, min_samples=3, wide_label=False) %}
 {% set width = (row.avg_diff | abs / max_abs * 100) if max_abs else 0 %}
+{% if wide_label %}
+<div class="py-1.5 border-b border-gray-50 last:border-b-0 text-xs {% if not row.enough_samples %}opacity-60{% endif %}">
+    <div class="text-gray-700 leading-snug break-words mb-1">{{ row.label }}</div>
+    <div class="flex items-center gap-1.5 md:gap-2">
+        <div class="flex-1 flex items-center min-w-[48px] md:min-w-[80px]">
+            <div class="flex-1 flex justify-end">
+                <div class="h-2.5 rounded-l-sm bg-red-500" style="width: {{ width if row.avg_diff < 0 else 0 }}%;"></div>
+            </div>
+            <div class="w-px h-3.5 bg-gray-300 shrink-0"></div>
+            <div class="flex-1 flex justify-start">
+                <div class="h-2.5 rounded-r-sm bg-green-600" style="width: {{ width if row.avg_diff > 0 else 0 }}%;"></div>
+            </div>
+        </div>
+        <span class="w-14 md:w-16 shrink-0 text-right font-mono tabular-nums font-bold {% if row.avg_diff > 0 %}text-green-600{% elif row.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+            {{ "%+d" | format(row.avg_diff | round(0) | int) }}
+        </span>
+        <span class="w-16 md:w-20 shrink-0 text-right text-gray-400 font-mono tabular-nums">
+            {{ row.count }}件 {{ row.plus_rate | round(0) | int }}%
+        </span>
+    </div>
+</div>
+{% else %}
 <div class="flex items-center gap-1.5 md:gap-2 py-1 text-xs {% if not row.enough_samples %}opacity-60{% endif %}">
     <span class="w-20 md:w-24 shrink-0 truncate text-gray-600" title="{{ row.label }}">{{ row.label }}</span>
     <div class="flex-1 flex items-center min-w-[48px] md:min-w-[80px]">
@@ -305,30 +331,35 @@
         {{ row.count }}件 {{ row.plus_rate | round(0) | int }}%
     </span>
 </div>
+{% endif %}
 {% endmacro %}
 
 {#
   店舗傾向の1セクション(見出し + 説明 + 区分ごとの行)。
   rows は build_store_trends() が返す集計行のリスト。
+  wide_label は trend_row にそのまま渡す(機種名など長いラベルの表で true にする)。
 #}
-{% macro trend_section(icon, title, description, rows, min_samples=3, scroll=False) %}
+{% macro trend_section(icon, title, description, rows, min_samples=3, scroll=False, wide_label=False) %}
 <section class="card card-body">
     <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
         <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">{{ icon }}</span>
         <span>{{ title }}</span>
+        {% if rows %}<span class="text-xs text-gray-400 font-normal font-sans">{{ rows | length }}件</span>{% endif %}
     </h2>
     {% if description %}<p class="hint mt-2">{{ description }}</p>{% endif %}
 
     {% if rows %}
     {% set max_abs = rows | map(attribute='avg_diff') | map('abs') | max %}
     <div class="mt-3 {% if scroll %}max-h-96 overflow-y-auto pr-1{% endif %}">
+        {% if not wide_label %}
         <div class="flex items-center gap-1.5 md:gap-2 pb-1 mb-1 border-b border-gray-100 text-[10px] text-gray-400">
             <span class="w-20 md:w-24 shrink-0">区分</span>
             <span class="flex-1 text-center min-w-[48px] md:min-w-[80px]">平均差枚</span>
             <span class="w-14 md:w-16 shrink-0 text-right">枚</span>
             <span class="w-16 md:w-20 shrink-0 text-right">件数/プラス</span>
         </div>
-        {% for row in rows %}{{ trend_row(row, max_abs, min_samples) }}{% endfor %}
+        {% endif %}
+        {% for row in rows %}{{ trend_row(row, max_abs, min_samples, wide_label) }}{% endfor %}
     </div>
     <p class="hint">薄く表示している区分は{{ min_samples }}件未満で、偶然のブレの可能性が高いものです。</p>
     {% else %}
