@@ -107,6 +107,15 @@ MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sour
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
 CHAT_HEADERS = ["session_id", "date", "question", "answer"]
 
+# store_stats シートの列構成(店舗ごとの年間データ)
+# データサイト等で公開されている「店舗単位の集計値」を1店舗1行で保持する。
+# 自分の記録から作る集計(build_store_trends)とは別物なので、シートを分けている。
+STORE_STATS_SHEET_NAME = os.environ.get("STORE_STATS_SHEET_NAME", "store_stats")
+STORE_STATS_HEADERS = [
+    "store_name", "period_label", "total_diff", "avg_diff", "avg_games", "win_rate",
+    "note", "source", "updated_at",
+]
+
 # 初回起動時、machinesシートが空だった場合に入れておくデフォルト値
 DEFAULT_MACHINE_RULES = [
     {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
@@ -221,6 +230,31 @@ def get_chat_worksheet():
     elif current_headers != CHAT_HEADERS:
         logger.warning(
             f"chat_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {CHAT_HEADERS})"
+        )
+    return ws
+
+
+def get_store_stats_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(STORE_STATS_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=STORE_STATS_SHEET_NAME, rows=200, cols=len(STORE_STATS_HEADERS))
+        ws.append_row(STORE_STATS_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(STORE_STATS_HEADERS)
+    elif current_headers != STORE_STATS_HEADERS and current_headers == STORE_STATS_HEADERS[:len(current_headers)]:
+        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        _ensure_min_columns(ws, len(STORE_STATS_HEADERS))
+        for i, header in enumerate(STORE_STATS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != STORE_STATS_HEADERS:
+        logger.warning(
+            f"store_statsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_STATS_HEADERS})"
         )
     return ws
 
@@ -1616,7 +1650,8 @@ def _format_suggestion_observations(suggestion_items, suggestion_observations):
 
 
 def estimate(machine_name, combined_text, stats=None, recent_history_text="", hall_tendency_text="",
-             recent_records_count=0, base64_image=None, mime_type="image/jpeg", suggestion_observations=None):
+             recent_records_count=0, base64_image=None, mime_type="image/jpeg", suggestion_observations=None,
+             store_stats_text=""):
     """
     machine_name・強示唆ワード・ゲームフロー・設定別確率表・累計データ・
     過去のメモやAI備考・同機種の直近の来店データ(とその傾向分析)・
@@ -1708,6 +1743,9 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     【今回のメモ・AI画像解析結果の蓄積テキスト】{combined_text if combined_text.strip() else "情報なし"}
     【同機種・このホールでの直近(約7日以内)の傾向分析】{hall_tendency_text if hall_tendency_text else "傾向データなし"}
     【同機種の直近の来店データ(個別内訳・参考情報)】{recent_history_text if recent_history_text else "登録なし"}
+    【このホール全体の年間データ(データサイト等の外部集計。店の全台・全期間が対象の実績値で、
+    その店がどれくらい出す方針かの目安。個々の台の設定を直接示すものではないため、
+    「ホールの傾向」カテゴリの点数付けの材料として扱い、これだけで高設定と判断しないこと)】{store_stats_text if store_stats_text else "登録なし"}
     【現時点の情報量】{data_volume}
     {image_instruction}
     setting_probabilities の6つの値は、合計がちょうど100になるように整数で出力してください。
@@ -2264,13 +2302,15 @@ def describe_store_trends(trends):
     return "\n".join(lines)
 
 
-def summarize_store_trends_with_gemini(trends):
+def summarize_store_trends_with_gemini(trends, store_stats=None):
     """
     集計結果をもとに、店舗の傾向についてのコメントをAIに書いてもらう。
 
     注意: 元データは「自分が打った記録」だけなので、母数が小さい区分は
     偶然のブレである可能性が高い。プロンプト側でもその点を明示し、
     断定させないようにしている。
+    store_stats(店舗全体の年間データ)がある場合は、母数の大きい実績として
+    併せて渡し、自分の記録との差にも触れてもらう。
     戻り値: (summary: str, error: str)
     """
     if not trends or not trends.get("record_count"):
@@ -2293,6 +2333,12 @@ def summarize_store_trends_with_gemini(trends):
     - 判断に注意が必要な点(サンプル数の偏りなど)を1行
 
     {describe_store_trends(trends)}
+
+    【店舗全体の年間データ(データサイト等の外部集計。店の全台が対象なので、
+    上のユーザー自身の記録より母数がはるかに大きい実績値)】
+    {describe_store_stats(store_stats)}
+    年間データが登録されている場合は、店全体の水準(平均差枚・勝率)と、
+    ユーザー自身の記録の水準がどれくらいズレているかにも1行触れてください。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {"Content-Type": "application/json"}
@@ -2315,3 +2361,218 @@ def summarize_store_trends_with_gemini(trends):
     except (KeyError, IndexError, ValueError, TypeError) as e:
         logger.error(f"店舗傾向AI総評: 解析エラー: {e}")
         return "", "AIの回答を解析できませんでした。もう一度お試しください。"
+
+
+# ---------------------------------------------------------------------------
+# 店舗の年間データ(データサイト等の外部集計)の登録・読み込み
+# ---------------------------------------------------------------------------
+# build_store_trends() が「自分が打った台の記録」から作る集計なのに対し、
+# こちらは店舗全体の年間実績(総差枚・平均差枚・平均G数・勝率)を外部から取り込んで持つ。
+# 母数が桁違いなので、混ぜずに別データとして扱い、画面でも並べて比較する。
+def _to_number(value, default=None):
+    """
+    "+12,345枚" "58.3%" "1,234G" のような表記から数値だけを取り出す。
+    数値として解釈できない場合は default を返す。
+    """
+    if value is None:
+        return default
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return default
+    # 数字・符号・小数点以外(カンマ、枚、%、G、全角文字など)を取り除く
+    cleaned = re.sub(r"[^0-9+\-.]", "", text.replace("−", "-").replace("＋", "+"))
+    if cleaned in ("", "+", "-", ".", "+.", "-."):
+        return default
+    try:
+        return float(cleaned)
+    except ValueError:
+        return default
+
+
+def parse_number(value, default=None):
+    """フォーム入力などの数値表記を数値に変換する(_to_number の公開版)。"""
+    return _to_number(value, default)
+
+
+def load_store_stats():
+    """
+    store_stats シートを読み込み、{店舗名: 年間データ} の辞書で返す。
+    シートが無い・読めない場合は空辞書を返す(この機能が使えないだけで、
+    他の画面は今まで通り動かしたいため、例外は投げない)。
+    """
+    cached = _cache_get("store_stats")
+    if cached is not None:
+        return cached
+
+    try:
+        ws = get_store_stats_worksheet()
+        rows = ws.get_all_records()
+    except Exception as e:
+        logger.error(f"店舗年間データの読み込みエラー: {e}")
+        return {}
+
+    stats_by_store = {}
+    for row in rows:
+        store_name = str(row.get("store_name", "")).strip()
+        if not store_name:
+            continue
+        stats_by_store[store_name] = {
+            "store_name": store_name,
+            "period_label": str(row.get("period_label", "")).strip(),
+            "total_diff": _to_number(row.get("total_diff")),
+            "avg_diff": _to_number(row.get("avg_diff")),
+            "avg_games": _to_number(row.get("avg_games")),
+            "win_rate": _to_number(row.get("win_rate")),
+            "note": str(row.get("note", "")).strip(),
+            "source": str(row.get("source", "")).strip(),
+            "updated_at": str(row.get("updated_at", "")).strip(),
+        }
+
+    _cache_set("store_stats", stats_by_store)
+    return stats_by_store
+
+
+def save_store_stats(store_name, period_label="", total_diff=None, avg_diff=None,
+                     avg_games=None, win_rate=None, note="", source=""):
+    """
+    店舗の年間データを保存する(1店舗1行。既に行があれば上書き更新)。
+    戻り値: (成功したか, メッセージ)
+    """
+    store_name = (store_name or "").strip()
+    if not store_name:
+        return False, "店舗名が空のため保存できません。"
+
+    values = [
+        store_name,
+        (period_label or "").strip(),
+        "" if total_diff is None else total_diff,
+        "" if avg_diff is None else avg_diff,
+        "" if avg_games is None else avg_games,
+        "" if win_rate is None else win_rate,
+        (note or "").strip(),
+        (source or "").strip(),
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    ]
+
+    try:
+        ws = get_store_stats_worksheet()
+        existing = ws.col_values(1)  # store_name列(1行目はヘッダー)
+        row_index = None
+        for i, name in enumerate(existing[1:], start=2):
+            if str(name).strip() == store_name:
+                row_index = i
+                break
+
+        if row_index:
+            _ensure_min_columns(ws, len(STORE_STATS_HEADERS))
+            ws.update(f"A{row_index}:{chr(ord('A') + len(STORE_STATS_HEADERS) - 1)}{row_index}", [values])
+            message = f"「{store_name}」の年間データを更新しました。"
+        else:
+            ws.append_row(values)
+            message = f"「{store_name}」の年間データを登録しました。"
+    except Exception as e:
+        logger.error(f"店舗年間データの保存エラー: {e}")
+        return False, "年間データの保存に失敗しました。時間をおいてお試しください。"
+
+    _cache_invalidate("store_stats")
+    return True, message
+
+
+def describe_store_stats(stats):
+    """店舗の年間データを、AIプロンプト用の1行テキストにする。"""
+    if not stats:
+        return "登録なし"
+
+    parts = []
+    period = stats.get("period_label") or "期間の記載なし"
+    parts.append(f"対象期間: {period}")
+    if stats.get("total_diff") is not None:
+        parts.append(f"総差枚: {stats['total_diff']:+,.0f}枚")
+    if stats.get("avg_diff") is not None:
+        parts.append(f"平均差枚: {stats['avg_diff']:+,.0f}枚")
+    if stats.get("avg_games") is not None:
+        parts.append(f"平均G数: {stats['avg_games']:,.0f}G")
+    if stats.get("win_rate") is not None:
+        parts.append(f"勝率: {stats['win_rate']:.1f}%")
+    if stats.get("note"):
+        parts.append(f"備考: {stats['note']}")
+    return " / ".join(parts)
+
+
+def analyze_store_stats_image_with_gemini(base64_image, mime_type="image/jpeg"):
+    """
+    データサイト等の「店舗全体の集計データ」のスクリーンショットを解析し、
+    総差枚・平均差枚・平均G数・勝率を抽出する。
+
+    読み取れなかった項目は null のまま返す(推測で埋めさせない)。
+    戻り値: 解析結果の辞書 / 失敗時は None
+    """
+    prompt = """
+    パチスロ・パチンコのデータサイトなどで表示される「店舗全体の集計データ」の画像です。
+    画像から読み取れる数値を、以下のJSON形式でのみ出力してください。他の文章は不要です。
+    画像に写っていない項目は、推測で埋めず必ず null にしてください。
+
+    {
+      "store_name": "画像から読み取れる店舗名(読み取れなければ空文字)",
+      "period_label": "集計期間の表記(例: 2025年, 直近1年, 2025/01-2025/12。読み取れなければ空文字)",
+      "total_diff": 総差枚(枚単位の整数。プラスなら正、マイナスなら負。読み取れなければ null),
+      "avg_diff": 平均差枚(枚単位の数値。読み取れなければ null),
+      "avg_games": 平均ゲーム数(G単位の数値。読み取れなければ null),
+      "win_rate": 勝率(パーセントの数値。例: 42.5。読み取れなければ null),
+      "note": "上記以外に読み取れた補足(機種数・台数・営業日数など)があれば50文字程度で(日本語)"
+    }
+
+    数値はカンマ・「枚」「G」「%」などの単位を取り除いた数値のみにしてください。
+    「平均差枚」が台あたりの平均なのか1日あたりなのか等の但し書きがあれば note に含めてください。
+    """
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt},
+                    {"inlineData": {"mimeType": mime_type, "data": base64_image}},
+                ]
+            }
+        ]
+    }
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        logger.error("Gemini API タイムアウト(店舗年間データ解析)")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Gemini API 通信エラー(店舗年間データ解析): {e}")
+        return None
+
+    raw_text = ""
+    try:
+        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        json_start = raw_text.find("{")
+        json_end = raw_text.rfind("}") + 1
+        if json_start == -1 or json_end == 0:
+            logger.error(f"JSONが見つかりません(店舗年間データ解析): {raw_text}")
+            return None
+        parsed = json.loads(raw_text[json_start:json_end])
+    except (KeyError, IndexError) as e:
+        logger.error(f"Geminiレスポンス構造エラー(店舗年間データ解析): {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON解析エラー(店舗年間データ解析): {e} / raw={raw_text!r}")
+        return None
+
+    return {
+        "store_name": str(parsed.get("store_name", "") or "").strip(),
+        "period_label": str(parsed.get("period_label", "") or "").strip(),
+        "total_diff": _to_number(parsed.get("total_diff")),
+        "avg_diff": _to_number(parsed.get("avg_diff")),
+        "avg_games": _to_number(parsed.get("avg_games")),
+        "win_rate": _to_number(parsed.get("win_rate")),
+        "note": str(parsed.get("note", "") or "").strip(),
+    }

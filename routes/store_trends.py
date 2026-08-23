@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, flash
+import base64
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 import common
 
@@ -26,6 +28,7 @@ def _render(store_name, days, ai_summary=""):
         store_name = stores[0]["name"]
 
     trends = common.build_store_trends(store_name, days=days) if store_name else None
+    store_stats = common.load_store_stats().get(store_name) if store_name else None
 
     return render_template(
         "store_trends.html",
@@ -34,8 +37,13 @@ def _render(store_name, days, ai_summary=""):
         days=days,
         period_choices=PERIOD_CHOICES,
         trends=trends,
+        store_stats=store_stats,
         ai_summary=ai_summary,
     )
+
+
+def _back_to(store_name, days):
+    return redirect(url_for("store_trends.index", store_name=store_name, days=days))
 
 
 @store_trends_bp.route("/")
@@ -56,7 +64,97 @@ def ai_summary():
         flash("この条件では集計できる記録がないため、AI総評を作成できません。")
         return _render(store_name, days)
 
-    summary, error = common.summarize_store_trends_with_gemini(trends)
+    store_stats = common.load_store_stats().get(store_name)
+    summary, error = common.summarize_store_trends_with_gemini(trends, store_stats=store_stats)
     if error:
         flash(error)
     return _render(store_name, days, ai_summary=summary)
+
+
+@store_trends_bp.route("/upload_stats", methods=["POST"])
+def upload_stats():
+    """
+    データサイト等のスクショから、店舗の年間データ(総差枚・平均差枚・平均G数・勝率)を
+    AIに読み取らせて保存する。
+
+    どの店舗のデータとして保存するかは、画面で選択中の店舗名を正とする。
+    (画像から読み取った店名は表記ゆれが起きやすく、記録側の店舗名と一致しないと
+    分析で紐づかないため。画像の店名が違って見える場合は警告だけ出す)
+    """
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+    file = request.files.get("stats_image")
+
+    if not file or file.filename == "":
+        flash("年間データの画像を選択してください。")
+        return _back_to(store_name, days)
+
+    if not common.allowed_file(file.filename):
+        flash("対応していないファイル形式です(jpg / jpeg / png / webp のみ)")
+        return _back_to(store_name, days)
+
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    mime_type = "image/png" if ext == "png" else "image/webp" if ext == "webp" else "image/jpeg"
+    base64_image = base64.b64encode(file.read()).decode("utf-8")
+
+    parsed = common.analyze_store_stats_image_with_gemini(base64_image, mime_type)
+    if not parsed:
+        flash("画像の解析に失敗しました。もう一度お試しいただくか、下の入力欄に手入力してください。")
+        return _back_to(store_name, days)
+
+    # 画面で店舗が選ばれていない場合に限り、画像から読み取った店名を使う
+    target_store = store_name or parsed.get("store_name", "").strip()
+    if not target_store:
+        flash("保存先の店舗が特定できませんでした。店舗を選んでから、もう一度お試しください。")
+        return _back_to(store_name, days)
+
+    ai_store_name = parsed.get("store_name", "").strip()
+    if ai_store_name and store_name and ai_store_name != store_name:
+        flash(f"画像から読み取った店名「{ai_store_name}」は選択中の「{store_name}」と異なります。"
+              f"選択中の店舗のデータとして保存しました。違う場合は店舗を選び直してください。")
+
+    read_values = [k for k in ("total_diff", "avg_diff", "avg_games", "win_rate") if parsed.get(k) is not None]
+    if not read_values:
+        flash("画像から数値を読み取れませんでした。下の入力欄に手入力してください。")
+        return _back_to(target_store, days)
+
+    ok, message = common.save_store_stats(
+        target_store,
+        period_label=parsed.get("period_label", ""),
+        total_diff=parsed.get("total_diff"),
+        avg_diff=parsed.get("avg_diff"),
+        avg_games=parsed.get("avg_games"),
+        win_rate=parsed.get("win_rate"),
+        note=parsed.get("note", ""),
+        source="画像から読み取り",
+    )
+    flash(message if ok else message)
+    if ok and len(read_values) < 4:
+        missing = {"total_diff": "総差枚", "avg_diff": "平均差枚", "avg_games": "平均G数", "win_rate": "勝率"}
+        not_read = [label for key, label in missing.items() if key not in read_values]
+        flash(f"画像から読み取れなかった項目({'、'.join(not_read)})があります。下の入力欄で補ってください。")
+    return _back_to(target_store, days)
+
+
+@store_trends_bp.route("/save_stats", methods=["POST"])
+def save_stats():
+    """AIの読み取り結果の修正・手入力での保存"""
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+
+    if not store_name:
+        flash("店舗を選んでから保存してください。")
+        return _back_to(store_name, days)
+
+    ok, message = common.save_store_stats(
+        store_name,
+        period_label=request.form.get("period_label", ""),
+        total_diff=common.parse_number(request.form.get("total_diff")),
+        avg_diff=common.parse_number(request.form.get("avg_diff")),
+        avg_games=common.parse_number(request.form.get("avg_games")),
+        win_rate=common.parse_number(request.form.get("win_rate")),
+        note=request.form.get("note", ""),
+        source="手入力",
+    )
+    flash(message)
+    return _back_to(store_name, days)

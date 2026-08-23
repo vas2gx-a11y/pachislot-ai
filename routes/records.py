@@ -225,11 +225,19 @@ def upload():
                 machine_number = str(r.get("machine_number", "")).strip()
                 break
 
+    # 店舗の年間データ(登録済みの場合)も、ホールの傾向を測る材料としてAIに渡す
+    store_stats_text = ""
+    if store_name:
+        store_stats = common.load_store_stats().get(store_name)
+        if store_stats:
+            store_stats_text = common.describe_store_stats(store_stats)
+
     estimation_comment, setting_probabilities, category_scores = common.estimate(
         machine_name, combined_text, stats, recent_history_text, hall_tendency_text,
         recent_records_count=len(recent_records),
         base64_image=image_for_estimate, mime_type=mime_type_for_estimate,
         suggestion_observations=suggestion_observations,
+        store_stats_text=store_stats_text,
     )
 
     record = {

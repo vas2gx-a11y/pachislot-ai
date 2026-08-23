@@ -41,9 +41,170 @@
     {% endif %}
     {% endcall %}
 
+    {% if store_name %}
+    {#
+      店舗全体の年間データ(データサイト等の外部集計)。
+      自分の記録から作る集計とは母数がまったく違うので、混ぜずに並べて比較する。
+    #}
+    {% call card("🏬", "店舗全体の年間データ", store_stats.period_label if store_stats and store_stats.period_label else None, "bg-gray-100",
+         "データサイトなどで公開されている、店舗単位の集計値です。スクショを読み込ませるか、下の欄に直接入力して登録できます。登録すると設定推測とAI総評にも渡されます。") %}
+
+    {% if store_stats %}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+        <div class="panel">
+            <div class="text-gray-400 text-xs">総差枚</div>
+            <div class="font-mono tabular-nums font-bold text-lg {% if store_stats.total_diff and store_stats.total_diff > 0 %}text-green-600{% elif store_stats.total_diff and store_stats.total_diff < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                {{ ("{:+,.0f}".format(store_stats.total_diff)) if store_stats.total_diff is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">平均差枚</div>
+            <div class="font-mono tabular-nums font-bold text-lg {% if store_stats.avg_diff and store_stats.avg_diff > 0 %}text-green-600{% elif store_stats.avg_diff and store_stats.avg_diff < 0 %}text-red-600{% else %}text-gray-900{% endif %}">
+                {{ ("{:+,.0f}".format(store_stats.avg_diff)) if store_stats.avg_diff is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">平均G数</div>
+            <div class="font-mono tabular-nums font-bold text-lg text-gray-900">
+                {{ ("{:,.0f}".format(store_stats.avg_games) ~ "G") if store_stats.avg_games is not none else "—" }}
+            </div>
+        </div>
+        <div class="panel">
+            <div class="text-gray-400 text-xs">勝率</div>
+            <div class="font-mono tabular-nums font-bold text-lg text-gray-900">
+                {{ ("%.1f" | format(store_stats.win_rate) ~ "%") if store_stats.win_rate is not none else "—" }}
+            </div>
+        </div>
+    </div>
+
+    {% if store_stats.note %}<p class="hint">📝 {{ store_stats.note }}</p>{% endif %}
+    <p class="hint">
+        {% if store_stats.source %}取り込み方法: {{ store_stats.source }}　{% endif %}
+        {% if store_stats.updated_at %}最終更新: {{ store_stats.updated_at }}{% endif %}
+    </p>
+
+    {% if trends and trends.record_count %}
+    {# 自分の記録との比較。母数が違うので「ズレ」を見る目安として扱う #}
+    <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+            <thead>
+                <tr class="text-[10px] text-gray-400 text-left">
+                    <th class="pb-1 pr-3">項目</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">自分の記録<span class="hidden sm:inline">（{{ trends.record_count }}件）</span></th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">年間データ</th>
+                    <th class="pb-1 text-right">差</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono tabular-nums">
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">平均差枚</td>
+                    <td class="py-1.5 pr-3 text-right">{{ "%+d" | format(trends.overall.avg_diff | round(0) | int) }}枚</td>
+                    <td class="py-1.5 pr-3 text-right">{{ ("%+d" | format(store_stats.avg_diff | round(0) | int) ~ "枚") if store_stats.avg_diff is not none else "—" }}</td>
+                    <td class="py-1.5 text-right {% if store_stats.avg_diff is not none and trends.overall.avg_diff - store_stats.avg_diff > 0 %}text-green-600{% elif store_stats.avg_diff is not none %}text-red-600{% endif %}">
+                        {{ ("%+d" | format((trends.overall.avg_diff - store_stats.avg_diff) | round(0) | int) ~ "枚") if store_stats.avg_diff is not none else "—" }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">平均G数</td>
+                    <td class="py-1.5 pr-3 text-right">{{ trends.overall.avg_games | round(0) | int }}G</td>
+                    <td class="py-1.5 pr-3 text-right">{{ (store_stats.avg_games | round(0) | int ~ "G") if store_stats.avg_games is not none else "—" }}</td>
+                    <td class="py-1.5 text-right text-gray-500">
+                        {{ ("%+d" | format((trends.overall.avg_games - store_stats.avg_games) | round(0) | int) ~ "G") if store_stats.avg_games is not none else "—" }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="py-1.5 pr-3 font-sans text-gray-600">プラス率 / 勝率</td>
+                    <td class="py-1.5 pr-3 text-right">{{ trends.overall.plus_rate | round(0) | int }}%</td>
+                    <td class="py-1.5 pr-3 text-right">{{ ("%.1f" | format(store_stats.win_rate) ~ "%") if store_stats.win_rate is not none else "—" }}</td>
+                    <td class="py-1.5 text-right {% if store_stats.win_rate is not none and trends.overall.plus_rate - store_stats.win_rate > 0 %}text-green-600{% elif store_stats.win_rate is not none %}text-red-600{% endif %}">
+                        {{ ("%+.1f" | format(trends.overall.plus_rate - store_stats.win_rate) ~ "pt") if store_stats.win_rate is not none else "—" }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">
+        「自分の記録」は選択中の期間・自分が打った台だけの集計、「年間データ」は店の全台が対象の集計です。
+        母数が大きく違うため、優劣ではなく「自分の引きや台選びが店の平均とどれくらいズレているか」の目安として見てください。
+    </p>
+    {% endif %}
+
+    {% else %}
+    <p class="text-sm text-gray-500">この店舗の年間データはまだ登録されていません。下のいずれかの方法で登録してください。</p>
+    {% endif %}
+
+    {# 取り込み1: データサイトのスクショをAIに読ませる #}
+    <form id="store-stats-form" action="{{ url_for('store_trends.upload_stats') }}" method="POST" enctype="multipart/form-data" class="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+        <div>
+            <label class="label" for="stats_image">🖼️ データサイトのスクショから読み取る</label>
+            <input id="stats_image" type="file" name="stats_image" accept="image/*" required class="input-file">
+            <p class="hint">総差枚・平均差枚・平均G数・勝率が写っている画面をアップロードしてください。読み取り結果は下の欄で修正できます。</p>
+        </div>
+        <button type="submit" class="btn btn-accent w-full sm:w-auto self-start">画像を解析して登録</button>
+    </form>
+    <script>
+        wireAsyncForm('store-stats-form', {
+            uploadingText: '画像アップロード中',
+            processingText: 'AIが数値を読み取っています...'
+        });
+    </script>
+
+    {# 取り込み2: 手入力・AIの読み取り結果の修正 #}
+    <details class="mt-3" {% if not store_stats %}open{% endif %}>
+        <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">
+            <span class="chev inline-block mr-1">▶</span>✏️ 手入力する / 読み取り結果を修正する
+        </summary>
+        <form action="{{ url_for('store_trends.save_stats') }}" method="POST" class="mt-3 flex flex-col gap-3">
+            <input type="hidden" name="store_name" value="{{ store_name }}">
+            <input type="hidden" name="days" value="{{ days }}">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="label" for="total_diff">総差枚（枚）</label>
+                    <input id="total_diff" type="text" inputmode="numeric" name="total_diff" value="{{ (store_stats.total_diff | round(0) | int) if store_stats and store_stats.total_diff is not none else '' }}" placeholder="例: -125000" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="avg_diff">平均差枚（枚）</label>
+                    <input id="avg_diff" type="text" inputmode="numeric" name="avg_diff" value="{{ (store_stats.avg_diff | round(1)) if store_stats and store_stats.avg_diff is not none else '' }}" placeholder="例: -120" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="avg_games">平均G数</label>
+                    <input id="avg_games" type="text" inputmode="numeric" name="avg_games" value="{{ (store_stats.avg_games | round(0) | int) if store_stats and store_stats.avg_games is not none else '' }}" placeholder="例: 3200" class="input font-mono">
+                </div>
+                <div>
+                    <label class="label" for="win_rate">勝率（%）</label>
+                    <input id="win_rate" type="text" inputmode="decimal" name="win_rate" value="{{ (store_stats.win_rate | round(1)) if store_stats and store_stats.win_rate is not none else '' }}" placeholder="例: 42.5" class="input font-mono">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="label" for="period_label">対象期間</label>
+                    <input id="period_label" type="text" name="period_label" value="{{ store_stats.period_label if store_stats else '' }}" placeholder="例: 2025年 / 直近1年" class="input">
+                </div>
+                <div>
+                    <label class="label" for="note">備考（任意）</label>
+                    <input id="note" type="text" name="note" value="{{ store_stats.note if store_stats else '' }}" placeholder="例: スロット全台・営業日数350日" class="input">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-full sm:w-auto self-start">年間データを保存</button>
+        </form>
+    </details>
+    {% endcall %}
+    {% endif %}
+
     {% if trends and trends.record_count %}
     {% set overall = trends.overall %}
 
+    {# 上の年間データ(店の全台)と混同しないよう、自分の記録の集計であることを明記する #}
+    {% set ns = namespace(period='') %}
+    {% for label, value in period_choices %}{% if value == days %}{% set ns.period = label %}{% endif %}{% endfor %}
+    <section>
+    <h2 class="font-display font-bold text-base md:text-lg text-gray-900 mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">📊</span>
+        <span>自分の記録の集計</span>
+        <span class="text-xs text-gray-400 font-normal font-sans">{{ ns.period }}・自分が打った台のみ</span>
+    </h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
         {{ stat_card("対象記録数", trends.record_count ~ "件") }}
         {{ stat_card("平均差枚", "%+d" | format(overall.avg_diff | round(0) | int) ~ "枚",
@@ -51,6 +212,7 @@
         {{ stat_card("プラス率", (overall.plus_rate | round(0) | int) ~ "%") }}
         {{ stat_card("打った日数", trends.unique_days ~ "日") }}
     </div>
+    </section>
 
     {% set h = trends.highlights %}
     {% if h.best_weekday or h.best_day_suffix or h.best_machine or h.best_number_suffix %}
