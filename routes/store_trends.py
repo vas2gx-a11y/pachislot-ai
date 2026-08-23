@@ -212,50 +212,6 @@ def my_records():
     return _render_my_records(store_name, days)
 
 
-@store_trends_bp.route("/add_store", methods=["POST"])
-def add_store():
-    """
-    店舗を新しく登録する。
-
-    店舗名は専用のマスタを持たず「どこかのシートに登場するか」で一覧を作っているため、
-    追加した直後に何も登録しないままページを離れると店名が消えてしまう。
-    それを避けるため、旧イベント日のシートに空の行を作って店名だけ先に登録しておく。
-    """
-    store_name = request.form.get("store_name", "").strip()
-    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
-
-    if not store_name:
-        flash("追加する店舗名を入力してください。")
-        return _back_to("", days)
-
-    if any(s["name"] == store_name for s in common.list_store_names()):
-        flash(f"「{store_name}」はすでに登録されています。")
-        return _back_to(store_name, days)
-
-    ok, message = common.save_store_events(store_name, event_days="", anniversary_days="",
-                                           note="", source="店舗追加")
-    flash(f"店舗「{store_name}」を追加しました。" if ok else message)
-    return _back_to(store_name, days)
-
-
-@store_trends_bp.route("/rename_store", methods=["POST"])
-def rename_store():
-    """
-    店舗名を変更する(記録・年間データ・旧イベント日・日別データ・台別データの全てに反映)。
-
-    「新しい店舗を追加」も同じ仕組みで実現している(まだデータの無い店名を選んだ状態は
-    ページ上はただの未選択と区別が付かないため、専用の追加処理は無い。テキストで
-    店名を入力してこの画面に来た時点で、以降にデータを保存すればその店名で作られる)。
-    """
-    old_name = request.form.get("old_name", "").strip()
-    new_name = request.form.get("new_name", "").strip()
-    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
-
-    ok, message = common.rename_store(old_name, new_name)
-    flash(message)
-    return _back_to(new_name if ok else old_name, days)
-
-
 @store_trends_bp.route("/ai_summary", methods=["GET", "POST"])
 def ai_summary():
     """

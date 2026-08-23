@@ -2195,6 +2195,72 @@ def list_store_names(records=None):
     ]
 
 
+def build_store_overview():
+    """
+    店舗ごとに「どの種類のデータが、どれだけ入っているか」を一覧にする。
+
+    店舗管理画面で、統合すべき表記ゆれ(片方にしかデータが無い等)を
+    見つけられるようにするためのもの。シートは各1回だけ読む。
+    戻り値: [{"name", "record_count", "has_stats", "event_summary",
+              "daily_days", "daily_first", "daily_last",
+              "unit_rows", "unit_days", "unit_first", "unit_last"}, ...]
+    """
+    records = load_records()
+    stats = load_store_stats()
+    events = load_store_events()
+    daily = load_store_daily()
+    units = load_store_units()
+
+    overview = {}
+
+    def _entry(name):
+        return overview.setdefault(name, {
+            "name": name, "record_count": 0, "has_stats": False, "event_summary": "",
+            "daily_days": 0, "daily_first": "", "daily_last": "",
+            "unit_rows": 0, "unit_days": 0, "unit_first": "", "unit_last": "",
+        })
+
+    for row in records:
+        name = str(row.get("store_name", "")).strip()
+        if name:
+            _entry(name)["record_count"] += 1
+
+    for name in stats:
+        _entry(name)["has_stats"] = True
+
+    for name, setting in events.items():
+        entry = _entry(name)
+        parts = []
+        if setting.get("event_rules"):
+            parts.append("旧イベ" + describe_event_rules(setting["event_rules"]))
+        if setting.get("anniversary_rules"):
+            parts.append("周年" + describe_event_rules(setting["anniversary_rules"]))
+        entry["event_summary"] = " / ".join(parts)
+
+    daily_dates = {}
+    for row in daily:
+        name = str(row.get("store_name", "")).strip()
+        if name:
+            daily_dates.setdefault(name, []).append(row["date"])
+    for name, dates in daily_dates.items():
+        entry = _entry(name)
+        entry["daily_days"] = len(set(dates))
+        entry["daily_first"], entry["daily_last"] = min(dates), max(dates)
+
+    unit_dates = {}
+    for row in units:
+        name = str(row.get("store_name", "")).strip()
+        if name:
+            unit_dates.setdefault(name, []).append(row["date"])
+    for name, dates in unit_dates.items():
+        entry = _entry(name)
+        entry["unit_rows"] = len(dates)
+        entry["unit_days"] = len(set(dates))
+        entry["unit_first"], entry["unit_last"] = min(dates), max(dates)
+
+    return sorted(overview.values(), key=lambda s: (-s["record_count"], s["name"]))
+
+
 def _store_names_from_other_sheets():
     """store_stats・store_events・store_daily・store_units に登場する店舗名の集合"""
     names = set()

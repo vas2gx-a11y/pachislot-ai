@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import back_link %}
+
+{% block title %}{{ category.label }}{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ category.icon }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ category.label }}</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stack">
+    <p class="text-sm text-gray-500">{{ category.description }}</p>
+
+    {#
+      カテゴリ配下の機能。カードを1枚ずつ並べるだけなので、
+      navigation.py に項目を足せばこの画面にも自動で増える。
+    #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        {% for item in items %}
+        <a href="{{ url_for(item.endpoint) }}"
+           class="card p-4 md:p-5 flex items-start gap-3 hover:bg-gray-50 transition">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 text-xl shrink-0" aria-hidden="true">{{ item.icon }}</span>
+            <span class="min-w-0 flex-1">
+                <span class="font-display font-bold text-gray-900 block">{{ item.label }}</span>
+                <span class="hint block">{{ item.description }}</span>
+            </span>
+            <span class="text-blue-600 shrink-0 pt-1" aria-hidden="true">→</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    {{ back_link(url_for('records.index'), "データ登録・記録一覧に戻る") }}
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, empty_state, back_link %}
+
+{% block title %}店舗の管理{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">🏪</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">店舗の管理</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stack">
+    {% call card("🏪", "登録されている店舗", None, "bg-gray-100",
+         "店舗名はデータに紐づいて管理されています。どの店舗にどんなデータが入っているかを確認して、表記ゆれの統合や名前の修正ができます。") %}
+    {% if overview %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs border-collapse">
+            <thead>
+                <tr class="text-[10px] text-gray-400 text-left border-b border-gray-100">
+                    <th class="pb-1 pr-3">店舗名</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">自分の記録</th>
+                    <th class="pb-1 pr-3 text-center whitespace-nowrap">年間データ</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">日別データ</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">台別データ</th>
+                    <th class="pb-1 pr-3">旧イベント日</th>
+                    <th class="pb-1"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for s in overview %}
+                <tr class="{% if s.name == highlight %}bg-amber-50{% endif %}">
+                    <td class="py-2 pr-3 font-bold text-gray-900 break-words">{{ s.name }}</td>
+                    <td class="py-2 pr-3 text-right font-mono tabular-nums {% if not s.record_count %}text-gray-300{% endif %}">
+                        {{ s.record_count }}件
+                    </td>
+                    <td class="py-2 pr-3 text-center">{% if s.has_stats %}✅{% else %}<span class="text-gray-300">—</span>{% endif %}</td>
+                    <td class="py-2 pr-3 text-right font-mono tabular-nums {% if not s.daily_days %}text-gray-300{% endif %}">
+                        {% if s.daily_days %}{{ s.daily_days }}日<br><span class="text-[10px] text-gray-400">{{ s.daily_first }}〜{{ s.daily_last }}</span>{% else %}—{% endif %}
+                    </td>
+                    <td class="py-2 pr-3 text-right font-mono tabular-nums {% if not s.unit_rows %}text-gray-300{% endif %}">
+                        {% if s.unit_rows %}{{ s.unit_rows }}台<br><span class="text-[10px] text-gray-400">{{ s.unit_days }}日分</span>{% else %}—{% endif %}
+                    </td>
+                    <td class="py-2 pr-3 text-gray-500 break-words">{{ s.event_summary or "—" }}</td>
+                    <td class="py-2 text-right whitespace-nowrap">
+                        <a href="{{ url_for('store_trends.index', store_name=s.name) }}" class="text-blue-600 underline">傾向を見る</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">
+        「自分の記録」はデータ管理画面で保存した自分が打った台の件数、それ以外は取り込んだ店の全台データです。
+        どちらか片方にしかデータが無い店舗が2つ並んでいる場合は、表記ゆれの可能性があります（下の「統合」でまとめられます）。
+    </p>
+    {% else %}
+    {{ empty_state("🏪", "まだ店舗が登録されていません。下の「新しい店舗を追加」から登録してください。") }}
+    {% endif %}
+    {% endcall %}
+
+    {% call card("➕", "新しい店舗を追加", None, "bg-emerald-50",
+         "これから通う店舗を先に登録しておけます。記録がなくても一覧に残ります。") %}
+    <form action="{{ url_for('stores.add') }}" method="POST" class="flex flex-col sm:flex-row gap-2">
+        <input type="text" name="store_name" placeholder="例: ○○ホール △△店" required class="input flex-1">
+        <button type="submit" class="btn btn-primary whitespace-nowrap self-start sm:self-auto">追加する</button>
+    </form>
+    <p class="hint">データサイトの表記に合わせておくと、後で取り込むときに迷いません。</p>
+    {% endcall %}
+
+    {% if overview %}
+    {% call card("✏️", "店舗名を変更する", None, "bg-gray-100",
+         "入力ミスや表記の修正に使います。記録・年間データ・旧イベント日・日別データ・台別データ、すべての店舗名が変わります。") %}
+    <form action="{{ url_for('stores.rename') }}" method="POST"
+          class="flex flex-col sm:flex-row gap-2"
+          onsubmit="return confirm('「' + this.old_name.value + '」のデータをすべて「' + this.new_name.value + '」に変更します。よろしいですか?');">
+        <select name="old_name" class="input flex-1" required>
+            {% for s in overview %}
+            <option value="{{ s.name }}">{{ s.name }}</option>
+            {% endfor %}
+        </select>
+        <span class="self-center text-gray-400 text-sm shrink-0">→</span>
+        <input type="text" name="new_name" placeholder="変更後の店舗名" required class="input flex-1">
+        <button type="submit" class="btn btn-primary whitespace-nowrap self-start sm:self-auto">変更する</button>
+    </form>
+    <p class="hint">元に戻したい場合は、もう一度この画面で逆方向に変更してください。</p>
+    {% endcall %}
+
+    {% call card("🔗", "店舗を統合する", None, "bg-amber-50",
+         "「大宮楽園」と「楽園大宮店」のように、同じ店が別々に登録されてしまった場合にまとめます。") %}
+    <form action="{{ url_for('stores.merge') }}" method="POST"
+          class="flex flex-col sm:flex-row gap-2"
+          onsubmit="return confirm('「' + this.source_name.value + '」を「' + this.target_name.value + '」に統合します。統合元の店舗名はなくなります。よろしいですか?');">
+        <div class="flex-1">
+            <label class="label">統合元（なくなる方）</label>
+            <select name="source_name" class="input" required>
+                {% for s in overview %}
+                <option value="{{ s.name }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <span class="self-center text-gray-400 text-sm shrink-0 pt-5">→</span>
+        <div class="flex-1">
+            <label class="label">統合先（残す方）</label>
+            <select name="target_name" class="input" required>
+                {% for s in overview %}
+                <option value="{{ s.name }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary whitespace-nowrap self-end">統合する</button>
+    </form>
+    <p class="hint">
+        両方に同じ日付のデータがある場合、日別データ・台別データは<strong>更新日時が新しい方</strong>を残します。
+        年間データ・旧イベント日は<strong>統合先の内容</strong>を優先し、統合元の分は破棄します。
+        統合は自動では戻せないので、内容を確認してから実行してください。
+    </p>
+    {% endcall %}
+    {% endif %}
+
+    {{ back_link(url_for('store_trends.index'), "店舗の傾向分析に戻る") }}
+</div>
+{% endblock %}
