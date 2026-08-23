@@ -38,14 +38,27 @@ from urllib.parse import unquote
 BASE_URL = "https://ana-slo.com"
 
 # 出力CSVの列。日付+店舗+台番号で1行が一意になる。
+# 後半4列は出玉グラフ(スランプグラフ)から計算した値。
 CSV_FIELDS = [
     "date", "store_name", "machine_number", "machine_name",
     "games", "diff", "bb", "rb", "art",
     "total_rate", "bb_rate", "rb_rate", "art_rate",
+    "graph_max", "graph_min", "graph_drawdown", "graph_points",
 ]
 
 # 全台データの表。id が固定なのでこれを目印にする。
 _ALL_DATA_TABLE_RE = re.compile(r'<table[^>]*id="all_data_table".*?</table>', re.S)
+
+# 出玉グラフ。台ごとに <canvas id="台番号"> と、その直後のscriptに
+# x_value(営業時間の経過。全台共通で0〜243の目盛り)と
+# y_value(その時点の差枚)の配列がそのまま書き出されている。
+# ブラウザで保存したページはcanvasにwidth/style等が追記されるため、id以降の属性は任意に許す
+_GRAPH_RE = re.compile(
+    r'<canvas id="(\d+)"[^>]*>\s*</canvas>\s*<script[^>]*>\s*'
+    r'var x_value\s*=\s*\[([^\]]*)\]\s*;\s*'
+    r'var y_value\s*=\s*\[([^\]]*)\]\s*;',
+    re.S,
+)
 _ROW_RE = re.compile(r"<tr>(.*?)</tr>", re.S)
 _CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.S)
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -128,6 +141,47 @@ def extract_meta(html_text, source_name=""):
     return "", ""
 
 
+def parse_graphs(html_text):
+    """
+    出玉グラフ(スランプグラフ)を台番号ごとに取り出し、形の特徴を数値にして返す。
+
+    x_value は営業時間の経過を表す全台共通の目盛り(0〜243)で、ゲーム数ではない。
+    同じ目盛りでも台によって回転数が違うため、ここではx軸は使わず
+    y_value(その時点の差枚)の推移だけを見ている。
+
+    戻り値: {台番号: {"graph_max": 最高差枚, "graph_min": 最低差枚,
+                      "graph_drawdown": 最大下落幅(高値からどれだけ飲まれたか),
+                      "graph_points": サンプル点数}}
+    """
+    graphs = {}
+    for match in _GRAPH_RE.finditer(html_text):
+        number = parse_int(match.group(1))
+        if number is None:
+            continue
+        try:
+            values = [float(v) for v in match.group(3).split(",") if v.strip()]
+        except ValueError:
+            continue
+        if not values:
+            continue
+
+        # 最大下落幅: それまでの最高値から一番大きく下げた幅。
+        # 「一度出たあとにどれだけ飲まれたか」の目安になる。
+        peak = values[0]
+        drawdown = 0.0
+        for value in values:
+            peak = max(peak, value)
+            drawdown = max(drawdown, peak - value)
+
+        graphs[number] = {
+            "graph_max": int(round(max(values))),
+            "graph_min": int(round(min(values))),
+            "graph_drawdown": int(round(drawdown)),
+            "graph_points": len(values),
+        }
+    return graphs
+
+
 def parse_day_html(html_text, store_name="", target_date="", source_name=""):
     """
     日別ページのHTMLから全台データを取り出して、行(dict)のリストで返す。
@@ -146,6 +200,8 @@ def parse_day_html(html_text, store_name="", target_date="", source_name=""):
     table_match = _ALL_DATA_TABLE_RE.search(html_text)
     if not table_match:
         raise ValueError("全台データの表(all_data_table)が見つかりませんでした。")
+
+    graphs = parse_graphs(html_text)
 
     rows = []
     for row_html in _ROW_RE.findall(table_match.group(0)):
@@ -171,6 +227,8 @@ def parse_day_html(html_text, store_name="", target_date="", source_name=""):
             "rb_rate": parse_rate(cells[9]),
             "art_rate": parse_rate(cells[10]),
         })
+        # グラフが取れた台には、その形から計算した値を足す(取れなければ空欄のまま)
+        rows[-1].update(graphs.get(machine_number, {}))
 
     if not rows:
         raise ValueError("表は見つかりましたが、データ行が0件でした。")
@@ -357,7 +415,8 @@ def load_csv(path):
 
 
 def _restore_types(row):
-    for key in ("machine_number", "games", "diff", "bb", "rb", "art"):
+    for key in ("machine_number", "games", "diff", "bb", "rb", "art",
+                "graph_max", "graph_min", "graph_drawdown", "graph_points"):
         row[key] = parse_int(row.get(key))
     for key in ("total_rate", "bb_rate", "rb_rate", "art_rate"):
         value = (row.get(key) or "").strip()
