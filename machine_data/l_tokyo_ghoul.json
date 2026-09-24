@@ -1,0 +1,362 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_tokyo_ghoul",
+  "name": "L 東京喰種",
+  "aliases": ["スマスロ東京喰種", "東京グール", "TG"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#b3122e" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L 東京喰種」", "url": "https://www.p-world.co.jp/machine/database/10207", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L 東京喰種」", "url": "https://p-town.dmm.com/machines/4742", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "スパイキー",
+    "release_date": "2025-02-03",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（差枚数管理型）",
+    "model_name": "L東京喰種CT / L東京喰種FT",
+    "certification_no": "4S1320, 4S1313",
+    "games_per_50_coins": { "value": 31, "unit": "G", "note": "約31G（設定1〜6）" },
+    "net_gain_per_game": { "value": 4.0, "unit": "枚", "note": "AT・EP BONUS中 約4.0枚/G" },
+    "features": ["赫眼状態（レア小役 約1/2.6）", "BITES（4桁上乗せに期待）", "コンプリート機能搭載"],
+    "summary": "通常時はレア小役や規定G数（液晶G数、スイカで加算あり）からCZ「レミニセンス」「大喰いの利世」やEP BONUSを目指す。CZ成功でAT「東京喰種咬」（初期約150枚・純増約4.0枚の差枚数管理型）。AT中は喰種対決（約1/49）勝利で報酬獲得ゾーン「(超)BITES」。有馬貴将に勝利すると上位CZ「有馬貴将ジャッジメント」→特化ゾーン「CCGの死神」。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.5, "2": 99.0, "3": 101.6, "4": 105.6, "5": 110.3, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 394.4, "2": 380.5, "3": 357.0, "4": 325.9, "5": 291.2, "6": 261.3 }, "highlight": true },
+      { "key": "cz", "label": "CZ合算", "format": "fraction", "values": { "1": 262.6, "2": 255.6, "3": 246.5, "4": 233.1, "5": 216.4, "6": 203.7 }, "highlight": true },
+      { "key": "ep_bonus", "label": "EP BONUS", "format": "fraction", "values": { "1": 6620.2, "2": 5879.7, "3": 5114.5, "4": 4062.5, "5": 3166.7, "6": 2639.5 } }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.3 },
+      { "key": "akagan_replay", "label": "赫眼リプレイ（下段リプレイ）", "format": "fraction", "values": { "1": 1260.3, "2": 1213.6, "3": 1170.3, "4": 1129.9, "5": 1092.3, "6": 1024.0 }, "highlight": true },
+      { "key": "diag_bell", "label": "斜めベル", "format": "fraction", "value": 131.1 },
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 70.3 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 356.2 },
+      { "key": "kakutei_cherry", "label": "確定チェリー", "format": "fraction", "value": 16384.0 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 100.5 },
+      { "key": "chance_a", "label": "チャンス目A", "format": "fraction", "value": 585.1 },
+      { "key": "chance_b", "label": "チャンス目B", "format": "fraction", "value": 585.1 },
+      { "key": "kui", "label": "喰図柄揃い", "format": "fraction", "value": 2048.0 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 31.5 }
+    ],
+    "note": "赫眼リプレイ（下段リプレイ）のみ設定差あり（設定別の値はDMMぱちタウン、P-WORLDは設定1の値のみ記載）。成立で赫眼状態（10〜50G）へ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "レミニセンス",
+        "facts": [
+          { "label": "継続", "value": "8G" },
+          { "label": "成功期待度", "value": "約50%" },
+          { "label": "出現率", "value": "設定1 1/300.5 〜 設定6 1/251.2" }
+        ],
+        "description": "押し順ベル10.9%、弱チェリー・スイカ40.6%（8G目は100%）、強レア100%で成功。フリーズで成功＝AT濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "大喰いの利世",
+        "facts": [
+          { "label": "継続", "value": "8G" },
+          { "label": "成功期待度", "value": "約75%" },
+          { "label": "出現率", "value": "設定1 1/2079.1 〜 設定6 1/1074.9" }
+        ],
+        "description": "上位CZ。リプレイ26.6%（8G目は100%）、レア小役なら成功濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "有馬貴将ジャッジメント（上位CZ）",
+        "facts": [
+          { "label": "継続", "value": "5G" },
+          { "label": "成功期待度", "value": "約61%" }
+        ],
+        "description": "喰種対決で有馬貴将（10戦目までに必ず出現）に勝利で突入。成功で特化ゾーン「CCGの死神」、失敗でAT終了。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "EP BONUS",
+        "facts": [
+          { "label": "獲得", "value": "100枚" },
+          { "label": "純増", "value": "約4.0枚/G" }
+        ],
+        "description": "白7揃い。消化中にATの差枚数を上乗せし、終了後はATへ。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "東京喰種咬（AT）",
+        "facts": [
+          { "label": "初期", "value": "差枚 約150枚" },
+          { "label": "純増", "value": "約4.0枚/G" },
+          { "label": "喰種対決", "value": "実質 約1/49" }
+        ],
+        "description": "約10Gの導入エピソードで敵キャラを選び、レア小役で差枚数上乗せ＋喰種対決をダブル抽選。規定G数（30G・60G・95Gが期待大）でも喰種対決。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "(超)BITES",
+        "facts": [
+          { "label": "継続", "value": "不定（小役 約1/2.2で報酬アップ）" },
+          { "label": "報酬", "value": "50枚〜3000枚（極BITESは2000枚）" }
+        ],
+        "description": "喰種対決勝利後の報酬獲得ゾーン。ハズレで終了のピンチ（約20%で継続）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "百足覚醒 / 隻眼の梟",
+        "facts": [
+          { "label": "百足覚醒", "value": "上乗せ期待 約300枚" },
+          { "label": "隻眼の梟", "value": "1G完結・上乗せ期待 約500枚" }
+        ],
+        "description": "AT中の喰図柄揃い（1/2048）から突入（百足覚醒84.4% / 隻眼の梟15.6%）。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1200, "text": "AT間 1200G+α（実G数）" },
+    "games_after_reset": { "value": 200, "text": "設定変更後 CZ・AT間 200G+α（液晶G数）" },
+    "benefit": "ATに当選（CZ・AT間天井はCZに当選）",
+    "notes": [
+      "CZ・AT間天井: 液晶G数で最大600G+α（モード別: 通常A・B・チャンス600G / 通常C 500G / 天国準備300G / 天国100G）",
+      "液晶G数はスイカで加算される（10G 74% / 100G 25% / MAX 1%）",
+      "AT間天井は実G数なので、メニュー画面で確認する"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "100G", "note": "CZ・EP BONUS期待度 〇" },
+      { "games": "200G", "note": "期待度 〇" },
+      { "games": "300G", "note": "期待度 〇" },
+      { "games": "500G", "note": "期待度 ◎" },
+      { "games": "600G", "note": "天井" },
+      { "games": "50G・150G・250G・400G", "note": "期待度 △" }
+    ],
+    "notes": ["規定G数は液晶G数（スイカで加算）", "100G以内の規定G数が選ばれる割合は高設定ほど高い（設定1 19.6% → 設定6 36.0%）"],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "有馬貴将ジャッジメント失敗後は100Gのゾーンで必ずCZに当選するので、そこまでは打つ",
+      "50Gごとの招待状で残りG数が示唆される。「3時まで」以上（残り300G以内濃厚）が出たら続行"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["必ず特殊モードに移行し、CZ・AT間天井が200G+αに短縮"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数（EP BONUS・直撃経由も含む）",
+        "denom_base": "normal",
+        "values": { "1": 394.4, "2": 380.5, "3": 357.0, "4": 325.9, "5": 291.2, "6": 261.3 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "reminiscence",
+        "label": "レミニセンス出現率",
+        "observe": "通常時ゲーム数に対するレミニセンス突入回数",
+        "denom_base": "normal",
+        "values": { "1": 300.5, "2": 295.1, "3": 287.6, "4": 276.6, "5": 262.7, "6": 251.2 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "rize",
+        "label": "大喰いの利世出現率",
+        "observe": "通常時ゲーム数に対する大喰いの利世突入回数",
+        "denom_base": "normal",
+        "values": { "1": 2079.1, "2": 1906.5, "3": 1722.8, "4": 1478.9, "5": 1226.6, "6": 1074.9 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "akagan_replay",
+        "label": "赫眼リプレイ（下段リプレイ）確率",
+        "observe": "総ゲーム数に対する下段リプレイの回数（通常時・AT中とも成立する）",
+        "denom_base": "total",
+        "values": { "1": 1260.3, "2": 1213.6, "3": 1170.3, "4": 1129.9, "5": 1092.3, "6": 1024.0 },
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "cz_total",
+        "label": "CZ合算確率",
+        "observe": "レミニセンス＋大喰いの利世",
+        "judge": false,
+        "values": { "1": 262.6, "2": 255.6, "3": 246.5, "4": 233.1, "5": 216.4, "6": 203.7 },
+        "weight_note": "各CZを個別に判別に使っているため、合算を入れると同じ当選を二重に数える",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "ep_bonus",
+        "label": "EP BONUS出現率",
+        "observe": "通常時のEP BONUS当選回数",
+        "judge": false,
+        "values": { "1": 6620.2, "2": 5879.7, "3": 5114.5, "4": 4062.5, "5": 3166.7, "6": 2639.5 },
+        "weight_note": "EP BONUSはAT初当りに含まれるため、判別に入れると二重に数える",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "at_direct",
+        "label": "AT直撃確率",
+        "observe": "通常時リプレイの一部でのAT直撃回数",
+        "judge": false,
+        "values": { "1": 28460.6, "2": 24453.5, "3": 18093.0, "4": 12019.5, "5": 8615.4, "6": 7036.8 },
+        "weight_note": "AT初当りに含まれるため判別には入れない",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "zone100",
+        "label": "100G以内の規定G数選択率",
+        "observe": "規定G数は見えないため直接は数えられない",
+        "judge": false,
+        "outcomes": [
+          { "key": "within", "label": "100G以内", "values": { "1": 19.6, "2": 21.0, "3": 23.2, "4": 26.4, "5": 32.0, "6": 36.0 }, "highlight": true },
+          { "key": "over", "label": "100G超", "values": { "1": 80.4, "2": 79.0, "3": 76.8, "4": 73.6, "5": 68.0, "6": 64.0 } }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "ura_at",
+        "label": "AT初当り時の裏AT突入率",
+        "observe": "裏ATの判別方法が公表されていないため参考",
+        "judge": false,
+        "outcomes": [
+          { "key": "ura", "label": "裏AT", "values": { "1": 1.1, "2": 1.3, "3": 1.6, "4": 2.2, "5": 2.9, "6": 3.3 }, "highlight": true },
+          { "key": "normal", "label": "通常AT", "values": { "1": 98.9, "2": 98.7, "3": 98.4, "4": 97.8, "5": 97.1, "6": 96.7 } }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "招待状（下2桁50Gごと）", "pattern": "偶にはディナーでもどうだい?", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "君はなかなかの活字中毒らしいね", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "本は良いよね…", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "僕としたことがすまない", "meaning": "設定4否定", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "不思議な香りだ…（銀）", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "存分に楽しもうじゃないか（金）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "招待状（下2桁50Gごと）", "pattern": "特別な夜を楽しもうじゃないか（レインボー）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "CZ失敗時のエンドカード", "pattern": "鈴屋什造（赤）", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "CZ失敗時のエンドカード", "pattern": "梟（金）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "CZ失敗時のエンドカード", "pattern": "有馬貴将（レインボー）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "456OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "1000-7OVER（993枚到達時）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面", "pattern": "金木研", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "亜門鋼太朗&真戸暁 / 鈴屋什造&篠原幸紀", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "笛口雛実&笛口リョーコ / 四方蓮示&イトリ&ウタ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "神代利世", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "金木研&霧嶋董香", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "あんていく全員集合", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "エンディング中のカード", "pattern": "白 / 青 / 赤のキャラカード", "meaning": "奇数設定示唆 / 偶数設定示唆 / 高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のカード", "pattern": "高槻泉（銅）", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "梟（銅）", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "エト（銅）", "meaning": "設定4否定", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "鈴屋什造（銅）", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "金木研（銀）", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "神代利世（金）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "隻眼の梟（金）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のカード", "pattern": "有馬貴将（レインボー）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "獲得枚数表示の「1000-7OVER」はP-WORLDの表では示唆内容が読み取れず、DMMぱちタウンの「設定6濃厚」を採用。",
+    "observations": [
+      {
+        "label": "精神世界（超高確）の滞在G数",
+        "detail": "10〜30Gで、設定6は設定1より30Gの選択率が4倍以上高いとされる（数値は未公表）。",
+        "official": true,
+        "source_ids": ["ptown"]
+      },
+      {
+        "label": "弱チェリー成立時のCZ当選率",
+        "detail": "通常滞在時 設定1 0.27% → 設定6 0.43%。値が小さく内部状態も見えないため判別には使わない。",
+        "official": true,
+        "source_ids": ["pworld"]
+      }
+    ],
+    "pending": [
+      { "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["昼", "基本パターン"], ["夕方", "高確・前兆示唆（弱）"], ["夜", "高確・前兆示唆（強）"], ["東京上空", "前兆ステージ"], ["精神世界", "超高確濃厚"]]
+      },
+      {
+        "name": "招待状（規定G数示唆）",
+        "rows": [["今すぐ", "残り100G以内濃厚"], ["2時まで", "残り200G以内濃厚"], ["3時まで", "残り300G以内濃厚"], ["最悪の事態には〜", "600G否定"]]
+      },
+      {
+        "name": "喰種対決の対戦相手別勝利期待度",
+        "rows": [["鯱", "40.0%"], ["霧島絢都", "47.0%"], ["ヤモリ", "53.0%"], ["有馬貴将", "67.0%"], ["特等ら", "76.0%"], ["亜門", "86.0%"]]
+      },
+      {
+        "name": "CZ失敗時のエンドカード（モード示唆）",
+        "rows": [["霧嶋董香・笛口雛実", "通常B以上示唆"], ["亜門鋼太朗", "通常B以上濃厚"], ["真戸呉緒", "通常C以上濃厚"], ["金木研・霧嶋董香（喰種）", "チャンス以上濃厚"], ["月山習", "天国準備以上濃厚"], ["神代利世", "天国濃厚"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/394.4 → 1/261.3）と、レミニセンス・大喰いの利世の回数を別々に数える",
+      "下段リプレイ（赫眼リプレイ）は通常時・AT中とも総ゲーム数で数える",
+      "招待状は設定否定（2・3・4否定）と確定系（銀・金・レインボー）があるので毎回確認",
+      "CZ失敗時はPUSHでエンドカードを確認（鈴屋什造で偶数、梟で設定4以上）",
+      "エンディング中の銅〜レインボーのカードは確定・否定系"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "CZ合算・EP BONUS・AT直撃は、個別のCZやAT初当りと重なるため判別スペックには取り込まない（二重に数えないため）",
+      "CZ・AT間天井は液晶G数（スイカで加算）、AT間天井は実G数と基準が違う",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}
