@@ -1,0 +1,251 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_million_god_kiseki",
+  "name": "スマスロ ミリオンゴッド-神々の軌跡-",
+  "aliases": ["スマスロ ミリゴ", "神々の軌跡"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#b8860b" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ ミリオンゴッド‐神々の軌跡‐」", "url": "https://www.p-world.co.jp/machine/database/10424", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ミリオンゴッド-神々の軌跡-」", "url": "https://p-town.dmm.com/machines/4961", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "ミズホ",
+    "release_date": "2026-04-20",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（セット数管理型・ループストック）",
+    "model_name": "L／ミリオンゴッド／CX",
+    "certification_no": "530692",
+    "games_per_50_coins": { "value": 30.8, "unit": "G", "note": "約30.8G" },
+    "net_gain_per_game": { "value": 7.0, "unit": "枚", "note": "GG・SGG・Z-ZONE中 約7.0枚/G" },
+    "features": ["GG当選時のループストック（1%〜80%）", "Z-ZONE → Z-GAME", "コンプリート機能搭載"],
+    "summary": "通常時は成立役（中段黄7など）や小役履歴（青7・黄7の3連以上）、ガイアステージ、天井からAT「GOD GAME（GG）」（1セット50G・純増約7.0枚）を目指す。GG当選時にはループストック（1%／25%／50%／80%）を獲得し、漏れるまでGGをストック。0揃いのZ-ZONEで黄7を5連させるとZ-GAME、赤7揃いでSGG、GOD揃い（1/16384）でPGG（期待枚数3000枚以上）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6の初当り・機械割は公表済み（初当りは整数での公表）。初当りは偶数設定が軽く（設定2・4・6）、奇数設定はZ-ZONE昇格で出玉を作る（特に設定5）配列。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.2, "2": 99.1, "3": 102.1, "4": 106.9, "5": 111.7, "6": 114.6 }, "highlight": true },
+      { "key": "first_hit", "label": "GG初当り", "format": "fraction", "values": { "1": 533, "2": 420, "3": 496, "4": 338, "5": 455, "6": 295 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "hazure", "label": "ハズレ", "format": "fraction", "value": 5.2 },
+      { "key": "blue7_top", "label": "上段青7", "format": "fraction", "value": 7.9 },
+      { "key": "blue7_mid", "label": "中段青7", "format": "fraction", "value": 109.2 },
+      { "key": "yellow7_push", "label": "押し順黄7", "format": "fraction", "value": 1.7 },
+      { "key": "yellow7_low", "label": "下段黄7", "format": "fraction", "value": 18.4 },
+      { "key": "yellow7_up", "label": "右上がり黄7", "format": "fraction", "value": 186.2 },
+      { "key": "yellow7_mid", "label": "中段黄7", "format": "fraction", "value": 963.8 },
+      { "key": "yellow7_common", "label": "共通黄7", "format": "fraction", "value": 1524.1 },
+      { "key": "gaia_bell", "label": "ガイアベル", "format": "fraction", "value": 37.6 },
+      { "key": "red7_fake", "label": "赤7フェイク", "format": "fraction", "value": 936.2 },
+      { "key": "red7", "label": "赤7揃い", "format": "fraction", "value": 6900 },
+      { "key": "god", "label": "GOD揃い", "format": "fraction", "value": 16384 },
+      { "key": "sp", "label": "SP役", "format": "fraction", "value": 65536 }
+    ],
+    "note": "小役確率はすべて全設定共通。赤7揃い・GOD揃いは確定役、SP役は1/2でGG＋80%ループストック。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "ガイアステージ",
+        "facts": [
+          { "label": "継続", "value": "9G+α" },
+          { "label": "契機", "value": "ガイアベル（右ナビ）の規定回数到達時の抽選" }
+        ],
+        "description": "GG超高確率状態。中段黄7・SP役でGG濃厚、中段青7 50%・右上がり黄7 62.5%。奇数図柄揃いでGG、0揃いでZ-ZONE。ガイアモード（低確／通常／天国）で移行率が変わる（10.2% / 30.1% / 66.8%）。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "Z-ZONE / Z-GAME",
+        "facts": [
+          { "label": "Z-ZONE", "value": "5G+α（黄7 約1/1.4でG数減算ストップ）" },
+          { "label": "Z-GAME", "value": "継続不定（黄7が揃い続ける限りGGストック）" }
+        ],
+        "description": "Z-ZONE中に黄7を5連させるとGGストック＋Z-GAME。右上がり黄7・中段黄7なら連続回数に関係なくZ-GAME。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "GOD GAME（GG）",
+        "facts": [
+          { "label": "1セット", "value": "50G" },
+          { "label": "純増", "value": "約7.0枚/G" },
+          { "label": "ループストック", "value": "1% / 25% / 50% / 80%" }
+        ],
+        "description": "セット数管理型。成立役でGGストックを抽選。セット終了後は最大5Gの「G-ZONE」で奇数図柄orV揃いなら継続。ステージ（ポセイドン・ゼウス）でモードとストックを示唆。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "SUPER GOD GAME（SGG）",
+        "facts": [
+          { "label": "契機", "value": "赤7揃い（1/6900）" },
+          { "label": "1セット", "value": "10〜100G（月10G〜木星100G）" },
+          { "label": "継続率", "value": "75%以上" }
+        ],
+        "description": "セット消化後の3G引き戻しゾーンでS揃いなら継続濃厚。5セットごとに継続G数の振り分けが優遇される模様。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "PREMIUM GOD GAME（PGG）",
+        "facts": [
+          { "label": "契機", "value": "GOD揃い（1/16384）" },
+          { "label": "期待枚数", "value": "3000枚以上" }
+        ],
+        "description": "GGストック4セット以上＋高継続のループストック。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1480, "text": "AT間 1480G" },
+    "games_after_reset": { "value": 510, "text": "設定変更後 510G（15.2%） / 1000G（20.3%） / 1480G（64.5%）" },
+    "benefit": "GGに当選＋ループストック（1%・25%・50%・80%が各16.7%、1%＋Z-ZONEが33.2%）",
+    "notes": ["天井到達時の約3回に1回はZ-ZONEを獲得"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [],
+    "notes": ["ゲーム数のゾーンはなく、成立役・小役履歴・ガイアステージが主な当選契機", "表モード（低確A〜超天国）が上がるほど成立役でのGG当選率が上がり、天国・超天国ではループストックも優遇"],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": ["GG終了後はG-ZONE終了後、32G消化でヤメ"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["天井が510G / 1000G / 1480Gから抽選（15.2% / 20.3% / 64.5%）", "ガイアベルの規定回数が再抽選される"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "GG初当り確率",
+        "observe": "通常時ゲーム数に対するGG初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 533, "2": 420, "3": 496, "4": 338, "5": 455, "6": 295 },
+        "weight_note": "偶数設定が軽い。設定5（1/455）は設定2（1/420）より重い。公表値が整数のため精度は粗め",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "zzone_up",
+        "label": "GG初当り時のZ-ZONE昇格率",
+        "observe": "ガイアステージ以外でのGG初当り回数と、そのうち0揃いなどでZ-ZONEに突入した回数",
+        "outcomes": [
+          { "key": "zzone", "label": "Z-ZONE昇格", "values": { "1": 1.2, "2": 1.0, "3": 4.2, "4": 1.0, "5": 11.6, "6": 1.0 }, "highlight": true },
+          { "key": "none", "label": "昇格なし", "values": { "1": 98.8, "2": 99.0, "3": 95.8, "4": 99.0, "5": 88.4, "6": 99.0 }, "note": "100%から昇格率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "blue7_3ren",
+        "label": "青7が3連したときのGG当選率",
+        "observe": "青7の3連回数と、そこからのGG当選回数",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "GG当選", "values": { "1": 1.2, "2": 10.2, "3": { "status": "調査中" }, "4": { "status": "調査中" }, "5": { "status": "調査中" }, "6": { "status": "調査中" } }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 98.8, "2": 89.8, "3": { "status": "調査中" }, "4": { "status": "調査中" }, "5": { "status": "調査中" }, "6": { "status": "調査中" } } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "ユニバプレート（GG終了時）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（GG終了時）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（GG終了時）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（GG終了時）", "pattern": "花火柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（GG終了時）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "設定示唆演出はユニバプレートのみ公表（DMMぱちタウンは独自調査と注記）。",
+    "observations": [
+      {
+        "label": "青7連続時のGG当選率",
+        "detail": "設定の奇偶で当選率が変わる（3連: 設定1 1.2% / 設定2 10.2%、4連: 33.2% / 50.0%）。設定3〜6は調査中。",
+        "official": true,
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "label": "非レア小役でのGG抽選",
+        "detail": "ハズレ・上段青7などでもGGを抽選し、設定6が最も高い（0.04%）。値が小さく、表モードも見えないため判別には使わない。",
+        "official": true,
+        "source_ids": ["pworld"]
+      }
+    ],
+    "pending": [
+      { "label": "青7連続時のGG当選率（設定3〜6）", "status": "調査中", "note": "設定1・2のみ公表。" },
+      { "label": "ガイアステージ中GG当選時のZ-ZONE抽選（設定2〜6）", "status": "調査中", "note": "設定1 15.0%のみ公表。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["アポロン・アフロディーテ・アルテミス", "基本パターン"], ["アクロポリス", "高モード示唆"], ["アテナ", "前兆示唆"], ["ガイア", "GG超高確率状態"]]
+      },
+      {
+        "name": "GG中ステージ",
+        "rows": [["オリンポス", "基本パターン"], ["ポセイドン", "通常以上＋GGストック1個以上"], ["ゼウス", "天国以上＋GGストック1個以上"], ["GOD", "GOD揃い後専用"]]
+      },
+      {
+        "name": "GG終了画面の裏ボタン（GG継続期待度）",
+        "rows": [["白", "10%"], ["青", "25%"], ["黄", "50%"], ["緑", "75%"], ["赤", "100%"], ["レインボー", "残りストック3個以上濃厚"]]
+      },
+      {
+        "name": "ループストック",
+        "rows": [["A", "1%"], ["B", "25%"], ["C", "50%"], ["D", "80%"], ["小役履歴で白7が途切れず3個以上", "80%ループ獲得"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "GG初当り確率は偶数設定が軽い（設定6 1/295、設定4 1/338、設定2 1/420）",
+      "ガイアステージ以外でのGG初当りからZ-ZONEに入ったら奇数設定、特に設定5（11.6%）の可能性が大きく上がる",
+      "初当りが重くてもZ-ZONEが多ければ設定5の可能性があるので、初当り確率だけで判断しない",
+      "GG終了時のユニバプレートは確定系",
+      "青7の3連からのGG当選は偶数設定で多い（設定1 1.2%、設定2 10.2%）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "初当り確率は整数（1/533など）での公表のため、判別の精度は粗め",
+      "設定示唆演出が少ない機種なので、判別は初当りとZ-ZONEの回数が中心になる",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}
