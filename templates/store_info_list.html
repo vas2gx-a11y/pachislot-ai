@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+
+{% block title %}店舗情報{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">🏬</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">店舗情報</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <p class="hint mt-0">
+        店舗の住所・台数・営業時間などを出典付きでまとめ、取り込んだ営業データと並べて見られます。
+        店舗は <code>tools/store_collect.py</code> で登録・収集すると、ここに追加されます。
+    </p>
+
+    {% if errors %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+        <strong>読み込めなかったファイルがあります</strong>
+        <ul class="list-disc pl-5 mt-1">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if stores %}
+    <div class="grid gap-3 md:grid-cols-2">
+        {% for s in stores %}
+        {% set info = s.info or {} %}
+        <a href="{{ url_for('store_info.detail', store_id=s.id) }}" class="card card-body block" style="border-left: 4px solid #0f766e">
+            <div class="font-bold text-gray-900">{{ s.name }}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</div>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="chip">パチスロ {{ (info.slot_units.value ~ '台') if info.slot_units and info.slot_units.value is number else '不明' }}</span>
+                <span class="chip">情報源 {{ (s.sources or []) | length }}件</span>
+                <span class="chip">更新 {{ s.updated_at }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    {{ empty_state("🏬", "まだ店舗情報がありません。tools/store_collect.py new で店舗を登録するとここに表示されます（書き方は store_data/README.md）。") }}
+    {% endif %}
+
+</div>
+</main>
+{% endblock %}

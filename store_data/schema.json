@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "店舗情報",
+  "description": "1店舗1ファイル。項目の定義(並び・型)の正は store_info.py の FIELDS。ここはエディタの補完・チェック用。",
+  "type": "object",
+  "required": ["id", "name", "region", "sheet_store_name", "updated_at", "sources", "info", "history"],
+  "definitions": {
+    "item": {
+      "type": "object",
+      "required": ["value", "status", "source_ids"],
+      "properties": {
+        "status": { "enum": ["確認済", "未確認", "不明"], "description": "確認済=公式で確認 / 未確認=公式以外の情報源 / 不明=値なし" },
+        "source_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "text": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["string", "null"] } } }] },
+    "int": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["integer", "null"] } } }] },
+    "list": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["array", "null"], "items": { "type": "string" } } } }] },
+    "links": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["array", "null"], "items": {
+      "type": "object", "required": ["url"], "properties": { "label": { "type": "string" }, "url": { "type": "string" } } } } } }] },
+    "machines": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["array", "null"], "items": {
+      "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "units": { "type": ["integer", "null"] } } } } } }] },
+    "dated": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["array", "null"], "items": {
+      "type": "object", "required": ["title"], "properties": {
+        "date": { "type": ["string", "null"], "description": "YYYY-MM-DD" }, "title": { "type": "string" }, "detail": { "type": "string" } } } } } }] }
+  },
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9_]+$", "description": "ファイル名と同じ" },
+    "name": { "type": "string" },
+    "region": { "type": "string", "description": "都道府県(登録時に人が入れる)" },
+    "sheet_store_name": { "type": "string", "description": "シート(日別・台別データ)側の店舗名。営業データとの紐づけに使う" },
+    "updated_at": { "type": "string", "description": "最後に収集を反映した日(YYYY-MM-DD)" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "url", "reliability", "checked_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "reliability": { "enum": ["公式", "ポータル", "その他"] },
+          "checked_at": { "type": "string" }
+        }
+      }
+    },
+    "info": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "city": { "$ref": "#/definitions/text" },
+        "address": { "$ref": "#/definitions/text" },
+        "phone": { "$ref": "#/definitions/text" },
+        "hours": { "$ref": "#/definitions/text" },
+        "total_units": { "$ref": "#/definitions/int" },
+        "pachinko_units": { "$ref": "#/definitions/int" },
+        "slot_units": { "$ref": "#/definitions/int" },
+        "rates": { "$ref": "#/definitions/list" },
+        "parking": { "$ref": "#/definitions/text" },
+        "access": { "$ref": "#/definitions/text" },
+        "official_url": { "$ref": "#/definitions/text" },
+        "sns": { "$ref": "#/definitions/links" },
+        "line": { "$ref": "#/definitions/text" },
+        "features": { "$ref": "#/definitions/list" },
+        "installed_machines": { "$ref": "#/definitions/machines" },
+        "special_days": { "$ref": "#/definitions/list" },
+        "new_machines": { "$ref": "#/definitions/dated" },
+        "notices": { "$ref": "#/definitions/dated" }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "値が変わった項目の記録(古い順)。収集ツールが追記する",
+      "items": {
+        "type": "object",
+        "required": ["field", "before", "after", "changed_at", "source_ids"],
+        "properties": {
+          "field": { "type": "string" },
+          "changed_at": { "type": "string" },
+          "source_ids": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

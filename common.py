@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import re
+import secrets
 import time
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
@@ -14,6 +15,8 @@ import gspread
 from google.oauth2.service_account import Credentials
 from flask import flash
 
+import machine_info
+
 # --- ロギング設定 ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -21,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # 軽量インメモリキャッシュ
 # ---------------------------------------------------------------------------
-# 記録一覧・機種マスタ・Q&A履歴はページを開くたびにスプレッドシートへ読みに行くと、
+# 記録一覧・Q&A履歴はページを開くたびにスプレッドシートへ読みに行くと、
 # データが増えるほど表示が重くなる主因になる。TTL(既定5分)の間はメモリから返し、
 # 自分の書き込み操作(save_record等)の直後は該当キーを即座に無効化することで、
 # 「保存した内容がすぐ反映されない」という不整合を避けつつ読み込み回数を減らす。
@@ -120,7 +123,7 @@ REQUEST_TIMEOUT = 30  # seconds
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_UPLOAD_SIZE = 8 * 1024 * 1024  # 8MB
 
-# --- URLから機種データを取り込む機能の設定 ---
+# --- URLから本文テキストを取る機能の設定(tools/store_collect.py が使う) ---
 ALLOWED_URL_SCHEMES = {"http", "https"}
 URL_FETCH_TIMEOUT = 20  # seconds
 URL_FETCH_MAX_BYTES = 3 * 1024 * 1024  # 3MB(取得するHTMLの上限)
@@ -129,16 +132,12 @@ URL_TEXT_MAX_CHARS = 18000  # Geminiに渡す本文テキストの最大文字�
 # --- Googleスプレッドシート設定 ---
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = os.environ.get("SHEET_NAME", "records")
-MACHINES_SHEET_NAME = os.environ.get("MACHINES_SHEET_NAME", "machines")
 SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
 
 if not SPREADSHEET_ID:
     raise RuntimeError("環境変数 SPREADSHEET_ID が設定されていません。")
 if not SERVICE_ACCOUNT_JSON:
     raise RuntimeError("環境変数 GOOGLE_SERVICE_ACCOUNT_JSON が設定されていません。")
-
-# machinesシートに直接テキストを書き込みたい場合のためのスプレッドシート直接リンク
-SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -155,14 +154,6 @@ HEADERS = [
     "max_renchan", "graph_shape_tags", "category_scores", "suggestion_observations",
 ]
 
-# machines シートの列構成
-# keyword: 機種名に含まれるキーワード
-# hint_words: 強示唆ワード群(カンマ区切り)
-# game_flow: ゲームフロー・システムの説明(AT/ART純増、上乗せ契機など)
-# setting_ratios: 設定1〜6ごとの確率(BIG/REG/合成など)をJSON文字列で格納
-# sources: この機種データがどこから取り込まれたか(画像アップロード/URL)の履歴をJSON文字列で格納
-MACHINE_HEADERS = ["keyword", "hint_words", "game_flow", "setting_ratios", "sources", "suggestion_items"]
-
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
 CHAT_HEADERS = ["session_id", "date", "question", "answer"]
@@ -174,6 +165,10 @@ STORE_DAILY_SHEET_NAME = os.environ.get("STORE_DAILY_SHEET_NAME", "store_daily")
 STORE_DAILY_HEADERS = [
     "store_name", "date", "total_diff", "avg_diff", "avg_games", "win_rate",
     "win_units", "total_units", "source", "updated_at",
+    # batch_id は「どの取り込み操作で書いた行か」を表す。取り込みログ(import_logs)と
+    # この値で紐づけて、間違えた取り込みぶんだけをまとめて消せるようにしている。
+    # 既存シートのヘッダーが前方一致のまま自動移行できるよう、末尾に置いている。
+    "batch_id",
 ]
 
 # store_units シートの列構成(店舗の台別データ)
@@ -187,6 +182,8 @@ STORE_UNITS_HEADERS = [
     # art_count は後から足した列。既存シートのヘッダーが前方一致のまま自動で移行できるよう、
     # 意味の並びとしては reg_count の隣が自然だが、あえて末尾に置いている。
     "art_count",
+    # batch_id の意味は store_daily と同じ(取り込みログとの紐づけ用)
+    "batch_id",
 ]
 
 # store_events シートの列構成(店舗ごとの旧イベント日・周年日)
@@ -196,6 +193,7 @@ STORE_UNITS_HEADERS = [
 STORE_EVENTS_SHEET_NAME = os.environ.get("STORE_EVENTS_SHEET_NAME", "store_events")
 STORE_EVENTS_HEADERS = [
     "store_name", "event_days", "anniversary_days", "note", "source", "updated_at",
+    "batch_id",
 ]
 
 # store_stats シートの列構成(店舗ごとの年間データ)
@@ -204,15 +202,30 @@ STORE_EVENTS_HEADERS = [
 STORE_STATS_SHEET_NAME = os.environ.get("STORE_STATS_SHEET_NAME", "store_stats")
 STORE_STATS_HEADERS = [
     "store_name", "period_label", "total_diff", "avg_diff", "avg_games", "win_rate",
-    "note", "source", "updated_at",
+    "note", "source", "updated_at", "batch_id",
 ]
 
-# 初回起動時、machinesシートが空だった場合に入れておくデフォルト値
-DEFAULT_MACHINE_RULES = [
-    {"keyword": "ToLOVE", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
-    {"keyword": "トラブル", "hint_words": "強示唆,高確,チャンス", "game_flow": "", "setting_ratios": "{}"},
+# import_logs シートの列構成(取り込み操作の履歴)
+# 取り込みは「同じ店舗×日付なら上書き」で走るため、間違えた取り込みを後から手で
+# 消すのは現実的でない(何日分がどのシートに入ったか分からない)。
+# そこで取り込み1回ごとに batch_id を振ってログを1行残し、データ側の各行にも
+# 同じ batch_id を書いておく。消すときはログを選ぶだけで、その取り込みで
+# 書いた行だけを正確に消せる。
+IMPORT_LOGS_SHEET_NAME = os.environ.get("IMPORT_LOGS_SHEET_NAME", "import_logs")
+IMPORT_LOG_HEADERS = [
+    "batch_id", "imported_at", "store_name", "kind", "target",
+    "row_count", "added", "updated", "source", "detail",
 ]
 
+# 取り込み種別(kind)と、消すときに触るシートの対応。
+# ログの表示名もここから引く(画面とロジックで二重に持たないため)。
+IMPORT_KINDS = {
+    "daily": {"label": "日別データ", "icon": "📅", "sheets": ("store_daily",)},
+    "units": {"label": "台別データ", "icon": "🎰", "sheets": ("store_units",)},
+    "csv": {"label": "CSV取り込み(台別+日別)", "icon": "📄", "sheets": ("store_units", "store_daily")},
+    "stats": {"label": "年間データ", "icon": "🏬", "sheets": ("store_stats",)},
+    "events": {"label": "旧イベント日・周年日", "icon": "🗓", "sheets": ("store_events",)},
+}
 
 # ---------------------------------------------------------------------------
 # Googleスプレッドシート接続
@@ -259,43 +272,6 @@ def get_records_worksheet():
         logger.warning(
             f"記録データシートのヘッダーが想定と異なります: {current_headers} (期待値: {HEADERS})。"
             f"列がズレている可能性があるため、内容を確認してください。"
-        )
-    return ws
-
-
-def get_machines_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(MACHINES_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=MACHINES_SHEET_NAME, rows=200, cols=len(MACHINE_HEADERS))
-        ws.append_row(MACHINE_HEADERS)
-        for rule in DEFAULT_MACHINE_RULES:
-            ws.append_row([
-                rule["keyword"], rule["hint_words"],
-                rule.get("game_flow", ""), rule.get("setting_ratios", "{}"),
-            ])
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        # ヘッダー行が空(真っさらなシート)の場合のみ、新規にヘッダー行を書き込む
-        ws.append_row(MACHINE_HEADERS)
-    elif current_headers != MACHINE_HEADERS and current_headers == MACHINE_HEADERS[:len(current_headers)]:
-        # 既存ヘッダーが新ヘッダーの先頭部分と完全に一致する場合(=列が後から追加されただけ、
-        # 例: sources列の新設)は、insert_row で行をズラさず、不足しているヘッダーだけを
-        # 同じ1行目に追記する。insert_row を使うと既存データが1行分ズレて破損するため使わない。
-        _ensure_min_columns(ws, len(MACHINE_HEADERS))
-        for i, header in enumerate(MACHINE_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != MACHINE_HEADERS:
-        # 想定外のヘッダー構成の場合は、データ破損を避けるためヘッダー行には手を加えない。
-        # (get_all_records は実際のヘッダー行の文言をそのままキーとして使うため、
-        #  多少キー名が古くても読み込み自体は継続できる)
-        logger.warning(
-            f"machinesシートのヘッダーが想定と異なります: {current_headers} "
-            f"(期待値: {MACHINE_HEADERS})。列がズレている可能性があるため、内容を確認してください。"
         )
     return ws
 
@@ -422,6 +398,30 @@ def get_store_units_worksheet():
     return ws
 
 
+def get_import_logs_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(IMPORT_LOGS_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=IMPORT_LOGS_SHEET_NAME, rows=1000, cols=len(IMPORT_LOG_HEADERS))
+        ws.append_row(IMPORT_LOG_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(IMPORT_LOG_HEADERS)
+    elif current_headers != IMPORT_LOG_HEADERS and current_headers == IMPORT_LOG_HEADERS[:len(current_headers)]:
+        _ensure_min_columns(ws, len(IMPORT_LOG_HEADERS))
+        for i, header in enumerate(IMPORT_LOG_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != IMPORT_LOG_HEADERS:
+        logger.warning(
+            f"import_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {IMPORT_LOG_HEADERS})"
+        )
+    return ws
+
+
 NUMERIC_FIELDS = [
     "total_games", "big_count", "reg_count", "current_games", "difference_slabs",
     "max_difference_slabs", "hamari_600_plus", "hamari_800_plus", "max_renchan",
@@ -533,113 +533,6 @@ def save_record(record):
         flash("スプレッドシートへの保存に失敗しました。")
 
 
-def _load_machine_rows_fallback(ws):
-    """
-    ws.get_all_records() は、ヘッダー行に重複や空セルがあると例外を投げる
-    (gspreadの既知の挙動)。過去のシート移行などでヘッダーが乱れている場合に
-    「エラーは出ないが一覧が空に見える」事故につながるため、
-    生の値を取得して期待するヘッダー名の列位置を手動で特定するフォールバックを用意する。
-    """
-    all_values = ws.get_all_values()
-    if not all_values:
-        return []
-    header_row = all_values[0]
-    col_index = {}
-    for name in MACHINE_HEADERS:
-        if name in header_row:
-            col_index[name] = header_row.index(name)  # 同名が複数あれば最初の位置を採用
-
-    rows = []
-    for raw_row in all_values[1:]:
-        row_dict = {}
-        for name, idx in col_index.items():
-            row_dict[name] = raw_row[idx] if idx < len(raw_row) else ""
-        if str(row_dict.get("keyword", "")).strip():  # keywordが空の行(空行・ゴミ行)は除外
-            rows.append(row_dict)
-    return rows
-
-
-def load_machine_rules():
-    """
-    machines シートから
-    {keyword: {"hint_words": [...], "game_flow": "...", "setting_ratios": {...}}}
-    の辞書を作る
-    """
-    cached = _cache_get("machine_rules")
-    if cached is not None:
-        return cached
-
-    try:
-        ws = get_machines_worksheet()
-    except Exception as e:
-        logger.error(f"機種マスタ読み込みエラー(シート取得に失敗): {e}")
-        return {}
-
-    try:
-        rows = ws.get_all_records()
-    except Exception as e:
-        logger.warning(
-            f"get_all_records()に失敗したためフォールバック処理で読み込みます"
-            f"(ヘッダー行の重複・空セルなどが原因の可能性): {e}"
-        )
-        try:
-            rows = _load_machine_rows_fallback(ws)
-        except Exception as fallback_error:
-            logger.error(f"機種マスタ読み込みエラー(フォールバックも失敗): {fallback_error}")
-            return {}
-
-    try:
-        rules = {}
-        for row in rows:
-            keyword = str(row.get("keyword", "")).strip()
-            if not keyword:
-                continue
-            hint_words_raw = str(row.get("hint_words", "")).strip()
-            hint_words = [w.strip() for w in hint_words_raw.split(",") if w.strip()]
-            game_flow = str(row.get("game_flow", "")).strip()
-            setting_ratios_raw = str(row.get("setting_ratios", "")).strip()
-            if setting_ratios_raw:
-                try:
-                    setting_ratios = json.loads(setting_ratios_raw)
-                except json.JSONDecodeError:
-                    # JSON形式でなければ、スプレッドシートに直接書かれた自由記述テキストとして扱う
-                    setting_ratios = setting_ratios_raw
-            else:
-                setting_ratios = {}
-            sources_raw = str(row.get("sources", "")).strip()
-            if sources_raw:
-                try:
-                    sources = json.loads(sources_raw)
-                    if not isinstance(sources, list):
-                        sources = []
-                except json.JSONDecodeError:
-                    sources = []
-            else:
-                sources = []
-            suggestion_items_raw = str(row.get("suggestion_items", "")).strip()
-            if suggestion_items_raw:
-                try:
-                    suggestion_items = json.loads(suggestion_items_raw)
-                    if not isinstance(suggestion_items, list):
-                        suggestion_items = []
-                except json.JSONDecodeError:
-                    suggestion_items = []
-            else:
-                suggestion_items = []
-            rules[keyword] = {
-                "hint_words": hint_words,
-                "game_flow": game_flow,
-                "setting_ratios": setting_ratios,
-                "sources": sources,
-                "suggestion_items": suggestion_items,
-            }
-        _cache_set("machine_rules", rules)
-        return rules
-    except Exception as e:
-        logger.error(f"機種マスタ読み込みエラー(データ整形に失敗): {e}")
-        return {}
-
-
 def get_records_sheet_diagnostics():
     """
     記録データ(records)シートの生の状態を確認するための軽量な診断情報。
@@ -657,267 +550,6 @@ def get_records_sheet_diagnostics():
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
-
-
-def get_machines_sheet_diagnostics():
-    """
-    machinesシートの生の状態を確認するための軽量な診断情報。
-    一覧が空に見えるときに、ユーザー自身がスプレッドシートを開かなくても
-    画面上でシートの実際の中身(ヘッダー行・行数・先頭数行)を確認できるようにする。
-    """
-    try:
-        ws = get_machines_worksheet()
-        all_values = ws.get_all_values()
-        return {
-            "ok": True,
-            "total_rows": len(all_values),
-            "header_row": all_values[0] if all_values else [],
-            "sample_rows": all_values[1:6],
-        }
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-def save_machine_rule(keyword, hint_words, game_flow, setting_ratios, source_label=""):
-    """
-    machines シートに機種情報を保存する。
-    同じ keyword の行が既にあれば、既存データに新しい内容を追記(マージ)する。
-    なければ新規追加する。
-
-    - hint_words: 既存 + 新規 を合算(重複除去)
-    - game_flow: 既存の説明文の末尾に新しい説明文を追記(全く同じ内容なら追記しない)
-    - setting_ratios: 既存の辞書をベースに、新しいキーで追加・更新(新規に無い既存キーは保持)
-    - source_label: 今回取り込んだ情報源(画像アップロード/取り込み元URLなど)を示すラベル。
-      既存の情報源リストに無ければ追加し、どのサイト・画像から情報を集約したかを蓄積していく。
-    """
-    keyword = (keyword or "").strip()
-    if not keyword:
-        return False
-
-    try:
-        ws = get_machines_worksheet()
-        existing_keywords = ws.col_values(1)  # 1列目 = keyword
-        target_row = None
-        for i, value in enumerate(existing_keywords[1:], start=2):  # ヘッダー行を除く
-            if str(value).strip() == keyword:
-                target_row = i
-                break
-
-        # 既存データを読み込む(あれば)
-        existing_hint_words = []
-        existing_game_flow = ""
-        existing_setting_ratios = {}
-        existing_sources = []
-        if target_row:
-            existing_row = ws.row_values(target_row)
-            if len(existing_row) > 1:
-                existing_hint_words = [w.strip() for w in existing_row[1].split(",") if w.strip()]
-            if len(existing_row) > 2:
-                existing_game_flow = existing_row[2].strip()
-            if len(existing_row) > 3 and existing_row[3].strip():
-                try:
-                    parsed_existing = json.loads(existing_row[3])
-                    if isinstance(parsed_existing, dict):
-                        existing_setting_ratios = parsed_existing
-                except json.JSONDecodeError:
-                    existing_setting_ratios = {}
-            if len(existing_row) > 4 and existing_row[4].strip():
-                try:
-                    parsed_sources = json.loads(existing_row[4])
-                    if isinstance(parsed_sources, list):
-                        existing_sources = parsed_sources
-                except json.JSONDecodeError:
-                    existing_sources = []
-
-        # 強示唆ワード: 既存 + 新規をマージ(重複除去、順序維持)
-        merged_hint_words = list(dict.fromkeys(
-            existing_hint_words + [w.strip() for w in (hint_words or []) if w.strip()]
-        ))
-
-        # ゲームフロー: 新しい説明文が既存に含まれていなければ末尾に追記
-        new_game_flow = (game_flow or "").strip()
-        if new_game_flow and new_game_flow not in existing_game_flow:
-            merged_game_flow = (
-                f"{existing_game_flow}\n{new_game_flow}".strip("\n")
-                if existing_game_flow else new_game_flow
-            )
-        else:
-            merged_game_flow = existing_game_flow
-
-        # 設定判別要素: 既存をベースに新しいキーで追加・更新(保持したまま追記)
-        merged_setting_ratios = dict(existing_setting_ratios)
-        if isinstance(setting_ratios, dict):
-            merged_setting_ratios.update(setting_ratios)
-
-        # 情報源: 同じラベルが無ければ追加(取り込むたびに履歴として蓄積)
-        merged_sources = list(existing_sources)
-        source_label = (source_label or "").strip()
-        if source_label:
-            already_recorded = any(
-                isinstance(s, dict) and s.get("label") == source_label for s in merged_sources
-            )
-            if not already_recorded:
-                merged_sources.append({
-                    "label": source_label,
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                })
-
-        hint_words_str = ",".join(merged_hint_words)
-        setting_ratios_json = json.dumps(merged_setting_ratios, ensure_ascii=False)
-        sources_json = json.dumps(merged_sources, ensure_ascii=False)
-        row_values = [keyword, hint_words_str, merged_game_flow, setting_ratios_json, sources_json]
-
-        if target_row:
-            ws.update(f"A{target_row}:E{target_row}", [row_values])
-        else:
-            ws.append_row(row_values)
-        _cache_invalidate("machine_rules")
-        return True
-    except Exception as e:
-        logger.error(f"機種マスタ書き込みエラー: {e}")
-        return False
-
-
-def add_machine_note(keyword, note):
-    """
-    既に登録済みの機種に、ユーザーが手動でメモ(特にゲームフロー・高設定挙動の示唆など)を
-    追記するための関数。save_machine_rule() の game_flow マージ機構をそのまま使うので、
-    既存のhint_words・setting_ratiosは変更せず、game_flowの末尾に新しい文章を追記するだけになる。
-    """
-    keyword = (keyword or "").strip()
-    note = (note or "").strip()
-    if not keyword or not note:
-        return False
-    return save_machine_rule(keyword, [], note, {}, source_label="手動メモ")
-
-
-def _find_machine_row(ws, keyword):
-    """keyword に完全一致する machines シートの行番号(1-indexed)を探す。無ければ None。"""
-    existing_keywords = ws.col_values(1)
-    for i, value in enumerate(existing_keywords[1:], start=2):
-        if str(value).strip() == keyword:
-            return i
-    return None
-
-
-def _load_suggestion_items_raw(ws, row):
-    """指定行の suggestion_items(F列)を生のリストとして読み込む。"""
-    existing_row = ws.row_values(row)
-    if len(existing_row) > 5 and existing_row[5].strip():
-        try:
-            items = json.loads(existing_row[5])
-            if isinstance(items, list):
-                return items
-        except json.JSONDecodeError:
-            pass
-    return []
-
-
-def add_suggestion_item(keyword, name, item_type, weight):
-    """
-    示唆項目(アイキャッチ・トロフィー・穢れ解放・CZ確率など、機種固有の判別要素)を
-    機種スペックに手動登録する。同名の項目が既にあれば上書き(種類・重みを更新)、
-    無ければ追加する。
-
-    keyword: 登録先の機種キーワード(完全一致、既存の機種である必要がある)
-    name: 項目名(例:「ヤミアイキャッチ」「穢れ解放」)
-    item_type: "count"(回数を入力する項目) または "boolean"(あり/なしの項目)
-    weight: 判定における重要度(0〜100の整数。大きいほど設定判別への影響が強い項目として扱う)
-    """
-    keyword = (keyword or "").strip()
-    name = (name or "").strip()
-    if not keyword or not name:
-        return False
-    if item_type not in ("count", "boolean"):
-        item_type = "count"
-    try:
-        weight = max(0, min(int(weight), 100))
-    except (TypeError, ValueError):
-        weight = 0
-
-    try:
-        ws = get_machines_worksheet()
-        target_row = _find_machine_row(ws, keyword)
-        if not target_row:
-            logger.error(f"示唆項目追加エラー: 機種「{keyword}」が見つかりません")
-            return False
-
-        items = _load_suggestion_items_raw(ws, target_row)
-        updated = False
-        for item in items:
-            if isinstance(item, dict) and item.get("name") == name:
-                item["type"] = item_type
-                item["weight"] = weight
-                updated = True
-                break
-        if not updated:
-            items.append({"name": name, "type": item_type, "weight": weight})
-
-        _ensure_min_columns(ws, len(MACHINE_HEADERS))
-        ws.update_cell(target_row, 6, json.dumps(items, ensure_ascii=False))
-        _cache_invalidate("machine_rules")
-        return True
-    except Exception as e:
-        logger.error(f"示唆項目追加エラー: {e}")
-        return False
-
-
-def remove_suggestion_item(keyword, name):
-    """指定した機種から示唆項目を1件削除する。"""
-    keyword = (keyword or "").strip()
-    name = (name or "").strip()
-    if not keyword or not name:
-        return False
-    try:
-        ws = get_machines_worksheet()
-        target_row = _find_machine_row(ws, keyword)
-        if not target_row:
-            return False
-
-        items = _load_suggestion_items_raw(ws, target_row)
-        new_items = [i for i in items if not (isinstance(i, dict) and i.get("name") == name)]
-
-        _ensure_min_columns(ws, len(MACHINE_HEADERS))
-        ws.update_cell(target_row, 6, json.dumps(new_items, ensure_ascii=False))
-        _cache_invalidate("machine_rules")
-        return True
-    except Exception as e:
-        logger.error(f"示唆項目削除エラー: {e}")
-        return False
-
-
-def find_mergeable_keyword(candidate_name, rules):
-    """
-    新しく登録しようとしている機種名(candidate_name、AIが画像/URLから読み取った名前)が、
-    既存の登録キーワードと実質的に同じ機種を指していそうな場合、そのキーワードを返す。
-
-    AIが機種名を読み取るたびに微妙に違う表記(例:「ToLOVEるダークネス」と
-    「L ToLOVEるダークネス」)になることがあり、そのまま新規キーワードとして保存すると
-    同じ機種のデータが複数のキーワードに分裂し、集約されなくなってしまう。
-    これを避けるため、双方向の部分一致(どちらかがどちらかを含む)を許容し、
-    最も一致度の高い(文字数が長い)既存キーワードを優先して返す。
-    一致するものが無ければ None を返す(=新規キーワードとして登録する)。
-    """
-    candidate_name = (candidate_name or "").strip()
-    if not candidate_name:
-        return None
-
-    for keyword in rules:
-        if (keyword or "").strip() == candidate_name:
-            return keyword  # 完全一致は即採用
-
-    best_keyword = None
-    best_overlap = 0
-    for keyword in rules:
-        k = (keyword or "").strip()
-        if not k:
-            continue
-        if k in candidate_name or candidate_name in k:
-            overlap = min(len(k), len(candidate_name))
-            if overlap > best_overlap:
-                best_overlap = overlap
-                best_keyword = keyword
-    return best_keyword
 
 
 def load_all_chat_history():
@@ -1222,75 +854,11 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
     return None
 
 
-def analyze_machine_spec_with_gemini(base64_image, mime_type="image/jpeg"):
-    """
-    機種のスペック表・設定判別要素の画像を解析し、
-    機種名・強示唆ワード・ゲームフロー・設定別確率表を抽出する。
-    """
-    prompt = """
-    パチスロ機種のスペック表、または設定判別要素・設定示唆情報が書かれた画像です。
-    画像から読み取れる情報をもとに、以下のJSON形式でのみ出力してください。他の文章は不要です。
-    値が読み取れない項目は空文字("")や空オブジェクト({})にしてください。数値を推測で埋めないでください。
-    machine_name, game_flow, hint_words の内容は必ず日本語で記述してください。
-
-    {
-      "machine_name": "画像から読み取れる機種名(正式名称、または特徴的な一部の単語)",
-      "hint_words": ["強設定示唆として画像に書かれているキーワードや台詞の一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、狙い目ゾーン(規定G数)など、天井・ゾーン絡みの立ち回り判断に使える情報があれば必ず含めて、わかる範囲で簡潔にまとめる)",
-      "setting_ratios": {
-        "1": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "2": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "3": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "4": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "5": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"},
-        "6": {"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x"}
-      }
-    }
-
-    setting_ratios は画像に記載されている設定のみを含めてください(全設定が写っていなければ写っている分だけでよい)。
-    """
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                    {"inlineData": {"mimeType": mime_type, "data": base64_image}},
-                ]
-            }
-        ]
-    }
-    headers = {"Content-Type": "application/json"}
-
-    try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
-        response.raise_for_status()
-    except requests.exceptions.Timeout:
-        logger.error("Gemini API タイムアウト(機種スペック解析)")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API 通信エラー(機種スペック解析): {e}")
-        return None
-
-    try:
-        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        json_start = raw_text.find("{")
-        json_end = raw_text.rfind("}") + 1
-        if json_start == -1 or json_end == 0:
-            logger.error(f"JSONが見つかりません(機種スペック解析): {raw_text}")
-            return None
-        return json.loads(raw_text[json_start:json_end])
-    except (KeyError, IndexError) as e:
-        logger.error(f"Geminiレスポンス構造エラー(機種スペック解析): {e}")
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON解析エラー(機種スペック解析): {e} / raw={raw_text!r}")
-    return None
-
-
 # ---------------------------------------------------------------------------
-# URLから機種スペック情報を取り込む
+# URLから本文テキストを取る
 # ---------------------------------------------------------------------------
+# 以前は機種スペックの取り込みにも使っていたが、機種データはJSON(machine_data/)に
+# 一本化したため、いまは店舗情報の収集(tools/store_collect.py)だけが使う。
 class _VisibleTextExtractor(HTMLParser):
     """
     HTMLから <script>/<style> 等を除いた「人間が読める本文テキスト」だけを
@@ -1335,6 +903,26 @@ def _is_allowed_url(url):
     return parsed.scheme in ALLOWED_URL_SCHEMES and bool(parsed.netloc)
 
 
+def _detect_html_encoding(content_type, raw_bytes):
+    """
+    ページの文字コードを決める。ヘッダー → <meta charset> → UTF-8 の順。
+    requests はヘッダーに charset が無い text/html を ISO-8859-1 とみなすため、
+    それに任せるとEUC-JPやShift_JISの古いサイト(P-WORLDなど)が文字化けする。
+    """
+    m = re.search(r"charset=([\w-]+)", content_type or "", re.I)
+    if not m:
+        m = re.search(rb"<meta[^>]+charset=[\"']?([\w-]+)", raw_bytes[:4096], re.I)
+    name = m.group(1) if m else "utf-8"
+    name = name.decode("ascii", "ignore") if isinstance(name, bytes) else name
+    # "x-euc-jp" のような古い表記は Python の codec 名に無いので接頭辞を外す
+    name = re.sub(r"^x-", "", name, flags=re.I)
+    try:
+        "".encode(name)
+    except LookupError:
+        return "utf-8"
+    return name
+
+
 def fetch_url_text(url):
     """
     指定されたURLのページを取得し、本文と思われるテキストのみを抽出して返す。
@@ -1366,7 +954,7 @@ def fetch_url_text(url):
         raw_bytes = response.raw.read(URL_FETCH_MAX_BYTES + 1, decode_content=True)
         if len(raw_bytes) > URL_FETCH_MAX_BYTES:
             logger.error("URL取り込み: ページサイズが上限を超えています")
-        html_text = raw_bytes.decode(response.encoding or "utf-8", errors="ignore")
+        html_text = raw_bytes.decode(_detect_html_encoding(content_type, raw_bytes), errors="ignore")
     except requests.exceptions.Timeout:
         logger.error("URL取り込み: タイムアウト")
         return None
@@ -1388,72 +976,6 @@ def fetch_url_text(url):
         text = text[:URL_TEXT_MAX_CHARS]
 
     return text or None
-
-
-def analyze_machine_url_with_gemini(page_text, source_url=""):
-    """
-    機種解析サイトのページ本文(テキスト)から、機種名・強示唆ワード・ゲームフロー・
-    設定別確率表(または設定差データ)を抽出する。analyze_machine_spec_with_gemini() の
-    画像版と同じ出力形式(JSON)に揃えることで、そのまま save_machine_rule() に渡せるようにする。
-    """
-    prompt = f"""
-    以下はパチンコ・パチスロの機種解析サイトのページ本文(HTMLからテキストのみ抽出したもの)です。
-    ページ内のナビゲーションメニューや広告、口コミなど、機種スペックと関係ない部分は無視してください。
-    読み取れる情報をもとに、以下のJSON形式でのみ出力してください。他の文章は一切不要です。
-    値が読み取れない項目は空文字("")や空オブジェクト({{}})にしてください。数値やデータを推測で埋めないでください。
-    machine_name, game_flow, hint_words の内容は必ず日本語で記述してください。
-
-    {{
-      "machine_name": "ページから読み取れる機種名(正式名称、または特徴的な一部の単語)",
-      "hint_words": ["強設定示唆として書かれているキーワード・演出名・スタンプ名などの一覧"],
-      "game_flow": "ゲームフロー・システムの説明(通常時の当選契機、AT/ART中の純増・上乗せ契機、天井ゲーム数、狙い目ゾーン(規定G数)、機械割など。天井・ゾーン絡みの立ち回り判断に使える情報があれば必ず含めて、わかる範囲で簡潔にまとめる)",
-      "setting_ratios": {{
-        "1": {{"big": "1/xxx.x", "reg": "1/xxx.x", "total": "1/xxx.x または自由記述の設定差情報"}},
-        "2": {{"...": "..."}},
-        "3": {{"...": "..."}},
-        "4": {{"...": "..."}},
-        "5": {{"...": "..."}},
-        "6": {{"...": "..."}}
-      }}
-    }}
-
-    設定ごとのBIG/REG確率表が無い機種(AT/STタイプなど)の場合は、
-    setting_ratios の各設定に "total" キーのみで、判明している設定差(例:
-    特定演出の出現率、当選率など)を自由記述で構いませんので記載してください。
-    情報が全く無い設定は省略して構いません。
-
-    【対象URL】{source_url if source_url else "不明"}
-    【ページ本文】
-    {page_text}
-    """
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    headers = {"Content-Type": "application/json"}
-
-    try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
-        response.raise_for_status()
-    except requests.exceptions.Timeout:
-        logger.error("Gemini API タイムアウト(URL機種データ解析)")
-        return None
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Gemini API 通信エラー(URL機種データ解析): {e}")
-        return None
-
-    try:
-        raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        json_start = raw_text.find("{")
-        json_end = raw_text.rfind("}") + 1
-        if json_start == -1 or json_end == 0:
-            logger.error(f"JSONが見つかりません(URL機種データ解析): {raw_text}")
-            return None
-        return json.loads(raw_text[json_start:json_end])
-    except (KeyError, IndexError) as e:
-        logger.error(f"Geminiレスポンス構造エラー(URL機種データ解析): {e}")
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON解析エラー(URL機種データ解析): {e} / raw={raw_text!r}")
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1481,73 +1003,20 @@ def build_dashboard_stats(history):
 
 def find_machine_rule(machine_name):
     """
-    machine_name に一致する登録済み機種を machines シートから探す。
+    machine_name に一致する機種を機種情報JSON(machine_data/)から探し、
+    設定推測・Q&A・期待値概算が使う形(hint_words / game_flow / setting_ratios / suggestion_items)で返す。
+    戻り値は (一致した機種の正式名 or None, rule)。
 
-    以前は「辞書の並び順で最初に部分一致したもの」を採用していたため、
-    例えば「ToLOVE」と「ToLOVEるダークネス」のように複数のキーワードが
-    部分一致する場合に、意図しない(=より一般的で不正確な)機種スペックが
-    採用されてしまうことがあった。これを以下の優先順位に修正する:
-        1. machine_name とキーワードが完全一致するもの
-        2. machine_name に部分一致するキーワードのうち、最も文字数が長い
-           (=より具体的な)もの
+    以前は machines シートに同じ項目を持っていたが、機種データの置き場所を
+    JSONに一本化したため、ここで都度組み立てる(理由は machine_info.py の冒頭)。
+    JSONは再起動なしで差し替えられる前提なので、キャッシュは持たない(ファイル読み込みは十分速い)。
     """
-    machine_name = (machine_name or "").strip()
-    if not machine_name:
-        return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
-
-    rules = load_machine_rules()
-
-    for keyword, rule in rules.items():
-        if keyword and keyword.strip() == machine_name:
-            return keyword, rule
-
-    candidates = [
-        (keyword, rule) for keyword, rule in rules.items()
-        if keyword and keyword.strip() and keyword.strip() in machine_name
-    ]
-    if candidates:
-        candidates.sort(key=lambda kv: len(kv[0].strip()), reverse=True)
-        return candidates[0]
-
-    logger.warning(f"機種スペック未登録: 「{machine_name}」に一致するキーワードが見つかりませんでした")
-    return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}}
-
-
-def debug_machine_name_match(machine_name):
-    """
-    machine_name が machines シートのどのキーワードとマッチする/しないかを診断する。
-    「登録したはずなのに一致しない」という問題の原因(前後の空白・全角/半角の違い・
-    見えない文字など)を切り分けるためのデバッグ用関数。
-
-    戻り値: {
-        "input": 入力された機種名(前後空白除去前後の両方を表示),
-        "matched_keyword": 最終的に採用されたキーワード(無ければ None),
-        "candidates": [{"keyword": ..., "is_exact_match": bool, "is_substring_match": bool}, ...],
-    }
-    """
-    raw_input = machine_name or ""
-    stripped_input = raw_input.strip()
-    rules = load_machine_rules()
-
-    candidates = []
-    for keyword in rules.keys():
-        k = (keyword or "").strip()
-        candidates.append({
-            "keyword": keyword,
-            "keyword_repr": repr(keyword),  # 前後の見えない空白・改行などがあれば repr で分かる
-            "is_exact_match": bool(k) and k == stripped_input,
-            "is_substring_match": bool(k) and k in stripped_input,
-        })
-
-    matched_keyword, _ = find_machine_rule(machine_name)
-
-    return {
-        "input": raw_input,
-        "input_repr": repr(raw_input),
-        "stripped_input": stripped_input,
-        "matched_keyword": matched_keyword,
-        "candidates": candidates,
-    }
+    m = machine_info.find_by_name(machine_name)
+    if m is None:
+        if (machine_name or "").strip():
+            logger.warning(f"機種情報未登録: 「{machine_name}」に一致する machine_data/*.json がありません")
+        return None, {"hint_words": [], "game_flow": "", "setting_ratios": {}, "suggestion_items": []}
+    return m.get("name"), machine_info.to_rule(m)
 
 
 def _format_setting_ratios(setting_ratios):
@@ -1639,7 +1108,7 @@ def _parse_ratio_string_to_probability(value):
 
 def _build_setting_match_hint(setting_ratios, total_games, big_count, reg_count):
     """
-    機種マスタの設定別確率表(BIG/REGの理論値)と、今回の実測値をPython側で数値比較し、
+    機種情報の設定別確率表(BIG/REGの理論値)と、今回の実測値をPython側で数値比較し、
     実測値に近い順に設定を並べたヒント文を作る。
     分数の比較をAIに丸投げすると計算を誤ることがあるため、事前に計算した結果を
     プロンプトに添えることで判定の精度を上げるのが狙い。
@@ -1790,7 +1259,7 @@ def _format_suggestion_observations(suggestion_items, suggestion_observations):
     誤解しないようにする(入力自体を忘れている可能性があるため)。
     """
     if not suggestion_items:
-        return "この機種には示唆項目が登録されていません(機種スペック登録システムから追加できます)"
+        return "この機種には示唆項目が登録されていません(機種情報JSONの setting_estimation に書くと出ます)"
 
     lines = []
     for item in suggestion_items:
@@ -2536,6 +2005,121 @@ def rename_store(old_name, new_name):
     return True, f"「{old_name}」を「{new_name}」に変更しました({' / '.join(notes)})。"
 
 
+def _delete_store_records(store_names):
+    """
+    records(自分の記録)から、指定した店舗の行を消す(戻り値: 消した行数)。
+
+    列構成が後から増えている可能性があるため、HEADERSではなくシートの
+    実際の値をそのまま読み書きする(触っていない列を落とさないため)。
+    """
+    ws = get_records_worksheet()
+    values = ws.get_all_values()
+    if not values:
+        return 0
+    header = values[0]
+    if "store_name" not in header:
+        return 0
+
+    col = header.index("store_name")
+    kept = [row for row in values[1:]
+            if (row[col].strip() if col < len(row) else "") not in store_names]
+    removed = len(values) - 1 - len(kept)
+    if not removed:
+        return 0
+
+    width = max([len(header)] + [len(r) for r in kept])
+    out = [row + [""] * (width - len(row)) for row in [header] + kept]
+    # 全部消えた場合、resize(rows=2) だと2行目に古い内容が残るので空行で上書きする
+    if len(out) == 1:
+        out.append([""] * width)
+
+    ws.resize(rows=max(len(out), 2), cols=width)
+    ws.update(out, "A1")
+    _cache_invalidate("records")
+    return removed
+
+
+def _delete_store_rows(sheet_key, store_names):
+    """店舗データのシート(日別・台別・年間・イベント日)から、指定した店舗の行を消す"""
+    getter, headers, cache_key, _label = _IMPORT_SHEET_SPECS[sheet_key]
+    ws = getter()
+    existing = ws.get_all_records()
+
+    kept = [r for r in existing if str(r.get("store_name", "")).strip() not in store_names]
+    removed = len(existing) - len(kept)
+    if not removed:
+        return 0
+
+    values = [list(headers)]
+    for row in kept:
+        values.append(["" if row.get(h) is None else row.get(h, "") for h in headers])
+    if len(values) == 1:
+        values.append([""] * len(headers))
+
+    ws.resize(rows=max(len(values), 2), cols=len(headers))
+    ws.update(values, "A1")
+    _cache_invalidate(cache_key)
+    return removed
+
+
+def delete_stores(store_names):
+    """
+    店舗を、その店舗に紐づくデータごと消す。
+
+    取り込みミスや解析ミスで出来てしまった店舗(「0」「big_count」など)を
+    片付けるためのもの。records(自分の記録)・store_stats・store_events・
+    store_daily・store_units の5シートから該当行を消し、その店舗の
+    取り込みログも消す(データが無いのにログだけ残ると、取り込みログ画面から
+    存在しないデータを取り消せてしまうため)。
+    元に戻せないので、呼び出し側で必ず確認を取ること。
+
+    戻り値: (成功したか, メッセージ)
+    """
+    store_names = {str(n).strip() for n in (store_names or []) if str(n).strip()}
+    if not store_names:
+        return False, "削除する店舗を選んでください。"
+
+    notes = []
+
+    def _failed(label):
+        done = f"({' / '.join(notes)}まで削除済み)" if notes else ""
+        return False, f"{label}の削除に失敗しました{done}。時間をおいてお試しください。"
+
+    try:
+        removed = _delete_store_records(store_names)
+    except Exception as e:
+        logger.error(f"店舗削除エラー(records): {e}")
+        return _failed("自分の記録")
+    if removed:
+        notes.append(f"自分の記録{removed}件")
+
+    for key in ("store_stats", "store_events", "store_daily", "store_units"):
+        label = _IMPORT_SHEET_SPECS[key][3]
+        try:
+            removed = _delete_store_rows(key, store_names)
+        except Exception as e:
+            logger.error(f"店舗削除エラー({key}): {e}")
+            return _failed(label)
+        if removed:
+            notes.append(f"{label}{removed}行")
+
+    try:
+        removed_logs = _rewrite_import_logs(
+            lambda row: str(row.get("store_name", "")).strip() not in store_names
+        )
+    except Exception as e:
+        logger.error(f"店舗削除エラー(import_logs): {e}")
+        return _failed("取り込みログ")
+    if removed_logs:
+        notes.append(f"取り込みログ{removed_logs}件")
+
+    names = "・".join(f"「{n}」" for n in sorted(store_names))
+    if not notes:
+        return False, f"{names}のデータが見つかりませんでした(すでに削除された可能性があります)。"
+
+    return True, f"{names}を削除しました({' / '.join(notes)})。"
+
+
 def _dedupe_daily_records(records):
     """
     「同一台番号・同じ日」の記録は、その日の最新1件だけを残す。
@@ -2901,7 +2485,7 @@ def load_store_stats():
 
 
 def save_store_stats(store_name, period_label="", total_diff=None, avg_diff=None,
-                     avg_games=None, win_rate=None, note="", source=""):
+                     avg_games=None, win_rate=None, note="", source="", batch_id=""):
     """
     店舗の年間データを保存する(1店舗1行。既に行があれば上書き更新)。
     戻り値: (成功したか, メッセージ)
@@ -2920,6 +2504,7 @@ def save_store_stats(store_name, period_label="", total_diff=None, avg_diff=None
         (note or "").strip(),
         (source or "").strip(),
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        batch_id,
     ]
 
     try:
@@ -3211,13 +2796,16 @@ def load_store_daily(store_name=""):
     return [r for r in cached if r["store_name"] == store_name]
 
 
-def save_store_daily_rows(store_name, rows, source="貼り付け取り込み"):
+def save_store_daily_rows(store_name, rows, source="貼り付け取り込み", batch_id=""):
     """
     日別データをまとめて保存する(同じ店舗×同じ日付は上書き)。
 
     1回の取り込みで1000行以上になることがあるため、1行ずつ書かずに
     「既存データ + 今回分」をマージしてシート全体を1回で書き換える。
-    戻り値: (成功したか, メッセージ, {"added": 新規, "updated": 上書き})
+
+    batch_id: 取り込み操作の識別子。今回書いた行にだけ入るので、
+      あとから「この取り込みぶんだけ消す」ができる(delete_import_batches)。
+    戻り値: (成功したか, メッセージ, {"added": 新規, "updated": 上書き, "dates": 対象日})
     """
     store_name = (store_name or "").strip()
     if not store_name:
@@ -3243,6 +2831,7 @@ def save_store_daily_rows(store_name, rows, source="貼り付け取り込み"):
             row.get("total_diff", ""), row.get("avg_diff", ""), row.get("avg_games", ""),
             row.get("win_rate", ""), row.get("win_units", ""), row.get("total_units", ""),
             str(row.get("source", "")), str(row.get("updated_at", "")),
+            str(row.get("batch_id", "")),
         ]
 
     now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -3261,7 +2850,7 @@ def save_store_daily_rows(store_name, rows, source="貼り付け取り込み"):
             "" if row.get("win_rate") is None else row["win_rate"],
             "" if row.get("win_units") is None else row["win_units"],
             "" if row.get("total_units") is None else row["total_units"],
-            source, now_text,
+            source, now_text, batch_id,
         ]
 
     values = [list(STORE_DAILY_HEADERS)]
@@ -3279,6 +2868,7 @@ def save_store_daily_rows(store_name, rows, source="貼り付け取り込み"):
     _cache_invalidate("store_daily")
     return True, f"「{store_name}」の日別データを{added + updated}日分保存しました(新規{added}日 / 上書き{updated}日)。", {
         "added": added, "updated": updated,
+        "dates": sorted({row["date"] for row in rows}),
     }
 
 
@@ -3453,7 +3043,7 @@ def load_store_events():
     return events_by_store
 
 
-def save_store_events(store_name, event_days="", anniversary_days="", note="", source=""):
+def save_store_events(store_name, event_days="", anniversary_days="", note="", source="", batch_id=""):
     """
     店舗の旧イベント日・周年日を保存する(1店舗1行。既に行があれば上書き)。
     戻り値: (成功したか, メッセージ)
@@ -3475,7 +3065,7 @@ def save_store_events(store_name, event_days="", anniversary_days="", note="", s
 
     now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     values = [store_name, event_days.strip(), anniversary_days.strip(),
-              note.strip(), source, now_text]
+              note.strip(), source, now_text, batch_id]
 
     target_row = None
     for index, row in enumerate(existing, start=2):
@@ -4062,19 +3652,21 @@ def load_store_units(store_name=""):
     return [r for r in cached if r["store_name"] == store_name]
 
 
-def save_store_unit_rows(store_name, date_str, rows, source="貼り付け取り込み"):
+def save_store_unit_rows(store_name, date_str, rows, source="貼り付け取り込み", batch_id=""):
     """台別データを1日分保存する(中身は複数日版と同じ処理)"""
     date_str = (date_str or "").strip()
     if not date_str:
         return False, "対象の日付を指定してください。", {}
-    ok, message, counts = save_store_unit_rows_multi(store_name, {date_str: rows}, source=source)
+    ok, message, counts = save_store_unit_rows_multi(
+        store_name, {date_str: rows}, source=source, batch_id=batch_id
+    )
     if ok:
         message = (f"「{store_name}」{date_str}の台別データを{counts['added'] + counts['updated']}台分"
                    f"保存しました(新規{counts['added']}台 / 上書き{counts['updated']}台)。")
     return ok, message, counts
 
 
-def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取り込み"):
+def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取り込み", batch_id=""):
     """
     台別データを複数日ぶんまとめて保存する(同じ店舗×日付×台番号は上書き)。
 
@@ -4107,7 +3699,7 @@ def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取
             row.get("total_games", ""), row.get("difference_slabs", ""),
             row.get("big_count", ""), row.get("reg_count", ""),
             str(row.get("source", "")), str(row.get("updated_at", "")),
-            row.get("art_count", ""),
+            row.get("art_count", ""), str(row.get("batch_id", "")),
         ]
 
     now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -4127,6 +3719,7 @@ def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取
                 "" if row.get("reg_count") is None else row["reg_count"],
                 source, now_text,
                 "" if row.get("art_count") is None else row["art_count"],
+                batch_id,
             ]
 
     values = [list(STORE_UNITS_HEADERS)]
@@ -4146,6 +3739,209 @@ def save_store_unit_rows_multi(store_name, rows_by_date, source="貼り付け取
                   f"保存しました(新規{added}台 / 上書き{updated}台)。"), {
         "added": added, "updated": updated, "dates": dates,
     }
+
+
+# ---------------------------------------------------------------------------
+# 取り込みログ(間違えた取り込みをまとめて取り消すための仕組み)
+# ---------------------------------------------------------------------------
+# 取り込みは「同じ店舗×日付なら上書き」なので、店舗を間違えた・別の日のファイルを
+# 選んだ、といったミスに気づいても、どの行が今回入ったのかを後から見分けられなかった。
+# 取り込み1回ごとに batch_id を振り、
+#   ・データ側の各行に batch_id を書く
+#   ・import_logs に「いつ・どの店舗に・何を・何件」入れたかを1行残す
+# ようにしてあるので、ログを選べばその取り込みで書いた行だけを正確に消せる。
+#
+# 注意: 上書きされた古い値までは戻らない(上書き前の値はどこにも残っていないため)。
+# 消えるのは「その取り込みで書いた行」で、その後さらに別の取り込みで上書きされた行は
+# 新しい取り込みのものになるので残る。
+
+_IMPORT_SHEET_SPECS = {
+    "store_daily": (get_store_daily_worksheet, STORE_DAILY_HEADERS, "store_daily", "日別データ"),
+    "store_units": (get_store_units_worksheet, STORE_UNITS_HEADERS, "store_units", "台別データ"),
+    "store_stats": (get_store_stats_worksheet, STORE_STATS_HEADERS, "store_stats", "年間データ"),
+    "store_events": (get_store_events_worksheet, STORE_EVENTS_HEADERS, "store_events", "イベント日"),
+}
+
+
+def new_import_batch_id():
+    """取り込み1回ぶんの識別子を作る(見たときに日時が分かるよう先頭に時刻を入れる)"""
+    return datetime.now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3)
+
+
+def describe_date_range(dates):
+    """対象日の一覧を「2026-08-01〜2026-08-22(22日分)」のような1行にする"""
+    dates = sorted({str(d).strip() for d in (dates or []) if str(d).strip()})
+    if not dates:
+        return ""
+    if len(dates) == 1:
+        return dates[0]
+    return f"{dates[0]}〜{dates[-1]}({len(dates)}日分)"
+
+
+def log_import(store_name, kind, batch_id, target="", row_count=0, added=0, updated=0,
+               source="", detail=""):
+    """
+    取り込み1回ぶんをログに残す。
+
+    ログ書き込みに失敗しても取り込み自体は成功しているので、例外は投げず False を返すだけにする
+    (「保存できたのにエラーが出る」ほうが混乱するため)。
+    """
+    try:
+        ws = get_import_logs_worksheet()
+        ws.append_row([
+            batch_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            (store_name or "").strip(), kind, target,
+            row_count, added, updated, source, detail,
+        ])
+    except Exception as e:
+        logger.error(f"取り込みログの保存エラー: {e}")
+        return False
+
+    _cache_invalidate("import_logs")
+    return True
+
+
+def load_import_logs(store_name="", limit=100):
+    """取り込みログを新しい順に返す。store_name を指定するとその店舗のぶんだけ。"""
+    cached = _cache_get("import_logs")
+    if cached is None:
+        try:
+            ws = get_import_logs_worksheet()
+            raw_rows = ws.get_all_records()
+        except Exception as e:
+            logger.error(f"取り込みログの読み込みエラー: {e}")
+            return []
+
+        cached = []
+        for row in raw_rows:
+            batch_id = str(row.get("batch_id", "")).strip()
+            if not batch_id:
+                continue
+            kind = str(row.get("kind", "")).strip()
+            cached.append({
+                "batch_id": batch_id,
+                "imported_at": str(row.get("imported_at", "")).strip(),
+                "store_name": str(row.get("store_name", "")).strip(),
+                "kind": kind,
+                "kind_label": IMPORT_KINDS.get(kind, {}).get("label", kind or "取り込み"),
+                "kind_icon": IMPORT_KINDS.get(kind, {}).get("icon", "📥"),
+                "target": str(row.get("target", "")).strip(),
+                "row_count": _to_int(row.get("row_count")),
+                "added": _to_int(row.get("added")),
+                "updated": _to_int(row.get("updated")),
+                "source": str(row.get("source", "")).strip(),
+                "detail": str(row.get("detail", "")).strip(),
+            })
+        cached.sort(key=lambda r: (r["imported_at"], r["batch_id"]), reverse=True)
+        _cache_set("import_logs", cached)
+
+    rows = cached if not store_name else [r for r in cached if r["store_name"] == store_name]
+    return rows[:limit] if limit else rows
+
+
+def _delete_rows_by_batch(sheet_key, batch_ids):
+    """指定シートから、batch_id が一致する行を消す(戻り値: 消した行数)"""
+    getter, headers, cache_key, _label = _IMPORT_SHEET_SPECS[sheet_key]
+    ws = getter()
+    existing = ws.get_all_records()
+
+    kept = [r for r in existing if str(r.get("batch_id", "")).strip() not in batch_ids]
+    removed = len(existing) - len(kept)
+    if not removed:
+        return 0
+
+    values = [list(headers)]
+    for row in kept:
+        values.append(["" if row.get(h) is None else row.get(h, "") for h in headers])
+    # 全部消えた場合、resize(rows=2) だと2行目に古い内容が残るので空行で上書きする
+    if len(values) == 1:
+        values.append([""] * len(headers))
+
+    ws.resize(rows=max(len(values), 2), cols=len(headers))
+    ws.update(values, "A1")
+    _cache_invalidate(cache_key)
+    return removed
+
+
+def _rewrite_import_logs(keep):
+    """
+    import_logs を keep(行) が True の行だけにして書き戻す(戻り値: 消した行数)。
+
+    「この取り込みぶん」を消す場合と「この店舗ぶん」を消す場合があるので、
+    残す条件だけを呼び出し側から渡してもらう。
+    """
+    ws = get_import_logs_worksheet()
+    existing = ws.get_all_records()
+    kept = [r for r in existing if keep(r)]
+    removed = len(existing) - len(kept)
+    if not removed:
+        return 0
+
+    values = [list(IMPORT_LOG_HEADERS)]
+    for row in kept:
+        values.append(["" if row.get(h) is None else row.get(h, "") for h in IMPORT_LOG_HEADERS])
+    if len(values) == 1:
+        values.append([""] * len(IMPORT_LOG_HEADERS))
+
+    ws.resize(rows=max(len(values), 2), cols=len(IMPORT_LOG_HEADERS))
+    ws.update(values, "A1")
+    _cache_invalidate("import_logs")
+    return removed
+
+
+def delete_import_batches(batch_ids):
+    """
+    選んだ取り込みぶんのデータとログをまとめて消す。
+
+    戻り値: (成功したか, メッセージ, {"deleted_rows": シート別の削除行数, "logs": 消したログ数})
+    """
+    # 空文字が混ざると「batch_id が未設定の行」= この機能より前に入れた古いデータまで
+    # 巻き込んで消えてしまうため、必ず落とす
+    batch_ids = {str(b).strip() for b in (batch_ids or []) if str(b).strip()}
+    if not batch_ids:
+        return False, "削除する取り込みを選んでください。", {}
+
+    logs = {log["batch_id"]: log for log in load_import_logs(limit=0)}
+    targets = [logs[b] for b in batch_ids if b in logs]
+    if not targets:
+        return False, "選んだ取り込みログが見つかりませんでした(すでに削除された可能性があります)。", {}
+
+    # 消す対象のシートは、ログの種別から決める。
+    # 見覚えのない種別(古いログや手で書いたもの)は、取りこぼすと消し残しになるので全シートを見る。
+    sheet_keys = []
+    for log in targets:
+        kinds = IMPORT_KINDS.get(log["kind"])
+        for key in (kinds["sheets"] if kinds else _IMPORT_SHEET_SPECS.keys()):
+            if key not in sheet_keys:
+                sheet_keys.append(key)
+
+    target_ids = {log["batch_id"] for log in targets}
+    deleted_rows = {}
+    try:
+        for key in sheet_keys:
+            removed = _delete_rows_by_batch(key, target_ids)
+            if removed:
+                deleted_rows[key] = removed
+        removed_logs = _rewrite_import_logs(
+            lambda row: str(row.get("batch_id", "")).strip() not in target_ids
+        )
+    except Exception as e:
+        logger.error(f"取り込みの削除エラー: {e}")
+        return False, "取り込みデータの削除に失敗しました。時間をおいてお試しください。", {
+            "deleted_rows": deleted_rows, "logs": 0,
+        }
+
+    total = sum(deleted_rows.values())
+    if total:
+        detail = "、".join(
+            f"{_IMPORT_SHEET_SPECS[key][3]}{count}行" for key, count in deleted_rows.items()
+        )
+        message = f"{len(targets)}件の取り込みを取り消しました({detail})。"
+    else:
+        message = (f"{len(targets)}件の取り込みログを削除しました。"
+                   f"(データ側の行はすでに別の取り込みで上書きされていたため残っています)")
+
+    return True, message, {"deleted_rows": deleted_rows, "logs": removed_logs}
 
 
 def _summarize_unit_rows(rows):
@@ -4839,3 +4635,102 @@ def build_calendar_day_detail(date_str, store_names=None):
         "stores": stores,
         "store_count": len(stores),
     }
+
+
+# ---------------------------------------------------------------------------
+# 実戦チャット(機種情報JSONを前提に、打ちながら相談する)
+# ---------------------------------------------------------------------------
+# 記録一覧のQ&A(answer_question)はシートに登録したセッションが前提だが、こちらは
+# 「座ったまま、見たものをそのまま送る」使い方のため、記録の登録を挟まない。
+# 会話履歴はブラウザ(localStorage)が持って毎回送ってくる。判別ログと同じく
+# その端末で打つ人の持ち物で、シートに残す意味が薄いうえ、書き込みを挟むと応答が遅れるため。
+#
+# 解析値の根拠は machine_data/<id>.json だけに絞る。AIの一般知識で数値を補わせると、
+# 出典付きで「未公表」としている値まで、もっともらしい数字で埋められてしまうため。
+
+LIVE_CHAT_MAX_TURNS = 40  # 送られてきた履歴のうち使う発言数。長時間打つと際限なく伸びるので古い方を捨てる
+LIVE_CHAT_MAX_CHARS = 2000  # 1発言の上限。貼り付けの事故でプロンプトが膨らまないように
+
+
+def _live_chat_system_prompt(machine, judge_note):
+    # $schema や表示色はAIの判断に関係ないので渡さない
+    info = {k: v for k, v in machine.items() if k not in ("$schema", "theme")}
+    return f"""あなたはパチスロを打っている最中のユーザーに付き添う立ち回りアシスタントです。
+ユーザーはホールで台を打ちながら、ゲーム数・当たり・小役・演出などを短文で送ってきます。
+会話全体から現在の状況(総G数・現在のハマりG数・当たり履歴・小役カウント・設定示唆・投資/差枚)を
+自分で積み上げて把握し、送られるたびに最新の状況として扱ってください。
+
+【回答の方針】
+- 数値・天井・ゾーン・設定差・設定示唆・ヤメ時は、下の【機種情報JSON】に書かれている内容だけを根拠にする。
+  JSONに無い値や "未公表"・status付きの値を、一般知識や推測で埋めない。無いものは「解析未公表」と言う。
+- 状況報告だけのメッセージには、把握した状況を1〜2行で復唱し、今気にするべき点(次のゾーン、天井まで残りG、
+  注目の設定差要素など)を短く添える。
+- 設定の質問には、分かっている設定差要素の実測と設定別の値を照らし合わせ、どの設定に近いかと、
+  その判断がどれくらい当てになるか(試行回数が少なければそう言う)を示す。
+- ヤメ時・続行の質問には、JSONのヤメ時・天井・ゾーン・リセット情報と現在の状況から、
+  「続行/様子見/ヤメ」のどれかを具体的なゲーム数とともに述べる。最終判断はユーザーに委ねるが、一般論で逃げない。
+- 打ちながら読むので短く。基本は3〜6行、必要なときだけ箇条書き。Markdownの見出しや太字記号は使わない。
+- 状況が曖昧なら、判断に必要な数字を1つだけ聞き返す。
+
+【ブラウザ側の設定判別(ベイズ推定)の最新結果】
+{judge_note or "なし(判別ページで推定・保存した結果がこの機種に無い)"}
+
+【機種情報JSON】
+{json.dumps(info, ensure_ascii=False)}
+"""
+
+
+def live_chat_reply(machine, history, message, judge_note=""):
+    """
+    機種情報JSONと会話履歴をもとに、打ちながらの相談に答える。
+
+    history は [{"role": "user"|"model", "text": "..."}, ...](古い順)。
+    戻り値: (回答テキスト, エラーかどうか)。エラー時は画面にそのまま出せる文言を返す。
+    """
+    message = (message or "").strip()[:LIVE_CHAT_MAX_CHARS]
+    if not message:
+        return "メッセージが空でした。", True
+
+    contents = []
+    for h in (history or [])[-LIVE_CHAT_MAX_TURNS:]:
+        role = h.get("role") if isinstance(h, dict) else None
+        text = str(h.get("text") or "").strip()[:LIVE_CHAT_MAX_CHARS] if role else ""
+        if role not in ("user", "model") or not text:
+            continue
+        # Geminiは同じroleが続くと弾くので、連続した発言は1つにまとめる
+        if contents and contents[-1]["role"] == role:
+            contents[-1]["parts"][0]["text"] += "\n" + text
+        else:
+            contents.append({"role": role, "parts": [{"text": text}]})
+    # 先頭がモデルの発言だと弾かれるので、ユーザー発言から始まるように揃える
+    while contents and contents[0]["role"] != "user":
+        contents.pop(0)
+    if contents and contents[-1]["role"] == "user":
+        contents[-1]["parts"][0]["text"] += "\n" + message
+    else:
+        contents.append({"role": "user", "parts": [{"text": message}]})
+
+    payload = {
+        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note)}]},
+        "contents": contents,
+    }
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+        text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if text:
+            return text, False
+        logger.error("実戦チャット: 空の応答")
+    except requests.exceptions.Timeout:
+        logger.error("実戦チャット タイムアウト")
+        return "AIの応答が時間切れになりました。もう一度送ってください。", True
+    except requests.exceptions.RequestException as e:
+        logger.error(f"実戦チャット 通信エラー: {e}")
+    except (KeyError, IndexError) as e:
+        logger.error(f"実戦チャット レスポンス構造エラー: {e}")
+
+    return "回答の生成に失敗しました。もう一度送ってください。", True

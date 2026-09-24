@@ -1,0 +1,102 @@
+{
+  "$schema": "./schema.json",
+  "id": "bellagio_nishinakajima",
+  "name": "ベラジオ西中島店",
+  "region": "大阪府",
+  "sheet_store_name": "ベラジオ西中島店",
+  "updated_at": "2026-09-25",
+  "sources": [],
+  "info": {
+    "city": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "address": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "slot_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "rates": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": []
+}

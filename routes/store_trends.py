@@ -24,6 +24,9 @@ MAX_IMPORT_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 MAX_IMPORT_ROWS = 4000
 # 台別データは1日分でも大型店だと1000台を超える
 MAX_IMPORT_UNIT_ROWS = 3000
+# 取り込みログの表示件数。取り消したいのは基本的に直前の取り込みなので、
+# 全部並べても選びにくくなるだけ。古いぶんはスプレッドシート側で見る。
+IMPORT_LOG_LIMIT = 50
 
 
 def _read_uploaded_text(file):
@@ -217,6 +220,9 @@ def _render_import(store_name, days, import_preview=None, pasted_text="",
         pasted_units_text=pasted_units_text,
         csv_import_preview=csv_import_preview,
         unit_date=unit_date or datetime.now().strftime("%Y-%m-%d"),
+        # 取り込みログは店舗を絞らずに出す。店舗を間違えて取り込んだ場合、
+        # 選択中の店舗で絞ると当の取り込みが一覧に出てこないため。
+        import_logs=common.load_import_logs(limit=IMPORT_LOG_LIMIT),
     )
 
 
@@ -350,6 +356,7 @@ def upload_stats():
         flash("画像から数値を読み取れませんでした。下の入力欄に手入力してください。")
         return _back_to_import(target_store, days)
 
+    batch_id = common.new_import_batch_id()
     ok, message = common.save_store_stats(
         target_store,
         period_label=parsed.get("period_label", ""),
@@ -359,7 +366,13 @@ def upload_stats():
         win_rate=parsed.get("win_rate"),
         note=parsed.get("note", ""),
         source="画像から読み取り",
+        batch_id=batch_id,
     )
+    if ok:
+        common.log_import(target_store, "stats", batch_id,
+                          target=parsed.get("period_label", ""), row_count=1,
+                          source="画像から読み取り",
+                          detail=f"読み取れた項目: {len(read_values)}/4")
     flash(message if ok else message)
     if ok and len(read_values) < 4:
         missing = {"total_diff": "総差枚", "avg_diff": "平均差枚", "avg_games": "平均G数", "win_rate": "勝率"}
@@ -378,6 +391,7 @@ def save_stats():
         flash("店舗を選んでから保存してください。")
         return _back_to_import(store_name, days)
 
+    batch_id = common.new_import_batch_id()
     ok, message = common.save_store_stats(
         store_name,
         period_label=request.form.get("period_label", ""),
@@ -387,7 +401,12 @@ def save_stats():
         win_rate=common.parse_number(request.form.get("win_rate")),
         note=request.form.get("note", ""),
         source="手入力",
+        batch_id=batch_id,
     )
+    if ok:
+        common.log_import(store_name, "stats", batch_id,
+                          target=request.form.get("period_label", ""), row_count=1,
+                          source="手入力")
     flash(message)
     return _back_to_import(store_name, days)
 
@@ -416,13 +435,19 @@ def save_events():
               "(空のまま保存すると設定が消えます)")
         return _back_to_import(store_name, days)
 
+    batch_id = common.new_import_batch_id()
     ok, message = common.save_store_events(
         store_name,
         event_days=event_days,
         anniversary_days=anniversary_days,
         note=request.form.get("note", ""),
         source="手入力",
+        batch_id=batch_id,
     )
+    if ok:
+        common.log_import(store_name, "events", batch_id,
+                          target=" / ".join(x for x in (event_days.strip(), anniversary_days.strip()) if x),
+                          row_count=1, source="手入力")
     flash(message)
     return _back_to_import(store_name, days)
 
@@ -476,8 +501,14 @@ def import_daily():
         return _render_import(store_name, days, pasted_text=pasted_text,
                        import_preview={"rows": rows[:10], "report": report, "total": len(rows)})
 
-    ok, message, _counts = common.save_store_daily_rows(store_name, rows)
+    batch_id = common.new_import_batch_id()
+    ok, message, counts = common.save_store_daily_rows(store_name, rows, batch_id=batch_id)
     flash(message)
+    if ok:
+        common.log_import(store_name, "daily", batch_id,
+                          target=common.describe_date_range(counts.get("dates")),
+                          row_count=len(rows), added=counts.get("added", 0),
+                          updated=counts.get("updated", 0), source="貼り付け取り込み")
     if ok and report["skipped"]:
         flash(f"列が足りずに読み飛ばした行が{report['skipped']}件あります。"
               f"表の一部だけをコピーしていないか確認してください。")
@@ -546,15 +577,24 @@ def import_csv():
             "report": report, "daily": daily_rows[:8], "token": new_token,
         })
 
+    # 台別と日別は「1回のCSV取り込み」なので、同じ batch_id を振って
+    # 取り消すときも1件のログでまとめて消えるようにする
+    batch_id = common.new_import_batch_id()
     ok_units, message_units, counts = common.save_store_unit_rows_multi(
-        store_name, units_by_date, source="CSV取り込み"
+        store_name, units_by_date, source="CSV取り込み", batch_id=batch_id
     )
     flash(message_units)
     if ok_units:
         ok_daily, message_daily, _ = common.save_store_daily_rows(
-            store_name, daily_rows, source="CSV取り込み(台別データから計算)"
+            store_name, daily_rows, source="CSV取り込み(台別データから計算)", batch_id=batch_id
         )
         flash(message_daily)
+        common.log_import(store_name, "csv", batch_id,
+                          target=common.describe_date_range(counts.get("dates")),
+                          row_count=counts.get("added", 0) + counts.get("updated", 0),
+                          added=counts.get("added", 0), updated=counts.get("updated", 0),
+                          source="CSV取り込み",
+                          detail=f"日別データ{len(daily_rows)}日分も同時に登録")
     _drop_stash(token)
     return _back_to_import(store_name, days)
 
@@ -614,9 +654,39 @@ def import_units():
                        unit_import_preview={"rows": rows[:12], "report": report,
                                             "total": len(rows), "date": unit_date})
 
-    ok, message, _counts = common.save_store_unit_rows(store_name, unit_date, rows)
+    batch_id = common.new_import_batch_id()
+    ok, message, counts = common.save_store_unit_rows(store_name, unit_date, rows, batch_id=batch_id)
     flash(message)
+    if ok:
+        common.log_import(store_name, "units", batch_id, target=unit_date,
+                          row_count=len(rows), added=counts.get("added", 0),
+                          updated=counts.get("updated", 0), source="貼り付け取り込み")
     if ok and report["skipped"]:
         flash(f"読み取れずに飛ばした行が{report['skipped']}件あります。"
               f"見出し行を含めてコピーすると、列の対応をより正確に判定できます。")
+    return _back_to_import(store_name, days)
+
+
+@store_trends_bp.route("/delete_imports", methods=["POST"])
+def delete_imports():
+    """
+    取り込みログで選んだぶんのデータを、まとめて取り消す。
+
+    取り込みは「同じ店舗×日付なら上書き」なので、店舗や日付を間違えたときに
+    手で消すのは現実的でない。取り込み時に振った batch_id を頼りに、
+    その取り込みで書いた行だけを消す。
+    """
+    store_name = request.form.get("store_name", "").strip()
+    days = _parse_days(request.form.get("days", DEFAULT_DAYS))
+    batch_ids = request.form.getlist("batch_id")
+
+    if not batch_ids:
+        flash("取り消す取り込みにチェックを入れてください。")
+        return _back_to_import(store_name, days)
+
+    ok, message, _result = common.delete_import_batches(batch_ids)
+    flash(message)
+    if ok:
+        flash("取り消せるのは「その取り込みで書いた行」だけです。"
+              "上書きされた古い値は戻らないため、必要なら取り込み直してください。")
     return _back_to_import(store_name, days)

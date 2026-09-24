@@ -1,16 +1,15 @@
 """
 機種情報(解析まとめ)ページ。machine_data/<id>.json を読んでそのまま描く。
 
-ページの中身はJSONが正で、この画面から編集はしない。
-新台は machine_data/ にJSONを1つ置けば一覧と詳細ページに出る(書き方は machine_data/README.md)。
-判別スペックへの取り込みだけはボタンで明示的に行う(理由は machine_info.py の冒頭)。
+ページの中身はJSONが正で、この画面から編集はしない(理由は machine_info.py の冒頭)。
+新台は machine_data/ にJSONを1つ置けば、一覧・詳細ページ・設定判別・設定推測のすべてに出る
+(書き方は machine_data/README.md)。
 """
 
 from datetime import date
 
-from flask import Blueprint, abort, flash, redirect, render_template, url_for
+from flask import Blueprint, abort, render_template
 
-import judge_db
 import machine_info
 
 machine_info_bp = Blueprint("machine_info", __name__, url_prefix="/info")
@@ -92,44 +91,24 @@ def detail(machine_id):
 
     # 出典は本文中で [1][2] と番号で参照するので、登録順に番号を振っておく
     source_no = {s["id"]: i for i, s in enumerate(m.get("sources", []), start=1)}
-    judge_row = judge_db.query_db(
-        "SELECT id, updated_at FROM judge_machines WHERE name = ?", (m.get("name"),), one=True
-    )
+    problems = machine_info.validate(m, machine_id)
+
+    # 判別ページと同じ変換を通し、判別に使えない項目があればページ上で分かるようにする
+    judge_spec, judge_skipped = None, []
+    if not problems:
+        try:
+            judge_spec, judge_skipped = machine_info.to_client_spec(m)
+        except ValueError as e:
+            judge_skipped = [str(e)]
 
     return render_template(
         "machine_info.html",
         m=m,
-        problems=machine_info.validate(m, machine_id),
+        problems=problems,
         source_no=source_no,
         payout=_payout_range(m),
-        judge_row=judge_row,
+        judge_spec=judge_spec,
+        judge_skipped=judge_skipped,
         **HELPERS,
     )
 
-
-@machine_info_bp.route("/<machine_id>/import_judge", methods=("POST",))
-def import_judge(machine_id):
-    """機種JSONの判別データを判別スペックに取り込む。同名の機種があれば上書きする。"""
-    m = machine_info.load(machine_id)
-    if m is None:
-        abort(404)
-
-    problems = machine_info.validate(m, machine_id)
-    if problems:
-        flash("JSONに不備があるため取り込めません: " + " / ".join(problems))
-        return redirect(url_for("machine_info.detail", machine_id=machine_id))
-
-    try:
-        spec, skipped = machine_info.to_judge_spec(m)
-    except ValueError as e:
-        flash(f"取り込めません: {e}")
-        return redirect(url_for("machine_info.detail", machine_id=machine_id))
-
-    _, created = judge_db.upsert_machine(spec)
-
-    counts = (f"判別要素{len(spec['judge_items'])}件・選択肢型{len(spec['categorical_groups'])}件・"
-              f"確定演出{len(spec['confirmations'])}件")
-    flash(f"「{spec['name']}」の判別スペックを{'登録' if created else '上書き'}しました（{counts}）。")
-    if skipped:
-        flash("値が揃わず取り込まなかった項目: " + " / ".join(skipped))
-    return redirect(url_for("judge.index", machine_name=spec["name"]))

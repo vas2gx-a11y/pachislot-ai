@@ -36,14 +36,14 @@
 
     {% if requested_machine_name and not preselect_id %}
     <div class="panel text-sm text-amber-700 bg-amber-50 border-amber-200">
-        「{{ requested_machine_name }}」の判別スペックは未登録です。
-        <a href="{{ url_for('judge.machine_new') }}" class="underline">判別スペックを登録</a>すると、この機種でも推測できます。
+        「{{ requested_machine_name }}」の機種情報が見つからないか、判別に使える数値がありません。
+        <a href="{{ url_for('machine_info.index') }}" class="underline">機種情報</a>のJSON（machine_data/）に設定差を書くと、この機種でも推測できます。
     </div>
     {% endif %}
 
     {% if not machines %}
-    {{ empty_state("🎲", "判別スペックがまだ登録されていません。先に機種の判別要素（小役やボーナスの設定別確率）を登録してください。") }}
-    {{ back_link(url_for('judge.machines'), "判別スペックを登録する") }}
+    {{ empty_state("🎲", "判別に使える機種がありません。機種情報のJSON（machine_data/）に設定差（setting_estimation）を書くと、ここで推測できます。") }}
+    {{ back_link(url_for('machine_info.index'), "機種情報を見る") }}
     {% else %}
 
     {# 店舗条件: 一度入れたら変えないので既定では畳んでおく。値はlocalStorageに残る #}
@@ -234,7 +234,7 @@
     <div id="judge-log-list" class="flex flex-col gap-2"></div>
     {% endcall %}
 
-    {{ back_link(url_for('judge.machines'), "判別スペックを管理する") }}
+    {{ back_link(url_for('machine_info.index'), "判別の元になる機種情報を見る") }}
     {% endif %}
 
 </div>

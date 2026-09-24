@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+
+{% block title %}実戦チャット{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">💬</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">実戦チャット</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* 打ちながら片手で見るので、入力欄が画面外に逃げないよう会話だけをスクロールさせる */
+    #chat-log { height: calc(100dvh - 22rem); min-height: 16rem; overflow-y: auto; }
+    .msg { max-width: 85%; white-space: pre-wrap; word-break: break-word; }
+    .msg-user { margin-left: auto; background: #18181b; color: #ffffff; }
+    .msg-model { margin-right: auto; background: #ffffff; border: 1px solid #e4e4e7; color: #18181b; }
+    .msg-error { margin-right: auto; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .quick { cursor: pointer; border: 1px solid #e4e4e7; background: #ffffff; }
+    .quick:hover { background: #f4f4f5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    {% if errors %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+        <strong>読み込めなかった機種情報があります</strong>
+        <ul class="list-disc pl-5 mt-1">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if machines %}
+    <div class="flex flex-wrap items-center gap-2">
+        <select id="chat-machine" class="input flex-1 min-w-0" aria-label="機種">
+            {% for m in machines %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}
+        </select>
+        <a id="chat-info-link" href="#" class="btn btn-ghost btn-sm" target="_blank">📖 機種情報</a>
+        <button type="button" id="chat-reset" class="btn btn-ghost btn-sm">🗑 新しい実戦</button>
+    </div>
+
+    <label id="chat-judge" class="hidden flex items-start gap-2 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+        <input type="checkbox" id="chat-judge-use" class="mt-0.5" checked>
+        <span>設定判別の保存結果を添えて送る：<span id="chat-judge-text"></span></span>
+    </label>
+
+    <div id="chat-log" class="panel flex flex-col gap-2" aria-live="polite"></div>
+
+    <div class="flex flex-wrap gap-1.5">
+        {% for q in ["今の状況まとめて", "やめ時は？", "設定どう見える？", "次に見るべきポイントは？"] %}
+        <button type="button" class="quick rounded-full px-3 py-1 text-xs text-gray-700" data-quick="{{ q }}">{{ q }}</button>
+        {% endfor %}
+    </div>
+
+    <form id="chat-form" class="flex gap-2 items-end">
+        <textarea id="chat-input" class="input flex-1" rows="2"
+                  placeholder="例: 480G 弱チェ2 スイカ1 CZ失敗、差枚-350"></textarea>
+        <button type="submit" id="chat-send" class="btn btn-primary">送信</button>
+    </form>
+    <p class="hint mt-0">
+        見たものをそのまま短く送ればOK。会話からAIが状況を積み上げます。
+        根拠は機種情報（解析まとめ）だけで、未公表の数値は推測しません。会話はこの端末にだけ保存されます。
+    </p>
+    {% else %}
+    {{ empty_state("📖", "機種情報がまだありません。machine_data/ に機種情報のJSONを置くと、ここで相談できるようになります。") }}
+    {% endif %}
+
+</div>
+</main>
+
+{% if machines %}
+<script id="chat-machines-data" type="application/json">{{ machines | tojson }}</script>
+<script>
+/*
+ * 会話はlocalStorageに機種ごとに置く。判別ログと同じく「その端末で打つ人の持ち物」で、
+ * サーバーは会話を持たない(毎回ここから履歴を送る)。
+ */
+(() => {
+  const STORE_KEY = 'pachislot_live_chat_v1';
+  const JUDGE_KEY = 'pachislot_judge_v1';  // judge.js の保存先。判別結果を読むだけで書き込まない
+  const MACHINES = JSON.parse(document.getElementById('chat-machines-data').textContent);
+  const PRESELECT = {{ preselect_id | tojson }};
+  const INFO_URL = {{ url_for('machine_info.detail', machine_id='__ID__') | tojson }};
+  const API_URL = {{ url_for('live_chat.api') | tojson }};
+
+  const $ = id => document.getElementById(id);
+  const machineSel = $('chat-machine'), log = $('chat-log'), input = $('chat-input'), sendBtn = $('chat-send');
+
+  let state = { lastMachineId: null, chats: {} };
+  let sending = false;
+
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (saved && typeof saved === 'object') state = { lastMachineId: saved.lastMachineId || null, chats: saved.chats || {} };
+    } catch (e) { console.warn('会話の読み込みに失敗しました:', e); }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e) { console.warn('会話の保存に失敗しました:', e); }  // 保存できなくても会話は続けられる
+  }
+
+  const currentId = () => machineSel.value;
+  const currentMachine = () => MACHINES.find(m => m.id === currentId());
+  const chat = () => (state.chats[currentId()] ||= []);
+
+  // 判別ページで保存したこの機種の最新結果。ログは新しい順に並んでいる
+  function latestJudge() {
+    const m = currentMachine();
+    try {
+      const logs = (JSON.parse(localStorage.getItem(JUDGE_KEY) || 'null') || {}).logs || [];
+      const l = logs.find(x => x.model === m.name && Array.isArray(x.posteriors));
+      if (!l) return null;
+      const dist = l.posteriors.map((p, i) => `設定${i + 1}:${Number(p).toFixed(1)}%`).join(' ');
+      return `${l.date} ${l.store}${l.unitNumber ? ' ' + l.unitNumber + '番' : ''} ${l.totalGames ?? '?'}G時点 / ${dist} / ${l.note || ''}`;
+    } catch (e) { return null; }
+  }
+
+  function renderJudge() {
+    const note = latestJudge();
+    $('chat-judge').classList.toggle('hidden', !note);
+    $('chat-judge-text').textContent = note || '';
+  }
+
+  function bubble(role, text) {
+    const div = document.createElement('div');
+    div.className = `msg msg-${role} rounded-2xl px-3 py-2 text-sm`;
+    div.textContent = text;  // AIの出力をHTMLとして解釈させない
+    log.appendChild(div);
+    return div;
+  }
+
+  function render() {
+    log.innerHTML = '';
+    const msgs = chat();
+    if (msgs.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'text-sm text-gray-400 m-auto text-center';
+      p.textContent = `「${currentMachine().name}」で実戦開始。ゲーム数や当たり、小役などを送ってください。`;
+      log.appendChild(p);
+    }
+    msgs.forEach(m => bubble(m.error ? 'error' : m.role, m.text));
+    log.scrollTop = log.scrollHeight;
+    $('chat-info-link').href = INFO_URL.replace('__ID__', currentId());
+    renderJudge();
+  }
+
+  async function send(text) {
+    text = text.trim();
+    if (!text || sending) return;
+    sending = true;
+    sendBtn.disabled = true;
+
+    const msgs = chat();
+    // エラー表示は会話ではないのでAIには送らない
+    const history = msgs.filter(m => !m.error).map(m => ({ role: m.role, text: m.text }));
+    msgs.push({ role: 'user', text, at: Date.now() });
+    save();
+    render();
+    const pending = bubble('model', '考え中…');
+    log.scrollTop = log.scrollHeight;
+
+    const judgeNote = $('chat-judge-use').checked ? latestJudge() : null;
+    let reply, isError;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ machine_id: currentId(), history, message: text, judge_note: judgeNote }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      reply = data.reply; isError = data.error;
+    } catch (e) {
+      reply = `送信に失敗しました（${e.message}）。電波を確認してもう一度送ってください。`;
+      isError = true;
+    }
+    pending.remove();
+    msgs.push({ role: 'model', text: reply, error: isError || undefined, at: Date.now() });
+    save();
+    render();
+    sending = false;
+    sendBtn.disabled = false;
+  }
+
+  load();
+  const initial = [PRESELECT, state.lastMachineId].find(id => id && MACHINES.some(m => m.id === id));
+  if (initial) machineSel.value = initial;
+
+  machineSel.addEventListener('change', () => { state.lastMachineId = currentId(); save(); render(); });
+  $('chat-form').addEventListener('submit', e => { e.preventDefault(); const t = input.value; input.value = ''; send(t); });
+  // Enterで送信、Shift+Enterで改行。日本語変換の確定Enterでは送らない
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('chat-form').requestSubmit(); }
+  });
+  document.querySelectorAll('[data-quick]').forEach(b => b.addEventListener('click', () => send(b.dataset.quick)));
+  $('chat-reset').addEventListener('click', () => {
+    if (!chat().length || !confirm('この機種の会話を消して、新しい実戦として始めます。よろしいですか？')) return;
+    state.chats[currentId()] = [];
+    save();
+    render();
+  });
+
+  state.lastMachineId = currentId();
+  save();
+  render();
+})();
+</script>
+{% endif %}
+{% endblock %}

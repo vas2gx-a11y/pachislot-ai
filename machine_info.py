@@ -1,5 +1,5 @@
 """
-機種情報(解析まとめ)のJSONを読む層。
+機種情報(解析まとめ)のJSONを読む層。機種のデータはここが唯一の置き場所。
 
 【なぜJSONファイルなのか】
 機種情報は「新台が出るたびに1ファイル足す」運用で、AIに資料を渡して
@@ -7,18 +7,18 @@ machine_data/<id>.json を作らせる前提にしている。ファイルなら
 差分もgitで追える。画面(/info)はこのJSONを毎回読んで描くだけなので、
 ファイルを置けば再起動なしでページが増える。
 
-【判別DB(judge_db.py)との関係】
-JSONは出典付きの「資料」で、判別に使う数値の正はあくまでSQLite側。
-JSONの setting_estimation を判別DBの形に変換して取り込む(to_judge_spec)が、
-自動では同期しない。判別スペック管理で手直しした値を、起動のたびに上書きしてしまうため。
-
-【天井・期待値との関係】
-JSONにも天井などを書くが、これは出典と一緒に読むための表示用。
-期待値計算に使う天井スペックはシート側(machines)が正で、ここからは流し込まない。
+【なぜ1か所にまとめたのか】
+以前は用途ごとに machines シート(AIの設定推測用)・SQLite(設定判別用)・このJSON(表示用)の
+3か所に機種データがあり、同じ機種の数値を3回登録して、どれが正か分からなくなっていた。
+いまは判別(to_client_spec)も設定推測・Q&A(to_rule)も、このJSONから都度組み立てる。
+画面から機種データを編集する手段は持たない。Renderのディスクは揮発性で、
+サーバー上で書き換えても再デプロイで消えるため、JSONを直してデプロイするのが唯一の更新手段。
 """
 
 import json
 import os
+import re
+import unicodedata
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "machine_data")
@@ -97,11 +97,11 @@ def validate(m, machine_id):
 
 
 # ---------------------------------------------------------------------------
-# 判別DBの形への変換
+# 設定判別(ブラウザのベイズ推定)の形への変換
 # ---------------------------------------------------------------------------
-# 判別DBは設定1〜6の6列が必ず埋まっている前提(NOT NULL)。
-# 設定1が無い機種などは、非搭載の設定を available_settings で候補から外したうえで、
-# 列を埋めるために「搭載されている中で最も低い設定」の値を入れる。
+# 判別エンジン(static/js/bayes.js)は設定1〜6の6要素がそろっている前提。
+# 設定1が無い機種などは、非搭載の設定を availableSettings で候補から外したうえで、
+# 要素を埋めるために「搭載されている中で最も低い設定」の値を入れる。
 # 事後確率が0に固定されるので計算には効かず、判別力の目安(設定1と6の比較)が
 # 「最低設定と6の比較」として自然に読めるようになる。
 
@@ -122,8 +122,8 @@ def _six(values, available):
 
 def to_judge_spec(m):
     """
-    機種JSONを judge_db.upsert_machine に渡せる形に変換する。
-    変換できなかった要素は黙って捨てず、skipped に理由を入れて返す。
+    機種JSONから判別に使う要素だけを抜き出す。
+    変換できなかった要素は黙って捨てず、skipped に理由を入れて返す(機種情報ページに出す)。
     """
     est = m.get("setting_estimation") or {}
     skipped = []
@@ -204,3 +204,177 @@ def to_judge_spec(m):
         "categorical_groups": categorical_groups,
         "confirmations": confirmations,
     }, skipped
+
+
+def to_client_spec(m):
+    """
+    判別ページにそのまま埋め込める形に変換する。戻り値は (spec, skipped)。
+    判別に使える要素が1つも無い機種は spec が None(判別の機種一覧に出さない)。
+    """
+    spec, skipped = to_judge_spec(m)
+    if not (spec["judge_items"] or spec["categorical_groups"] or spec["confirmations"]):
+        return None, skipped
+    return {
+        # 判別ログは機種名で紐づけているので、IDはファイル名でよい(DB時代の連番とは互換がない)
+        "id": m["id"],
+        "name": spec["name"],
+        "maker": spec["maker"],
+        "availableSettings": [c == "1" for c in spec["available_settings"]],
+        # 1つでも欠けていると時給計算が破綻するので、全部揃っているときだけ渡す
+        "payouts": spec["payouts"] if all(p is not None for p in spec["payouts"]) else None,
+        "judgeItems": [
+            {"name": j["name"], "type": j["item_type"], "denomBase": j["denom_base"],
+             "denominators": j["denominators"]}
+            for j in spec["judge_items"]
+        ],
+        "categoricalGroups": spec["categorical_groups"],
+        "confirmations": [
+            {"group": c["group"], "name": c["name"], "flags": [bool(f) for f in c["flags"]]}
+            for c in spec["confirmations"]
+        ],
+    }, skipped
+
+
+def load_for_judge():
+    """判別ページ用に全機種を変換する。JSONに不備がある機種は、誤った数値で判別しないよう外す。"""
+    machines, _ = load_all()
+    result = []
+    for m in machines:
+        if validate(m, m.get("id")):
+            continue
+        try:
+            spec, _ = to_client_spec(m)
+        except ValueError:
+            continue
+        if spec:
+            result.append(spec)
+    return sorted(result, key=lambda s: s["name"])
+
+
+# ---------------------------------------------------------------------------
+# 機種名での検索
+# ---------------------------------------------------------------------------
+# 記録の登録画面では機種名を手入力するので、正式名と一致しないことが多い。
+# 正式名と aliases(通称)の両方で探し、完全一致 → 部分一致(長く一致した方)の順に採用する。
+# 部分一致を「どちらかがどちらかを含む」の双方向にしているのは、
+# 「東京喰種」(入力)⊂「L 東京喰種」(正式名) と、逆に通称の方が短いケースの両方があるため。
+# 比較の前に全角半角・大文字小文字・空白をそろえる(「スマスロ 東京喰種」と「スマスロ東京喰種」を同じに扱う)。
+
+# 部分一致に使う名前の最短の長さ。「TG」のような短い通称が無関係な機種名に紛れて当たるのを防ぐ
+_MIN_PARTIAL_LEN = 3
+
+
+def _normalize(name):
+    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", name)).lower()
+
+
+def _names_of(m):
+    return [_normalize(n) for n in [m.get("name")] + list(m.get("aliases") or [])
+            if isinstance(n, str) and n.strip()]
+
+
+def find_by_name(name):
+    """機種名(表記ゆれ込み)から機種JSONを探す。見つからなければ None。"""
+    name = _normalize(name or "")
+    if not name:
+        return None
+    machines, _ = load_all()
+
+    for m in machines:
+        if name in _names_of(m):
+            return m
+
+    best, best_len = None, 0
+    for m in machines:
+        for n in _names_of(m):
+            if min(len(n), len(name)) < _MIN_PARTIAL_LEN:
+                continue
+            if n in name or name in n:
+                overlap = min(len(n), len(name))
+                if overlap > best_len:
+                    best, best_len = m, overlap
+    return best
+
+
+# ---------------------------------------------------------------------------
+# AIの設定推測・Q&A・期待値概算に渡す形への変換
+# ---------------------------------------------------------------------------
+# common.py の設定推測は、もともと machines シートの
+#   hint_words(強示唆ワード) / game_flow(仕様の説明文) / setting_ratios(設定別確率表)
+#   / suggestion_items(記録時に入力させる示唆項目)
+# の4つを前提に組まれている。プロンプトや登録画面の入力欄はそのまま使えるので、
+# JSONからこの4つを組み立てて渡す(呼び出し側を書き換えずに置き場所だけ移すため)。
+
+# game_flow としてAIに渡すセクション。設定差の数値は setting_ratios で別に渡すので含めない
+_GAME_FLOW_KEYS = ("features", "ceiling", "zones", "quit_timing", "reset",
+                   "favorable_zone", "practical_points", "cautions")
+
+# 記録の登録画面に出す示唆項目の重要度(0〜100)。AIへのプロンプトにそのまま載る
+_WEIGHT_CONFIRM = 100  # 設定◯以上濃厚・設定◯確定
+_WEIGHT_DENY = 70      # 設定◯否定
+_WEIGHT_COUNT = 60     # 回数を数えて設定差を見る要素
+
+
+def _fmt_value(v, fmt):
+    if not isinstance(v, (int, float)) or isinstance(v, bool):
+        return None
+    if fmt == "fraction":
+        return f"1/{v}"
+    if fmt == "percent":
+        return f"{v}%"
+    return str(v)
+
+
+def _setting_ratios(m):
+    """{"1": {"機械割": "97.5%", "AT初当り": "1/394.4", ...}, ...} の形にする。"""
+    # setting_estimation.probabilities は判別(to_judge_spec)と同じく、format が無くても分母として読む
+    rows = [(r, r.get("format")) for r in (m.get("spec") or {}).get("rows", [])]
+    rows += [(p, p.get("format") or "fraction")
+             for p in (m.get("setting_estimation") or {}).get("probabilities", [])]
+    ratios = {}
+    for r, fmt in rows:
+        if not isinstance(r.get("values"), dict):
+            continue
+        for setting, v in r["values"].items():
+            text = _fmt_value(v, fmt)
+            if text:
+                ratios.setdefault(setting, {})[r.get("label") or r.get("key")] = text
+    return ratios
+
+
+def _hint_label(h):
+    return f"{h.get('category')}：{h.get('pattern')}"
+
+
+def _strong_hints(m):
+    """設定を確定・否定できる示唆だけ。重み付けだけの示唆はAIに渡しても判断がぶれるので除く。"""
+    return [h for h in (m.get("setting_estimation") or {}).get("hints", [])
+            if h.get("exact_setting") or h.get("min_setting") or h.get("denied_settings")]
+
+
+def to_rule(m):
+    """機種JSONを、設定推測(common.estimate など)が使う形に変換する。"""
+    basic = m.get("basic") or {}
+    flow = {"type": basic.get("type"), "summary": basic.get("summary")}
+    flow.update({k: m[k] for k in _GAME_FLOW_KEYS if m.get(k)})
+
+    strong = _strong_hints(m)
+    suggestion_items = [
+        {"name": _hint_label(h), "type": "boolean",
+         "weight": _WEIGHT_CONFIRM if (h.get("exact_setting") or h.get("min_setting")) else _WEIGHT_DENY}
+        for h in strong
+    ]
+    suggestion_items += [
+        {"name": p.get("label"), "type": "count", "weight": _WEIGHT_COUNT}
+        for p in (m.get("setting_estimation") or {}).get("probabilities", [])
+        if p.get("label") and p.get("judge") is not False
+    ]
+
+    return {
+        # スクショの文字やメモにこの文言が含まれていたら強示唆として扱う(common.estimate)
+        "hint_words": list(dict.fromkeys(h["pattern"] for h in strong if h.get("pattern"))),
+        "game_flow": json.dumps(flow, ensure_ascii=False),
+        "setting_ratios": _setting_ratios(m),
+        "suggestion_items": suggestion_items,
+        "sources": m.get("sources", []),
+    }

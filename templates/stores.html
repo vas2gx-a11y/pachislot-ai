@@ -54,6 +54,7 @@
     <p class="hint">
         「自分の記録」はデータ管理画面で保存した自分が打った台の件数、それ以外は取り込んだ店の全台データです。
         どちらか片方にしかデータが無い店舗が2つ並んでいる場合は、表記ゆれの可能性があります（下の「統合」でまとめられます）。
+        取り込みミスで出来てしまった店舗（「0」「big_count」など）は、下の「いらない店舗を削除する」で消せます。
     </p>
     {% else %}
     {{ empty_state("🏪", "まだ店舗が登録されていません。下の「新しい店舗を追加」から登録してください。") }}
@@ -116,6 +117,65 @@
         年間データ・旧イベント日は<strong>統合先の内容</strong>を優先し、統合元の分は破棄します。
         統合は自動では戻せないので、内容を確認してから実行してください。
     </p>
+    {% endcall %}
+
+    {#
+      いらない店舗の削除。
+      取り込みや画像解析のミスで「0」「big_count」のような店舗が出来てしまうため、
+      表記ゆれの統合ではまとめられないものをここで消す。
+      自分の記録まで消える操作なので、チェック + 確認チェック + 確認ダイアログの3段構えにしている。
+    #}
+    {% call card("🗑️", "いらない店舗を削除する", None, "bg-rose-50",
+         "取り込みミスなどで出来てしまった店舗を、そのデータごと消します。元には戻せません。") %}
+    <form action="{{ url_for('stores.delete') }}" method="POST" id="store-delete-form"
+          onsubmit="return confirmDeleteStores(this);">
+        <div class="flex flex-col gap-2">
+            {% for s in overview %}
+            <label class="flex items-start gap-3 border border-gray-200 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-rose-50/60 transition">
+                <input type="checkbox" name="store_name" value="{{ s.name }}"
+                       class="mt-1 shrink-0 w-4 h-4 accent-red-600">
+                <span class="min-w-0 flex-1">
+                    <span class="block text-sm text-gray-900 font-semibold break-words">{{ s.name }}</span>
+                    <span class="block text-xs text-gray-500 mt-0.5">
+                        {%- set parts = [] -%}
+                        {%- if s.record_count %}{% set _ = parts.append("自分の記録" ~ s.record_count ~ "件") %}{% endif -%}
+                        {%- if s.has_stats %}{% set _ = parts.append("年間データあり") %}{% endif -%}
+                        {%- if s.daily_days %}{% set _ = parts.append("日別" ~ s.daily_days ~ "日分") %}{% endif -%}
+                        {%- if s.unit_rows %}{% set _ = parts.append("台別" ~ s.unit_rows ~ "台") %}{% endif -%}
+                        {%- if s.event_summary %}{% set _ = parts.append("旧イベント日あり") %}{% endif -%}
+                        {{ parts | join("・") if parts else "データなし" }}
+                    </span>
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+
+        <label class="flex items-start gap-3 mt-4 text-xs text-gray-700">
+            <input type="checkbox" name="confirm_delete" value="1" required
+                   class="mt-0.5 shrink-0 w-4 h-4 accent-red-600">
+            <span>チェックした店舗の記録・年間データ・日別データ・台別データ・旧イベント日・取り込みログが、すべて消えることを確認しました。</span>
+        </label>
+
+        <button type="submit" class="btn bg-red-600 text-white hover:bg-red-700 w-full sm:w-auto mt-3">
+            チェックした店舗を削除する
+        </button>
+        <p class="hint mt-3">
+            残したい店舗と同じ店の表記ゆれ（「大宮楽園」と「楽園大宮店」など）は、削除ではなく上の「統合」を使ってください。
+            削除すると、その店舗のデータは自動では戻せません。
+        </p>
+    </form>
+
+    <script>
+        function confirmDeleteStores(form) {
+            const checked = Array.from(form.querySelectorAll('input[name="store_name"]:checked'));
+            if (!checked.length) {
+                alert('削除する店舗にチェックを入れてください。');
+                return false;
+            }
+            const names = checked.map(function (box) { return '・' + box.value; }).join('\n');
+            return confirm('次の店舗を、データごと削除します。\n\n' + names + '\n\n元には戻せません。よろしいですか?');
+        }
+    </script>
     {% endcall %}
     {% endif %}
 

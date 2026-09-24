@@ -4,10 +4,8 @@ import os
 from flask import Flask, request, url_for
 
 import common
-import judge_db
 import navigation
 from routes.records import records_bp
-from routes.machines import machines_bp
 from routes.expected_value import expected_value_bp
 from routes.store_trends import store_trends_bp
 from routes.stores import stores_bp
@@ -15,13 +13,14 @@ from routes.calendar import calendar_bp
 from routes.nav import nav_bp
 from routes.judge import judge_bp
 from routes.machine_info import machine_info_bp
+from routes.live_chat import live_chat_bp
+from routes.store_info import store_info_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
 app.config["MAX_CONTENT_LENGTH"] = common.MAX_UPLOAD_SIZE
 
 app.register_blueprint(records_bp)
-app.register_blueprint(machines_bp)
 app.register_blueprint(expected_value_bp)
 app.register_blueprint(store_trends_bp)
 app.register_blueprint(stores_bp)
@@ -29,12 +28,8 @@ app.register_blueprint(calendar_bp)
 app.register_blueprint(nav_bp)
 app.register_blueprint(judge_bp)
 app.register_blueprint(machine_info_bp)
-
-# 設定判別の機種スペックだけはSQLiteに置いている(理由は judge_db.py の冒頭)。
-# 起動時にテーブルを用意し、リクエストごとの接続は毎回閉じる。
-with app.app_context():
-    judge_db.init_db()
-app.teardown_appcontext(judge_db.close_db)
+app.register_blueprint(live_chat_bp)
+app.register_blueprint(store_info_bp)
 
 # テンプレート側でスコア内訳を組み立てるために、common.py の変換関数を
 # Jinjaのグローバル関数として登録しておく(ロジックの二重管理を避けるため)

@@ -37,7 +37,7 @@
         <button type="submit" class="btn btn-primary w-full md:w-auto">この店舗に取り込む</button>
     </form>
     <p class="hint mt-3">
-        店舗の追加・名前の変更・表記ゆれの統合は
+        店舗の追加・名前の変更・表記ゆれの統合・いらない店舗の削除は
         <a href="{{ url_for('stores.index') }}" class="text-blue-600 underline">🏪 店舗管理</a>
         から行えます。
     </p>
@@ -525,6 +525,90 @@
     {% endcall %}    {% else %}
     {{ empty_state("📥", "取り込み先の店舗を選ぶと、取り込みのフォームが表示されます。") }}
     {% endif %}
+
+    {#
+      取り込みログ。
+      店舗を選んでいなくても、また選択中の店舗と関係なく全店舗ぶんを出す。
+      「店舗を間違えて取り込んだ」ときに、選択中の店舗で絞ると当の取り込みが
+      一覧に出てこなくなり、取り消せなくなるため。
+    #}
+    {% call card("🧾", "取り込みログ", ("直近" ~ import_logs | length ~ "件") if import_logs else None, "bg-gray-100",
+         "取り込んだ操作の履歴です。店舗や日付を間違えたときは、チェックを入れて取り消すと、その取り込みで書いたデータだけがまとめて消えます。") %}
+    {% if import_logs %}
+    <form action="{{ url_for('store_trends.delete_imports') }}" method="POST" id="import-log-form"
+          onsubmit="return confirmDeleteImports(this);">
+        <input type="hidden" name="store_name" value="{{ store_name }}">
+        <input type="hidden" name="days" value="{{ days }}">
+
+        <div class="flex flex-col gap-2">
+            {% for log in import_logs %}
+            <label class="flex items-start gap-3 border border-gray-200 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition">
+                <input type="checkbox" name="batch_id" value="{{ log.batch_id }}"
+                       class="mt-1 shrink-0 w-4 h-4 accent-red-600">
+                <span class="min-w-0 flex-1">
+                    <span class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-gray-900 font-semibold">
+                        <span aria-hidden="true">{{ log.kind_icon }}</span>
+                        <span>{{ log.store_name or "店舗不明" }}</span>
+                        <span class="text-xs font-normal text-gray-500">{{ log.kind_label }}</span>
+                    </span>
+                    <span class="block text-xs text-gray-500 mt-0.5">
+                        {{ log.imported_at }}
+                        {% if log.target %}・対象 {{ log.target }}{% endif %}
+                        {% if log.row_count %}・{{ log.row_count }}件{% endif %}
+                        {% if log.added or log.updated %}（新規{{ log.added }} / 上書き{{ log.updated }}）{% endif %}
+                        {% if log.source %}・{{ log.source }}{% endif %}
+                    </span>
+                    {% if log.detail %}
+                    <span class="block text-xs text-gray-400 mt-0.5">{{ log.detail }}</span>
+                    {% endif %}
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4 flex flex-col sm:flex-row gap-2 sm:items-center">
+            {# 取り消しは戻せない操作なので、ボタンの見た目だけ赤系にして他の保存ボタンと区別する #}
+            <button type="submit"
+                    class="btn btn-ghost text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 w-full sm:w-auto">
+                選択した取り込みを取り消す
+            </button>
+            <button type="button" class="btn btn-ghost w-full sm:w-auto"
+                    onclick="toggleAllImportLogs(this)">すべて選択</button>
+        </div>
+        <p class="hint mt-3">
+            取り消せるのは「その取り込みで書いた行」だけです。あとから別の取り込みで上書きされた行は、
+            新しい取り込みのものとして残ります。上書きされた古い値は戻らないので、必要なら取り込み直してください。
+        </p>
+    </form>
+
+    <script>
+        function confirmDeleteImports(form) {
+            const selected = form.querySelectorAll('input[name="batch_id"]:checked').length;
+            if (!selected) {
+                alert('取り消す取り込みにチェックを入れてください。');
+                return false;
+            }
+            return confirm(selected + '件の取り込みを取り消します。\nこの操作で書き込まれたデータが削除されます。よろしいですか?');
+        }
+
+        function toggleAllImportLogs(button) {
+            const boxes = document.querySelectorAll('#import-log-form input[name="batch_id"]');
+            const turnOn = button.dataset.state !== 'on';
+            boxes.forEach(function (box) { box.checked = turnOn; });
+            button.dataset.state = turnOn ? 'on' : 'off';
+            button.textContent = turnOn ? 'すべて解除' : 'すべて選択';
+        }
+    </script>
+    {% else %}
+    <p class="text-sm text-gray-500">
+        まだ取り込みの履歴がありません。データを取り込むと、ここに履歴が残ります。
+    </p>
+    <p class="hint mt-2">
+        この履歴が付く前に取り込んだデータは一覧に出ません(どの取り込みで入った行か分からないため)。
+        その分はスプレッドシートから直接消してください。
+    </p>
+    {% endif %}
+    {% endcall %}
 
     <a href="{{ url_for('store_trends.index', store_name=store_name, days=days) }}"
        class="card flex items-center gap-2 hover:bg-gray-50 p-4 text-sm text-gray-700 transition">

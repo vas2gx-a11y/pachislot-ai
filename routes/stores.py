@@ -16,7 +16,7 @@ def index():
 
     店舗名は専用のマスタを持たず「どのシートに登場するか」で決まるため、
     どの店舗にどんなデータが入っているかが分かりにくい。
-    ここで一覧にして、追加・名前変更・統合をまとめて行えるようにする。
+    ここで一覧にして、追加・名前変更・統合・削除をまとめて行えるようにする。
     """
     overview = common.build_store_overview()
     return render_template(
@@ -81,3 +81,25 @@ def merge():
         message = f"「{source}」を「{target}」に統合しました。" + message.split("に変更しました", 1)[-1]
     flash(message)
     return _back(target if ok else source)
+
+
+@stores_bp.route("/delete", methods=["POST"])
+def delete():
+    """
+    いらない店舗を、その店舗のデータごと消す。
+
+    取り込みミスや解析ミス(店舗名の欄に「0」「big_count」などが入ってしまう)で
+    出来た店舗を片付けるためのもの。自分の記録も一緒に消えるので、
+    画面側の確認チェックが入っていない送信は受け付けない。
+    """
+    store_names = [n.strip() for n in request.form.getlist("store_name") if n.strip()]
+    if not store_names:
+        flash("削除する店舗にチェックを入れてください。")
+        return _back()
+    if not request.form.get("confirm_delete"):
+        flash("削除する前に、確認のチェックを入れてください。")
+        return _back(store_names[0])
+
+    ok, message = common.delete_stores(store_names)
+    flash(message)
+    return _back("" if ok else store_names[0])

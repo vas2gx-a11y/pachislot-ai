@@ -404,7 +404,7 @@ function renderObservationInputs() {
 
   if (items.length === 0) {
     wrap.innerHTML = '<div class="hint">この機種には判別要素が登録されていません。' +
-      '「判別スペック管理」から小役やボーナスの設定別確率を登録すると推測できます。</div>';
+      '機種情報JSON（machine_data/）の setting_estimation.probabilities に小役やボーナスの設定別確率を書くと推測できます。</div>';
   } else {
     // 判別に効く順に並べる。効かない要素は折りたたんで、入力する箇所を絞る。
     const ranked = items.map((item, idx) => ({

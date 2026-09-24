@@ -166,16 +166,11 @@
                 <div class="font-mono font-bold text-lg">{{ fmt_date(m.basic.release_date) or unknown() }}</div></div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4">
-            <form method="post" action="{{ url_for('machine_info.import_judge', machine_id=m.id) }}"
-                  {% if judge_row %}onsubmit="return confirm('判別スペック「{{ m.name }}」をこのJSONの内容で上書きします。判別スペック管理で手直しした値は消えます。よろしいですか？');"{% endif %}>
-                <button type="submit" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">
-                    🧪 {% if judge_row %}判別スペックを更新{% else %}判別スペックに取り込む{% endif %}
-                </button>
-            </form>
-            {% if judge_row %}
-            <a href="{{ url_for('judge.index', machine_name=m.name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">🎲 この機種で判別する</a>
-            <span class="text-[11px] opacity-50">判別スペック最終更新 {{ judge_row['updated_at'] }}</span>
+            {% if judge_spec %}
+            <a href="{{ url_for('judge.index', machine_name=m.name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">🎲 この機種で判別する</a>
+            <span class="text-[11px] opacity-50">判別要素{{ judge_spec.judgeItems | length }}・選択肢型{{ judge_spec.categoricalGroups | length }}・確定演出{{ judge_spec.confirmations | length }}</span>
             {% endif %}
+            <a href="{{ url_for('live_chat.index', machine_id=m.id) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">💬 打ちながら相談する</a>
         </div>
         <p class="text-[11px] opacity-50 mt-3">情報更新日 {{ m.updated_at }}</p>
     </div>
@@ -197,7 +192,15 @@
     <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
         <strong>JSONに不備があります</strong>（machine_data/{{ m.id }}.json）
         <ul class="list-disc pl-5 mt-1">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+        <p class="mt-1 text-xs">直すまで、この機種は設定判別の一覧に出ません（誤った数値で判別しないため）。</p>
     </div>
+    {% endif %}
+
+    {% if judge_skipped %}
+    <details class="bg-gray-50 border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs">
+        <summary class="cursor-pointer">設定判別に使っていない項目（{{ judge_skipped | length }}件）</summary>
+        <ul class="list-disc pl-5 mt-1">{% for s in judge_skipped %}<li>{{ s }}</li>{% endfor %}</ul>
+    </details>
     {% endif %}
 
     {% call section('basic', '基本情報') %}

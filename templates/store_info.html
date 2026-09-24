@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% from "_macros.html" import back_link %}
+
+{#
+  店舗情報ページ。上半分(基本情報)は store_data/<id>.json、下半分(営業データ)はシートから来る。
+  不明な項目は推測で埋めず「不明」と見せ、値のある項目には確認状態と出典番号を必ず添える。
+  セクションの並びを変えるときは、下の toc の並びも合わせて直す(目次とずれないように)。
+#}
+
+{% set toc = [
+    ('basic', '基本情報'), ('access', 'アクセス'), ('units', '設置台数'), ('machines', '設置機種'),
+    ('days', '営業日・特定日'), ('notices', 'イベント・告知'), ('new', '新台入替'),
+    ('daily', '過去の営業データ'), ('slot', 'パチスロデータ'), ('features', '店舗の特徴'),
+    ('sources', '情報源'), ('history', '更新履歴'),
+] %}
+
+{% macro status(key) -%}
+{% set item = info.get(key) or {} %}
+{% set st = item.status or '不明' %}
+<span class="st st-{{ {'確認済': 'ok', '未確認': 'check', '不明': 'none'}[st] }}">{{ st }}</span>
+{%- for sid in item.source_ids or [] if sid in source_no %} <a class="cite" href="#src-{{ sid }}">[{{ source_no[sid] }}]</a>{% endfor %}
+{%- endmacro %}
+
+{% macro value(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v is none or v == '' or v == [] %}<span class="text-gray-400">不明</span>
+{% elif key == 'official_url' %}<a href="{{ v }}" target="_blank" rel="noopener" class="text-blue-600 underline break-all">{{ v }}</a>
+{% elif v is string or v is number %}{{ v }}{% if v is number %} 台{% endif %}
+{% elif key == 'sns' %}{% for l in v %}<a href="{{ l.url }}" target="_blank" rel="noopener" class="text-blue-600 underline mr-3">{{ l.label or l.url }}</a>{% endfor %}
+{% else %}{{ v | join('、') }}{% endif %}
+{%- endmacro %}
+
+{# 1行1項目の表。値と確認状態を同じ行に並べる #}
+{% macro kv_rows(keys) -%}
+<table class="kv w-full"><tbody>
+    {% for k in keys %}
+    <tr><th>{{ field_labels[k] }}</th><td>{{ value(k) }}<div class="mt-0.5">{{ status(k) }}</div></td></tr>
+    {% endfor %}
+</tbody></table>
+{%- endmacro %}
+
+{% macro list_block(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v %}<ul class="info-list">{% for x in v %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}<p class="text-gray-400 text-sm">不明</p>{% endif %}
+<p class="mt-2">{{ status(key) }}</p>
+{%- endmacro %}
+
+{% macro dated_block(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v %}
+{% for x in sort_by(v, 'date') %}
+<div class="border-t border-dashed border-gray-200 py-2 first:border-t-0">
+    <p class="text-xs text-gray-400">{{ x.date or '日付不明' }}</p>
+    <p class="font-bold text-sm text-gray-900">{{ x.title }}</p>
+    {% if x.detail %}<p class="text-sm text-gray-600 mt-0.5">{{ x.detail }}</p>{% endif %}
+</div>
+{% endfor %}
+{% else %}<p class="text-gray-400 text-sm">不明</p>{% endif %}
+<p class="mt-2">{{ status(key) }}</p>
+{%- endmacro %}
+
+{% macro section(id, title) -%}
+<section id="{{ id }}" class="card card-body info-section">
+    <h2 class="flex items-center gap-2 font-bold text-gray-900 mb-3">
+        <span class="section-bar"></span>{{ title }}
+    </h2>
+    {{ caller() }}
+</section>
+{%- endmacro %}
+
+{% macro signed(v) -%}
+{% if v is none %}-{% else %}<span class="{{ 'text-emerald-600' if v > 0 else 'text-rose-600' if v < 0 else '' }}">{{ '{:+,}'.format(v | int) }}</span>{% endif %}
+{%- endmacro %}
+
+
+{% block title %}{{ s.name }} | 店舗情報{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">🏬</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ s.name }}</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .store-info { --accent: #0f766e; }
+    .store-info .info-section { scroll-margin-top: 4.5rem; }
+    .section-bar { width: 4px; height: 1.1em; border-radius: 2px; background: var(--accent); }
+    .hero { background: #18181b; color: #fff; border-bottom: 4px solid var(--accent); }
+    .hero-stat { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: .5rem; padding: .5rem .75rem; }
+
+    /* 確認状態。「不明」を目立たせすぎると空欄の多い店舗が読みにくいので、灰色に留める */
+    .st { display: inline-block; padding: 0 .5rem; border-radius: 9999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+    .st-ok { background: #ccfbf1; color: #115e59; }
+    .st-check { background: #fef3c7; color: #92400e; }
+    .st-none { background: #f4f4f5; color: #a1a1aa; }
+    .cite { font-size: .7rem; color: #2563eb; text-decoration: none; }
+
+    .info-list { padding-left: 1.2em; list-style: disc; font-size: .875rem; }
+    .info-list li { margin: .25rem 0; }
+    .info-list li::marker { color: var(--accent); }
+    .kv th, .kv td { padding: .5rem; border-bottom: 1px solid #f4f4f5; text-align: left; vertical-align: top; font-size: .875rem; }
+    .kv th { width: 34%; color: #71717a; font-weight: 600; }
+    .num-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .8125rem; }
+    .num-table th, .num-table td { padding: .45rem .5rem; border-bottom: 1px solid #f4f4f5; text-align: right; white-space: nowrap; }
+    .num-table th:first-child, .num-table td:first-child { text-align: left; }
+    .num-table thead th { color: #71717a; font-weight: 600; font-size: .75rem; }
+
+    .toc a { display: block; padding: .3rem .75rem; border-left: 2px solid #e4e4e7; color: #71717a; font-size: .8125rem; }
+    .toc a:hover { color: #18181b; }
+    .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+    .toc-sticky { top: 3.1rem; }
+    @media (min-width: 768px) { .toc-sticky { top: 3.55rem; } }
+    .toc-chips { scrollbar-width: none; }
+    .toc-chips::-webkit-scrollbar { display: none; }
+    .toc-chips a.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+{# base.html が </main> で閉じる作りなので、ページ側で <main> を開く #}
+<main class="store-info">
+
+{# ---- 店舗概要 ---- #}
+<div class="hero">
+    <div class="page-container py-5">
+        <p class="text-xs opacity-60"><a href="{{ url_for('store_info.index') }}" class="underline">店舗情報</a> / {{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</p>
+        <h2 class="font-display font-extrabold text-2xl md:text-3xl mt-1">{{ s.name }}</h2>
+        {% if info.address and info.address.value %}<p class="text-sm opacity-70 mt-1">{{ info.address.value }}</p>{% endif %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+            {% for key, label in [('total_units', '総台数'), ('slot_units', 'パチスロ'), ('pachinko_units', 'パチンコ')] %}
+            <div class="hero-stat"><div class="text-[11px] opacity-60">{{ label }}</div>
+                <div class="font-mono font-bold text-lg">{% if info[key] and info[key].value is number %}{{ info[key].value }}台{% else %}<span class="opacity-50">不明</span>{% endif %}</div></div>
+            {% endfor %}
+            <div class="hero-stat"><div class="text-[11px] opacity-60">営業時間</div>
+                <div class="font-bold text-sm mt-1">{{ (info.hours and info.hours.value) or '不明' }}</div></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-4">
+            <a href="{{ url_for('store_trends.index', store_name=s.sheet_store_name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">🏢 店舗傾向を見る</a>
+            <a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">📥 営業データを取り込む</a>
+        </div>
+        <p class="text-[11px] opacity-50 mt-3">基本情報 {{ known }} / {{ field_count }} 項目が判明 ・ 最終更新 {{ s.updated_at }}</p>
+    </div>
+</div>
+
+{# ---- スマホ用の目次(横スクロール) ---- #}
+<nav class="toc-sticky xl:hidden sticky z-20 bg-zinc-100/90 backdrop-blur border-b border-gray-200" aria-label="目次">
+    <div class="toc-chips page-container flex gap-1.5 overflow-x-auto py-2">
+        {% for id, label in toc %}
+        <a href="#{{ id }}" class="shrink-0 text-xs px-3 py-1 rounded-full border border-gray-200 bg-white text-gray-600">{{ label }}</a>
+        {% endfor %}
+    </div>
+</nav>
+
+<div class="page-container py-4 md:py-6 xl:grid xl:grid-cols-[1fr_13rem] xl:gap-6">
+<div class="stack min-w-0">
+
+    {% if problems %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+        <strong>JSONに不備があります</strong>（store_data/{{ s.id }}.json）
+        <ul class="list-disc pl-5 mt-1">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% call section('basic', '基本情報') %}
+        {{ kv_rows(['address', 'phone', 'hours', 'rates', 'official_url', 'sns', 'line']) }}
+    {% endcall %}
+
+    {% call section('access', 'アクセス') %}
+        {{ kv_rows(['access', 'parking']) }}
+    {% endcall %}
+
+    {% call section('units', '設置台数') %}
+        {{ kv_rows(['total_units', 'pachinko_units', 'slot_units']) }}
+    {% endcall %}
+
+    {% call section('machines', '設置機種（パチスロ）') %}
+        {% set v = (info.installed_machines or {}).value %}
+        {% if v %}
+        <table class="num-table"><thead><tr><th>機種</th><th>台数</th></tr></thead><tbody>
+            {% for m in sort_by(v, 'units') %}
+            <tr><td class="!whitespace-normal">{{ m.name }}</td><td>{{ m.units if m.units is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        {% else %}<p class="text-gray-400 text-sm">不明</p>{% endif %}
+        <p class="mt-2">{{ status('installed_machines') }}</p>
+        {% if ops.latest_units %}<p class="hint">台別データ（{{ ops.latest_unit_date }}）には {{ ops.latest_units | map(attribute='machine_name') | unique | list | length }} 機種 {{ ops.latest_units | length }} 台が載っています。</p>{% endif %}
+    {% endcall %}
+
+    {% call section('days', '営業日・特定日') %}
+        {{ list_block('special_days') }}
+        {% if ops.events and (ops.events.event_days or ops.events.anniversary_days) %}
+        <div class="panel text-sm mt-3">
+            <p class="text-xs text-gray-500 mb-1">分析に使っている旧イベント日（シート）</p>
+            {% if ops.events.event_days %}<p>イベント日: <strong>{{ ops.events.event_days }}</strong></p>{% endif %}
+            {% if ops.events.anniversary_days %}<p>周年日: <strong>{{ ops.events.anniversary_days }}</strong></p>{% endif %}
+            {% if ops.events.note %}<p class="text-xs text-gray-500 mt-1">{{ ops.events.note }}</p>{% endif %}
+        </div>
+        {% endif %}
+    {% endcall %}
+
+    {% call section('notices', 'イベント・告知') %}{{ dated_block('notices') }}{% endcall %}
+    {% call section('new', '新台入替') %}{{ dated_block('new_machines') }}{% endcall %}
+
+    {% call section('daily', '過去の営業データ（日別）') %}
+        {% if ops.daily %}
+        <div class="overflow-x-auto -mx-1 px-1">
+        <table class="num-table"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th></tr></thead><tbody>
+            {% for d in ops.daily %}
+            <tr><td>{{ d.date }}</td><td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
+                <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
+                <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        </div>
+        <p class="hint">直近 {{ ops.daily | length }} 日分を表示（全 {{ ops.daily_count }} 日）。曜日・特定日ごとの傾向は店舗傾向ページで見られます。</p>
+        {% else %}
+        <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の日別データはまだありません。</p>
+        {% endif %}
+    {% endcall %}
+
+    {% call section('slot', 'パチスロデータ（台別）') %}
+        {% if ops.latest_units %}
+        <p class="text-sm mb-2">最新 <strong>{{ ops.latest_unit_date }}</strong>（全 {{ ops.unit_date_count }} 日 / {{ '{:,}'.format(ops.unit_row_count) }} 行）</p>
+        <div class="overflow-x-auto -mx-1 px-1">
+        <table class="num-table"><thead><tr><th>台番</th><th>機種</th><th>G数</th><th>差枚</th><th>BB</th><th>RB</th><th>AT/ART</th></tr></thead><tbody>
+            {% for u in ops.latest_units[:30] %}
+            <tr><td>{{ u.machine_number }}</td><td class="!text-left max-w-[12rem] truncate">{{ u.machine_name }}</td>
+                <td>{{ '{:,}'.format(u.total_games | int) if u.total_games is not none else '-' }}</td>
+                <td>{{ signed(u.difference_slabs) }}</td>
+                <td>{{ u.big_count | int if u.big_count is not none else '-' }}</td>
+                <td>{{ u.reg_count | int if u.reg_count is not none else '-' }}</td>
+                <td>{{ u.art_count | int if u.art_count is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        </div>
+        <p class="hint">差枚の多い順に最大30台。台番号ごとの履歴は店舗傾向ページで見られます。</p>
+        {% else %}
+        <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の台別データはまだありません。</p>
+        {% endif %}
+    {% endcall %}
+
+    {% call section('features', '店舗の特徴') %}{{ list_block('features') }}{% endcall %}
+
+    {% call section('sources', '情報源') %}
+        {% if s.sources %}
+        <ol class="list-decimal pl-5 text-sm">
+            {% for src in s.sources %}
+            <li id="src-{{ src.id }}" class="my-1.5 scroll-mt-20">
+                {% if src.url %}<a href="{{ src.url }}" target="_blank" rel="noopener" class="text-blue-600 underline break-all">{{ src.name }}</a>{% else %}{{ src.name }}{% endif %}
+                <span class="chip ml-1">{{ src.reliability }}</span>
+                <span class="block text-xs text-gray-400">取得日 {{ src.checked_at }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="text-gray-400 text-sm">まだ情報源がありません。<code>tools/store_collect.py collect</code> で集めると追加されます。</p>
+        {% endif %}
+        <p class="hint">「確認済」は公式サイト・公式SNSで確認できた値、「未確認」はそれ以外の情報源の値です。</p>
+        <p class="text-sm mt-3">最終更新日: <strong>{{ s.updated_at }}</strong></p>
+    {% endcall %}
+
+    {% call section('history', '更新履歴') %}
+        {% if history %}
+        {% for h in history %}
+        <div class="border-t border-dashed border-gray-200 py-2 first:border-t-0 text-sm">
+            <p class="text-xs text-gray-400">{{ h.changed_at }} ・ {{ field_labels.get(h.field, h.field) }}
+                {%- for sid in h.source_ids or [] if sid in source_no %} <a class="cite" href="#src-{{ sid }}">[{{ source_no[sid] }}]</a>{% endfor %}</p>
+            <p class="text-gray-400 line-through break-all">{{ h.before if h.before is string else (h.before | tojson if h.before is not none else '不明') }}</p>
+            <p class="text-gray-900 break-all">{{ h.after if h.after is string else h.after | tojson }}</p>
+        </div>
+        {% endfor %}
+        {% else %}<p class="text-gray-400 text-sm">まだ変更はありません。</p>{% endif %}
+    {% endcall %}
+
+    {{ back_link(url_for('store_info.index'), "店舗情報の一覧に戻る") }}
+</div>
+
+{# ---- 広い画面用の目次(追従) ---- #}
+<aside class="hidden xl:block">
+    <nav class="toc sticky" style="top: 4.5rem" aria-label="目次">
+        <p class="text-xs font-bold text-gray-400 mb-1 tracking-widest">目次</p>
+        {% for id, label in toc %}<a href="#{{ id }}">{{ label }}</a>{% endfor %}
+    </nav>
+</aside>
+</div>
+
+<script>
+  // 表示中のセクションを目次でハイライトする
+  (function () {
+    var links = document.querySelectorAll('.toc a, .toc-chips a');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) {
+          var on = a.hash === '#' + e.target.id;
+          a.classList.toggle('active', on);
+          if (on && a.closest('.toc-chips')) a.scrollIntoView({ block: 'nearest', inline: 'center' });
+        });
+      });
+    }, { rootMargin: '-25% 0px -65% 0px' });
+    document.querySelectorAll('.info-section').forEach(function (s) { io.observe(s); });
+  })();
+</script>
+{# </main> は base.html 側 #}
+{% endblock %}
