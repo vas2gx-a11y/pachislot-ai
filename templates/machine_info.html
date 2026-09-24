@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+{% from "_macros.html" import back_link %}
+
+{#
+  機種情報ページ。中身はすべて machine_data/<id>.json から来る。
+  不明値(null / {"status": ...})は推測で埋めず、必ず「未公表」「情報確認中」として見せる。
+  セクションの並びを変えるときは、下の toc の並びも合わせて直す(目次とずれないように)。
+#}
+
+{% set settings = m.settings.list %}
+{% set est = m.setting_estimation or {} %}
+{% set toc = [
+    ('basic', '基本情報'), ('spec', '設定別スペック'), ('features', 'AT・CZ・ボーナス'),
+    ('ceiling', '天井'), ('zones', 'ゾーン'), ('quit', 'やめどき'), ('reset', '朝一・リセット'),
+    ('favorable', '有利区間'), ('koyaku', '小役確率'), ('setting-diff', '設定差'),
+    ('hints', '設定示唆'), ('effects', '演出'), ('estimation', '設定判別ポイント'),
+    ('practical', '実戦で重要なポイント'), ('cautions', '注意事項'), ('sources', '出典・更新日'),
+] %}
+
+{% macro unknown(v=None) -%}
+<span class="unknown {% if unknown_label(v) != '未公表' %}checking{% endif %}">{{ unknown_label(v) }}</span>
+{%- endmacro %}
+
+{% macro val(v) -%}
+{% if is_unknown(v) %}{{ unknown(v) }}{% else %}{{ v }}{% endif %}
+{%- endmacro %}
+
+{% macro num(v, fmt) -%}
+{% if is_unknown(v) %}{{ unknown(v) }}{% else %}{{ fmt_num(v, fmt) }}{% endif %}
+{%- endmacro %}
+
+{% macro cite(ids) -%}
+{% if ids %}<p class="cite">出典{% for sid in ids if sid in source_no %} <a href="#src-{{ sid }}">[{{ source_no[sid] }}]</a>{% endfor %}</p>{% endif %}
+{%- endmacro %}
+
+{% macro items_list(block) -%}
+{% if block and block['items'] %}
+<ul class="info-list">{% for i in block['items'] %}<li>{{ i }}</li>{% endfor %}</ul>
+{{ cite(block.source_ids) }}
+{% else %}<p>{{ unknown({'status': '情報確認中'}) }}</p>{% endif %}
+{%- endmacro %}
+
+{# 設定1〜6の比較表。高設定ほど見出しを濃くし、設定6の列を強調する #}
+{% macro setting_table(rows, fmt=None) -%}
+<div class="overflow-x-auto -mx-1 px-1">
+<table class="setting-table">
+    <thead><tr><th></th>{% for s in settings %}<th class="set set-{{ s }}">設定{{ s }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr class="{% if r.highlight %}hl{% endif %}">
+        <th scope="row">{{ r.label }}{% if r.note %}<span class="row-note">{{ r.note }}</span>{% endif %}</th>
+        {% for s in settings %}<td class="set-{{ s }}">{{ num((r['values'] or {}).get(s), fmt or r.format) }}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{%- endmacro %}
+
+{% macro feature_card(f) -%}
+<article class="panel">
+    <h4 class="font-bold text-gray-900 mb-2">{{ f.name }}</h4>
+    {% if f.facts %}
+    <dl class="grid grid-cols-2 gap-1.5">
+        {% for x in f.facts %}
+        <div class="bg-white border border-gray-200 rounded-md px-2 py-1">
+            <dt class="text-[11px] text-gray-400">{{ x.label }}</dt>
+            <dd class="font-bold text-sm text-gray-900">{{ val(x.value) }}</dd>
+        </div>
+        {% endfor %}
+    </dl>
+    {% endif %}
+    {% if f.description %}<p class="text-sm text-gray-600 mt-2">{{ f.description }}</p>{% endif %}
+    {% if f.caution %}<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5 mt-2">⚠ {{ f.caution }}</p>{% endif %}
+    {{ cite(f.source_ids) }}
+</article>
+{%- endmacro %}
+
+{% macro section(id, title) -%}
+<section id="{{ id }}" class="card card-body info-section">
+    <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex items-center gap-2 mb-4">
+        <span class="section-bar"></span>{{ title }}
+    </h2>
+    {{ caller() }}
+</section>
+{%- endmacro %}
+
+
+{% block title %}{{ m.name }} | 機種情報{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">📖</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ m.name }}</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* 機種ごとのアクセント色は JSON の theme.accent から */
+    .machine-info { --accent: {{ (m.theme or {}).accent or '#18181b' }}; scroll-margin-top: 4rem; }
+    .machine-info .info-section { scroll-margin-top: 4.5rem; }
+    .section-bar { width: 4px; height: 1.1em; border-radius: 2px; background: var(--accent); }
+    .hero { background: #18181b; color: #fff; border-bottom: 4px solid var(--accent); }
+    .hero-stat { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: .5rem; padding: .5rem .75rem; }
+
+    .unknown { display: inline-block; padding: 0 .5rem; border-radius: 9999px; background: #f4f4f5; color: #71717a; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+    .unknown.checking { background: #fef3c7; color: #92400e; }
+    .cite { margin-top: .5rem; font-size: .7rem; color: #a1a1aa; }
+    .cite a { color: #2563eb; text-decoration: none; }
+    .info-list { padding-left: 1.2em; list-style: disc; }
+    .info-list li { margin: .25rem 0; }
+    .info-list li::marker { color: var(--accent); }
+    .kv th, .kv td { padding: .5rem .5rem; border-bottom: 1px solid #f4f4f5; text-align: left; vertical-align: top; font-size: .875rem; }
+    .kv th { width: 36%; color: #71717a; font-weight: 600; }
+
+    .setting-table { width: 100%; min-width: 30rem; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .875rem; }
+    .setting-table th, .setting-table td { padding: .55rem .5rem; border-bottom: 1px solid #f4f4f5; text-align: right; white-space: nowrap; }
+    .setting-table tbody th { text-align: left; font-weight: 600; white-space: normal; min-width: 8rem; }
+    .setting-table thead th.set { color: #fff; font-size: .75rem; border-radius: .375rem .375rem 0 0; background: color-mix(in srgb, var(--accent) 30%, #52525b); }
+    .setting-table thead th.set-4 { background: color-mix(in srgb, var(--accent) 55%, #52525b); }
+    .setting-table thead th.set-5 { background: color-mix(in srgb, var(--accent) 78%, #52525b); }
+    .setting-table thead th.set-6 { background: var(--accent); }
+    .setting-table td.set-6 { background: color-mix(in srgb, var(--accent) 7%, transparent); font-weight: 700; }
+    .setting-table tr.hl td { font-weight: 700; font-size: .95rem; }
+    .setting-table tr.hl th { color: var(--accent); }
+    .row-note { display: block; font-size: .7rem; font-weight: 400; color: #a1a1aa; }
+
+    .badge-lv { display: inline-block; padding: .05rem .6rem; border-radius: 9999px; font-size: .75rem; font-weight: 700; white-space: nowrap; }
+    .lv-none { background: #f4f4f5; color: #71717a; }
+    .lv-weak { background: color-mix(in srgb, var(--accent) 10%, #fff); color: var(--accent); }
+    .lv-confirm { background: color-mix(in srgb, var(--accent) 20%, #fff); color: var(--accent); }
+    .lv-top { background: var(--accent); color: #fff; }
+    .lv-unofficial { background: #fef3c7; color: #92400e; }
+
+    .toc a { display: block; padding: .3rem .75rem; border-left: 2px solid #e4e4e7; color: #71717a; font-size: .8125rem; }
+    .toc a:hover { color: #18181b; }
+    .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+    /* サイトヘッダー(スティッキー)の真下に貼り付ける。ヘッダーの高さは md で変わる */
+    .toc-sticky { top: 3.1rem; }
+    @media (min-width: 768px) { .toc-sticky { top: 3.55rem; } }
+    .toc-chips { scrollbar-width: none; }
+    .toc-chips::-webkit-scrollbar { display: none; }
+    .toc-chips a.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+{# base.html が </main> で閉じる作りなので、ページ側で <main> を開く #}
+<main class="machine-info">
+
+{# ---- ヘッダー: 一目で見たい数値 ---- #}
+<div class="hero">
+    <div class="page-container py-5">
+        <p class="text-xs opacity-60"><a href="{{ url_for('machine_info.index') }}" class="underline">機種情報</a> / {{ val(m.basic.maker) }}</p>
+        <h2 class="font-display font-extrabold text-2xl md:text-3xl mt-1">{{ m.name }}</h2>
+        {% if m.aliases %}<p class="text-sm opacity-60">{{ m.aliases | join(' / ') }}</p>{% endif %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+            <div class="hero-stat"><div class="text-[11px] opacity-60">機械割</div>
+                <div class="font-mono font-bold text-lg">{% if payout %}{{ '%.1f' % payout[0] }}〜{{ '%.1f' % payout[1] }}%{% else %}{{ unknown() }}{% endif %}</div></div>
+            <div class="hero-stat"><div class="text-[11px] opacity-60">天井</div>
+                <div class="font-mono font-bold text-lg">{% if m.ceiling and not is_unknown(m.ceiling.games) %}{{ m.ceiling.games.value }}G+α{% else %}{{ unknown() }}{% endif %}</div></div>
+            <div class="hero-stat"><div class="text-[11px] opacity-60">純増</div>
+                <div class="font-mono font-bold text-lg">{% if not is_unknown(m.basic.net_gain_per_game) %}約{{ m.basic.net_gain_per_game.value }}枚/G{% else %}{{ unknown() }}{% endif %}</div></div>
+            <div class="hero-stat"><div class="text-[11px] opacity-60">導入日</div>
+                <div class="font-mono font-bold text-lg">{{ fmt_date(m.basic.release_date) or unknown() }}</div></div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-4">
+            <form method="post" action="{{ url_for('machine_info.import_judge', machine_id=m.id) }}"
+                  {% if judge_row %}onsubmit="return confirm('判別スペック「{{ m.name }}」をこのJSONの内容で上書きします。判別スペック管理で手直しした値は消えます。よろしいですか？');"{% endif %}>
+                <button type="submit" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">
+                    🧪 {% if judge_row %}判別スペックを更新{% else %}判別スペックに取り込む{% endif %}
+                </button>
+            </form>
+            {% if judge_row %}
+            <a href="{{ url_for('judge.index', machine_name=m.name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">🎲 この機種で判別する</a>
+            <span class="text-[11px] opacity-50">判別スペック最終更新 {{ judge_row['updated_at'] }}</span>
+            {% endif %}
+        </div>
+        <p class="text-[11px] opacity-50 mt-3">情報更新日 {{ m.updated_at }}</p>
+    </div>
+</div>
+
+{# ---- スマホ用の目次(横スクロール) ---- #}
+<nav class="toc-sticky xl:hidden sticky z-20 bg-zinc-100/90 backdrop-blur border-b border-gray-200" aria-label="目次">
+    <div class="toc-chips page-container flex gap-1.5 overflow-x-auto py-2">
+        {% for id, label in toc %}
+        <a href="#{{ id }}" class="shrink-0 text-xs px-3 py-1 rounded-full border border-gray-200 bg-white text-gray-600">{{ label }}</a>
+        {% endfor %}
+    </div>
+</nav>
+
+<div class="page-container py-4 md:py-6 xl:grid xl:grid-cols-[1fr_13rem] xl:gap-6">
+<div class="stack min-w-0">
+
+    {% if problems %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+        <strong>JSONに不備があります</strong>（machine_data/{{ m.id }}.json）
+        <ul class="list-disc pl-5 mt-1">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% call section('basic', '基本情報') %}
+        {% if m.basic.summary %}<p class="text-sm text-gray-700 mb-3">{{ m.basic.summary }}</p>{% endif %}
+        {% set q = m.basic.games_per_50_coins %}{% set ng = m.basic.net_gain_per_game %}
+        <table class="kv w-full"><tbody>
+            <tr><th>メーカー</th><td>{{ val(m.basic.maker) }}</td></tr>
+            <tr><th>導入日</th><td>{{ fmt_date(m.basic.release_date) or unknown(m.basic.release_date) }}</td></tr>
+            <tr><th>区分</th><td>{{ val(m.basic.category) }}</td></tr>
+            <tr><th>タイプ</th><td>{{ val(m.basic.type) }}</td></tr>
+            <tr><th>型式名</th><td>{{ val(m.basic.model_name) }}</td></tr>
+            <tr><th>検定番号</th><td>{{ val(m.basic.certification_no) }}</td></tr>
+            <tr><th>50枚あたり</th><td>{% if is_unknown(q) %}{{ unknown(q) }}{% else %}約{{ q.value }}{{ q.unit }} <span class="text-xs text-gray-400">{{ q.note }}</span>{% endif %}</td></tr>
+            <tr><th>純増</th><td>{% if is_unknown(ng) %}{{ unknown(ng) }}{% else %}約{{ ng.value }}{{ ng.unit }}/G <span class="text-xs text-gray-400">{{ ng.note }}</span>{% endif %}</td></tr>
+            <tr><th>搭載設定</th><td>{% for s in settings %}設定{{ s }}{% if not loop.last %}・{% endif %}{% endfor %}</td></tr>
+        </tbody></table>
+        {% if m.basic.features %}
+        <div class="flex flex-wrap gap-1.5 mt-3">{% for t in m.basic.features %}<span class="chip">{{ t }}</span>{% endfor %}</div>
+        {% endif %}
+        {% if m.settings.note %}<p class="panel text-xs text-gray-600 mt-3">{{ m.settings.note }}</p>{% endif %}
+        {{ cite(((m.basic.source_ids or []) + (m.settings.source_ids or [])) | unique | list) }}
+    {% endcall %}
+
+    {% call section('spec', '設定別スペック（機械割・初当り）') %}
+        {% if m.spec and m.spec.rows %}{{ setting_table(m.spec.rows) }}{{ cite(m.spec.source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('features', 'AT・CZ・ボーナス') %}
+        {% set f = m.features or {} %}
+        {% for key, label in [('cz', 'CZ'), ('bonus', 'ボーナス'), ('at', 'AT・ST・特化ゾーン')] if f[key] %}
+        <h3 class="font-bold text-sm text-gray-900 {% if not loop.first %}mt-5{% endif %} mb-2">{{ label }}</h3>
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{% for x in f[key] %}{{ feature_card(x) }}{% endfor %}</div>
+        {% else %}{{ unknown({'status': '情報確認中'}) }}
+        {% endfor %}
+    {% endcall %}
+
+    {% call section('ceiling', '天井') %}
+        {% set c = m.ceiling %}
+        {% if c %}
+        <table class="kv w-full"><tbody>
+            <tr><th>天井</th><td class="font-bold">{% if is_unknown(c.games) %}{{ unknown(c.games) }}{% else %}{{ c.games.text }}{% endif %}</td></tr>
+            <tr><th>設定変更後</th><td class="font-bold">{% if is_unknown(c.games_after_reset) %}{{ unknown(c.games_after_reset) }}{% else %}{{ c.games_after_reset.text }}{% endif %}</td></tr>
+            <tr><th>恩恵</th><td>{{ val(c.benefit) }}</td></tr>
+        </tbody></table>
+        {% if c.notes %}<ul class="info-list text-sm mt-2">{% for n in c.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        {{ cite(c.source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+        <p class="hint">期待値計算に使う天井は「機種スペック・一覧」の値です。ここは出典と照らし合わせるための表示です。</p>
+    {% endcall %}
+
+    {% call section('zones', 'ゾーン') %}
+        {% if m.zones and m.zones['items'] %}
+        <ul class="flex flex-col gap-2">
+            {% for z in m.zones['items'] %}
+            <li class="flex items-center gap-3 text-sm">
+                <span class="shrink-0 min-w-[4.5rem] text-center font-mono font-extrabold rounded-md px-2 py-1" style="color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, #fff)">{{ z.games }}</span>
+                <span>{{ z.note }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if m.zones.notes %}<ul class="info-list text-sm mt-3">{% for n in m.zones.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        {{ cite(m.zones.source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('quit', 'やめどき') %}{{ items_list(m.quit_timing) }}{% endcall %}
+    {% call section('reset', '朝一・リセット') %}{{ items_list(m.reset) }}{% endcall %}
+    {% call section('favorable', '有利区間') %}{{ items_list(m.favorable_zone) }}{% endcall %}
+
+    {% call section('koyaku', '小役確率') %}
+        {% set p = m.probabilities %}
+        {% if p and p.koyaku %}
+        {% set common_rows, per_setting = split_by_setting(p.koyaku) %}
+        {% if common_rows %}
+        <table class="kv w-full"><thead><tr><th class="text-xs">小役</th><th class="text-xs text-right">確率（全設定共通）</th></tr></thead><tbody>
+            {% for k in common_rows %}<tr><th>{{ k.label }}</th><td class="text-right font-mono font-bold">{{ num(k.value, k.format) }}</td></tr>{% endfor %}
+        </tbody></table>
+        {% endif %}
+        {% if per_setting %}{{ setting_table(per_setting) }}{% endif %}
+        {% if p.note %}<p class="panel text-xs text-gray-600 mt-3">{{ p.note }}</p>{% endif %}
+        {{ cite(p.source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('setting-diff', '設定差') %}
+        {% for p in est.probabilities or [] %}
+        <h3 class="font-bold text-sm text-gray-900 mb-2 {% if not loop.first %}mt-5{% endif %}">{{ p.label }}{% if p.judge == false %} <span class="chip">判別には使わない</span>{% endif %}</h3>
+        {{ setting_table([{'label': '確率', 'values': p['values']}], 'fraction') }}
+        {% if p.weight_note %}<p class="hint">{{ p.weight_note }}</p>{% endif %}
+        {{ cite(p.source_ids) }}
+        {% endfor %}
+        {% for r in est.ratios or [] %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1 mt-5">{{ r.label }}{% if r.judge == false %} <span class="chip">判別には使わない</span>{% endif %}</h3>
+        {% if r.observe %}<p class="text-xs text-gray-500 mb-2">見る所: {{ r.observe }}</p>{% endif %}
+        {{ setting_table(r.outcomes, 'percent') }}
+        {{ cite(r.source_ids) }}
+        {% endfor %}
+        {% if not est.probabilities and not est.ratios %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('hints', '設定示唆') %}
+        {% if est.hints %}
+        {% for cat, rows in est.hints | groupby('category') %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1 {% if not loop.first %}mt-4{% endif %}">{{ cat }}</h3>
+        <table class="kv w-full"><tbody>
+            {% for h in rows %}
+            <tr><th class="!text-gray-900">{{ h.pattern }}</th>
+                <td><span class="badge-lv lv-{{ 'top' if h.exact_setting else h.level }}">{{ h.meaning }}</span></td></tr>
+            {% endfor %}
+        </tbody></table>
+        {% endfor %}
+        {% if est.hints_note %}<p class="panel text-xs text-gray-600 mt-3">{{ est.hints_note }}</p>{% endif %}
+        {{ cite(est.hints_source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('effects', '演出') %}
+        {% if m.effects and m.effects['items'] %}
+        <div class="grid gap-3 sm:grid-cols-2">
+            {% for e in m.effects['items'] %}
+            <article class="panel">
+                <h4 class="font-bold text-gray-900 mb-1">{{ e.name }}</h4>
+                <table class="kv w-full"><tbody>
+                    {% for a, b in e.rows %}<tr><th class="!text-gray-900 !py-1">{{ a }}</th><td class="!py-1">{{ b }}</td></tr>{% endfor %}
+                </tbody></table>
+            </article>
+            {% endfor %}
+        </div>
+        {{ cite(m.effects.source_ids) }}
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
+    {% endcall %}
+
+    {% call section('estimation', '設定判別ポイント') %}
+        {% if est.judge_exclude and est.judge_exclude.settings %}
+        <div class="panel text-sm mb-4">
+            <strong>判別では{% for s in est.judge_exclude.settings %}設定{{ s }}{% if not loop.last %}・{% endif %}{% endfor %}を候補から外します。</strong>
+            <p class="text-xs text-gray-600 mt-1">{{ est.judge_exclude.reason }}</p>
+        </div>
+        {% endif %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1">カウントする項目</h3>
+        <ul class="info-list text-sm">
+            {% for p in est.probabilities or [] if p.judge != false %}<li><strong>{{ p.label }}</strong> — {{ p.observe }}</li>{% endfor %}
+            {% for r in est.ratios or [] if r.judge != false %}<li><strong>{{ r.label }}</strong> — {{ r.observe }}</li>{% endfor %}
+            {% if est.hints %}<li><strong>設定示唆</strong> — {{ est.hints | map(attribute='category') | unique | join('・') }}</li>{% endif %}
+        </ul>
+        {% if est.observations %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1 mt-5">実戦値ベースの傾向</h3>
+        {% for o in est.observations %}
+        <div class="border-t border-dashed border-gray-200 py-2">
+            <span class="badge-lv {{ 'lv-confirm' if o.official else 'lv-unofficial' }}">{{ '公式' if o.official else '非公式・実戦値' }}</span>
+            <strong class="text-sm">{{ o.label }}</strong>
+            <p class="text-sm text-gray-700 mt-1">{{ o.detail }}</p>
+            {{ cite(o.source_ids) }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if est.pending %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1 mt-5">未確認の要素</h3>
+        <table class="kv w-full"><tbody>
+            {% for p in est.pending %}<tr><th>{{ p.label }}</th><td>{{ unknown({'status': p.status}) }} <span class="text-xs text-gray-500">{{ p.note }}</span></td></tr>{% endfor %}
+        </tbody></table>
+        {% endif %}
+        <p class="hint mt-3">「判別スペックに取り込む」で、上の設定差・確定系の示唆が設定判別にそのまま使えます（非公式の傾向と「高設定示唆」のような弱い示唆は取り込みません）。</p>
+    {% endcall %}
+
+    {% call section('practical', '実戦で重要なポイント') %}{{ items_list(m.practical_points) }}{% endcall %}
+    {% call section('cautions', '注意事項') %}{{ items_list(m.cautions) }}{% endcall %}
+
+    {% call section('sources', '出典・更新日') %}
+        <ol class="list-decimal pl-5 text-sm">
+            {% for s in m.sources %}
+            <li id="src-{{ s.id }}" class="my-1.5 scroll-mt-20">
+                {% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener" class="text-blue-600 underline">{{ s.name }}</a>{% else %}{{ s.name }}{% endif %}
+                <span class="block text-xs text-gray-400">確認日 {{ s.checked_at }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        <p class="text-sm mt-3">このページの情報更新日: <strong>{{ m.updated_at }}</strong></p>
+    {% endcall %}
+
+    {{ back_link(url_for('machine_info.index'), "機種情報の一覧に戻る") }}
+</div>
+
+{# ---- 広い画面用の目次(追従)。サイドバーと並ぶと表が窮屈になるので xl 以上だけ ---- #}
+<aside class="hidden xl:block">
+    <nav class="toc sticky" style="top: 4.5rem" aria-label="目次">
+        <p class="text-xs font-bold text-gray-400 mb-1 tracking-widest">目次</p>
+        {% for id, label in toc %}<a href="#{{ id }}">{{ label }}</a>{% endfor %}
+    </nav>
+</aside>
+</div>
+
+<script>
+  // 表示中のセクションを目次でハイライトする
+  (function () {
+    var links = document.querySelectorAll('.toc a, .toc-chips a');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) {
+          var on = a.hash === '#' + e.target.id;
+          a.classList.toggle('active', on);
+          if (on && a.closest('.toc-chips')) a.scrollIntoView({ block: 'nearest', inline: 'center' });
+        });
+      });
+    }, { rootMargin: '-25% 0px -65% 0px' });
+    document.querySelectorAll('.info-section').forEach(function (s) { io.observe(s); });
+  })();
+</script>
+{# </main> は base.html 側 #}
+{% endblock %}

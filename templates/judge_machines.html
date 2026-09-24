@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state, icon_action, back_link %}
+
+{% block title %}判別スペック管理{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">🧪</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">判別スペック管理</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="hint mt-0 flex-1">
+            設定判別に使う数値を機種ごとに登録します。ここに入れた確率がそのまま判定結果になるため、
+            公表値・解析値と一致しているかを必ず確認してください。
+        </p>
+        <a href="{{ url_for('judge.machine_new') }}" class="btn btn-primary btn-sm shrink-0">＋ 機種を追加</a>
+    </div>
+
+    {% if machines %}
+    <section class="card card-body overflow-x-auto">
+        <table class="w-full text-sm whitespace-nowrap">
+            <thead>
+                <tr class="text-left text-xs text-gray-400 border-b border-gray-200">
+                    <th class="py-2 pr-3">機種名</th>
+                    <th class="py-2 pr-3">メーカー</th>
+                    <th class="py-2 pr-3">判別要素</th>
+                    <th class="py-2 pr-3">選択肢型</th>
+                    <th class="py-2 pr-3">確定演出</th>
+                    <th class="py-2 pr-3">機械割</th>
+                    <th class="py-2"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in machines %}
+                <tr class="border-b border-gray-100 last:border-0">
+                    <td class="py-2.5 pr-3 font-bold text-gray-900">{{ m['name'] }}</td>
+                    <td class="py-2.5 pr-3 text-gray-500">{{ m['maker'] or '-' }}</td>
+                    <td class="py-2.5 pr-3 font-mono">{{ m['judge_count'] or '-' }}</td>
+                    <td class="py-2.5 pr-3 font-mono">{{ m['group_count'] or '-' }}</td>
+                    <td class="py-2.5 pr-3 font-mono">{{ m['confirm_count'] or '-' }}</td>
+                    <td class="py-2.5 pr-3 text-gray-500">
+                        {% if m['payout1'] is not none and m['payout6'] is not none %}
+                        {{ m['payout1'] }}〜{{ m['payout6'] }}%
+                        {% else %}<span class="text-amber-600">未登録</span>{% endif %}
+                    </td>
+                    <td class="py-2.5">
+                        <div class="flex flex-wrap items-center gap-1.5 justify-end">
+                            {{ icon_action(url_for('judge.index', machine_name=m['name']), "🎲", "判別する", "primary") }}
+                            {{ icon_action(url_for('judge.machine_edit', machine_id=m['id']), "✏️", "編集") }}
+                            <form method="post" action="{{ url_for('judge.machine_delete', machine_id=m['id']) }}"
+                                  onsubmit="return confirm('「{{ m['name'] }}」の判別スペックを削除しますか？判別要素・選択肢・確定演出もまとめて消えます。');">
+                                <button type="submit" class="btn btn-sm btn-ghost gap-1 text-xs text-red-600">🗑 削除</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% else %}
+    {{ empty_state("🧪", "まだ判別スペックが登録されていません。「＋ 機種を追加」から、小役やボーナスの設定別確率を登録してください。") }}
+    {% endif %}
+
+    <div class="panel text-sm text-gray-600 leading-relaxed">
+        <strong>精度を決めるのはアルゴリズムではなく、どの要素を登録するかです。</strong><br>
+        分母の大きい要素（ボーナス等）は1回の成立で分布が大きく動くため強く見えますが、成立回数が少ないため
+        1日で得られる合計の情報量では小役に及びません。最も効くのは<strong>終了画面・トロフィーのような選択肢型</strong>で、
+        数回の観測で設定1と6を見分けられます。登録画面では要素ごとの収束目安が表示されるので、
+        「ノイズになりやすい」と出た要素は無理に使わないでください。
+    </div>
+
+    {{ back_link(url_for('judge.index'), "設定判別に戻る") }}
+
+</div>
+</main>
+{% endblock %}

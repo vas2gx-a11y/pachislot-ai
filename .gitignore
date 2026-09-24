@@ -1,0 +1,3 @@
+# 設定判別の機種スペック。ローカルで自動生成されるSQLiteなのでコミットしない
+# (置き場所は判別DB既定の data/judge.db。JUDGE_DB_PATH で変更できる)
+data/judge.db

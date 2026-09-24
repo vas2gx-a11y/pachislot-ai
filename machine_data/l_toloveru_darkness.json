@@ -1,0 +1,323 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_toloveru_darkness",
+  "name": "L ToLOVEるダークネス",
+  "aliases": ["スマスロ ToLOVEるダークネス", "スマスロ とらぶるダークネス"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#e0457b" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L ToLOVEるダークネス」", "url": "https://www.p-world.co.jp/machine/database/10038", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L ToLOVEるダークネス」", "url": "https://p-town.dmm.com/machines/4571", "checked_at": "2026-09-24" },
+    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「スマスロトラブルダークネスの設定差はこれを見ればOK！」(2025/02/28更新)", "url": "https://p-town.dmm.com/specials/3573", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "オリンピアエステート",
+    "release_date": "2024-06-03",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ST＋疑似ボーナス）",
+    "model_name": "LToLOVEるダークネスS6",
+    "certification_no": "430016",
+    "games_per_50_coins": { "value": 30, "unit": "G", "note": "約30G・全設定共通" },
+    "net_gain_per_game": { "value": 6.6, "unit": "枚", "note": "ボーナス中 約6.6枚/G" },
+    "features": ["コンプリート機能搭載（1日19,000枚で打ち止め）", "設定L搭載機", "実質5段階設定（設定2〜6）"],
+    "summary": "通常時はチャンス目でどきどきポイントを貯めてCZを目指し、ボーナス後のST「楽園ハーレム計画」で「とらぶるBONUS」をループさせるゲーム性。ヒロイン攻略で上位ST「ハーレムモード」を目指す。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["2", "3", "4", "5", "6"],
+    "note": "設定1は非搭載（設定2〜6の実質5段階）。設定L（ロング稼働用）の数値は調査中。",
+    "source_ids": ["pworld", "ptown_sp"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "2": 98.0, "3": 99.0, "4": 102.5, "5": 105.8, "6": 110.1 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り（メモリアルボーナス）", "format": "fraction", "values": { "2": 352.0, "3": 345.7, "4": 328.4, "5": 311.3, "6": 311.1 }, "highlight": true },
+      { "key": "cz_total", "label": "CZ合算", "format": "fraction", "values": { "2": 177.6, "3": 177.6, "4": 177.6, "5": 177.6, "6": 177.6 }, "note": "全設定共通" }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 16.7 },
+      { "key": "bell_no_navi", "label": "ナビなしベル合成", "format": "fraction", "value": 8.5 },
+      { "key": "chance_left", "label": "左チャンス目", "format": "fraction", "value": 32.0 },
+      { "key": "chance_center", "label": "中チャンス目", "format": "fraction", "value": 40.0 },
+      { "key": "chance_right", "label": "右チャンス目", "format": "fraction", "value": 68.0 },
+      { "key": "chance_left_center", "label": "左・中チャンス目", "format": "fraction", "value": 512.0 },
+      { "key": "chance_left_right", "label": "左・右チャンス目", "format": "fraction", "value": 512.0 },
+      { "key": "chance_center_right", "label": "中・右チャンス目", "format": "fraction", "value": 512.0 },
+      { "key": "harem_me", "label": "ハーレム目", "format": "fraction", "value": 5461.3 },
+      { "key": "chance_total", "label": "チャンス目合成", "format": "fraction", "value": 13.0 }
+    ],
+    "note": "通常時の小役確率はすべて設定差なし（全設定共通）。",
+    "source_ids": ["pworld"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "きゅんきゅんバルーン",
+        "facts": [
+          { "label": "契機", "value": "左チャンス目" },
+          { "label": "出現率", "value": "1/417.9" },
+          { "label": "継続", "value": "6G+α" },
+          { "label": "ボーナス期待度", "value": "約33%" }
+        ],
+        "description": "小役成立で風船の色が昇格し、残りゲーム数が1G加算される。最終ゲームで風船色に応じた7を狙えカットイン、7揃いでボーナス濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "ときめきスイート",
+        "facts": [
+          { "label": "契機", "value": "中チャンス目" },
+          { "label": "出現率", "value": "1/528.6" },
+          { "label": "継続", "value": "1セット5G（小役成立でリセット）" },
+          { "label": "ボーナス期待度", "value": "約40%" }
+        ],
+        "description": "5G間小役非成立でジャッジ演出へ。小役成立ごとにデート場所（期待度）がアップ。",
+        "caution": "出現率はP-WORLDでは1/417.9、DMMぱちタウンでは1/528.6と記載が異なる。CZ合算1/177.6と整合するのは1/528.6のため、こちらを採用。",
+        "source_ids": ["ptown", "pworld"]
+      },
+      {
+        "name": "ぷっちゅんちゃれんじ",
+        "facts": [
+          { "label": "契機", "value": "右チャンス目" },
+          { "label": "出現率", "value": "1/742.4" },
+          { "label": "継続", "value": "7G" },
+          { "label": "ボーナス期待度", "value": "約70%" }
+        ],
+        "description": "成立役に応じて毎ゲーム成功抽選。タイマーやセリフが赤なら期待度アップ、ぷっちゅん発生でボーナス濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "メモリアルボーナス",
+        "facts": [
+          { "label": "獲得", "value": "約100枚" },
+          { "label": "純増", "value": "約6.6枚/G" },
+          { "label": "ST突入率", "value": "100%" }
+        ],
+        "description": "主な初当り。CZ成功・規定ゲーム数消化で当選。消化中は発明品の獲得抽選あり。終了後はST「楽園ハーレム計画」へ。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "ToLOVEるEPISODE",
+        "facts": [
+          { "label": "継続", "value": "20G" },
+          { "label": "純増", "value": "約6.6枚/G" },
+          { "label": "恩恵", "value": "ST＋Vストック1個以上濃厚" }
+        ],
+        "description": "初当り時の一部で突入。ヤミエピソードなら特化ゾーン「ダークネス計画」へ。トランスポイント100pt到達時の次回初当りでも突入。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "とらぶるBONUS",
+        "facts": [
+          { "label": "獲得", "value": "100〜1,600枚" },
+          { "label": "平均（ST中）", "value": "約375.2枚" },
+          { "label": "平均（ハーレムモード中）", "value": "約650.0枚" }
+        ],
+        "description": "ST中の当選から突入。開始時「プレゼントちゃんす」で枚数決定ゾーン（ばいんATTACK／ぺろぺろちゃんす／愛すぷRUSH／ウィスパー演出）が選ばれる。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "楽園ハーレム計画（ST）",
+        "facts": [
+          { "label": "継続", "value": "10G+α" },
+          { "label": "継続期待度", "value": "約52%" }
+        ],
+        "description": "ボーナス高確率状態。ベル・チャンス目でボーナス抽選。ヒロインを3人攻略でハーレムモードの期待高、6人攻略でハーレムモード濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ハーレムモード（上位ST）",
+        "facts": [
+          { "label": "継続", "value": "10G+α" },
+          { "label": "継続期待度", "value": "約80%" },
+          { "label": "期待枚数", "value": "約3,000枚以上" }
+        ],
+        "description": "ボーナス平均約650枚×約80%ループ。期待枚数は楽園ハーレム計画突入時から一連の増加区間終了までの平均。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ダークネス計画（特化ゾーン）",
+        "facts": [
+          { "label": "継続", "value": "5G" },
+          { "label": "契機", "value": "ヤミエピソード" }
+        ],
+        "description": "毎ゲームSTゲーム数を上乗せ抽選。終了後は45Gのエピソードボーナスへ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "もぐもぐたい焼きタイム",
+        "facts": [
+          { "label": "継続", "value": "32G" },
+          { "label": "契機", "value": "エンディング到達後など" }
+        ],
+        "description": "発明品を高確率で獲得。終了後は平均650枚のとらぶるBONUS→ハーレムモード再突入。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 999, "text": "通常時（ST間）999G+α" },
+    "games_after_reset": { "value": 650, "text": "設定変更後 650G+α" },
+    "benefit": "ボーナス当選＝ST（楽園ハーレム計画）突入濃厚",
+    "notes": ["設定変更時は内部的に通常ゲーム数がランダムで加算される"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "250G", "note": "規定ゲーム数でのボーナス当選に期待" },
+      { "games": "650G", "note": "規定ゲーム数でのボーナス当選に期待" },
+      { "games": "999G", "note": "天井" }
+    ],
+    "notes": ["100G・300G・500G・700Gでは発明品チャンスが必ず発生（ボーナス当選ではない）"],
+    "source_ids": ["pworld", "ptown_sp"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "ST（楽園計画）終了後が基本のやめどき",
+      "ST終了後200G以内の引き戻しはハーレムモード突入期待度がアップするため、状況次第で200G付近まで続行も可"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "reset": {
+    "items": [
+      "天井が650G+αに短縮",
+      "トランスポイントを再抽選",
+      "どきどきポイントを再抽選（60%以上で半分以上貯まった状態から開始）",
+      "通常ゲーム数がランダムに加算される"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": [
+      "エンディング到達後は有利区間がリセットされ「もぐもぐたい焼きタイム」へ突入"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "初当り（メモリアルボーナス）確率",
+        "observe": "通常時ゲーム数に対する初当り回数",
+        "denom_base": "normal",
+        "values": { "2": 352.0, "3": 345.7, "4": 328.4, "5": 311.3, "6": 311.1 },
+        "weight_note": "設定差はあるが大きくない",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "harem_zone_select",
+        "label": "ハーレムモード中 枚数決定ゾーン振り分け",
+        "observe": "ハーレムモード中のとらぶるBONUS当選時に選ばれたゾーン",
+        "outcomes": [
+          { "key": "aisupu_rush", "label": "愛すぷRUSH", "values": { "2": 96.2, "3": 95.7, "4": 93.3, "5": 92.2, "6": 87.4 } },
+          { "key": "whisper", "label": "ウィスパー演出", "values": { "2": 3.1, "3": 3.6, "4": 6.0, "5": 7.1, "6": 11.9 }, "highlight": true },
+          { "key": "episode", "label": "ToLOVEるEPISODE", "values": { "2": 0.7, "3": 0.7, "4": 0.7, "5": 0.7, "6": 0.7 }, "note": "表では設定2のみ記載・他設定は同セル結合のため全設定共通と解釈" }
+        ],
+        "source_ids": ["pworld", "ptown_sp"]
+      }
+    ],
+    "hints": [
+      { "category": "ST終了画面", "pattern": "各ヒロイン単体", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "ST終了画面", "pattern": "美柑", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ST終了画面", "pattern": "ネメシス／吉スタンプ", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ヤミ&美柑／良スタンプ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ララ&モモ&ナナ／優スタンプ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ヒロイン集合／極スタンプ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "555枚OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown", "ptown_sp"],
+    "hints_note": "ST終了画面の表記はP-WORLD（キャラ名）とDMMぱちタウン（スタンプ名）で異なる。示唆内容の段階が一致するため同じ行にまとめている。",
+    "observations": [
+      {
+        "label": "250G到達時の当選",
+        "detail": "高設定ほどゲーム数契機で当たりやすいとされる。実戦値では設定5・6で250G当選が複数回あり（設定2は0回）。",
+        "official": false,
+        "source_ids": ["ptown_sp", "ptown"]
+      },
+      {
+        "label": "CZ突入率",
+        "detail": "実戦値では高設定のほうがCZ出現率が高かったとの記述あり。公式な設定差の数値は未公表。",
+        "official": false,
+        "source_ids": ["ptown_sp"]
+      }
+    ],
+    "pending": [
+      { "label": "隠れ凪のセリフ示唆", "status": "情報確認中", "note": "1000Gごとのセリフ示唆に言及する記事はあるが、今回確認した出典では内容を確認できていない。" },
+      { "label": "設定Lの数値", "status": "調査中", "note": "P-WORLDで「調査中」表記。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "会話演出の文字色",
+        "rows": [["ピンク", "左チャンス目が140pt以上濃厚"], ["緑", "中チャンス目が140pt以上濃厚"], ["紫", "右チャンス目が140pt以上濃厚"]]
+      },
+      {
+        "name": "美柑看板演出",
+        "rows": [["怪", "当該チャンス目のポイント蓄積量が中〜大"], ["近", "当該チャンス目が140pt以上濃厚"]]
+      },
+      {
+        "name": "アイキャッチ",
+        "rows": [
+          ["ララ&春菜", "左or中チャンス目のポイント蓄積量が中〜大"],
+          ["モモ", "右チャンス目のポイント蓄積量が中〜大"],
+          ["美柑&セリーヌ", "左or中チャンス目が140pt以上濃厚"],
+          ["芽亜&ヤミ", "右チャンス目が140pt以上濃厚"],
+          ["ティアーユ&ヤミ", "100G以内の規定ゲーム数当選の期待大"],
+          ["セフィ&ララ&ナナ&モモ", "150G以内の規定ゲーム数当選濃厚"],
+          ["白雪姫美柑", "トランスポイントMAX濃厚"]
+        ]
+      },
+      {
+        "name": "通常時ステージ",
+        "rows": [["彩南高校・彩南町", "基本ステージ"], ["夕暮れ", "高確示唆"], ["夜更け", "超高確示唆"], ["おでかけ", "CZ前兆示唆"], ["追憶の闇", "規定ゲーム数前兆示唆"]]
+      }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "チャンス目（約1/13）でどきどきポイントを貯め、150ptで対応CZへ。ポイントはST・CZではクリアされない",
+      "ST終了後や100G消化ごとに必ず高確へ移行する",
+      "ハーレムモード中のウィスパー演出（平均1,200枚）の頻度が最も分かりやすい設定差",
+      "ST終了画面・獲得枚数表示は必ず確認。確定系が出れば粘る根拠になる",
+      "設定変更後は天井650G+α＋ゲーム数加算があるため、朝一は早い初当りに期待できる"
+    ],
+    "source_ids": ["pworld", "ptown", "ptown_sp"]
+  },
+
+  "cautions": {
+    "items": [
+      "設定1は非搭載（最低設定は設定2・機械割98.0%）",
+      "初当り確率の設定差は小さく、単独での判別は難しい",
+      "設定Lの数値は調査中",
+      "コンプリート機能（差枚+19,000枚で打ち止め）搭載",
+      "250G・CZ突入率に関する設定差は実戦値ベースで、公式な数値ではない"
+    ],
+    "source_ids": ["pworld", "ptown_sp"]
+  }
+}

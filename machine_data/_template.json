@@ -1,0 +1,130 @@
+{
+  "$schema": "./schema.json",
+  "id": "machine_id",
+  "name": "機種名",
+  "aliases": [],
+  "updated_at": "YYYY-MM-DD",
+  "theme": {
+    "accent": "#d6336c"
+  },
+  "sources": [
+    {
+      "id": "src1",
+      "name": "出典名",
+      "url": "",
+      "checked_at": "YYYY-MM-DD"
+    }
+  ],
+  "basic": {
+    "maker": null,
+    "release_date": null,
+    "category": null,
+    "type": null,
+    "model_name": null,
+    "certification_no": null,
+    "games_per_50_coins": null,
+    "net_gain_per_game": null,
+    "features": [],
+    "summary": "",
+    "source_ids": []
+  },
+  "settings": {
+    "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "note": "",
+    "source_ids": []
+  },
+  "spec": {
+    "rows": [
+      {
+        "key": "payout",
+        "label": "機械割",
+        "format": "percent",
+        "values": {
+          "1": null,
+          "2": null,
+          "3": null,
+          "4": null,
+          "5": null,
+          "6": null
+        },
+        "highlight": true
+      },
+      {
+        "key": "first_hit",
+        "label": "初当り",
+        "format": "fraction",
+        "values": {
+          "1": null,
+          "2": null,
+          "3": null,
+          "4": null,
+          "5": null,
+          "6": null
+        },
+        "highlight": true
+      }
+    ],
+    "source_ids": []
+  },
+  "probabilities": {
+    "koyaku": [],
+    "note": "",
+    "source_ids": []
+  },
+  "features": {
+    "cz": [],
+    "bonus": [],
+    "at": []
+  },
+  "ceiling": {
+    "games": null,
+    "games_after_reset": null,
+    "benefit": null,
+    "notes": [],
+    "source_ids": []
+  },
+  "zones": {
+    "items": [],
+    "notes": [],
+    "source_ids": []
+  },
+  "quit_timing": {
+    "items": [],
+    "source_ids": []
+  },
+  "reset": {
+    "items": [],
+    "source_ids": []
+  },
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+  "setting_estimation": {
+    "probabilities": [],
+    "ratios": [],
+    "hints": [],
+    "hints_source_ids": [],
+    "observations": [],
+    "pending": []
+  },
+  "effects": {
+    "items": [],
+    "source_ids": []
+  },
+  "practical_points": {
+    "items": [],
+    "source_ids": []
+  },
+  "cautions": {
+    "items": [],
+    "source_ids": []
+  }
+}

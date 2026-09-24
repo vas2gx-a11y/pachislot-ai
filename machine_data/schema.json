@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "machine.schema.json",
+  "title": "パチスロ機種データ",
+  "description": "1機種＝1ファイル。数値が不明な項目は null（＝未公表）か {\"status\": \"情報確認中\"} を入れる。推測値は入れない。",
+  "type": "object",
+  "required": ["id", "name", "updated_at", "sources", "basic", "settings"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9_]+$", "description": "ファイル名・出力HTML名と一致させる" },
+    "name": { "type": "string" },
+    "aliases": { "type": "array", "items": { "type": "string" } },
+    "updated_at": { "$ref": "#/$defs/date" },
+    "theme": { "type": "object", "properties": { "accent": { "type": "string", "description": "ページのアクセント色 (#rrggbb)" } } },
+
+    "sources": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["id", "name", "checked_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "checked_at": { "$ref": "#/$defs/date" }
+        }
+      }
+    },
+
+    "basic": {
+      "type": "object", "required": ["maker"],
+      "properties": {
+        "maker": { "$ref": "#/$defs/text" },
+        "release_date": { "oneOf": [{ "$ref": "#/$defs/date" }, { "$ref": "#/$defs/unknown" }] },
+        "category": { "$ref": "#/$defs/text" },
+        "type": { "$ref": "#/$defs/text" },
+        "model_name": { "$ref": "#/$defs/text" },
+        "certification_no": { "$ref": "#/$defs/text" },
+        "games_per_50_coins": { "$ref": "#/$defs/quantity" },
+        "net_gain_per_game": { "$ref": "#/$defs/quantity" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "summary": { "type": "string" },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+
+    "settings": {
+      "type": "object", "required": ["list"],
+      "properties": {
+        "list": { "type": "array", "items": { "type": "string" }, "description": "搭載設定。例: [\"1\",\"2\",\"3\",\"4\",\"5\",\"6\"]" },
+        "note": { "type": "string" },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+
+    "spec": {
+      "type": "object",
+      "properties": {
+        "rows": { "type": "array", "items": { "$ref": "#/$defs/setting_row" } },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+
+    "probabilities": {
+      "type": "object",
+      "properties": {
+        "koyaku": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["key", "label", "format"],
+            "properties": {
+              "key": { "type": "string" }, "label": { "type": "string" }, "format": { "$ref": "#/$defs/format" },
+              "value": { "$ref": "#/$defs/num_or_unknown", "description": "全設定共通の値" },
+              "values": { "$ref": "#/$defs/per_setting", "description": "設定差がある場合はこちら" }
+            }
+          }
+        },
+        "note": { "type": "string" },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+
+    "features": {
+      "type": "object", "description": "CZ / ボーナス / AT・ST",
+      "properties": {
+        "cz": { "type": "array", "items": { "$ref": "#/$defs/feature" } },
+        "bonus": { "type": "array", "items": { "$ref": "#/$defs/feature" } },
+        "at": { "type": "array", "items": { "$ref": "#/$defs/feature" } }
+      }
+    },
+
+    "ceiling": {
+      "type": "object",
+      "properties": {
+        "games": { "$ref": "#/$defs/games" },
+        "games_after_reset": { "$ref": "#/$defs/games" },
+        "benefit": { "$ref": "#/$defs/text" },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+    "zones": {
+      "type": "object",
+      "properties": {
+        "items": { "type": "array", "items": { "type": "object", "properties": { "games": { "type": "string" }, "note": { "type": "string" } } } },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+    "quit_timing": { "$ref": "#/$defs/list_section" },
+    "reset": { "$ref": "#/$defs/list_section" },
+    "favorable_zone": { "$ref": "#/$defs/list_section" },
+
+    "setting_estimation": {
+      "type": "object",
+      "description": "設定予測アプリが読む領域。文章ではなく数値で持つ",
+      "properties": {
+        "judge_exclude": {
+          "type": "object",
+          "description": "搭載はされているが判別では候補から外す設定（数値が調査中だが筐体の表示などで否定できる設定など）",
+          "properties": { "settings": { "type": "array", "items": { "type": "string" } }, "reason": { "type": "string" } }
+        },
+        "probabilities": {
+          "type": "array",
+          "description": "回数/試行数で観測できる確率。values は分母（1/x の x）",
+          "items": {
+            "type": "object", "required": ["key", "label", "values"],
+            "properties": {
+              "key": { "type": "string" }, "label": { "type": "string" },
+              "observe": { "type": "string", "description": "何を数えるか" },
+              "denom_base": { "enum": ["total", "normal"], "description": "母数。total=総回転数 / normal=通常時のみ(判別DBの denom_base と同じ意味)" },
+              "judge": { "type": "boolean", "description": "false なら表示のみで判別スペックには取り込まない（分母が不明確な要素など）" },
+              "values": { "$ref": "#/$defs/per_setting" },
+              "weight_note": { "type": "string" },
+              "source_ids": { "$ref": "#/$defs/source_ids" }
+            }
+          }
+        },
+        "ratios": {
+          "type": "array",
+          "description": "ある契機での振り分け。values は％",
+          "items": {
+            "type": "object", "required": ["key", "label", "outcomes"],
+            "properties": {
+              "key": { "type": "string" }, "label": { "type": "string" }, "observe": { "type": "string" },
+              "judge": { "type": "boolean", "description": "false なら表示のみで判別スペックには取り込まない" },
+              "outcomes": {
+                "type": "array",
+                "items": {
+                  "type": "object", "required": ["key", "label", "values"],
+                  "properties": {
+                    "key": { "type": "string" }, "label": { "type": "string" },
+                    "values": { "$ref": "#/$defs/per_setting" },
+                    "highlight": { "type": "boolean" }, "note": { "type": "string" }
+                  }
+                }
+              },
+              "source_ids": { "$ref": "#/$defs/source_ids" }
+            }
+          }
+        },
+        "hints": {
+          "type": "array",
+          "description": "設定示唆。min_setting=「○以上濃厚」、exact_setting=「○濃厚」",
+          "items": {
+            "type": "object", "required": ["category", "pattern", "meaning", "level"],
+            "properties": {
+              "category": { "type": "string" }, "pattern": { "type": "string" }, "meaning": { "type": "string" },
+              "min_setting": { "type": ["integer", "null"] },
+              "exact_setting": { "type": ["integer", "null"] },
+              "denied_settings": { "type": "array", "items": { "type": "integer" }, "description": "否定される設定" },
+              "level": { "enum": ["none", "weak", "strong", "confirm"] }
+            }
+          }
+        },
+        "hints_note": { "type": "string" },
+        "hints_source_ids": { "$ref": "#/$defs/source_ids" },
+        "observations": {
+          "type": "array",
+          "description": "実戦値など公式でない傾向。予測の重み付けには使わない前提",
+          "items": {
+            "type": "object", "required": ["label", "detail", "official"],
+            "properties": { "label": { "type": "string" }, "detail": { "type": "string" }, "official": { "type": "boolean" }, "source_ids": { "$ref": "#/$defs/source_ids" } }
+          }
+        },
+        "pending": {
+          "type": "array",
+          "description": "存在は分かっているが数値・内容が未確認の判別要素",
+          "items": {
+            "type": "object", "required": ["label", "status"],
+            "properties": { "label": { "type": "string" }, "status": { "enum": ["未公表", "情報確認中", "調査中"] }, "note": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "effects": {
+      "type": "object",
+      "properties": {
+        "items": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } } } } },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+    "practical_points": { "$ref": "#/$defs/list_section" },
+    "cautions": { "$ref": "#/$defs/list_section" }
+  },
+
+  "$defs": {
+    "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "unknown": {
+      "description": "null＝未公表。status を指定すると表示文言を変えられる",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "required": ["status"], "properties": { "status": { "enum": ["未公表", "情報確認中", "調査中"] }, "note": { "type": "string" } } }
+      ]
+    },
+    "text": { "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/unknown" }] },
+    "num_or_unknown": { "oneOf": [{ "type": "number" }, { "$ref": "#/$defs/unknown" }] },
+    "format": { "enum": ["fraction", "percent", "number"], "description": "fraction: 値は分母（352.0 → 1/352.0）" },
+    "per_setting": {
+      "type": "object",
+      "description": "キーは設定番号の文字列",
+      "additionalProperties": { "$ref": "#/$defs/num_or_unknown" }
+    },
+    "setting_row": {
+      "type": "object", "required": ["key", "label", "format", "values"],
+      "properties": {
+        "key": { "type": "string" }, "label": { "type": "string" }, "format": { "$ref": "#/$defs/format" },
+        "values": { "$ref": "#/$defs/per_setting" }, "highlight": { "type": "boolean" }, "note": { "type": "string" }
+      }
+    },
+    "quantity": {
+      "oneOf": [
+        { "type": "object", "required": ["value"], "properties": { "value": { "type": "number" }, "unit": { "type": "string" }, "note": { "type": "string" } } },
+        { "$ref": "#/$defs/unknown" }
+      ]
+    },
+    "games": {
+      "oneOf": [
+        { "type": "object", "required": ["text"], "properties": { "value": { "type": "number" }, "text": { "type": "string" } } },
+        { "$ref": "#/$defs/unknown" }
+      ]
+    },
+    "feature": {
+      "type": "object", "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "facts": { "type": "array", "items": { "type": "object", "properties": { "label": { "type": "string" }, "value": { "$ref": "#/$defs/text" } } } },
+        "description": { "type": "string" },
+        "caution": { "type": "string" },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+    "list_section": {
+      "type": "object",
+      "properties": { "items": { "type": "array", "items": { "type": "string" } }, "source_ids": { "$ref": "#/$defs/source_ids" } }
+    },
+    "source_ids": { "type": "array", "items": { "type": "string" }, "description": "sources[].id を参照" }
+  }
+}

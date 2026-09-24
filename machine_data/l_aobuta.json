@@ -1,0 +1,370 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_aobuta",
+  "name": "L青春ブタ野郎はバニーガール先輩の夢を見ない",
+  "aliases": ["スマスロ 青ブタ", "あおぶた"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#4f6bd8" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L青春ブタ野郎はバニーガール先輩の夢を見ない」", "url": "https://www.p-world.co.jp/machine/database/10527", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L青春ブタ野郎はバニーガール先輩の夢を見ない」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5064", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "オリンピア",
+    "release_date": "2026-09-07",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（完走型ST＋疑似ボーナス）",
+    "model_name": "L青春ブタ野郎L1",
+    "certification_no": "630379",
+    "games_per_50_coins": { "value": 31.5, "unit": "G", "note": "約31.5G" },
+    "net_gain_per_game": { "value": 8.0, "unit": "枚", "note": "ボーナス中 約8.0枚/G" },
+    "features": ["完走型ST「青ブタJUDGE」", "コンプリート機能搭載（1日19,000枚で打ち止め）", "設定1は下パネル消灯"],
+    "summary": "通常時は毎G貯まる「思春期ポイント」の規定pt到達やアオハルCHANCEからCZ「エピソードチャンス」を目指す。CZ成功で青春BONUS→ST「青ブタJUDGE」（最低4セット＝8G+α）へ。STは完走型で、成功するたびにボーナスをストックし、「(超)青春DREAM BURST」のヒロイン乗せで枚数が決まる。上位CZ「夢現JUDGEMENT」成功で上位ST「青春ブタ野郎は∞の夢を見る」へ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1の数値は調査中。設定1は下パネルが消灯するため、パネルが点灯していれば設定1は否定される。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": { "status": "調査中" }, "2": 98.1, "3": 99.3, "4": 105.3, "5": 108.4, "6": 110.3 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り（青春BONUS）", "format": "fraction", "values": { "1": { "status": "調査中" }, "2": 350.8, "3": 336.5, "4": 295.1, "5": 274.6, "6": 207.8 }, "highlight": true },
+      { "key": "cz", "label": "CZ「エピソードチャンス」", "format": "fraction", "values": { "1": { "status": "調査中" }, "2": 222.9, "3": { "status": "調査中" }, "4": { "status": "調査中" }, "5": { "status": "調査中" }, "6": { "status": "調査中" } }, "note": "設定2の数値のみ公表" }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay_up", "label": "右上がりリプレイ", "format": "fraction", "value": 10.8 },
+      { "key": "replay_low", "label": "下段リプレイ", "format": "fraction", "value": 385.5 },
+      { "key": "replay_mid", "label": "中段リプレイ", "format": "fraction", "value": 99.4 },
+      { "key": "replay_total", "label": "リプレイ合成", "format": "fraction", "value": 9.5 },
+      { "key": "bell_top", "label": "上段ベル", "format": "fraction", "value": 8.9 },
+      { "key": "bell_down", "label": "右下がりベル", "format": "fraction", "value": 15.2 },
+      { "key": "bell_total", "label": "ベル合成", "format": "fraction", "value": 5.6 },
+      { "key": "cherry", "label": "チェリー", "format": "fraction", "value": 66.9 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 99.4 },
+      { "key": "chance_a", "label": "チャンス目A", "format": "fraction", "value": 978.1 },
+      { "key": "chance_b", "label": "チャンス目B", "format": "fraction", "value": 250.1 },
+      { "key": "kansoku_normal", "label": "観測目（通常時）", "format": "fraction", "value": 50840.0 },
+      { "key": "kansoku_special", "label": "観測目合成（CZ・ST・ヒロイン上乗せ中）", "format": "fraction", "value": 595.8 },
+      { "key": "rare_total", "label": "レア小役合成（観測目を含む）", "format": "fraction", "value": 31.5 },
+      { "key": "koyaku_total", "label": "小役合成", "format": "fraction", "value": 3.2 }
+    ],
+    "note": "通常時の小役確率はすべて設定差なし（全設定共通）。観測目は通常時と特定状態で確率が異なる。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "エピソードチャンス",
+        "facts": [
+          { "label": "継続", "value": "16G+α" },
+          { "label": "出現率（設定2）", "value": "1/222.9" },
+          { "label": "成功期待度（設定2）", "value": "62.5%" },
+          { "label": "構成", "value": "前半10G＋後半6G+α" }
+        ],
+        "description": "前半エピソード区間で後半G数の上乗せ・ボーナスを抽選し、後半「青春JUDGEMENT」は全役でボーナス抽選。突入時のヒロインで対応役と期待度が変わり、フリーズで成功濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "夢現JUDGEMENT（上位CZ）",
+        "facts": [
+          { "label": "継続", "value": "16G+α" },
+          { "label": "成功期待度（設定2）", "value": "約53%" }
+        ],
+        "description": "ドリームコレクション21セット到達・CZ/STの「牧之原翔子」成功などから突入。成功でエピソードBONUS（300枚）を経て上位STへ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "アオハルCHANCE",
+        "facts": [
+          { "label": "契機", "value": "レア小役の一部・かえでスタンプMAX・咲太クエスト達成" },
+          { "label": "報酬", "value": "青春CHARGE 66.4% / ドリコレ 32.1% / CZ 1.3% / BONUS 0.1%" }
+        ],
+        "description": "報酬告知ゾーン。当該Gでレア小役が成立すれば報酬が1段階以上アップ。ドリームコレクションは平均142.4ptの思春期pt獲得特化ゾーン。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "青春BONUS",
+        "facts": [
+          { "label": "継続", "value": "ベルナビ5or25回" },
+          { "label": "純増", "value": "約8.0枚/G" }
+        ],
+        "description": "主な初当り。ジャッジポイント20ptでSTを1セット上乗せ。BAR揃いで次回ST開始時に「思春期症候群」発動。終了後はST「青ブタJUDGE」へ。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "(超)青春DREAM BURST",
+        "facts": [
+          { "label": "獲得", "value": "不定（ヒロイン乗せで決定）" },
+          { "label": "純増", "value": "約8.0枚/G" }
+        ],
+        "description": "STで成功したヒロインに応じた乗せ方で枚数を決定。白7揃いの「超」は上乗せ期待度がアップ（例: 梓川かえでは青7で平均約380枚、白7で約650枚）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "エピソードBONUS",
+        "facts": [
+          { "label": "獲得", "value": "300枚" },
+          { "label": "純増", "value": "約8.0枚/G" }
+        ],
+        "description": "上位CZ成功後・ロングフリーズ後に突入し、終了後は上位STへ。",
+        "source_ids": ["ptown", "pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "青ブタJUDGE（ST）",
+        "facts": [
+          { "label": "継続", "value": "最低4セット+α（1セット2G）" },
+          { "label": "継続率（設定2）", "value": "約60%" }
+        ],
+        "description": "完走型ST。1G目の成立役でジャッジ種別（ヒロイン約10%／PUSH約22%／リール約40%）を決め、2G目にボーナス抽選。成功するたびにストックし、残りセットも消化する。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "青春ブタ野郎は∞の夢を見る（上位ST）",
+        "facts": [
+          { "label": "継続", "value": "最低4セット+α（8G+α）" },
+          { "label": "継続率（設定2）", "value": "約80%" },
+          { "label": "期待枚数（設定2）", "value": "約3,100枚" }
+        ],
+        "description": "思春期症候群が必ず1個以上発動し、ボーナスはすべて白7（超青春DREAM BURST）。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "ロングフリーズ",
+        "facts": [
+          { "label": "確率", "value": "1/203360.2" },
+          { "label": "恩恵", "value": "エピソードBONUS＋上位ST" }
+        ],
+        "description": "通常時の観測目の約25%で発生。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 899, "text": "ボーナス間 899G+α" },
+    "games_after_reset": { "value": 699, "text": "設定変更後・ST駆け抜け後 699G+α" },
+    "benefit": "青春BONUSに当選",
+    "notes": [
+      "CZ間天井: 通常時560G+α消化 または 思春期ポイント1000pt到達でCZ当選",
+      "CZスルー天井: CZでボーナス非当選が6回続くと、7回目のCZでボーナス当選",
+      "ゲーム数はいずれも実ゲーム数"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "100pt", "note": "思春期ポイント。CZ期待度 約33%" },
+      { "games": "300pt", "note": "本前兆期待度 約30%（設定2）〜40%以上（設定4以上）。前兆後はリラックス移行25%" },
+      { "games": "400pt", "note": "前兆ステージ移行でCZ以上濃厚（移行率に設定差）" },
+      { "games": "600pt", "note": "前兆ステージ移行でCZ以上濃厚" },
+      { "games": "800pt", "note": "前兆ステージ移行でCZ以上濃厚" },
+      { "games": "1000pt", "note": "天井（CZ以上濃厚）" }
+    ],
+    "notes": ["百の位が奇数のptと200ptは必ず前兆に移行する。200ptを除く百の位が偶数のptで前兆に移行すれば本前兆濃厚", "300ptまでのトータルCZ期待度は約60%"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "ST後、思春期ポイントの持ち越しがほぼ無ければ即ヤメ",
+      "100pt時のCZ当選率が約1/3のため、100pt時の前兆まで打つのもあり",
+      "ST終了後は高確（CZ・ST終了後に40.2%で移行）の可能性も考慮"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["ボーナス間の天井が699G+αに短縮"],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": ["エンディング移行などで有利区間ツラヌキ。実戦上、エンディング後は上位STへ突入"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "judge_exclude": {
+      "settings": ["1"],
+      "reason": "設定1は数値が調査中で判別に使えない。下パネルが点灯していれば設定1は否定されるため、判別では設定1を候補から外す（パネル消灯なら設定1濃厚なので判別不要）。"
+    },
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "初当り（青春BONUS）確率",
+        "observe": "通常時ゲーム数に対する青春BONUS当選回数",
+        "denom_base": "normal",
+        "values": { "1": { "status": "調査中" }, "2": 350.8, "3": 336.5, "4": 295.1, "5": 274.6, "6": 207.8 },
+        "weight_note": "設定2と6で約1.7倍の差。最も分かりやすい設定差",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "aoharu",
+        "label": "アオハルCHANCE確率",
+        "observe": "通常時ゲーム数に対するアオハルCHANCE突入回数",
+        "denom_base": "normal",
+        "values": { "1": { "status": "調査中" }, "2": 63.7, "3": 62.4, "4": 59.4, "5": 58.6, "6": 57.2 },
+        "weight_note": "レア役の一部・かえでスタンプMAX・咲太クエスト達成契機の合算。差は小さいが回数を稼ぎやすい",
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "sakuta_point",
+        "label": "咲太ポイント解放（MAX到達）確率",
+        "observe": "CZ開始時のレインボーイルミ（解放）回数",
+        "denom_base": "total",
+        "values": { "1": { "status": "調査中" }, "2": 12387.9, "3": 12163.0, "4": 12210.3, "5": 11518.1, "6": 8348.9 },
+        "weight_note": "設定6だけ軽い。1日1回出るかどうかの頻度なので参考程度",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "bar_first",
+        "label": "BAR揃い確率（青春BONUS中）",
+        "observe": "青春BONUS中のBAR揃い",
+        "judge": false,
+        "values": { "1": { "status": "調査中" }, "2": 6222.0, "3": 6167.6, "4": 5526.0, "5": 5482.0, "6": 5392.2 },
+        "weight_note": "何を分母とした確率か出典に明記がないため、判別スペックには取り込まない",
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "bar_burst",
+        "label": "BAR揃い確率（青春DREAM BURST中）",
+        "observe": "青春DREAM BURST中のBAR揃い",
+        "judge": false,
+        "values": { "1": { "status": "調査中" }, "2": 671.6, "3": 667.9, "4": 648.7, "5": 647.2, "6": 645.8 },
+        "weight_note": "同上。設定差もごく小さい",
+        "source_ids": ["ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "pt400_zenchou",
+        "label": "思春期ポイント400pt時の前兆ステージ移行率",
+        "observe": "400pt到達時に前兆ステージへ移行したか（移行すればCZ以上濃厚）",
+        "outcomes": [
+          { "key": "yes", "label": "前兆移行", "values": { "1": { "status": "調査中" }, "2": 1.0, "3": 1.0, "4": 1.2, "5": 1.3, "6": 2.8 }, "highlight": true },
+          { "key": "no", "label": "移行なし", "values": { "1": { "status": "調査中" }, "2": 99.0, "3": 99.0, "4": 98.8, "5": 98.7, "6": 97.2 }, "note": "100%から前兆移行率を引いた値" }
+        ],
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "aoharu_cherry",
+        "label": "アオハルCHANCE当選率（通常滞在時）",
+        "observe": "通常滞在時のレア役成立時。高確・リラックス中は全設定共通（スイカ30.1%/チェリー50.0%/チャンス目85.2%）なので区別できない場合は使わない",
+        "judge": false,
+        "outcomes": [
+          { "key": "suika", "label": "スイカ", "values": { "1": { "status": "調査中" }, "2": 0.4, "3": { "status": "未公表" }, "4": { "status": "未公表" }, "5": { "status": "未公表" }, "6": { "status": "未公表" } }, "note": "設定2のみ記載" },
+          { "key": "cherry", "label": "チェリー", "values": { "1": { "status": "調査中" }, "2": 30.1, "3": 30.9, "4": 36.3, "5": 37.5, "6": 40.2 }, "highlight": true },
+          { "key": "chance", "label": "チャンス目", "values": { "1": { "status": "調査中" }, "2": 50.0, "3": 53.5, "4": 57.8, "5": 59.0, "6": 60.2 }, "highlight": true }
+        ],
+        "source_ids": ["ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "ST（青ブタJUDGE）終了画面", "pattern": "梓川咲太", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "ST（青ブタJUDGE）終了画面", "pattern": "梓川かえで（吉スタンプ）", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ST（青ブタJUDGE）終了画面", "pattern": "牧之原翔子（良スタンプ）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ST（青ブタJUDGE）終了画面", "pattern": "バニー麻衣（優スタンプ）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ST（青ブタJUDGE）終了画面", "pattern": "全員集合（極スタンプ）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "555枚OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "821枚OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "ST中の演出", "pattern": "ヒロインCHALLENGE中のハルルナPUSH", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "筐体", "pattern": "下パネル消灯", "meaning": "設定1", "min_setting": null, "exact_setting": 1, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "下パネル消灯（設定1）は判別スペックには取り込まない（判別では設定1を最初から候補外にしているため）。",
+    "observations": [
+      {
+        "label": "CZ後半最終ゲームの役別成功率",
+        "detail": "リプレイ・ベル・レア役での成功率に設定差あり（例: 古賀朋絵のリプレイ 設定2 約41% / 設定3 約42% / 設定4以上 50%以上）。設定4以上は下限値しか公表されていないため、判別には使わず傾向として扱う。",
+        "official": true,
+        "source_ids": ["ptown"]
+      },
+      {
+        "label": "青ブタJUDGE開始時の思春期症候群当選率",
+        "detail": "設定2は20.4%、設定3以上は調査中。高設定ほど優遇される可能性があるとされる。上位ST中は必ず発生するのでサンプルから除外する。",
+        "official": true,
+        "source_ids": ["ptown"]
+      }
+    ],
+    "pending": [
+      { "label": "設定1の各数値", "status": "調査中", "note": "機械割・初当りとも調査中。" },
+      { "label": "ST終了画面（古賀朋絵・豊浜のどか・双葉理央・桜島麻衣）", "status": "調査中", "note": "示唆内容はP-WORLDで調査中。" },
+      { "label": "CZ出現率・ST継続率の設定差", "status": "調査中", "note": "設定2の数値のみ公表。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["梓川家・通学路", "基本パターン"], ["ファミレス", "高確示唆"], ["リラックス", "リラックス示唆"], ["七里ヶ浜", "CZ当選に期待（前兆）"], ["彷徨の刻", "CZ前兆示唆"]]
+      },
+      {
+        "name": "不可思議モード（クリスタルのキャラ）",
+        "rows": [
+          ["古賀朋絵", "次回規定思春期ptが100pt"],
+          ["豊浜のどか", "アオハルCHANCEの報酬に期待"],
+          ["双葉理央", "常にアオハルCHANCE高確率"],
+          ["桜島麻衣", "当該の規定思春期ptが300or500pt"],
+          ["梓川かえで", "次回CZで梓川かえでが出現"],
+          ["牧之原翔子", "次回CZで牧之原翔子が出現"]
+        ]
+      },
+      {
+        "name": "CZのヒロイン別対応役",
+        "rows": [
+          ["古賀朋絵", "スイカでボーナス濃厚、リプレイ・レア役でチャンス"],
+          ["豊浜のどか", "ベル・レア役でチャンス"],
+          ["双葉理央", "チェリーでボーナス濃厚、リプレイ・レア役でチャンス"],
+          ["桜島麻衣", "チャンス目でボーナス濃厚、リプレイで大チャンス"],
+          ["梓川かえで", "レア役でボーナス濃厚、リプレイ・ベルでチャンス"],
+          ["牧之原翔子", "レア役でボーナス濃厚、リプレイでチャンス。成功で上位CZ濃厚"]
+        ]
+      },
+      {
+        "name": "ST中のカットイン色",
+        "rows": [["青", "約33%"], ["赤", "約98%"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "まず下パネルの点灯を確認。消灯なら設定1",
+      "初当り確率の設定差が大きい（設定2 1/350.8 → 設定6 1/207.8）ので、通常時ゲーム数と初当り回数は必ず数える",
+      "アオハルCHANCE回数も通常時ゲーム数と合わせて数える（差は小さいが試行が多い）",
+      "ST終了画面のスタンプと獲得枚数表示（456/555/666/821）は確定系",
+      "400ptで前兆ステージに移行したら設定6の可能性がアップ（設定6は2.8%、設定2は1.0%）",
+      "思春期ポイントは百の位が偶数（200pt除く）での前兆なら本前兆濃厚"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "導入直後（2026年9月）のため、設定1や設定3以上の一部数値は調査中。解析の更新に合わせてJSONを更新すること",
+      "設定3以上の数値が「○%以上」とだけ公表されている要素（CZ後半の成功率など）は判別スペックに取り込んでいない",
+      "コンプリート機能（差枚+19,000枚で打ち止め）搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

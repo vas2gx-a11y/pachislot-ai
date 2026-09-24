@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, collapsible_card, empty_state, back_link %}
+
+{% block title %}設定判別（ベイズ推定）{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">🎲</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">設定判別</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* 選択できるチップ。押した状態を色で残す(確定演出・朝一挙動の選択に使う) */
+    .chip-toggle { cursor: pointer; border: 1px solid #e4e4e7; user-select: none; }
+    .chip-toggle:hover { background: #e4e4e7; }
+    .chip-toggle.selected { background: #18181b; color: #ffffff; border-color: #18181b; }
+
+    /* 確率バー。設定1〜6を縦に並べるので、細く・高さを揃える */
+    .bar-bg { flex: 1 1 0; min-width: 0; height: 8px; background: #e4e4e7; border-radius: 9999px; overflow: hidden; }
+    .bar { height: 100%; border-radius: 9999px; }
+
+    /* 観測データの1行。スマホでは縦に折り返す */
+    .obs-row { display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap; }
+    .obs-row > * { min-width: 8rem; }
+
+    /* 総回転数を超えた入力など、その場で気づけるように枠を赤くする */
+    .invalid { border-color: #dc2626 !important; background: #fef2f2 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    {% if requested_machine_name and not preselect_id %}
+    <div class="panel text-sm text-amber-700 bg-amber-50 border-amber-200">
+        「{{ requested_machine_name }}」の判別スペックは未登録です。
+        <a href="{{ url_for('judge.machine_new') }}" class="underline">判別スペックを登録</a>すると、この機種でも推測できます。
+    </div>
+    {% endif %}
+
+    {% if not machines %}
+    {{ empty_state("🎲", "判別スペックがまだ登録されていません。先に機種の判別要素（小役やボーナスの設定別確率）を登録してください。") }}
+    {{ back_link(url_for('judge.machines'), "判別スペックを登録する") }}
+    {% else %}
+
+    {# 店舗条件: 一度入れたら変えないので既定では畳んでおく。値はlocalStorageに残る #}
+    {% call collapsible_card("🏪", "店舗条件", false, "bg-gray-100",
+         "貸出と交換のギャップ・持ち玉比率から、設定別の「実質」時給を出します。継続か撤退かはここで決まります。") %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label class="label" for="shop-rental">貸出（枚/1,000円）</label>
+            <input type="number" id="shop-rental" class="input" value="46" min="1">
+        </div>
+        <div>
+            <label class="label" for="shop-exchange">交換（枚/1,000円）</label>
+            <input type="number" id="shop-exchange" class="input" value="52" min="1">
+        </div>
+        <div>
+            <label class="label" for="shop-gph">時速（G/h）</label>
+            <input type="number" id="shop-gph" class="input" value="800" min="1">
+        </div>
+    </div>
+    <div class="mt-4">
+        <label class="label" for="shop-holding">持ち玉比率: <span id="shop-holding-label" class="font-bold text-gray-900">70%</span></label>
+        <input type="range" id="shop-holding" class="w-full" min="0" max="100" value="70">
+        <p class="hint">投入メダルのうち持ち玉で賄える割合。実戦値は60〜80%程度。0%＝全額現金投資。</p>
+    </div>
+    <div id="shop-gap-info" class="hint mt-3"></div>
+    {% endcall %}
+
+    {# 事前確率: 何も指定しなければ均等ではなくホール配分を使う(実際のホールは均等に入れない) #}
+    {% call collapsible_card("🌅", "STEP 1-2　前日データ・朝一挙動", false, "bg-amber-50",
+         "当日の観測を入れる前に「どの設定が入りやすいか」を決めます。前日の実測値を入れると、設定移行マトリクスを通して当日の事前確率を逆算します。") %}
+    <div class="mb-4">
+        <label class="label" for="prior-mode">事前確率の決め方</label>
+        <select id="prior-mode" class="input">
+            <option value="flat">均等（設定情報なし）</option>
+            <option value="shop" selected>ホール配分を仮定</option>
+            <option value="prevday">前日データを手入力</option>
+            <option value="prevcount">前日の実測値から逆算</option>
+            <option value="lastsession">この台の前回記録から</option>
+        </select>
+    </div>
+
+    <div id="prior-shop-box">
+        <label class="label">ホールのベース配分（設定1〜6 の比率）</label>
+        <div class="grid grid-cols-6 gap-1">
+            {% for v in [40, 30, 15, 10, 4, 1] %}
+            <input type="number" class="input input-sm prior-shop-input" value="{{ v }}" min="0" step="1">
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="prior-prevday-box" class="hidden">
+        <label class="label">前日の推定設定（確率 % ／ 合計100になるよう自動正規化）</label>
+        <div class="grid grid-cols-6 gap-1 mb-4">
+            {% for v in [0, 5, 10, 15, 20, 50] %}
+            <input type="number" class="input input-sm prior-prev-input" value="{{ v }}" min="0" step="1">
+            {% endfor %}
+        </div>
+        <label class="label" for="morning-obs">朝一の挙動</label>
+        <select id="morning-obs" class="input">
+            <option value="UNKNOWN">不明（判別できず）</option>
+            <option value="STAY">据え置き濃厚（ガックンなし等）</option>
+            <option value="RESET">リセット濃厚（ガックン有等）</option>
+        </select>
+    </div>
+
+    <div id="prior-prevcount-box" class="hidden">
+        <div class="mb-4">
+            <label class="label" for="prevcount-games">前日の総回転数 (G)</label>
+            <input type="number" id="prevcount-games" class="input" min="1" value="6500">
+        </div>
+        <label class="label">前日の観測回数</label>
+        <div id="prevcount-inputs" class="mb-4"></div>
+        <label class="label">朝一の挙動（当てはまるものを選択・複数可）</label>
+        <div id="morning-signals-count" class="flex flex-wrap gap-1.5 mb-3"></div>
+        <div id="stay-prob-box" class="hidden mb-3"></div>
+        <div id="prior-prevcount-info" class="hint"></div>
+    </div>
+
+    <div id="prior-lastsession-box" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="md:col-span-2">
+                <label class="label" for="prior-store">店舗名</label>
+                <input type="text" id="prior-store" class="input" placeholder="○○ホール">
+            </div>
+            <div>
+                <label class="label" for="prior-unit">台番号</label>
+                <input type="text" id="prior-unit" class="input" placeholder="753">
+            </div>
+        </div>
+        <label class="label">朝一の挙動（当てはまるものを選択・複数可）</label>
+        <div id="morning-signals-last" class="flex flex-wrap gap-1.5 mb-3"></div>
+        <div id="stay-prob-box-last" class="hidden mb-3"></div>
+        <div id="prior-lastsession-info" class="hint"></div>
+    </div>
+
+    <div class="mt-5">
+        <label class="label">適用される事前確率</label>
+        <div id="prior-preview" class="panel"></div>
+    </div>
+    {% endcall %}
+
+    {# 当日の観測。判別に効く順に並ぶので、上から埋めれば効率がよい #}
+    {% call card("🎯", "STEP 3　本日の実戦データ", none, "bg-amber-50") %}
+    <div class="mb-4">
+        <label class="label" for="st-model-select">機種</label>
+        <select id="st-model-select" class="input">
+            {% for m in machines %}
+            <option value="{{ m.id }}" {% if preselect_id == m.id %}selected{% endif %}>{{ m.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="label" for="st-games">総回転数 (G)</label>
+            <input type="number" id="st-games" class="input" value="3000" min="1">
+        </div>
+        <div id="st-normal-games-box" class="hidden">
+            <label class="label" for="st-normal-games">うち通常時 (G)</label>
+            <input type="number" id="st-normal-games" class="input" value="" min="0">
+        </div>
+    </div>
+    <div id="st-normal-games-note" class="hint hidden mt-2">
+        この機種には「通常時のみ」を母数とする判別要素があります。AT・上位ATの消化ゲーム数を除いた通常時の
+        ゲーム数を入力してください。未入力の場合は総回転数で計算するため、<strong>設定を過小評価します</strong>。
+    </div>
+
+    <div id="cat-inputs"></div>
+    <div id="obs-inputs"></div>
+
+    <label class="label mt-5">確定演出（1つ選択・該当しない設定を除外）</label>
+    <div id="confirm-chips" class="flex flex-wrap gap-1.5"></div>
+
+    <label class="label mt-4">示唆演出（複数選択可・確率を緩やかに補正）</label>
+    <div id="hint-chips" class="flex flex-wrap gap-1.5"></div>
+
+    <button type="button" id="st-run" class="btn btn-primary w-full mt-5">設定推測を実行</button>
+
+    <div id="st-result-box" class="hidden mt-5">
+        <div class="text-sm font-bold mb-2">STEP 4　判定結果</div>
+        <div id="st-obs-summary" class="text-xs text-gray-500 leading-relaxed mb-3"></div>
+
+        <div class="flex justify-between text-[0.65rem] text-gray-400 mb-1">
+            <span>設定別 事後確率</span>
+            <span>実質時給</span>
+        </div>
+        <div id="setting-bars" class="panel"></div>
+
+        <div class="grid grid-cols-2 gap-3 mt-3">
+            <div class="panel text-center">
+                <div class="text-xs text-gray-400">設定4以上</div>
+                <div id="st-high-prob" class="font-mono font-bold text-xl text-emerald-600">-</div>
+            </div>
+            <div class="panel text-center">
+                <div class="text-xs text-gray-400">推定時給</div>
+                <div id="st-hourly" class="font-mono font-bold text-xl">-</div>
+            </div>
+        </div>
+
+        <div id="st-precision" class="panel mt-3"></div>
+
+        {# 継続/様子見/撤退の判断。見た目のクラスは判定結果に応じて judge.js が付け替える #}
+        <div id="st-alert" class="hidden">
+            <div id="st-alert-title" class="font-bold"></div>
+            <div id="st-alert-msg" class="mt-1 leading-relaxed"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+            <div class="md:col-span-2">
+                <label class="label" for="st-save-store">店舗名</label>
+                <input type="text" id="st-save-store" class="input" placeholder="○○ホール">
+            </div>
+            <div>
+                <label class="label" for="st-save-unit">台番号</label>
+                <input type="text" id="st-save-unit" class="input" placeholder="753">
+            </div>
+        </div>
+        <button type="button" id="st-save" class="btn btn-ghost w-full mt-3">📝 判別結果を保存する</button>
+        <p class="hint">
+            店舗名と台番号を入れて保存すると、次回この台を打つときに「この台の前回記録から」で事前確率を引き継げます。
+            保存先はこの端末のブラウザ内（localStorage）で、他の端末とは共有されません。
+        </p>
+    </div>
+    {% endcall %}
+
+    {% call collapsible_card("📝", "保存した判別結果", false, "bg-gray-100",
+         "この端末に保存されている判別結果です。店舗名と台番号が一致する記録が、翌日以降の事前確率になります。") %}
+    <div id="judge-log-list" class="flex flex-col gap-2"></div>
+    {% endcall %}
+
+    {{ back_link(url_for('judge.machines'), "判別スペックを管理する") }}
+    {% endif %}
+
+</div>
+</main>
+
+{# 機種スペックはサーバーが正。ページ生成時に埋め込んで渡し、ブラウザ側では持ち回らない #}
+<script id="judge-machines-data" type="application/json">{{ machines | tojson }}</script>
+<script>
+    window.JUDGE_MACHINES = JSON.parse(document.getElementById('judge-machines-data').textContent);
+</script>
+<script src="{{ url_for('static', filename='js/bayes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/judge.js') }}"></script>
+{% endblock %}
