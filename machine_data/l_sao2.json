@@ -1,0 +1,343 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_sao2",
+  "name": "スロット ソードアート・オンラインⅡ",
+  "aliases": ["スマスロ SAO2", "SAO2"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#3a7bd5" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スロット ソードアート・オンラインII」", "url": "https://www.p-world.co.jp/machine/database/10483", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スロット ソードアート・オンラインⅡ」", "url": "https://p-town.dmm.com/machines/5025", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "パオン・ディーピー",
+    "release_date": "2026-06-08",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（差枚数管理型）",
+    "model_name": "L／ソードアート・オンラインII／PA1",
+    "certification_no": "531088",
+    "games_per_50_coins": { "value": 31, "unit": "G", "note": "約31G" },
+    "net_gain_per_game": { "value": 3.6, "unit": "枚", "note": "AT約3.6枚/G、上位AT約7.2枚/G" },
+    "features": ["バレットサークルシステム", "GGOモード（滞在で出玉率100%以上）", "コンプリート機能搭載"],
+    "summary": "通常時は規定G数（液晶G数）や強チェリーからCZ「スコードロンバトル」（14G・約55%）を目指し、弱レア役で液晶G数加算ゾーン「シューティングチャージ」を抽選。AT「Bullet of Bullets」は差枚数管理型（初期150枚+α）で、スナイパーチャンス勝利で上乗せ・特化ゾーン。デス・ガンに勝利すると上位CZ「デス・ガンバトル」→上位AT「FULL DIVE」（純増約7.2枚）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6の主要数値は公表済み。CZ・AT確率は設定4より設定5の方が重く、設定順に並んでいない（設定5は上位AT突入のしやすさで出玉を作る模様）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.6, "2": 98.8, "3": 100.2, "4": 105.3, "5": 110.4, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 386.2, "2": 364.3, "3": 368.1, "4": 326.8, "5": 340.6, "6": 269.6 }, "highlight": true },
+      { "key": "cz", "label": "CZ初当り", "format": "fraction", "values": { "1": 238.4, "2": 232.3, "3": 232.7, "4": 218.9, "5": 225.2, "6": 191.7 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 79.9 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 327.7 },
+      { "key": "ultima_cherry", "label": "ウルティマ・チェリー", "format": "fraction", "value": 16384 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 82.6 },
+      { "key": "weak_chance", "label": "弱チャンス目", "format": "fraction", "value": 163.8 },
+      { "key": "strong_chance_a", "label": "強チャンス目A", "format": "fraction", "value": 1057.0 },
+      { "key": "strong_chance_b", "label": "強チャンス目B", "format": "fraction", "values": { "1": 1057.0, "2": 993.0, "3": 936.2, "4": 885.6, "5": 840.2, "6": 799.2 }, "highlight": true }
+    ],
+    "note": "強チャンス目Bのみ設定差あり。ウルティマ・チェリーはAT or ロングフリーズ濃厚。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "スコードロンバトル",
+        "facts": [
+          { "label": "継続", "value": "14G" },
+          { "label": "勝利期待度", "value": "約55%" }
+        ],
+        "description": "バレットサークル内のバレット図柄停止やレア小役で弾痕を獲得し、弾痕数で勝利抽選。失敗時はAT強化アイテムとフリーズ「曠野の決闘」（40Gエピソード＋AT＋勝利濃厚スナイパーチャンス）を抽選。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "デス・ガンバトル（上位CZ）",
+        "facts": [
+          { "label": "継続", "value": "5G" },
+          { "label": "勝利期待度", "value": "約50%" }
+        ],
+        "description": "AT中のスナイパーチャンスでデス・ガンに勝利すると権利獲得（最大3戦目までに必ず出現）。勝利で上位AT、一部で最強特化ゾーン「絶剣」（2200枚＋1100枚ループ）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "シューティングチャージ",
+        "facts": [
+          { "label": "契機", "value": "弱レア役の一部・強チャンス目（濃厚）" },
+          { "label": "種類", "value": "キリト射撃訓練 / シノンビンタ / 水鉄砲チャージ / NIGHT SPLASH" }
+        ],
+        "description": "液晶G数の加算特化ゾーン。サークル内にバレット図柄なら大量加算、ボーナス図柄ならAT濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "曠野の決闘（エピソードボーナス）",
+        "facts": [
+          { "label": "継続", "value": "40G" },
+          { "label": "純増", "value": "約3.6枚/G" }
+        ],
+        "description": "スコードロンバトル失敗時のフリーズから突入。AT＋勝利濃厚のスナイパーチャンスストック1個。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "Bullet of Bullets（AT）",
+        "facts": [
+          { "label": "初期", "value": "差枚150枚+α" },
+          { "label": "純増", "value": "約3.6枚/G" },
+          { "label": "スナイパーチャンス（設定1）", "value": "約1/54" }
+        ],
+        "description": "レア小役で差枚数上乗せ（20〜2000枚）・スナイパーチャンスを抽選。スナイパーチャンス（5G・勝利期待度約50%）勝利で上乗せや特化ゾーン。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "Bullet of Bullets FULL DIVE（上位AT）",
+        "facts": [
+          { "label": "初期", "value": "差枚150枚+α" },
+          { "label": "純増", "value": "約7.2枚/G" }
+        ],
+        "description": "上乗せがすべて3桁になるなど各種性能が強化。終了後は必ず上位CZ（勝利期待度アップ）へ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "特化ゾーン",
+        "facts": [
+          { "label": "NIGHT BATTLE", "value": "7G+α・平均約250枚" },
+          { "label": "すくーるばんばん すぷらっしゅ", "value": "5G・平均約600枚" },
+          { "label": "ULTIMA NIGHT BATTLE", "value": "7G+α・平均約850枚（終了後上位AT）" },
+          { "label": "シノンアタック", "value": "50〜3000枚" }
+        ],
+        "description": "バレットサークル内のバレット図柄停止やレア小役で差枚数を上乗せ。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1200, "text": "AT間 1200G（実G数）" },
+    "games_after_reset": { "value": 256, "text": "設定変更後 CZ間 256G+α（AT間天井は変わらず）" },
+    "benefit": "ATに当選（CZ間・液晶G数天井はCZに当選）",
+    "notes": [
+      "CZ間天井: 実G数499G+α でCZ当選（設定変更後・AT初回の上位CZ失敗後は256G+α）",
+      "液晶G数天井: 液晶800G でCZ当選（モード別の天井は下のゾーン参照）",
+      "AT終了時に規定G数を350Gに短縮する抽選あり"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "通常A", "note": "液晶250G・500Gに期待（天井800G）" },
+      { "games": "通常B", "note": "液晶350G・650Gに期待（天井800G）" },
+      { "games": "通常C", "note": "液晶100G・250G・350G・500Gに期待（天井650G）" },
+      { "games": "通常D", "note": "液晶100Gに期待（天井350G）" },
+      { "games": "天国", "note": "液晶50G〜100G（天井100G）" }
+    ],
+    "notes": [
+      "モードは天国へ移行するまで下位に転落しない",
+      "GGOモード（キリト・詩乃・シノン・死銃）は設定1で約20%滞在し、滞在中は出玉率100%以上。50Gごとのアイテムで示唆（赤アイテムならそのモード濃厚）",
+      "キリトモードは規定G数を500Gに短縮、詩乃モードはCZ当選をAT直撃に変換"
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "AT終了後50G間は引き戻しゾーン（50G目のレア小役で引き戻し濃厚）。モード示唆を確認しつつ50G消化後にヤメ",
+      "初回の上位CZ失敗後はCZ天井が256G+αに短縮されるので続行もあり"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "reset": {
+    "items": [
+      "CZ間天井が256G+αに短縮",
+      "GGOモード「死銃」への移行率が優遇（上位ATのチャンス）",
+      "設定変更時の機械割は100%超"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 386.2, "2": 364.3, "3": 368.1, "4": 326.8, "5": 340.6, "6": 269.6 },
+        "weight_note": "設定6だけ大きく軽い。設定5は設定4より重い",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "cz",
+        "label": "CZ初当り確率",
+        "observe": "通常時ゲーム数に対するスコードロンバトル突入回数",
+        "denom_base": "normal",
+        "values": { "1": 238.4, "2": 232.3, "3": 232.7, "4": 218.9, "5": 225.2, "6": 191.7 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "strong_chance_b",
+        "label": "強チャンス目B確率",
+        "observe": "通常時ゲーム数に対する強チャンス目Bの回数（強チャンス目Aと区別して数える）",
+        "denom_base": "normal",
+        "values": { "1": 1057.0, "2": 993.0, "3": 936.2, "4": 885.6, "5": 840.2, "6": 799.2 },
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "shino_direct",
+        "label": "GGOモード「詩乃」契機のAT直撃確率",
+        "observe": "通常時ゲーム数に対するAT直撃回数（ウルティマ・チェリー、ロングフリーズ、シューティングチャージ中の7図柄、引き戻し、AT間天井による当選は除く）",
+        "denom_base": "normal",
+        "values": { "1": 18091.8, "2": 14160.5, "3": 14390.8, "4": 8498.0, "5": 4723.3, "6": 3415.7 },
+        "weight_note": "設定1と6で約5倍の差。1回でも大きく動く",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "at_stage",
+        "label": "AT初当り時のステージ",
+        "observe": "AT初当り（50G以内の引き戻しを含む）開始時のステージ。高確率モードスタート時のその後の移行は除く",
+        "outcomes": [
+          { "key": "kouya", "label": "荒野ステージ", "values": { "1": 60.0, "2": 40.0, "3": 60.0, "4": 40.0, "5": 60.0, "6": 40.0 } },
+          { "key": "buggy", "label": "バギーステージ", "values": { "1": 40.0, "2": 60.0, "3": 40.0, "4": 60.0, "5": 40.0, "6": 60.0 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "cz_fail_item",
+        "label": "CZ失敗時のAT強化アイテム獲得率",
+        "observe": "スコードロンバトル失敗回数と、その次ゲームでアイテムを獲得した回数",
+        "outcomes": [
+          { "key": "get", "label": "アイテム獲得", "values": { "1": 20.3, "2": 21.1, "3": 21.9, "4": 22.7, "5": 25.0, "6": 30.1 }, "highlight": true },
+          { "key": "none", "label": "獲得なし", "values": { "1": 79.7, "2": 78.9, "3": 78.1, "4": 77.3, "5": 75.0, "6": 69.9 }, "note": "100%から獲得率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "strong_cherry_cz",
+        "label": "強チェリー成立時のCZ当選率（低確滞在時）",
+        "observe": "低確・高確は内部状態のため見た目で確定できない（高確時は設定1 50% 〜 設定6 60%）",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "CZ当選", "values": { "1": 20.0, "2": 21.0, "3": 20.0, "4": 25.0, "5": 20.0, "6": 33.0 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 80.0, "2": 79.0, "3": 80.0, "4": 75.0, "5": 80.0, "6": 67.0 } }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "AT終了画面", "pattern": "キリト&シノン", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "制服 / ソファー", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "木漏れ日 / 夏祭り", "meaning": "高設定示唆（通常 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "幼少期", "meaning": "設定5以上の期待大（出現率は設定6より5の方が高い）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "AT終了画面", "pattern": "ワイシャツ", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "お風呂", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "水着", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "パジャマ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "コパンダトロフィー", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "コパンダトロフィー", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "コパンダトロフィー", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "コパンダトロフィー", "pattern": "イナズマ柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "コパンダトロフィー", "pattern": "虹", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "エンディング中のミニキャラ", "pattern": "キリト・リズベット / シノン・シリカ", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のミニキャラ", "pattern": "銃士X / アスナ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のミニキャラ", "pattern": "詩乃", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のミニキャラ", "pattern": "シノン&キリト", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "マザーズ・ロザリオ中のミニキャラ", "pattern": "キリト・リズベット / ユウキ・シリカ", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "マザーズ・ロザリオ中のミニキャラ", "pattern": "リーファ / アスナ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "マザーズ・ロザリオ中のミニキャラ", "pattern": "ユイ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "マザーズ・ロザリオ中のミニキャラ", "pattern": "アスナ&ユウキ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "AT終了画面の「幼少期」は設定5以上の期待大だが濃厚ではないため、判別スペックには取り込まない。",
+    "observations": [
+      {
+        "label": "AT終了後の引き戻し",
+        "detail": "AT終了後50G間の毎G引き戻し抽選に設定差がある模様（数値は未公表）。",
+        "official": true,
+        "source_ids": ["pworld"]
+      },
+      {
+        "label": "スナイパーチャンス1・2戦目のデス・ガン選択率",
+        "detail": "設定5は1・2戦目でデス・ガンが選ばれやすい（＝上位ATへ行きやすい）とされる。数値は未公表。",
+        "official": true,
+        "source_ids": ["ptown"]
+      },
+      {
+        "label": "GGOモードの滞在率",
+        "detail": "設定1で約20%。「高設定なら…!?」とされ、数値は未公表。",
+        "official": true,
+        "source_ids": ["pworld"]
+      }
+    ],
+    "pending": [
+      { "label": "曠野の決闘（CZ失敗時フリーズ）の設定2〜5", "status": "調査中", "note": "設定1 1/128.0、設定6 1/64.0のみ公表。" },
+      { "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["市街地・マーケット・現実世界", "基本パターン"], ["公園", "高確示唆"], ["酒場", "高確or前兆示唆"], ["総督府", "前兆示唆"], ["SBCグロッケン", "本前兆の期待高"], ["Sterben", "AT濃厚"]]
+      },
+      {
+        "name": "GGOモードのアイテム（50Gごと）",
+        "rows": [["光剣", "キリトモード示唆"], ["アミュスフィア", "詩乃モード示唆"], ["ヘカートⅡ", "シノンモード示唆"], ["黒星", "死銃モード示唆"], ["バギー", "全モード示唆"], ["緑 / 赤のアイテム", "いずれかのモード滞在 約50% / 表示モード濃厚"]]
+      },
+      {
+        "name": "通常時のレア役の役割",
+        "rows": [["弱チェリー・弱チャンス目・スイカ", "シューティングチャージ＆高確移行抽選"], ["強チャンス目", "シューティングチャージ濃厚"], ["強チェリー", "CZ抽選"], ["ウルティマ・チェリー", "AT or ロングフリーズ濃厚"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "設定5は通常時の数値（CZ・AT・直撃）が設定4より重いことがあるので、数値だけで設定5を否定しない",
+      "AT初当り時のステージ（荒野=奇数寄り / バギー=偶数寄り）を毎回記録する",
+      "CZ失敗の次ゲームでのアイテム獲得率（設定6は30.1%）を数える",
+      "強チャンス目Bの回数とAT直撃（詩乃モード契機）は高設定ほど多い",
+      "AT終了画面（ワイシャツ・お風呂・水着・パジャマ）とコパンダトロフィーは確定系"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "CZ・AT確率は設定順に並んでいない（設定2と3、設定4と5が逆転）",
+      "強チェリーのCZ当選率は低確・高確で異なり、内部状態が見えないため判別スペックには取り込まない",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld"]
+  }
+}

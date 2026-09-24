@@ -32,7 +32,8 @@ def _unknown_label(v):
 
 def _fmt_num(v, fmt):
     if fmt == "fraction":
-        return f"1/{v:.1f}"
+        # 整数で公表されている値(1/269など)に小数を足すと、ない精度があるように見えるのでそのまま出す
+        return f"1/{v}" if isinstance(v, int) else f"1/{v:.1f}"
     if fmt == "percent":
         return f"{v:.1f}%"
     return str(v)

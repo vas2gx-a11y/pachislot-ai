@@ -1,0 +1,366 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_super_blackjack",
+  "name": "スマスロスーパーブラックジャック",
+  "aliases": ["スマスロ SBJ", "ブラックジャック"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#b3262e" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロスーパーブラックジャック」", "url": "https://www.p-world.co.jp/machine/database/10174", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーブラックジャック」(2026/09/14更新)", "url": "https://p-town.dmm.com/machines/4712", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "セブンリーグ（山佐ネクスト販売）",
+    "release_date": "2025-02-03",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナス＋ストックタイム）",
+    "model_name": "LスーパーブラックジャックSLDC",
+    "certification_no": "4S1230",
+    "games_per_50_coins": { "value": 31.4, "unit": "G", "note": "設定1" },
+    "net_gain_per_game": { "value": 5.1, "unit": "枚", "note": "ボーナス・SST中 約5.1枚/G（STOCK TIMEは約0.4枚/G）" },
+    "features": ["リオチャンス・ボーナス・ストックタイムのループ", "スイカ規定回数天井", "コンプリート機能搭載"],
+    "summary": "通常時はレア小役・小役連・100Gごとの抽選で「ボーナス高確率」に上げてボーナスを狙う。初当りBIG後はリオチャンス高確率へ移行し、昇格型のボーナス超準備状態「リオチャンス」でボーナスの種類を自力で昇格させる。ボーナス中は(スーパー)ストックタイムを抽選し、リオチャンスをストックしてループさせる。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.8, "2": 98.7, "3": 100.5, "4": 105.7, "5": 110.0, "6": 112.7 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り（ボーナス合算）", "format": "fraction", "values": { "1": 241.7, "2": 238.8, "3": 235.9, "4": 201.8, "5": 194.9, "6": 181.3 }, "highlight": true },
+      { "key": "bonus_high", "label": "実質ボーナス高確率移行率", "format": "fraction", "values": { "1": 114.7, "2": 112.5, "3": 110.5, "4": 96.4, "5": 92.0, "6": 90.3 } },
+      { "key": "rc_high", "label": "実質リオチャンス高確移行率", "format": "fraction", "values": { "1": 417.6, "2": 411.7, "3": 405.8, "4": 350.4, "5": 335.9, "6": 312.1 } }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "cherry", "label": "チェリー", "format": "fraction", "value": 75.0 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 99.9 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 30.0 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "values": { "1": 99.9, "2": 91.1, "3": 87.7, "4": 86.7, "5": 85.0, "6": 83.9 }, "highlight": true }
+    ],
+    "note": "チェリー・チャンス目・レア小役合成はP-WORLDで設定1の値として記載。スイカのみ設定差あり。平行スイカはチャンス目。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "ボーナス高確率",
+        "facts": [
+          { "label": "平均滞在", "value": "約34G" },
+          { "label": "ボーナス期待度", "value": "50.0%（設定1）〜57.2%（設定6）" }
+        ],
+        "description": "レア小役（主にチャンス目）・小役連（3連から抽選、4連以上は毎回）・100Gごとの抽選で移行。全役でボーナス抽選。転落時は必ずピンチ目を経由する。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "リオチャンス高確率",
+        "facts": [
+          { "label": "高確A", "value": "継続不定・毎G全役でRC抽選" },
+          { "label": "高確B", "value": "30G+α・リーチ目でRC濃厚" }
+        ],
+        "description": "初当りBIG後・リオチャンス経由のボーナス後に移行。A・Bの2種類に同時に滞在する仕組み。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "リオチャンス",
+        "facts": [
+          { "label": "構成", "value": "昇格パート6G+α＋ジャッジパート" },
+          { "label": "昇格率", "value": "毎G約1/2（押し順ベル）" }
+        ],
+        "description": "6枚のトランプを昇格させ、ジャッジパートで狙えカットイン（約1/3）発生時のカードの報酬を獲得。レア小役で超昇格・超ジャッジへ。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "BIG BONUS（初当り）",
+        "facts": [
+          { "label": "払い出し", "value": "赤7 100枚 / 青7 300枚" },
+          { "label": "純増", "value": "約5.1枚/G" },
+          { "label": "振り分け（独自調査）", "value": "赤7 49.4% / 青7 4.9%" }
+        ],
+        "description": "終了後はリオチャンス高確率へ。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "REGULAR BONUS（初当り）",
+        "facts": [
+          { "label": "払い出し", "value": "60枚" },
+          { "label": "振り分け（独自調査）", "value": "45.7%" }
+        ],
+        "description": "終了後は通常へ戻り、天井までのゲーム数は引き継ぐ。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "リオチャンス経由のボーナス",
+        "facts": [
+          { "label": "REG", "value": "60枚" },
+          { "label": "赤7BIG", "value": "200枚（ST期待度 低）" },
+          { "label": "青7BIG", "value": "300枚（ST期待度 中・約30%）" },
+          { "label": "スーパーBIG", "value": "400枚（ST期待度 高・約50%）" }
+        ],
+        "description": "消化中にストックタイムを抽選し、終了後はリオチャンス高確率へ。RC高確終了までにREG3回で金BARシナリオ確定。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "at": [
+      {
+        "name": "STOCK TIME",
+        "facts": [
+          { "label": "継続", "value": "50G+α" },
+          { "label": "純増", "value": "約0.4枚/G" },
+          { "label": "平均ストック", "value": "約2個" }
+        ],
+        "description": "リオチャンスのストック高確率状態。リプレイ・レア役でストック抽選、リーチ目でストック濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "SUPER STOCK TIME",
+        "facts": [
+          { "label": "継続", "value": "100G+α（200G以上 14.0%）" },
+          { "label": "純増", "value": "約5.1枚/G" },
+          { "label": "平均ストック", "value": "約5個" },
+          { "label": "確率（設定1）", "value": "1/6518.3" }
+        ],
+        "description": "ベルナビも発生する最強の特化ゾーン。リナ登場で200G以上継続濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "ジョーカーモード",
+        "facts": [
+          { "label": "突入率（設定1）", "value": "1/3443.1" },
+          { "label": "期待枚数", "value": "約1,500枚以上" }
+        ],
+        "description": "リオチャンスの連チャンに期待できる特殊モード。REG後のリオチャンスで必ずSSTが出現するシナリオになる。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 999, "text": "通常時 999G+α" },
+    "games_after_reset": { "value": 666, "text": "設定変更後・初当りBIG後のリオチャンススルー時 666G+α" },
+    "benefit": "BIG BONUSに当選",
+    "notes": [
+      "REGスルー天井: 通常時REGが最大4連続すると、次のボーナスがBIG（リオチャンス経由のREGは数えない）",
+      "スイカ規定回数天井: 全状態で成立したスイカが規定回数（最大100回）に到達するとSTOCK TIME直撃。有利区間リセットで再セット",
+      "REGでは天井までのゲーム数がリセットされない"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "100G毎", "note": "規定G数の状態移行抽選（CHINA・ボーナス高確率へ）。高設定ほど優遇" },
+      { "games": "200/400/600/800G", "note": "ボーナス高確率移行率が高い（設定1 10.2% 〜 設定6 20.7%）" },
+      { "games": "150/450/750G", "note": "ダイスチェック発生（スイカ天井までの残り回数・設定を示唆）" }
+    ],
+    "notes": ["朝イチ状態は規定G数に到達しても液晶上でステージ変化が行われない"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "BIG後はリオチャンス高確へ移行するので最低30Gは消化",
+      "31G以降もリオチャンス高確示唆演出が出ている間は続行",
+      "REG後は天井までのゲーム数が引き継がれるので、残りゲーム数で押し引きを判断"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": [
+      "天井が666G+αに短縮",
+      "スイカ天井の規定回数が少ない回数に振り分けられやすい（90%以上で50回以下）"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": ["エンディング終了後に有利区間ツラヌキ → ジョーカーモードへ。見た目上の判別はエンディング後のみ可能"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "初当り（ボーナス合算）確率",
+        "observe": "通常時ゲーム数に対するBIG・REGの初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 241.7, "2": 238.8, "3": 235.9, "4": 201.8, "5": 194.9, "6": 181.3 },
+        "weight_note": "設定1〜3と設定4〜6の間に段差がある",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "suika",
+        "label": "スイカ確率",
+        "observe": "通常時ゲーム数に対するスイカ成立回数（平行スイカ＝チャンス目は数えない）",
+        "denom_base": "normal",
+        "values": { "1": 99.9, "2": 91.1, "3": 87.7, "4": 86.7, "5": 85.0, "6": 83.9 },
+        "weight_note": "設定1だけ大きく離れている。試行数を稼ぎやすい",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "bonus_high",
+        "label": "実質ボーナス高確率移行率",
+        "observe": "内部状態なので直接は数えられない",
+        "judge": false,
+        "values": { "1": 114.7, "2": 112.5, "3": 110.5, "4": 96.4, "5": 92.0, "6": 90.3 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "rc_high",
+        "label": "実質リオチャンス高確移行率",
+        "observe": "内部状態なので直接は数えられない",
+        "judge": false,
+        "values": { "1": 417.6, "2": 411.7, "3": 405.8, "4": 350.4, "5": 335.9, "6": 312.1 },
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "chance_direct",
+        "label": "チャンス目成立時のボーナス直撃率（通常・CHINA滞在時）",
+        "observe": "通常時のチャンス目のうち、そのままボーナスに直撃した回数",
+        "outcomes": [
+          { "key": "hit", "label": "直撃", "values": { "1": 5.0, "2": 5.1, "3": 5.2, "4": 6.9, "5": 7.6, "6": 7.8 }, "highlight": true },
+          { "key": "miss", "label": "直撃せず", "values": { "1": 95.0, "2": 94.9, "3": 94.8, "4": 93.1, "5": 92.4, "6": 92.2 }, "note": "100%から直撃率を引いた値" }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "g100_shift",
+        "label": "100G到達時の状態移行",
+        "observe": "ボーナス高確率は内部状態のため見た目では確定できない",
+        "judge": false,
+        "outcomes": [
+          { "key": "china", "label": "CHINAステージ移行", "values": { "1": 84.8, "2": 84.0, "3": 83.2, "4": 80.5, "5": 77.0, "6": 76.2 } },
+          { "key": "bonus_high", "label": "ボーナス高確率移行", "values": { "1": 15.2, "2": 16.0, "3": 16.8, "4": 19.5, "5": 23.0, "6": 23.8 }, "highlight": true }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "g200_shift",
+        "label": "200/400/600/800G到達時の状態移行",
+        "observe": "同上",
+        "judge": false,
+        "outcomes": [
+          { "key": "none", "label": "移行せず", "values": { "1": 50.0, "2": 48.1, "3": 46.1, "4": 39.4, "5": 37.1, "6": 35.5 } },
+          { "key": "china", "label": "CHINAステージ移行", "values": { "1": 39.8, "2": 40.6, "3": 41.4, "4": 42.2, "5": 43.0, "6": 43.8 } },
+          { "key": "bonus_high", "label": "ボーナス高確率移行", "values": { "1": 10.2, "2": 11.3, "3": 12.5, "4": 18.4, "5": 19.9, "6": 20.7 }, "highlight": true }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "g300_shift",
+        "label": "300/500/700/900G到達時の状態移行",
+        "observe": "同上",
+        "judge": false,
+        "outcomes": [
+          { "key": "none", "label": "移行せず", "values": { "1": 83.6, "2": 82.0, "3": 80.4, "4": 78.2, "5": 76.2, "6": 74.6 } },
+          { "key": "china", "label": "CHINAステージ移行", "values": { "1": 12.5, "2": 13.3, "3": 14.1, "4": 14.8, "5": 15.6, "6": 16.4 } },
+          { "key": "bonus_high", "label": "ボーナス高確率移行", "values": { "1": 3.9, "2": 4.7, "3": 5.5, "4": 7.0, "5": 8.2, "6": 9.0 }, "highlight": true }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "bonus_high_win",
+        "label": "ボーナス高確率移行時のボーナス当選期待度",
+        "observe": "ボーナス高確率への移行は見た目で確定できないため参考",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "当選", "values": { "1": 50.0, "2": 50.0, "3": 50.0, "4": 53.6, "5": 53.6, "6": 57.2 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 50.0, "2": 50.0, "3": 50.0, "4": 46.4, "5": 46.4, "6": 42.8 }, "note": "100%から当選期待度を引いた値" }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "ケロットトロフィー（ボーナス終了画面）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（ボーナス終了画面）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（ボーナス終了画面）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（ボーナス終了画面）", "pattern": "ケロット柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（ボーナス終了画面）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "HAWAIIステージの違和感演出", "pattern": "第1停止時に下パネル消灯", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "HAWAIIステージの違和感演出", "pattern": "第2停止時に下パネル消灯", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "HAWAIIステージの違和感演出", "pattern": "第3停止時に下パネル消灯", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "HAWAIIステージの違和感演出", "pattern": "リナランプ点灯", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "HAWAIIステージの違和感演出", "pattern": "下パネル点滅のみ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "REG終了時のタッチカード", "pattern": "ティファニー", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "REG終了時のタッチカード", "pattern": "イルエル", "meaning": "設定2以上示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG終了時のタッチカード", "pattern": "ローザ", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG終了時のタッチカード", "pattern": "ミント / リオ / リナ", "meaning": "高設定示唆（弱 / 中 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG終了時のタッチカード", "pattern": "リオ&リナ（JOKER）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "REG終了時のタッチカード", "pattern": "リオ&リナ&ミント", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "JAC中のトランプ（11枚役）", "pattern": "ティファニー・ローザ", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "JAC中のトランプ（11枚役）", "pattern": "ハワード・ミント / リオ / リナ", "meaning": "高設定示唆（弱 / 中 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "EPISODE/ENDING BONUS中のキャラ", "pattern": "イルエル / ローザ", "meaning": "設定2以上示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "EPISODE/ENDING BONUS中のキャラ", "pattern": "ミント / リオ / リナ", "meaning": "高設定示唆（弱 / 中 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ダイスチェック（150/450/750G）", "pattern": "2〜6のゾロ目で残り回数を否定", "meaning": "ゾロ目の数字以上の設定濃厚（6ゾロ否定なら設定6）", "min_setting": null, "exact_setting": null, "level": "strong" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ダイスチェックのゾロ目は「スイカ天井までの残り回数」か「設定」の示唆。残り回数が否定されたときだけ設定示唆になるため、判別スペックには取り込まない（該当したら判別画面の汎用の確定演出から選ぶ）。",
+    "observations": [],
+    "pending": []
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["内観・外観", "基本パターン"], ["CHINA", "JAPAN移行の高確示唆"], ["JAPAN", "ボーナス高確率示唆"], ["HAWAII", "本前兆濃厚"]]
+      },
+      {
+        "name": "高確濃厚の演出（一部）",
+        "rows": [
+          ["キャラが右から通過", "ボーナス高確/RC高確濃厚"],
+          ["ランプルーレット逆回転", "高確濃厚（発展で本前兆濃厚）"],
+          ["ミント出現", "高確濃厚"],
+          ["巨大ミントの頭が出現", "高確濃厚（第3停止で飛び出せば本前兆濃厚）"]
+        ]
+      },
+      {
+        "name": "カード斬りの手札",
+        "rows": [["J", "本前兆期待度 20%"], ["Q", "34%"], ["K", "70%"], ["JOKER", "本前兆濃厚"]]
+      },
+      {
+        "name": "ボーナス準備中のPUSHボタン色",
+        "rows": [["白", "全ボーナスの可能性"], ["赤", "赤7BIG以上"], ["青", "青7BIG濃厚"], ["赤&青", "スーパーBIG（RC高確中のみ）"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "スイカ確率（設定1 1/99.9 → 設定6 1/83.9）は設定1の否定に効く。平行スイカはチャンス目なので数えない",
+      "初当り確率は設定3と4の間で大きく変わる（1/235.9 → 1/201.8）",
+      "チャンス目からのボーナス直撃も数えておく（設定1 5.0% → 設定6 7.8%）",
+      "HAWAIIステージでレバーON時に下パネルが点滅したら、違和感演出＝設定2以上濃厚",
+      "ボーナス終了画面のケロットトロフィーとREG終了時のタッチカードは必ず確認",
+      "各種高確からの転落は必ずピンチ目を経由するので、高確中は左リール青7狙いで判別できる"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "初当りボーナスの振り分け（REG 45.7%など）はDMMぱちタウンの独自調査値",
+      "ボーナス高確率・リオチャンス高確の移行率は内部状態なので、判別スペックには取り込まない",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  }
+}

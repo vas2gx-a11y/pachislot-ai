@@ -1,0 +1,330 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_jashinchan",
+  "name": "L邪神ちゃんドロップキック",
+  "aliases": ["スマスロ 邪神ちゃん", "じゃしんちゃん"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#8b3fd1" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L邪神ちゃんドロップキック」(2026/09/24更新)", "url": "https://www.p-world.co.jp/machine/database/10498", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L邪神ちゃんドロップキック」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5020", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "三洋（サンスリー）",
+    "release_date": "2026-08-03",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ボーナス＋G数上乗せ型AT）",
+    "model_name": "L邪神ちゃんドロップキックTX",
+    "certification_no": "5S1821",
+    "games_per_50_coins": { "value": 30.7, "unit": "G", "note": "約30.7G" },
+    "net_gain_per_game": { "value": 2.5, "unit": "枚", "note": "AT「人生シアター」約2.5枚/G、上位AT・ボーナス中は約5.0枚/G" },
+    "features": ["ちゃんすラインシステム（業界初）", "5回先までの内部モードを一括抽選", "コンプリート機能搭載"],
+    "summary": "通常時は小役でラインポイントを貯めてCZ→ボーナス、または規定G数到達でボーナスを目指す。スイカが揃ったラインは15G間「ちゃんすライン」になり、そのライン上の小役がレア役並みに優遇される。ボーナス（小悪魔／BIG／EPISODE）からG数上乗せ型AT「人生シアター」へ。上位AT「極上人生シアター」は純増約5.0枚。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.8, "2": 98.6, "3": 100.4, "4": 106.1, "5": 110.4, "6": 114.1 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 253.1, "2": 248.1, "3": 241.6, "4": 222.5, "5": 211.8, "6": 210.0 }, "highlight": true },
+      { "key": "at_first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 758.2, "2": 746.3, "3": 722.8, "4": 655.9, "5": 615.9, "6": 606.2 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ合成", "format": "fraction", "value": 7.3 },
+      { "key": "bell", "label": "ベル", "format": "fraction", "value": 7.0 },
+      { "key": "suika_line", "label": "スイカ（各ライン）", "format": "fraction", "value": 201.0 },
+      { "key": "suika", "label": "スイカ合成", "format": "fraction", "value": 40.2 },
+      { "key": "jashin_line", "label": "邪神ちゃん揃い（各ライン）", "format": "fraction", "value": 1130.0 },
+      { "key": "jashin", "label": "邪神ちゃん揃い合成", "format": "fraction", "value": 226.0 },
+      { "key": "jashin_high", "label": "邪神ちゃん揃い（高確率中）", "format": "fraction", "value": 3.3 },
+      { "key": "hazure", "label": "純ハズレ", "format": "fraction", "value": 528.6 },
+      { "key": "yurine_replay", "label": "ゆりねリプレイ（各ライン）", "format": "fraction", "value": 596.0 },
+      { "key": "yurine_hazure_replay", "label": "ゆりねハズレリプレイ（各ライン）", "format": "fraction", "value": 39.0 }
+    ],
+    "note": "小役確率はすべて全設定共通。スイカ・邪神ちゃん揃いは5ラインに均等に停止する。純ハズレもレア役扱い。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "ちゃんすだヨ!全員集合!",
+        "facts": [
+          { "label": "継続", "value": "前半15G＋後半（小役成立まで）" },
+          { "label": "契機", "value": "規定ラインpt到達・とつぜんうれしいちゃんす等" }
+        ],
+        "description": "前半で小役が揃ったラインの「%」を上げ、後半で成立したラインの期待度でボーナスをガチ抽選。100%超過分でさらにボーナス抽選、後半10G消化ならボーナス3個ストック濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "3戦突破ゆりねバトル",
+        "facts": [
+          { "label": "継続", "value": "1セット10G" },
+          { "label": "バトル継続率", "value": "50%以上（3戦目まで）" },
+          { "label": "純増", "value": "約2.5枚/G" }
+        ],
+        "description": "3戦突破でAT濃厚＋4戦目へ（以降は勝利ごとにATのG数上乗せ）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "とつぜんうれしいちゃんす",
+        "facts": [
+          { "label": "契機", "value": "邪神ちゃん揃い" },
+          { "label": "継続", "value": "1G完結" }
+        ],
+        "description": "小役が揃ったラインのアイテム（規定G数進行・天井短縮・CZ優遇・天国示唆・設定示唆シールなど）を獲得。ちゃんすライン上の邪神ちゃん揃いならSUPER。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "小悪魔BONUS",
+        "facts": [
+          { "label": "継続", "value": "20G" },
+          { "label": "純増", "value": "約5.0枚/G" }
+        ],
+        "description": "通常時はCZ「3戦突破ゆりねバトル」やATを抽選。キャラ紹介で設定示唆あり。裏小悪魔BONUSはAT濃厚＋全ラインがちゃんすライン。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "BIG BONUS",
+        "facts": [
+          { "label": "継続", "value": "30G" },
+          { "label": "純増", "value": "約5.0枚/G" }
+        ],
+        "description": "通常時はAT抽選、AT中は上乗せ特化ゾーン抽選。告知モードは10種類から選択可能。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "EPISODE BONUS",
+        "facts": [
+          { "label": "継続", "value": "35G" },
+          { "label": "純増", "value": "約5.0枚/G" },
+          { "label": "恩恵", "value": "AT濃厚（全員集合なら上位AT濃厚）" }
+        ],
+        "description": "ボーナス確定画面で赤7が揃ったラインのボーナスになる（入賞ラインは完全均等1/5）。アイコンは小悪魔→BIG→EPISODE銀→金→レインボーの順に昇格。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "at": [
+      {
+        "name": "人生シアター（AT）",
+        "facts": [
+          { "label": "初期", "value": "50G" },
+          { "label": "純増", "value": "約2.5枚/G" }
+        ],
+        "description": "G数上乗せ型。規定G数到達でボーナス抽選。残り0Gで規定G数まで残り40G以内ならATが1セット継続。純ハズレで「うれしい高確率」（10G）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "極上人生シアター（上位AT）",
+        "facts": [
+          { "label": "初期", "value": "50G" },
+          { "label": "純増", "value": "約5.0枚/G" }
+        ],
+        "description": "EPISODE BONUS「全員集合」後・ロングフリーズ後・「極上」アイコン獲得後から突入。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "邪神ちゃんす / ゆりねバトル（特化ゾーン）",
+        "facts": [
+          { "label": "邪神ちゃんす", "value": "1セット6GのST型・最大継続率 約90%" },
+          { "label": "ゆりねバトル", "value": "1セット10G・継続率 約50〜90%・1勝10〜300G" }
+        ],
+        "description": "ゆりねバトルの追撃おしおきは平均16.3G（ワンパン）〜246.0G（ぴろぴろ）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ロングフリーズ",
+        "facts": [
+          { "label": "確率", "value": "1/199210.0" },
+          { "label": "恩恵", "value": "EPISODE全員集合＋ゆりねバトル(90%)＋上位AT3セット" }
+        ],
+        "description": "レバーON時or第3停止後に発生。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 799, "text": "通常時 最大799G+α（特殊モード）" },
+    "games_after_reset": { "value": 599, "text": "設定変更後 最大599G+α" },
+    "benefit": "ボーナスに当選",
+    "notes": [
+      "モード別の天井: 通常A・B 749G+α / 通常C 599G+α / 特殊 799G+α / 天国A・B 99G",
+      "ラインポイント天井: 最大5周期到達でCZ当選濃厚",
+      "怒りポイント: ボーナスでAT非当選（6スルーから獲得、10スルーでMAX濃厚）などで貯まり、MAXで次回ボーナスがEPISODE以上濃厚"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "通常A", "note": "200G / 400G / 600G でボーナスに期待（天井749G+α）" },
+      { "games": "通常B", "note": "100G / 300G / 500G でボーナスに期待（天井749G+α）" },
+      { "games": "通常C", "note": "100G / 200G / 300G / 500G（下2桁50でも当選あり、天井599G+α）" },
+      { "games": "天国A・B", "note": "99G以内（天国Bは次回も天国濃厚）" },
+      { "games": "特殊", "note": "天井799G+αまでゾーンなし。同モードループor天国Bへ" }
+    ],
+    "notes": ["モードは5回先まで一括で抽選され、ボーナス当選まで移行しない（AT中も貫通）", "AT中はモードごとの天井が短くなる（通常A 649G / 通常B 549G / 通常C 399G / 特殊・天国 99G）"],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "5回先までモードが決まっているため、天国示唆（天界チケットなど）を確認し、天国の可能性が低ければ即ヤメもあり",
+      "AT・上位AT後は引き戻しの可能性があるので50Gくらいまで様子を見る"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": [
+      "天井が最大599G+αに短縮",
+      "通常C or 天国モードからスタート",
+      "いずれかのラインのラインポイント周期天井が1周期に短縮"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 253.1, "2": 248.1, "3": 241.6, "4": 222.5, "5": 211.8, "6": 210.0 },
+        "weight_note": "設定3と4の間に段差がある",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "at_first_hit",
+        "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 758.2, "2": 746.3, "3": 722.8, "4": 655.9, "5": 615.9, "6": 606.2 },
+        "weight_note": "ボーナス初当りと同じ傾向。回数が少ないので単独では振れやすい",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [],
+    "hints": [
+      { "category": "AT終了画面", "pattern": "邪神ちゃん", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "ミノス / メデューサ", "meaning": "奇数設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "ぺこら / ぽぽろん", "meaning": "偶数設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "ゆりねA / ゆりねB", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "悪だくみ", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "水着", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "パジャマ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "全員集合", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "クジラッキートロフィー", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "クジラッキートロフィー", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "クジラッキートロフィー", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "クジラッキートロフィー", "pattern": "クマノミ柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "クジラッキートロフィー", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "設定示唆シール", "pattern": "芽依 / キョンキョン&ランラン", "meaning": "奇数設定示唆（通常 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "設定示唆シール", "pattern": "遊佐&氷ちゃん / ぴの&ぽぽろん", "meaning": "偶数設定示唆（通常 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "設定示唆シール", "pattern": "ペルセポネ2世", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "設定示唆シール", "pattern": "リエール&ペルセポネ1世", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "設定示唆シール", "pattern": "エキュート&アトレ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "邪神ちゃんジャスティス", "meaning": "設定1否定", "min_setting": null, "exact_setting": null, "denied_settings": [1], "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "邪神ちゃんファイター", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "邪神ちゃんコマンダー", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "邪神ちゃんエスプ", "meaning": "設定1・2否定（設定3以上濃厚）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 2], "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "邪神ちゃんジーニアス", "meaning": "設定1・3否定（設定2・4・5・6濃厚）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3], "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "パーフェクト邪神ちゃん", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "悪魔コスゆりね", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "1回のボーナスでエキュートとアトレ", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "1回のボーナスで高設定示唆キャラ4回", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "1回のボーナスで高設定示唆キャラ2回 / 3回", "meaning": "設定2以上示唆 / 設定3以上示唆", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "小悪魔BONUS中のキャラ紹介", "pattern": "芽依・リエール・ペルセポネ1世 / エキュート・アトレ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "CZ前半のハズレ対応アイテム", "pattern": "タワシがミノスにHIT", "meaning": "設定1否定", "min_setting": null, "exact_setting": null, "denied_settings": [1], "level": "confirm" },
+      { "category": "CZ前半のハズレ対応アイテム", "pattern": "タライがゆりね・メデューサにHIT", "meaning": "設定1否定", "min_setting": null, "exact_setting": null, "denied_settings": [1], "level": "confirm" },
+      { "category": "CZ前半のハズレ対応アイテム", "pattern": "落雷がミノス・ゆりね・メデューサにHIT", "meaning": "設定1否定", "min_setting": null, "exact_setting": null, "denied_settings": [1], "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "小悪魔BONUS中の「邪神ちゃん○○」系キャラは、P-WORLDは「設定2以上濃厚」などの肯定形、DMMぱちタウンは「設定1否定」などの否定形で記載。否定される設定は一致するため否定形でまとめた。奇数・偶数や高設定の弱い示唆は判別スペックには取り込まない。",
+    "observations": [
+      {
+        "label": "CZ前半の落雷の出現頻度",
+        "detail": "高設定ほどハズレ成立時に「落雷」が出現しやすい（数値は未公表）。",
+        "official": true,
+        "source_ids": ["ptown"]
+      },
+      {
+        "label": "AT直撃（3セット獲得）",
+        "detail": "通常時は毎GでAT直撃を抽選し、当選率に設定差がある模様（数値は未公表）。",
+        "official": true,
+        "source_ids": ["pworld"]
+      }
+    ],
+    "pending": [
+      { "label": "AT直撃の設定差", "status": "未公表", "note": "設定差がある模様とのみ記載。" },
+      { "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["ゆりねの部屋・お散歩", "基本パターン"], ["夕日", "G数前兆のプレ前兆"], ["邪神ちゃん脳内会議", "G数前兆示唆"]]
+      },
+      {
+        "name": "邪神ちゃん脳内会議のステージ色",
+        "rows": [["白→青→黄→緑→赤", "右ほど期待度アップ"], ["レインボー", "本前兆濃厚"], ["緑・赤", "「かるた対決」以上濃厚（矛盾で本前兆濃厚）"]]
+      },
+      {
+        "name": "ラインとキャラの対応",
+        "rows": [["メデューサ", "右下がり"], ["ミノス", "上段"], ["邪神ちゃん", "中段"], ["ゆりね", "下段"], ["ぺこら", "右上がり"]]
+      },
+      {
+        "name": "怒りポイントのオーラ",
+        "rows": [["弱", "30pt以上"], ["中", "45pt以上"], ["強", "50pt以上（次回ボーナスで解放濃厚）"]]
+      }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "ボーナス初当り・AT初当りとも設定3と4の間で大きく変わる。通常時ゲーム数と両方の回数を数える",
+      "AT終了画面・クジラッキートロフィー・設定示唆シールは確定系を必ず確認",
+      "小悪魔BONUS中のキャラ紹介は、邪神ちゃん○○系（設定否定）と高設定示唆キャラの出現回数に注目",
+      "CZ前半のタワシ・タライ・落雷が特定キャラにHITすれば設定1否定",
+      "エンディング中は押し順ナビを外して延命するとシールの精度が下がる"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "導入から約2か月のため、AT直撃の設定差など一部は未公表",
+      "奇数・偶数設定示唆は判別スペックには取り込まない（重み付けのみの示唆のため）",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

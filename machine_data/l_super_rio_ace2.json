@@ -1,0 +1,342 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_super_rio_ace2",
+  "name": "スマスロスーパーリオエース2",
+  "aliases": ["リオエース2", "スーリオ2"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#c4264f" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロスーパーリオエース2」", "url": "https://www.p-world.co.jp/machine/database/10449", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーリオエース2」", "url": "https://p-town.dmm.com/machines/4984", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "山佐ネクスト",
+    "release_date": "2026-05-11",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ボーナス＋G数上乗せ型AT）",
+    "model_name": "Lパチスロスーパーリオエース2ND02H",
+    "certification_no": "5S1634",
+    "games_per_50_coins": { "value": 31.2, "unit": "G", "note": "約31.2G" },
+    "net_gain_per_game": { "value": 2.5, "unit": "枚", "note": "AT「RIO RUSH」約2.5枚/G、上位AT「RIO RUSH EX」約4.5枚/G" },
+    "features": ["V-BELLシステム（小Vベルの次Gにレア小役）", "V-BELL HACKING / STATE HACKING", "エースモード（滞在中は機械割100%超）"],
+    "summary": "通常時はレア小役や規定G数（100G・300Gは期待度50%以上）からBB高確率「ノワールルーム」、リプレイ50回ごとにCZ「ハワードゲーム」を抽選。BIG中のAT抽選（期待度約50%）からAT「RIO RUSH」（初期50G・G数上乗せ型）へ。AT中はカジノバトル勝利でリオチャンス、上位CZ「ノワールクライシス」成功で上位AT「RIO RUSH EX」。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 98.7, "3": 100.5, "4": 105.1, "5": 109.1, "6": 112.1 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り", "format": "fraction", "values": { "1": 289.8, "2": 281.9, "3": 268.0, "4": 238.9, "5": 230.0, "6": 219.2 }, "highlight": true },
+      { "key": "noir_room", "label": "ノワールルーム", "format": "fraction", "values": { "1": 131.9, "2": 130.4, "3": 127.6, "4": 121.2, "5": 119.1, "6": 116.2 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 71.6 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 695.6 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 84.1 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 542.1 },
+      { "key": "chance_replay", "label": "チャンスリプレイ", "format": "fraction", "value": 248.4 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 30.2 },
+      { "key": "vbell_hacking", "label": "V-BELL HACKING役（4択）", "format": "fraction", "value": 721.0 },
+      { "key": "state_hacking", "label": "STATE HACKING目（下段リプレイ）", "format": "fraction", "value": 2884.0 }
+    ],
+    "note": "小役確率はすべて全設定共通。小Vベル（約1/20）の次Gは約20%でレア小役、強小Vベル・小Vベル2連なら次Gレア小役濃厚（左リール赤7狙いで強弱を判別可能）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "ノワールルーム（BB高確率）",
+        "facts": [
+          { "label": "継続", "value": "平均約16G" },
+          { "label": "ボーナス期待度", "value": "約40%" }
+        ],
+        "description": "リプレイやレア小役でボーナス抽選。背景が赤の「のわーるるーむ」は成功すればAT濃厚。ボグLv.1 28.2% / Lv.2 54.5% / Lv.3 100%。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ハワードゲーム（CZ）",
+        "facts": [
+          { "label": "継続", "value": "10G+α" },
+          { "label": "成功期待度", "value": "約50%" },
+          { "label": "契機", "value": "リプレイ50回ごとの抽選" }
+        ],
+        "description": "小役成立時に成功抽選（リプレイ/ベル15.2%、弱レア50.2%、強レア100%）。成功でAT濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "V-BELL HACKING / STATE HACKING",
+        "facts": [
+          { "label": "V-BELL HACKING", "value": "20GのレアST・ループ率約77.5%（レア小役 約1/13.9）" },
+          { "label": "STATE HACKING", "value": "20Gの状態格上げST・ループ率約50.4%" }
+        ],
+        "description": "全状態共通の特殊状態。STがループすれば通常時からAT中へ持ち越せる。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "BIG BONUS",
+        "facts": [
+          { "label": "継続", "value": "31G" },
+          { "label": "純増", "value": "約2.5枚/G（上位AT中 約4.5枚/G）" },
+          { "label": "AT期待度（通常時）", "value": "約50%" }
+        ],
+        "description": "通常時は全役でAT抽選（強チェリー/チャンス目62.5%）。AT中はG数上乗せを抽選。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "RIO RUSH（AT）",
+        "facts": [
+          { "label": "初期", "value": "50G" },
+          { "label": "純増", "value": "約2.5枚/G" }
+        ],
+        "description": "レア小役・規定G数でG数上乗せやカジノバトル（4G）を抽選。バトル勝利でリオチャンス（小役2連でカードの報酬を獲得）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "RIO RUSH EX（上位AT）",
+        "facts": [
+          { "label": "初期", "value": "50G" },
+          { "label": "純増", "value": "約4.5枚/G" }
+        ],
+        "description": "上位CZ「ノワールクライシス」（12G+α・約50%）で黄7orリバースセブン揃いから突入。終了後は必ず上位CZへ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "特化ゾーン",
+        "facts": [
+          { "label": "ノワールタイム", "value": "平均105G上乗せ" },
+          { "label": "リオタイム", "value": "リオチャンスストック平均約3.3個" }
+        ],
+        "description": "ノワールタイムはリバースシステム発動でG数加算状態へ。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 750, "text": "ボーナス間 750G+α" },
+    "games_after_reset": { "value": 500, "text": "設定変更後 500G+α" },
+    "benefit": "BIG BONUSに当選",
+    "notes": [
+      "ボーナススルー天井: AT非当選のボーナスが最大7回続くと8回目がAT（0〜7回から振り分け、高設定ほど浅い回数が選ばれやすい模様）",
+      "設定変更後は5回目のボーナスがATに書き換え",
+      "エースモード「ナヴィ」滞在中は天井が300G or 500Gに短縮"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "100G", "note": "ノワールルーム当選期待度 50%以上" },
+      { "games": "300G", "note": "ノワールルーム当選期待度 50%以上" },
+      { "games": "50G・200G・400G〜700G", "note": "規定G数のゾーン" },
+      { "games": "750G", "note": "天井" }
+    ],
+    "notes": ["G数表示が青なら周期到達示唆、赤なら期待高", "ハワードカウンターが赤ならCZ当選濃厚"],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "基本はAT終了後",
+      "上位CZ終了後はエースモード示唆（アイキャッチのチップなど）を確認して、何もなければヤメ",
+      "AT終了後は約10%で50G+α以内に「のわーるるーむ」が出現する引き戻し抽選あり"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "reset": {
+    "items": [
+      "ボーナス間天井が500G+αに短縮",
+      "ボーナススルー天井が4回（5回目のボーナスでAT）に短縮",
+      "リプレイ50回到達の初回のみCZ当選率が全設定共通で約33%",
+      "リバースポイントは20.02%で残り16pt以内が選ばれる"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "初当り確率",
+        "observe": "通常時ゲーム数に対するAT/ボーナス初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 289.8, "2": 281.9, "3": 268.0, "4": 238.9, "5": 230.0, "6": 219.2 },
+        "weight_note": "設定3と4の間に段差がある",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "noir_room",
+        "label": "ノワールルーム出現率",
+        "observe": "通常時ゲーム数に対するノワールルーム突入回数",
+        "denom_base": "normal",
+        "values": { "1": 131.9, "2": 130.4, "3": 127.6, "4": 121.2, "5": 119.1, "6": 116.2 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "direct",
+        "label": "通常時のボーナス直撃確率",
+        "observe": "通常時ゲーム数に対するボーナス直撃回数（ノワールルーム・CZを経由しない当選）",
+        "denom_base": "normal",
+        "values": { "1": 53905.6, "2": 26924.8, "3": 13681.4, "4": 6252.5, "5": 5208.0, "6": 4326.7 },
+        "weight_note": "設定1と6で約12倍の差。1回でも大きく動く",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "replay50_cz",
+        "label": "リプレイ50回到達時のCZ当選率",
+        "observe": "ハワードカウンターが50回に到達した回数と、そこからのCZ当選回数（設定変更後の初回は全設定33%なので除く）",
+        "outcomes": [
+          { "key": "win", "label": "CZ当選", "values": { "1": 20.3, "2": 21.1, "3": 22.7, "4": 26.2, "5": 27.7, "6": 30.1 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 79.7, "2": 78.9, "3": 77.3, "4": 73.8, "5": 72.3, "6": 69.9 }, "note": "100%から当選率を引いた値" }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "rina_sign",
+        "label": "ボーナス/AT終了画面のリナサイン出現率",
+        "observe": "ボーナス・AT終了画面の回数と、そのうちリナのサインが出た回数",
+        "outcomes": [
+          { "key": "rina", "label": "リナサイン", "values": { "1": 1.0, "2": 2.0, "3": 3.0, "4": 4.0, "5": 4.5, "6": 5.0 }, "highlight": true },
+          { "key": "other", "label": "リナ以外", "values": { "1": 99.0, "2": 98.0, "3": 97.0, "4": 96.0, "5": 95.5, "6": 95.0 }, "note": "100%からリナの出現率を引いた値" }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "ending_voice",
+        "label": "エンディング中のボイス振り分け",
+        "observe": "エンディング中のレア小役成立時にPUSHで出たボイス（ナビ無視をすると30G間示唆が出ないので注意）",
+        "outcomes": [
+          { "key": "blue", "label": "お客様がお望みなら（青）", "values": { "1": 59.0, "2": 55.0, "3": 54.0, "4": 49.0, "5": 48.0, "6": 45.0 } },
+          { "key": "yellow", "label": "ちゅうもーく（黄）", "values": { "1": 30.0, "2": 31.0, "3": 32.0, "4": 33.0, "5": 34.0, "6": 35.0 } },
+          { "key": "green", "label": "良い予感がするわ（緑）", "values": { "1": 10.0, "2": 12.0, "3": 12.0, "4": 14.0, "5": 14.0, "6": 16.0 } },
+          { "key": "red", "label": "承認します（赤）", "values": { "1": 1.0, "2": 2.0, "3": 2.0, "4": 3.0, "5": 3.0, "6": 3.0 } },
+          { "key": "rainbow", "label": "激ヤバじゃん（レインボー）", "values": { "1": 0, "2": 0, "3": 0, "4": 1.0, "5": 1.0, "6": 1.0 }, "highlight": true, "note": "設定1〜3は出現しない（ー表記）" }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "suika_noir",
+        "label": "スイカ成立時の次回ノワールルーム成功抽選",
+        "observe": "当選したかは見た目で確定できない（PUSHボタン横ランプで示唆のみ）",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "当選", "values": { "1": 10.2, "2": 10.9, "3": 12.9, "4": 18.0, "5": 19.5, "6": 21.9 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 89.8, "2": 89.1, "3": 87.1, "4": 82.0, "5": 80.5, "6": 78.1 } }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "ace_mode",
+        "label": "エースモード突入率",
+        "observe": "高設定ほど突入しやすいが、示唆頻度が低く見た目での判別は難しい",
+        "judge": false,
+        "outcomes": [
+          { "key": "in", "label": "突入", "values": { "1": 30.1, "2": 32.0, "3": 34.4, "4": 37.5, "5": 40.6, "6": 43.8 }, "highlight": true },
+          { "key": "out", "label": "突入せず", "values": { "1": 69.9, "2": 68.0, "3": 65.6, "4": 62.5, "5": 59.4, "6": 56.2 } }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "獲得枚数表示", "pattern": "246枚OVER", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "803枚OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ケロットトロフィー（AT終了時）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（AT終了時）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（AT終了時）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（AT終了時）", "pattern": "ケロット柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ケロットトロフィー（AT終了時）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ボーナス/AT終了画面のサイン", "pattern": "リオ / ミント", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス/AT終了画面のサイン", "pattern": "リナ", "meaning": "高設定示唆（強）※出現率は選択肢型で判別に使用", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "エンディング中のボイス", "pattern": "激ヤバじゃん（レインボーランプ）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "アイキャッチ", "pattern": "「全員」のアイキャッチ後、のわーるるーむ・AT・ノワールタイムのいずれにも当選しない", "meaning": "設定4以上濃厚", "min_setting": null, "exact_setting": null, "level": "strong" }
+    ],
+    "hints_source_ids": ["pworld"],
+    "hints_note": "「全員」アイキャッチは後から結果が分かったときだけ設定4以上が確定するため、判別スペックには取り込まない（該当したら判別画面の汎用の確定演出から選ぶ）。エンディングの「激ヤバじゃん」は確定演出と選択肢型の両方に入っているが、どちらも設定1〜3を0にするだけなので二重に数えても結果は変わらない。",
+    "observations": [
+      {
+        "label": "ボーナススルー天井の回数",
+        "detail": "高設定ほど浅めの天井回数が選ばれやすい模様（数値は未公表）。",
+        "official": true,
+        "source_ids": ["pworld"]
+      }
+    ],
+    "pending": [
+      { "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["ダイヤモンドラグーン・クローバーフォレスト", "基本パターン"], ["スペード&ハートカフェ", "高確準備以上示唆"], ["トランプスカイ", "高確示唆"]]
+      },
+      {
+        "name": "エースモード（アイキャッチのチップ）",
+        "rows": [
+          ["ナヴィ", "天井が300G or 500Gに短縮"],
+          ["テイル", "規定G数到達のたびに50%以上でノワールルーム"],
+          ["ヴィヴィアン&メリッサ", "レア小役のノワールルーム当選期待度アップ"],
+          ["アリス", "ノワールルーム当選時に50%でのわーるるーむ"],
+          ["ノワール", "次回の当りがAT"]
+        ]
+      },
+      {
+        "name": "小Vベル時のサブ液晶タッチ（次Gレア小役期待度）",
+        "rows": [["白", "9.5%"], ["青", "25.2%"], ["黄", "100%（強レア期待度 低）"], ["緑", "100%（強レア期待度 中）"], ["赤", "100%（強レア濃厚）"]]
+      }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "初当り（1/289.8 → 1/219.2）とノワールルーム（1/131.9 → 1/116.2）を通常時ゲーム数と合わせて数える",
+      "リプレイ50回到達時のCZ当選率（設定1 20.3% → 設定6 30.1%）を数える。ハワードカウンターが赤ならCZ濃厚",
+      "ボーナス/AT終了画面のリナサインの回数を数える（設定1 1.0% → 設定6 5.0%）",
+      "ボーナス直撃は設定差が非常に大きい（設定1 1/53905.6、設定6 1/4326.7）",
+      "獲得枚数表示の246枚OVERは偶数、803枚OVERは設定5以上濃厚"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "設定変更後の初回リプレイ50回到達はCZ当選率が全設定33%なので、判別の回数に含めない",
+      "エンディング中に押し順ナビを無視すると30G間ボイス示唆が出ない",
+      "エースモード・スイカのノワールルーム成功抽選は見た目で確定できないため、判別スペックには取り込まない"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

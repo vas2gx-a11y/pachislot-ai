@@ -1,0 +1,294 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_kanokari",
+  "name": "Lパチスロ 彼女、お借りします",
+  "aliases": ["スマスロ かのかり", "かのかり"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#e0548a" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 彼女、お借りします」", "url": "https://www.p-world.co.jp/machine/database/10543", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 彼女、お借りします」", "url": "https://p-town.dmm.com/machines/5065", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "SANKYO（製造: ビスティ）",
+    "release_date": "2026-09-07",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナス＋1G連ループ）",
+    "model_name": "Lレンタル彼女bK",
+    "certification_no": "630270",
+    "games_per_50_coins": { "value": 31.0, "unit": "G", "note": "約31.0G（設定1）" },
+    "net_gain_per_game": { "value": 5.0, "unit": "枚", "note": "ボーナス中 約5.0枚/G" },
+    "features": ["2段階の「小役変換」", "ガチ恋ループ（ユメカノモード時 平均ループ率 約92%）", "コンプリート機能搭載"],
+    "summary": "通常時はレア小役でハートメーターを貯めて変換(超)高確率へ上げ、「小役変換」（チャンス目→強チャンス目→ガチ恋目→最強目）からCZ・ボーナスを目指す。100G・300Gなど百の位が奇数のG数でもCZ抽選。ボーナス中に「1GレンCHANCE」「1G恋」をストックし、ボーナス→1GレンCHANCE→引き戻しゾーン（66G）のループで出玉を増やす。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている（CZ・初当りは整数での公表）。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 98.7, "3": 101.0, "4": 105.5, "5": 110.4, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 269, "2": 263, "3": 254, "4": 235, "5": 231, "6": 226 }, "highlight": true },
+      { "key": "cz", "label": "CZ合成", "format": "fraction", "values": { "1": 172, "2": 169, "3": 164, "4": 154, "5": 151, "6": 149 }, "highlight": true }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 9.2 },
+      { "key": "left_bell", "label": "左1stベル", "format": "fraction", "value": 17 },
+      { "key": "weak_chance", "label": "弱チャンス目", "format": "fraction", "value": 12 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 80 },
+      { "key": "strong_chance", "label": "強チャンス目", "format": "fraction", "value": 256 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 10.0 },
+      { "key": "strong_chance_total", "label": "強チャンス目合成（変換含む・実質）", "format": "fraction", "value": 77 },
+      { "key": "gachikoi", "label": "ガチ恋目（変換のみ・実質）", "format": "fraction", "value": 730 },
+      { "key": "saikyo", "label": "最強目（変換のみ・実質）", "format": "fraction", "value": 11990 }
+    ],
+    "note": "小役確率はすべて全設定共通。ガチ恋目・最強目は小役変換からのみ出現する。チャンス目・強チャンス目はフリー打ちだと1枚役を取りこぼすことがある（左リールに金7or赤7を狙えば回避可能）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "レンカノCHALLENGE",
+        "facts": [
+          { "label": "継続", "value": "15G+α" },
+          { "label": "成功期待度", "value": "約56%" }
+        ],
+        "description": "成立役でドキドキ色をレベルアップし、最終色で成功抽選（白12.8% / 青19.7% / 黄30.1% / 緑55.7% / 赤95.2% / レインボー100%）。小役変換で複数レベルアップ＋5G加算。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "妄想DTデートチャレンジ",
+        "facts": [
+          { "label": "継続", "value": "10G" },
+          { "label": "成功期待度", "value": "約75%" }
+        ],
+        "description": "CZ当選時の一部で突入する上位CZ。成功でかのかりBONUS以上濃厚、レア小役からの成功はななかりDREAMに期待。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "小役変換",
+        "facts": [
+          { "label": "1段階目", "value": "レバーON時（弱チャンス目・チャンス目→強チャンス目、強チャンス目→ガチ恋目）" },
+          { "label": "2段階目", "value": "MAX BET時（→ガチ恋目 / →最強目）" }
+        ],
+        "description": "変換(超)高確率中のレア小役で発生。1段階目のCZ以上期待度は通常パターン32.3% / 強パターン75.1%、2段階なら84.8%以上。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "かのかりBONUS",
+        "facts": [
+          { "label": "継続", "value": "30G" },
+          { "label": "純増", "value": "約5.0枚/G" }
+        ],
+        "description": "赤7揃い。1GレンCHANCE・1G恋のストックを抽選（初当り時は1GレンCHANCEを必ず1個獲得）。下パネル消灯なら「裏かのかりBONUS」（毎G約1/3でストック）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "REGULAR BONUS",
+        "facts": [
+          { "label": "継続", "value": "ベルナビ10回" },
+          { "label": "1G恋ストック期待度", "value": "約5%" }
+        ],
+        "description": "[赤7・赤7・金7]揃い。キャラ紹介で設定示唆あり。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "(S級)ななかりDREAM",
+        "facts": [
+          { "label": "平均上乗せ", "value": "78G（S級は279G）" },
+          { "label": "期待枚数（S級）", "value": "2,910枚" }
+        ],
+        "description": "金7揃い。金7揃いが続く限りG数を上乗せし、消化後はかのかりBONUSへ。S級はユメカノモード獲得後の11.4%やロングフリーズから。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "1GレンCHANCE / 1G恋",
+        "facts": [
+          { "label": "継続", "value": "1セット2G" },
+          { "label": "1G連期待度", "value": "約40%（1G恋は1G連濃厚）" }
+        ],
+        "description": "ボーナスのストックを消化する1G連抽選ゾーン。4回成功ごとにエピソードBONUS、8回成功でスペシャルエピソード（ユメカノモード濃厚）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "引き戻しゾーン",
+        "facts": [
+          { "label": "期間", "value": "ボーナス・1GレンCHANCE終了後66G" },
+          { "label": "引き戻し期待度", "value": "24.7%（ユメカノモード中 58.0%）" }
+        ],
+        "description": "G数表示がピンク、紫ならユメカノモード濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "(S級)DREAM TIME",
+        "facts": [
+          { "label": "継続", "value": "15G" },
+          { "label": "平均ストック", "value": "約2.5個（S級 約6個）" },
+          { "label": "期待枚数", "value": "1,390枚（S級 2,590枚）" }
+        ],
+        "description": "エンディング到達後などから突入するストック特化ゾーン。ストック消化後はユメカノモード濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1000, "text": "ボーナス間 1000G+α" },
+    "games_after_reset": { "value": 600, "text": "設定変更後 600G+α（REG後は800G+α）" },
+    "benefit": "かのかりBONUSに当選",
+    "notes": [
+      "REG連続天井: REGが最大6回（3〜6回の振り分け）続くと、次回ボーナスが「裏かのかりBONUS」",
+      "規定G数はCZ当選→失敗では引き継がれ、ボーナス当選でリセット"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "100G", "note": "CZ期待度 モード1 約10% / モード2 約30% / モード3 濃厚" },
+      { "games": "300G", "note": "CZ期待度 約10% / 約40% / 約30%" },
+      { "games": "500G", "note": "CZ期待度 濃厚 / 濃厚 / 約30%" },
+      { "games": "700G", "note": "CZ期待度 約10% / 約30% / 濃厚" },
+      { "games": "900G", "note": "CZ期待度 約10% / 約30% / 約30%" },
+      { "games": "偶数百G", "note": "200G・400G・600G・800Gはポイント高確率移行濃厚（20G保障）" }
+    ],
+    "notes": [
+      "G数表示が赤ならCZ当選濃厚",
+      "設定変更後はモード2以上濃厚。かのかりBONUS後はモード1、REG後はモード1・2が選ばれやすい",
+      "CZ当選契機の割合はレア小役 約70% / G数 約30%"
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "ボーナス・1GレンCHANCE後は66G間が引き戻しゾーンなので、66G消化後にヤメるのが理想",
+      "引き戻しゾーン中のセリフやアイキャッチで次回かのかりBONUS以上が示唆されたら続行（かのかりBONUS以上なら機械割100%超）"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": [
+      "ボーナス間天井が600G+αに短縮",
+      "モード2 or モード3が必ず選ばれるため、早いG数で当たりやすい"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": ["エンディング到達後（規定差枚数で突入）に有利区間ツラヌキ → DREAM TIME＋ユメカノモードの権利獲得"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数（引き戻し・1G連は含めない）",
+        "denom_base": "normal",
+        "values": { "1": 269, "2": 263, "3": 254, "4": 235, "5": 231, "6": 226 },
+        "weight_note": "設定3と4の間に段差がある。公表値が整数のため精度は粗め",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "cz",
+        "label": "CZ合成確率",
+        "observe": "通常時ゲーム数に対するCZ（レンカノCHALLENGE＋妄想DT）突入回数",
+        "denom_base": "normal",
+        "values": { "1": 172, "2": 169, "3": 164, "4": 154, "5": 151, "6": 149 },
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "ratios": [],
+    "hints": [
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "枠なし", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "白枠（BBQ / 浜辺）", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "赤枠", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "紫枠", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "銀枠", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "かのかりBONUS/1GレンCHANCE終了画面", "pattern": "金枠", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "センチメートル演出", "pattern": "運命の44cm（紫）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "センチメートル演出", "pattern": "運命の55cm（赤）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "センチメートル演出", "pattern": "運命の66cm（金）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "246枚OVER", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "394枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "1GレンCHANCEのシナリオ", "pattern": "シナリオ1・3からスタート / シナリオ2・4からスタート", "meaning": "偶数設定示唆 / 奇数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "1GレンCHANCEのシナリオ", "pattern": "4人攻略後に同じシナリオが連続", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+
+      { "category": "REG中のキャラ紹介", "pattern": "千鶴だけコスプレ / 墨からコスプレ", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG中のキャラ紹介", "pattern": "瑠夏からコスプレ / 麻美からコスプレ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG中のキャラ紹介", "pattern": "麻美から水着（水着4人）", "meaning": "高設定濃厚（具体的な下限は未公表）", "min_setting": null, "exact_setting": null, "level": "strong" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "1GレンCHANCEのシナリオは、引き戻しゾーンで引き戻した場合に再セット（初回扱い）になる。REG中の水着は「高設定濃厚」とだけ記載され下限の設定が不明なため、判別スペックには取り込まない。",
+    "observations": [],
+    "pending": [
+      { "label": "エンディング中のボイス", "status": "調査中", "note": "レア役成立時のPUSHで設定示唆ボイスが発生するが、内容は調査中。" },
+      { "label": "REG中キャラ紹介の水着・肺魚パターン", "status": "調査中", "note": "全15パターンのうち一部のみ公表。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["部屋と彼女・大学と彼女・街と彼女", "基本パターン"], ["ヒロインステージ", "ポイント高確示唆"], ["海と彼女・和也の部屋", "CZ前兆示唆"], ["夜と彼女", "CZ/ボーナス前兆示唆"], ["ヒミツ恋ゴコロ", "ボーナス前兆示唆"]]
+      },
+      {
+        "name": "規定G数到達時のアイキャッチ",
+        "rows": [["千鶴", "CZ期待度 低"], ["麻美&瑠夏", "↓"], ["墨&千鶴", "↓"], ["祖父&祖母&千鶴", "高"]]
+      },
+      {
+        "name": "次回かのかりBONUS以上の示唆（非前兆時のアイキャッチ）",
+        "rows": [["デフォルト", "40.7%"], ["青（キャラ4人）", "73.5%"], ["ピンク（キャラ2人）", "88.9%"], ["特殊（劇画調）", "100%"]]
+      },
+      {
+        "name": "レンカノJUDGE",
+        "rows": [["3バカトリオ出現", "ボーナス当選濃厚"], ["確定PUSH（ミニ水原）", "ボーナス当選濃厚"], ["肺魚出現", "ボーナス当選濃厚"]]
+      }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "ボーナス初当り（1/269 → 1/226）とCZ（1/172 → 1/149）を通常時ゲーム数と合わせて数える",
+      "かのかりBONUS/1GレンCHANCE終了画面は赤枠でも設定2以上濃厚、紫枠で設定4以上濃厚",
+      "獲得枚数表示の246枚OVERは偶数設定濃厚、394枚OVERは設定6濃厚",
+      "1GレンCHANCEで4人攻略後に同じシナリオが続けば設定5以上濃厚",
+      "ヒミツ恋ゴコロ中やチャンス告知中のセンチメートル演出（44/55/66cm）に注目"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "CZ・初当り確率は整数（約1/172など）での公表のため、判別の精度は他機種より粗め",
+      "導入から約2週間のため、エンディングボイスなどは調査中",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

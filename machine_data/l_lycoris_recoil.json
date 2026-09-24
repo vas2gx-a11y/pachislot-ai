@@ -1,0 +1,349 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_lycoris_recoil",
+  "name": "スマスロ リコリス・リコイル",
+  "aliases": ["Lリコリコ", "リコリコ"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#c8293c" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ リコリス・リコイル」", "url": "https://www.p-world.co.jp/machine/database/10503", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ リコリス・リコイル」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5033", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "サミー",
+    "release_date": "2026-09-07",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナス連打型）",
+    "model_name": "L スマスロ リコリス・リコイル KX",
+    "certification_no": "6S0400",
+    "games_per_50_coins": { "value": 31.8, "unit": "G", "note": "約31.8G" },
+    "net_gain_per_game": { "value": 8.4, "unit": "枚", "note": "ボーナス中 約8.4枚/G" },
+    "features": ["「変換」でCZ・ボーナスを抽選", "才能レベルでボーナス期待度が変わるRUSH", "コンプリート機能搭載"],
+    "summary": "通常時はレア小役後の「変換」（リールアクション）・規定G数・スタンプ12個からCZ（オポジットバトル／ファーストリコリス）を目指す。CZ成功でボーナス高確率状態「リコリスラッシュ」（20G+α）へ。ボーナス当選後は前半50G+α＋後半ST10G+αで疑似ボーナスを連打。ボーナス中のポイント1000ptで上位CZ「リコイル オブ リコリス」→上位RUSH「リコリスラッシュW」。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6の主要数値は公表済み。一部の要素（RUSH直撃・ファーストリコリス）は設定1と6のみ公表。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.9, "3": 101.3, "4": 106.1, "5": 110.4, "6": 114.6 }, "highlight": true },
+      { "key": "first_hit", "label": "リコリスラッシュ初当り", "format": "fraction", "values": { "1": 328.8, "2": 323.4, "3": 312.1, "4": 288.3, "5": 271.6, "6": 256.7 }, "highlight": true },
+      { "key": "cz", "label": "CZ", "format": "fraction", "values": { "1": 198.7, "2": 196.9, "3": 191.3, "4": 183.3, "5": 175.9, "6": 169.4 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.3 },
+      { "key": "common_bell", "label": "共通ベル（右下がり15枚ベル）", "format": "fraction", "values": { "1": 95.8, "2": 95.8, "3": 95.8, "4": 87.6, "5": 83.2, "6": 79.1 }, "highlight": true },
+      { "key": "cherry", "label": "チェリー", "format": "fraction", "value": 89.2 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 89.2 },
+      { "key": "weak_lycoris", "label": "弱リコリス目", "format": "fraction", "value": 50.3 },
+      { "key": "strong_lycoris", "label": "強リコリス目", "format": "fraction", "value": 728.2 },
+      { "key": "mid_cherry", "label": "中段チェリー", "format": "fraction", "value": 16384.0 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 22.9 },
+      { "key": "replay_rare_total", "label": "リプレイ＋レア小役合成", "format": "fraction", "value": 5.5 }
+    ],
+    "note": "共通ベル（右下がりに揃う15枚ベル）のみ設定差あり。設定1〜3は同じ値で、設定4以上で軽くなる。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "オポジットバトル",
+        "facts": [
+          { "label": "継続", "value": "8G" },
+          { "label": "成功期待度", "value": "約53%" }
+        ],
+        "description": "成立役でフリーズ（成功）を抽選。レア小役55.1%、強リコリス目・中段チェリーは100%。最終Gはレア小役で成功濃厚。リールロック3段階でフリーズ＝成功濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ファーストリコリス",
+        "facts": [
+          { "label": "継続", "value": "8G" },
+          { "label": "成功期待度", "value": "約83%" },
+          { "label": "出現率", "value": "設定1 1/3965.0 / 設定6 1/2084.8" }
+        ],
+        "description": "CZ当選時の一部で突入する高期待度CZ。レア小役でフリーズ濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "リコイル オブ リコリス（上位CZ）",
+        "facts": [
+          { "label": "継続", "value": "10G" },
+          { "label": "成功期待度", "value": "約70%" }
+        ],
+        "description": "ボーナス中のポイント1000ptで権利獲得。全役でフリーズ抽選、成功で上位RUSH「リコリスラッシュW」。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "リコリスBONUS",
+        "facts": [
+          { "label": "払い出し", "value": "100枚" },
+          { "label": "純増", "value": "約8.4枚/G" }
+        ],
+        "description": "赤7シングル揃い。全役でポイント獲得抽選（100ptごとにギフト、1000ptで上位CZ）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "リコリスBONUS W / エピソードBONUS",
+        "facts": [
+          { "label": "W", "value": "200枚以上（リコイルアタックで上乗せ）" },
+          { "label": "エピソード", "value": "300枚" }
+        ],
+        "description": "赤7ダブル揃い。W揃い後のブラックアウトで「カウントダウンアタック」＝1000or2000or3000枚上乗せ濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "りこりすぷらっしゅBONUS",
+        "facts": [
+          { "label": "払い出し", "value": "平均約385枚" },
+          { "label": "純増", "value": "約8.4枚/G" }
+        ],
+        "description": "青7揃い。開始時「ビーチアタック」で枚数を決定（中段チェリーなら最低500枚）。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "リコリスラッシュ",
+        "facts": [
+          { "label": "継続", "value": "初回20G+α、2連目以降は前半50G+α＋後半ST10G+α" },
+          { "label": "ボーナス期待度（初回）", "value": "約60%" },
+          { "label": "RUSH中ボーナス確率", "value": "約1/18" }
+        ],
+        "description": "千束RUSH（チェリーの才能Lv2）かたきなRUSH（スイカの才能Lv2）でスタート。才能レベルと成立役でボーナス抽選。変換後の前兆中はG数HOLD。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "リコリスラッシュW（上位RUSH）",
+        "facts": [
+          { "label": "継続", "value": "前半50G+α＋後半10G+α" },
+          { "label": "特徴", "value": "チェリー&スイカの才能Lv2常時点灯・ボーナスはW揃い以上" }
+        ],
+        "description": "1000pt到達で「虹MAX」＝上位RUSHのG数リセット。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "レジェンダリーリコリス",
+        "facts": [
+          { "label": "継続", "value": "7G+α" },
+          { "label": "平均上乗せ", "value": "約1000枚" },
+          { "label": "期待枚数", "value": "約2400枚" }
+        ],
+        "description": "上位RUSH突入時の一部やロングフリーズ（中段チェリーの一部）から突入する枚数上乗せ特化ゾーン。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 850, "text": "RUSH間 最大850G+α" },
+    "games_after_reset": { "value": 600, "text": "設定変更後・RUSH駆け抜け後 600G+α（上位CZ失敗後は250G+α）" },
+    "benefit": "リコリスラッシュ当選（850G到達時はVストック抽選あり）",
+    "notes": [
+      "CZ間天井: CZ/RUSH間で最大600G+α → CZ当選（設定変更後・RUSH駆け抜け後は250G+α）",
+      "短縮天井: 250G・400G・600G・750Gのいずれかが選ばれると、前兆を経て成功濃厚CZ → RUSH",
+      "スタンプ前兆失敗時のアイコン色（青<緑<赤）とサブ液晶の分母で短縮天井を示唆"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "0G", "note": "CZ期待度 〇" },
+      { "games": "100G", "note": "CZ期待度 ◎" },
+      { "games": "250G", "note": "CZ期待度 ◎（250G+αまでのCZ当選期待度 約90%）" },
+      { "games": "400G", "note": "CZ期待度 〇" },
+      { "games": "600G", "note": "CZ期待度 ◎" },
+      { "games": "750G", "note": "CZ期待度 〇" }
+    ],
+    "notes": [
+      "変換高確率への移行期待度: 50G・150G・450Gで高、300Gで濃厚、650Gで中",
+      "規定G数契機・スタンプ契機のCZ当選率は高設定ほど優遇（数値は未公表）"
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "RUSH終了後はCZの引き戻し・変換高確移行のチャンスとなる50Gまでが最初のヤメ時",
+      "100GのCZまで見るなら100G+α（250G+αまでのCZ当選期待度が約90%と高いので状況次第）",
+      "上位RUSH終了後は100G以内（下パネル点滅中）の引き戻しで上位RUSHに復帰するため100G+αまで"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": [
+      "CZ間天井が最大250G、RUSH間天井が最大600Gに短縮",
+      "通常時のゲーム数がランダムに加算された状態でスタートすることもある",
+      "設定変更時の機械割は100%超"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": [
+      "有利区間リセット契機: ①上位RUSHで1000pt獲得後の前半50G消化後or後半ボーナス後の一部 ②上位CZ成功時の一部 ③レジェンダリーリコリス後のボーナス終了時の一部 ④エンディング終了時",
+      "リセット後は上位RUSHorレジェンダリーリコリスへ。②と④のみ確実に判別可能（②は成功後にRUSH準備画面へ移行すればリセット濃厚）"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "リコリスラッシュ初当り確率",
+        "observe": "通常時ゲーム数に対するRUSH初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 328.8, "2": 323.4, "3": 312.1, "4": 288.3, "5": 271.6, "6": 256.7 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "cz",
+        "label": "CZ確率",
+        "observe": "通常時ゲーム数に対するCZ突入回数",
+        "denom_base": "normal",
+        "values": { "1": 198.7, "2": 196.9, "3": 191.3, "4": 183.3, "5": 175.9, "6": 169.4 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "common_bell",
+        "label": "共通ベル（右下がり15枚ベル）確率",
+        "observe": "通常時ゲーム数に対する右下がり15枚ベルの回数",
+        "denom_base": "normal",
+        "values": { "1": 95.8, "2": 95.8, "3": 95.8, "4": 87.6, "5": 83.2, "6": 79.1 },
+        "weight_note": "設定1〜3が同じ値なので、低設定か設定4以上かの見分けに効く",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "rush_direct",
+        "label": "リコリスラッシュ直撃確率",
+        "observe": "通常時のRUSH直撃回数",
+        "judge": false,
+        "values": { "1": 22429.5, "2": { "status": "調査中" }, "3": { "status": "調査中" }, "4": { "status": "調査中" }, "5": { "status": "調査中" }, "6": 6263.7 },
+        "weight_note": "設定2〜5が調査中のため判別スペックには取り込まない",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "first_lycoris",
+        "label": "ファーストリコリス出現率",
+        "observe": "通常時のファーストリコリス突入回数",
+        "judge": false,
+        "values": { "1": 3965.0, "2": { "status": "調査中" }, "3": { "status": "調査中" }, "4": { "status": "調査中" }, "5": { "status": "調査中" }, "6": 2084.8 },
+        "weight_note": "同上",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "g150_high",
+        "label": "150G消化時の変換高確率移行率",
+        "observe": "変換高確率は内部状態のため見た目では確定できない",
+        "judge": false,
+        "outcomes": [
+          { "key": "yes", "label": "移行", "values": { "1": 50.0, "2": 50.0, "3": 50.0, "4": 54.7, "5": 58.6, "6": 62.5 }, "highlight": true },
+          { "key": "no", "label": "移行せず", "values": { "1": 50.0, "2": 50.0, "3": 50.0, "4": 45.3, "5": 41.4, "6": 37.5 }, "note": "100%から移行率を引いた値" }
+        ],
+        "source_ids": ["ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "RUSH終了画面", "pattern": "たきな／千束リコリス制服", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "RUSH終了画面", "pattern": "千束RUSH終了時の たきな私服", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "RUSH終了画面", "pattern": "たきなRUSH終了時の 千束私服", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "RUSH終了画面", "pattern": "上記以外の たきな私服・千束私服", "meaning": "高設定示唆（弱）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "RUSH終了画面", "pattern": "千束&たきなドレスコード", "meaning": "高設定示唆（強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "RUSH終了画面", "pattern": "押上の風景", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "RUSH終了画面", "pattern": "ロボ太", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "RUSH終了画面", "pattern": "ハワイ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "サミートロフィー（RUSH終了画面）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（RUSH終了画面）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（RUSH終了画面）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（RUSH終了画面）", "pattern": "キリン柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（RUSH終了画面）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "初当りプロローグ", "pattern": "Repay evil with evil / Time will tell②", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エピソードBONUS（RUSH中）", "pattern": "Opposites attract / -side 千束＆真島-", "meaning": "高設定示唆（弱 / 強）※弱は1回目のみ有効", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エピソードBONUS（上位RUSH中）", "pattern": "-side リコリコ- / -side ハワイ-", "meaning": "高設定示唆（弱 / 強）※弱は1回目のみ有効", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "上部ランプ（1000pt後・エンディングのレア役）", "pattern": "緑 / 赤", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "RUSH終了画面の私服は、千束RUSHとたきなRUSHのどちらの終了時かで意味が変わる（DMMぱちタウン）。上位RUSH終了時の私服は高設定示唆（弱）。",
+    "observations": [
+      {
+        "label": "規定G数・スタンプ契機のCZ当選率",
+        "detail": "高設定ほど優遇されている模様（数値は未公表）。",
+        "official": true,
+        "source_ids": ["pworld"]
+      },
+      {
+        "label": "RUSH初当り時の初期Vストック（謎Vストック）",
+        "detail": "高設定ほど優遇。直撃・850G天井以外のRUSH突入時に、すべての才能レベルが2かつG数HOLDなら獲得していた目安。",
+        "official": true,
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "pending": [
+      { "label": "RUSH直撃・ファーストリコリスの設定2〜5", "status": "調査中", "note": "設定1と6のみ公表。" },
+      { "label": "アイキャッチの示唆内容", "status": "調査中", "note": "短縮天井やCZ復活期待度を示唆するとされる。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["北押上・喫茶リコリコ", "基本パターン"], ["BAR", "規定G数前兆示唆"], ["リコリス", "前兆示唆"], ["公園", "前兆示唆（期待大）"]]
+      },
+      {
+        "name": "変換発生時のCZ期待度",
+        "rows": [["チェリー/スイカ/弱リコリス目", "約33%"], ["強リコリス目", "約66%"]]
+      },
+      {
+        "name": "オポジットバトルのリールロック",
+        "rows": [["1段階", "フリーズ期待度 約17%（緑・赤導光板なら100%）"], ["2段階", "約50%（白・赤導光板なら100%）"]]
+      },
+      {
+        "name": "RUSH中",
+        "rows": [["変換後に彼岸花ステージ", "ボーナス期待度 約90%"], ["才能レベル2（V表示）の対応役", "ボーナス濃厚"]]
+      }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "共通ベル（右下がりの15枚ベル）を数える。設定1〜3は1/95.8、設定6は1/79.1",
+      "CZ確率とRUSH初当り確率も通常時ゲーム数と合わせて数える",
+      "RUSH終了画面は、千束RUSH終了時の「たきな私服」とたきなRUSH終了時の「千束私服」が設定4以上濃厚。どちらのRUSHだったかを覚えておく",
+      "サミートロフィーとRUSH終了画面（押上の風景・ロボ太・ハワイ）は確定系",
+      "高設定ほど150Gで変換高確に上がりやすい（設定1〜3 50% → 設定6 62.5%）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "導入から約2週間のため、RUSH直撃など一部の数値は設定1と6のみ公表",
+      "設定変更時の機械割は100%を超えるため、朝一の据え置き・変更の判断にも注意",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  }
+}

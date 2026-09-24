@@ -1,0 +1,321 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_sengoku_otome5",
+  "name": "L戦国乙女5 業火を穿つ宿焔の双刃",
+  "aliases": ["スマスロ 戦国乙女5", "乙女5"],
+  "updated_at": "2026-09-24",
+  "theme": { "accent": "#d2402a" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L戦国乙女5 業火を穿つ宿焔の双刃」", "url": "https://www.p-world.co.jp/machine/database/10473", "checked_at": "2026-09-24" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L戦国乙女5 業火を穿つ宿焔の双刃」", "url": "https://p-town.dmm.com/machines/5009", "checked_at": "2026-09-24" }
+  ],
+
+  "basic": {
+    "maker": "オリンピア",
+    "release_date": "2026-06-08",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ゲーム数上乗せ型）",
+    "model_name": "L戦国乙女5L8",
+    "certification_no": "6S0006",
+    "games_per_50_coins": { "value": 31.0, "unit": "G", "note": "約31.0G" },
+    "net_gain_per_game": { "value": 2.7, "unit": "枚", "note": "AT「強カワRUSH」約2.7枚/G、上位AT約4.8枚/G、エンディング約6.9枚/G" },
+    "features": ["周期抽選＋巫女ポイントの2ルート", "出陣BONUSで上乗せ（ユウサイ・双など）", "コンプリート機能搭載"],
+    "summary": "通常時は規定G数（50G、以降100Gごと）の周期到達でAT抽選、または毎G減る巫女ポイントが0になった時のCZ「乙女アタック」抽選からATを目指す。AT「強カワRUSH」はG数上乗せ型で、CZ「本能寺の変」勝利で出陣BONUS（上乗せ特化）を獲得。決戦ノ刻勝利で上位CZ「剣聖CHANCE」→上位AT「真強カワRUSH」へ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.9, "3": 101.0, "4": 106.2, "5": 111.1, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 359.5, "2": 350.8, "3": 332.5, "4": 302.8, "5": 281.0, "6": 262.9 }, "highlight": true },
+      { "key": "otome_bonus", "label": "戦国乙女BONUS（実質）", "format": "fraction", "values": { "1": 21206.7, "2": 15648.9, "3": 13143.5, "4": 8143.4, "5": 6427.6, "6": 5502.7 } }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 9.4 },
+      { "key": "bell", "label": "共通ベル", "format": "fraction", "value": 17.5 },
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 88.2 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 397.2 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 69.4 },
+      { "key": "chance_a", "label": "チャンス目A", "format": "fraction", "value": 392.4 },
+      { "key": "chance_b", "label": "チャンス目B", "format": "fraction", "value": 392.4 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 30.0 },
+      { "key": "reel_lock1", "label": "リールロック1段階以上", "format": "fraction", "value": 298.9 },
+      { "key": "reel_lock2", "label": "リールロック2段階以上", "format": "fraction", "value": 2396.7 },
+      { "key": "reel_lock3", "label": "リールロック3段階（ロングフリーズ）", "format": "fraction", "value": 16384.0 }
+    ],
+    "note": "小役確率はすべて全設定共通。2連チェリーは弱チェリー、それ以外のチェリーは強チェリー。スイカハズレはチャンス目。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "乙女アタック",
+        "facts": [
+          { "label": "継続", "value": "20G（2G×10戦）" },
+          { "label": "AT期待度", "value": "約52%" },
+          { "label": "契機", "value": "巫女ポイント0到達時の抽選・リールロック2段階" }
+        ],
+        "description": "敵武将に勝利でAT濃厚。敵武将別の勝利期待度はオウガイ0.8% / ムラサメ5.4% / コタロウ42.2% / 昇格コタロウ71.3% / シロ100%。AT当選後も10戦まで続き、勝利ごとに出陣BONUSをストック。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "本能寺の変（AT中）",
+        "facts": [
+          { "label": "継続", "value": "4G+α" },
+          { "label": "勝利期待度（設定1）", "value": "50%" },
+          { "label": "実質出現率（設定1）", "value": "1/114.8" }
+        ],
+        "description": "勝利で出陣BONUS。最終Gの「宿焔目を狙え!」で宿焔目（1/3.2）停止でも勝利。一部で連戦（15.2%）や「決戦ノ刻」へ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "剣聖CHANCE（上位CZ）",
+        "facts": [
+          { "label": "継続", "value": "10G+α" },
+          { "label": "成功期待度（設定1）", "value": "通常初当り時51% / AT終了後70%" }
+        ],
+        "description": "小役揃いでジャッジへ発展し、2G連続で小役成立なら上位AT「真強カワRUSH」。強レア小役・リールロック2段階は一撃成功濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "出陣BONUS",
+        "facts": [
+          { "label": "継続", "value": "20G" },
+          { "label": "純増", "value": "約2.7枚/G" },
+          { "label": "実質出現率（設定1）", "value": "1/183.6" }
+        ],
+        "description": "G数上乗せ特化ボーナス。出陣乙女で性能が変わる（平均上乗せ: ヒデヨシ24.0G〜ユウサイ421.8G、双(ヒデヨシ×ノブナガ)316.4G）。終了時は必ず10G上乗せ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "戦国乙女BONUS",
+        "facts": [
+          { "label": "継続", "value": "30G" },
+          { "label": "恩恵", "value": "AT濃厚＋出陣BONUSストック期待度41.5%" }
+        ],
+        "description": "AT初当り時の一部などから突入する青7揃いの疑似ボーナス。出現率に設定差あり。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "お風呂アタック",
+        "facts": [
+          { "label": "継続", "value": "8G+α（2G1セットのST）" },
+          { "label": "恩恵", "value": "AT＋出陣BONUS(黒)以上濃厚" }
+        ],
+        "description": "ゴエモンに勝利するたびに出陣BONUSの色が昇格。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "強カワRUSH（AT）",
+        "facts": [
+          { "label": "初期", "value": "45G+α" },
+          { "label": "純増", "value": "約2.7枚/G" }
+        ],
+        "description": "レア小役でG数上乗せ・ミツヒデ高確・本能寺の変を抽選。規定G数（20G・70Gなど）でも本能寺の変を抽選。残り0Gで5Gの引き戻しゾーン「百花繚乱チャンス」。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "真強カワRUSH（上位AT）",
+        "facts": [
+          { "label": "初期", "value": "100G" },
+          { "label": "純増", "value": "約4.8枚/G（エンディング6.9枚/G）" }
+        ],
+        "description": "剣聖CHANCE成功後や出陣BONUS「ヨシテル」終了後から突入。本能寺の変は「カシンバトル」、決戦ノ刻は「オウガイバトル」に変化。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "夢幻の如くなり（特化ゾーン）",
+        "facts": [
+          { "label": "継続", "value": "10G" },
+          { "label": "平均上乗せ", "value": "約234.9G" }
+        ],
+        "description": "ロングフリーズ（1/16384.0）や出陣チャンスの「夢幻」パネルから突入。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 999, "text": "AT間 999G+α（実ゲーム数）" },
+    "games_after_reset": { "value": 650, "text": "設定変更後 650G+α" },
+    "benefit": "ATに当選",
+    "notes": [
+      "周期天井: 最大6周期到達でAT当選（設定変更後は最大4周期）",
+      "周期テーブルごとの天井周期数: 通常A 6周期 / 通常B 3周期 / 天国 1周期",
+      "ゴエモン依頼ポイントがMAXになると、次回AT当選時に勝利濃厚の本能寺の変をストック"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "モードA", "note": "200G・400Gに期待（天井500G+α）。400Gを超えると次回モードB以上濃厚" },
+      { "games": "モードB", "note": "天井300G+α（次回モードB以上濃厚）" },
+      { "games": "モードC", "note": "100G・200G（天井200G+α、次回モードC以上濃厚）" },
+      { "games": "チャンス", "note": "天井50G+α" },
+      { "games": "引き戻し", "note": "AT終了後1周期目に必ず選択。50Gに期待（天井200G+α）" }
+    ],
+    "notes": [
+      "規定G数は50G、以降100Gごと。1周期は最大500G",
+      "周期ごとのAT当選期待度（設定1）: 1・2周期目 約40% / 3〜5周期目 30%以上 / 6周期目 100%",
+      "AT中の本能寺の変は初回20G・70Gが期待大"
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "AT終了後の1周期目は必ず引き戻しモード（50Gに期待）なので、最低でも1周期目の前兆までは打つ",
+      "AT終了画面でテーブルB以上・天国が示唆されたら続行"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "reset": {
+    "items": [
+      "天井が最大4周期・実ゲーム数650G+αに短縮",
+      "巫女ポイントは内部的にランダムに減算された状態からスタート"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": ["エンディング到達後に有利区間ツラヌキ → 上位CZ「剣聖CHANCE」へ（失敗しても通常ATへ）"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 359.5, "2": 350.8, "3": 332.5, "4": 302.8, "5": 281.0, "6": 262.9 },
+        "weight_note": "設定3と4の間に段差がある",
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "otome_bonus",
+        "label": "戦国乙女BONUS確率",
+        "observe": "通常時ゲーム数に対する戦国乙女BONUS回数",
+        "denom_base": "normal",
+        "values": { "1": 21206.7, "2": 15648.9, "3": 13143.5, "4": 8143.4, "5": 6427.6, "6": 5502.7 },
+        "weight_note": "1回出るだけで高設定寄りに大きく動くが、頻度はごく低い",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "miko_cz",
+        "label": "巫女ポイント0到達時のCZ当選率",
+        "observe": "巫女ポイントが0になった回数と、そこから乙女アタックに当選した回数（乙女ストラップ「カンスケ」滞在中は全設定40.2%なので除く）",
+        "outcomes": [
+          { "key": "win", "label": "CZ当選", "values": { "1": 20.3, "2": 21.4, "3": 23.2, "4": 24.7, "5": 25.2, "6": 25.7 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 79.7, "2": 78.6, "3": 76.8, "4": 75.3, "5": 74.8, "6": 74.3 }, "note": "100%から当選率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "出陣BONUS終了画面", "pattern": "可スタンプ", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "出陣BONUS終了画面", "pattern": "吉スタンプ", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "出陣BONUS終了画面", "pattern": "良スタンプ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "出陣BONUS終了画面", "pattern": "優スタンプ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "出陣BONUS終了画面", "pattern": "極スタンプ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面", "pattern": "ノブナガ", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "マサムネ&ヒデヨシ / モトナリ&ドウセツ&ソウリン", "meaning": "テーブルB以上のチャンス（設定示唆なし）", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "イエヤス&シンゲン&カンスケ&ヨシモト", "meaning": "テーブルB以上濃厚。テーブルAなら設定4以上濃厚", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "AT終了画面", "pattern": "乙女集合A", "meaning": "天国濃厚。天国否定なら設定4以上濃厚", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "AT終了画面", "pattern": "乙女集合B", "meaning": "天国濃厚かつ設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+
+      { "category": "エンディング中のゴエモンボイス", "pattern": "感謝、感謝！ / 怪しい…！", "meaning": "奇数設定示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "どーよ？あたしも中々いけてるっしょ / きゅい～ん♪", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "さんきゅ～！", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "ご機嫌っしょ！", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "攻めどきっしょ！", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "気分アゲアゲだし！", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "戦乱に忍ぶ深紅の影、石川ゴエモン！", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "なになに、気になるー？", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "エンディング中のゴエモンボイス", "pattern": "ちょ～っとホンキ出しちゃおっかな？", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "出陣BONUS終了画面のスタンプとAT終了画面のキャラ名はDMMぱちタウンの表記（P-WORLDは画像のため名称を確認できず）。AT終了画面の「テーブルAなら／天国否定なら設定4以上」は後から条件が分かったときだけ成り立つので、判別スペックには取り込まない（該当したら判別画面の汎用の確定演出から選ぶ）。",
+    "observations": [
+      {
+        "label": "乙女ストラップの出現率",
+        "detail": "ノブナガ・ゴエモン・ヒデヨシのストラップは高設定ほど出現しやすいとされる（数値は未公表）。",
+        "official": true,
+        "source_ids": ["ptown"]
+      }
+    ],
+    "pending": [
+      { "label": "乙女ストラップの設定差", "status": "未公表", "note": "出現しやすさの傾向のみ。" }
+    ]
+  },
+
+  "effects": {
+    "items": [
+      {
+        "name": "通常時ステージ",
+        "rows": [["尾張・駿河", "基本パターン"], ["清洲城", "高確示唆"], ["毛利邸", "当該周期の本前兆期待度アップ"], ["封印の塔", "本前兆の期待大"], ["繚乱の刻-焔舞-", "AT前兆"], ["繚乱の刻-紫炎-", "AT前兆（CZ的な役割、設定1の期待度64.1%）"]]
+      },
+      {
+        "name": "周期開始時のエフェクト",
+        "rows": [["白", "1回:5周期以内 / 2回:4周期以内 / 3回:3周期以内濃厚"], ["青", "3周期以内濃厚＋当該周期のAT期待度50%以上"], ["赤", "当該周期の期待大"]]
+      },
+      {
+        "name": "リールロック",
+        "rows": [["1段階", "レア小役以上濃厚"], ["2段階", "周期到達＋AT期待度50%（非当選時もCZ期待度50%）"], ["3段階", "ロングフリーズ濃厚"]]
+      },
+      {
+        "name": "乙女ストラップモード",
+        "rows": [
+          ["ゴエモン", "周期の規定G数が最大200Gに"],
+          ["ノブナガ", "強カワチャンス獲得率アップ"],
+          ["ヒデヨシ", "周期テーブルが通常B以上"],
+          ["カンスケ", "巫女ポイントからの乙女アタック当選率アップ"],
+          ["ミツヒデ", "AT当選時に本能寺の変ストック"],
+          ["ヨシテル", "AT当選で剣聖CHANCE or 上位AT"]
+        ]
+      }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り確率は設定3と4の間で大きく変わる（1/332.5 → 1/302.8）",
+      "巫女ポイントが0になった回数と、そこからのCZ当選回数を数える（カンスケモード中は除く）",
+      "出陣BONUS終了画面のスタンプ（可〜極）とエンディングのゴエモンボイスは確定系",
+      "AT終了画面「イエヤス&シンゲン&カンスケ&ヨシモト」後にテーブルAだったら設定4以上濃厚",
+      "戦国乙女BONUSは設定1と6で約4倍の差。出たら高設定寄り"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "乙女ストラップモード「カンスケ」滞在中は巫女ポイント0到達時のCZ当選率が全設定共通（40.2%）",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["ptown", "pworld"]
+  }
+}
