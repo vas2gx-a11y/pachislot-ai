@@ -9,6 +9,8 @@
  */
 
 const STORE_KEY = 'pachislot_judge_v1';
+// icons.py の trend_up と同じ絵柄（このファイルはテンプレートを通らないので icon() を呼べない）
+const TREND_ICON = '<svg class="ico " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 17l5.5-5.5 4 4 7-7.5V20H3.5z" fill="currentColor" fill-opacity=".16" stroke="none"/><path d="M3.5 17l5.5-5.5 4 4 7-7.5"/><path d="M15 8h5v5"/></svg>';
 const DEFAULT_SHOP = { rental: 46, exchange: 52, gamesPerHour: 800, holdingRatio: 70 };
 
 // 判別力のレベルと表示色の対応。色の判断はここだけに置く（bayes.js は色を持たない）
@@ -877,7 +879,7 @@ function renderPrecisionAnalysis(m, posteriors, prior, observations) {
   }).join('');
 
   target.innerHTML =
-    '<div class="text-sm font-bold mb-1.5">📈 精度を上げるには</div>' +
+    '<div class="text-sm font-bold mb-1.5 flex items-center gap-1">' + TREND_ICON + ' 精度を上げるには</div>' +
     `<div class="text-xs text-gray-500 mb-2">絞り込み度 <strong class="text-gray-900">${narrowed.toFixed(1)}%</strong>` +
     `（残り不確実性 ${H.toFixed(2)} / ${maxH.toFixed(2)} bit）</div>` +
     '<div class="text-[0.65rem] text-gray-400 mb-1">1回あたりの情報量が多い順</div>' +

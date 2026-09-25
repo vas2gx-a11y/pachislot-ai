@@ -27,6 +27,11 @@
       "status": "不明",
       "source_ids": []
     },
+    "entry": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
     "total_units": {
       "value": null,
       "status": "不明",
@@ -43,6 +48,21 @@
       "source_ids": []
     },
     "rates": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "exchange_rates": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
       "value": null,
       "status": "不明",
       "source_ids": []
@@ -72,12 +92,27 @@
       "status": "不明",
       "source_ids": []
     },
+    "opened_on": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
     "features": {
       "value": null,
       "status": "不明",
       "source_ids": []
     },
     "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "anniversary_days": {
       "value": null,
       "status": "不明",
       "source_ids": []

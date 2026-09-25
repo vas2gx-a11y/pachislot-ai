@@ -1,9 +1,12 @@
 import gzip
 import os
+from datetime import timedelta
 
-from flask import Flask, request, url_for
+from flask import Flask, g, request, url_for
 
+import auth
 import common
+import icons
 import navigation
 from routes.records import records_bp
 from routes.expected_value import expected_value_bp
@@ -15,10 +18,22 @@ from routes.judge import judge_bp
 from routes.machine_info import machine_info_bp
 from routes.live_chat import live_chat_bp
 from routes.store_info import store_info_bp
+from routes.auth import auth_bp
+from routes.members import members_bp
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
+# ログインをセッションで持つので、鍵が起動のたびに変わると再起動(Renderのスリープ復帰を含む)で
+# 全員ログアウトされる。本番では必ず FLASK_SECRET_KEY を設定する
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+if not app.secret_key:
+    common.logger.warning("FLASK_SECRET_KEY が未設定です。再起動するたびに全員ログアウトされます。")
+    app.secret_key = os.urandom(24)
 app.config["MAX_CONTENT_LENGTH"] = common.MAX_UPLOAD_SIZE
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+# 別サイトからのフォーム送信にはクッキーを付けない(ログイン中のユーザーになりすました書き込みを防ぐ)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+# Render上ではHTTPSで配信されるので、クッキーもHTTPSのときだけ送らせる(ローカルはHTTPなので付けない)
+app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))
 
 app.register_blueprint(records_bp)
 app.register_blueprint(expected_value_bp)
@@ -30,11 +45,19 @@ app.register_blueprint(judge_bp)
 app.register_blueprint(machine_info_bp)
 app.register_blueprint(live_chat_bp)
 app.register_blueprint(store_info_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(members_bp)
+
+# ?refresh=1 の処理より先にログインを確認する(未ログインでキャッシュを捨てさせないため)
+app.before_request(auth.load_logged_in_user)
 
 # テンプレート側でスコア内訳を組み立てるために、common.py の変換関数を
 # Jinjaのグローバル関数として登録しておく(ロジックの二重管理を避けるため)
 app.jinja_env.globals["describe_category_scores"] = common.describe_category_scores
 app.jinja_env.globals["category_scores_total"] = common.category_scores_total
+# アイコンはマクロからも呼ぶので、コンテキストではなくグローバルに置く(import したマクロにも届くように)
+app.jinja_env.globals["icon"] = icons.icon
+app.jinja_env.globals["icon_tint"] = icons.icon_tint
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +105,7 @@ def handle_cache_refresh():
     アプリから保存したデータはその場でキャッシュを無効化しているので通常は不要だが、
     スプレッドシートを直接編集したときの反映待ち(最大TTLぶん)を飛ばすために使う。
     """
-    if request.args.get("refresh"):
+    if request.args.get("refresh") and g.user:
         common.refresh_caches()
 
 
@@ -123,9 +146,12 @@ def _active_keys():
 def inject_navigation():
     """全テンプレートでナビ構成と現在地を使えるようにする"""
     active_category, active_item = _active_keys()
+    is_admin = common.is_admin()
     return {
+        "current_user": common.current_user(),
+        "current_user_is_admin": is_admin,
         "nav_categories": navigation.NAV,
-        "nav_visible_items": navigation.visible_items,
+        "nav_visible_items": lambda category: navigation.visible_items(category, is_admin),
         "nav_mobile_primary": navigation.mobile_primary(),
         "nav_mobile_overflow": navigation.mobile_overflow(),
         "nav_active_category": active_category,

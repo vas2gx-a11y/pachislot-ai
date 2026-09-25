@@ -1,0 +1,487 @@
+{
+  "$schema": "./schema.json",
+  "id": "rakuen_omiya",
+  "name": "楽園大宮店",
+  "region": "埼玉県",
+  "sheet_store_name": "楽園大宮店",
+  "updated_at": "2026-09-25",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "楽園大宮店 店舗ページ（公式LP）",
+      "url": "https://rakuen01.lp-dokidoki.com/",
+      "reliability": "公式",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "s2",
+      "name": "みんぱち 楽園大宮新館",
+      "url": "https://minpachi.com/rakuen-oomiyashinkan/",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "s3",
+      "name": "スロパチステーション 楽園大宮店",
+      "url": "https://777.slopachi-station.com/shop_data/3581/",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "s4",
+      "name": "DMMぱちタウン 楽園大宮店 お知らせ一覧（店舗投稿）",
+      "url": "https://p-town.dmm.com/shops/saitama/12321/informations",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-25"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "さいたま市大宮区",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "埼玉県さいたま市大宮区宮町一丁目63番地1 大宮RAKUUN内 地下1階・1階・2階",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": "048-640-3636",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hours": {
+      "value": "10:00-22:40",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "パチンコ・5円スロット: 先着順、8:30より整理券配布（東口駅前通り入口）",
+        "20円スロット: 8:30抽選参加券配布、9:00抽選開始（旧中山道側入口、1,100名で打ち切り）"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 1584,
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 1446,
+      "status": "確認済",
+      "source_ids": [
+        "s1",
+        "s2"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円",
+        "スロット 20円 / 5円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "全レート等価交換"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "replay_limit": {
+      "value": [
+        "全レート無制限"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "prize_exchange": {
+      "value": "大宮駅側出入り口出てすぐ",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": "JR大宮駅徒歩2分",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "official_url": {
+      "value": "https://rakuen01.lp-dokidoki.com/",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": "LINE公式アカウントあり（ページにQRコード掲載）",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "opened_on": {
+      "value": "2014年9月9日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "features": {
+      "value": [
+        "Wi-Fi",
+        "携帯充電器",
+        "屋内喫煙室",
+        "加熱式たばこプレイエリア"
+      ],
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "1日、11日、22日、月日ゾロ目",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "anniversary_days": {
+      "value": "9月9日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "special_days": {
+      "value": [
+        "毎月1日・11日・22日（旧イベント日）",
+        "月と日がゾロ目の日（旧イベント日）",
+        "9月9日（周年）"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": [
+        {
+          "date": "2026-09-28",
+          "title": "スロパチステーション来店取材",
+          "detail": "ページの表記は「9月28日」（年の記載なし。2026-09-25時点の予定として掲載）",
+          "source_id": "s3"
+        },
+        {
+          "date": "2026-10-28",
+          "title": "スロパチステーション来店取材",
+          "detail": "ページの表記は「10月28日」（年の記載なし。2026-09-25時点の予定として掲載）",
+          "source_id": "s3"
+        },
+        {
+          "date": "2026-09-23",
+          "title": "9月23日(水)楽園大宮店❗全館10時開店ッ✨",
+          "detail": "",
+          "source_id": "s4"
+        },
+        {
+          "date": "2026-09-22",
+          "title": "9月22日(火)ウッケッケッ❗全館10時開店ッ❗",
+          "detail": "",
+          "source_id": "s4"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s3",
+        "s4"
+      ]
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "さいたま市大宮区",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "埼玉県さいたま市大宮区宮町一丁目63番地1 大宮RAKUUN内 地下1階・1階・2階",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "048-640-3636",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00-22:40",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 1584,
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 1446,
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "https://rakuen01.lp-dokidoki.com/",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "line",
+      "before": null,
+      "after": "LINE公式アカウントあり（ページにQRコード掲載）",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "Wi-Fi",
+        "携帯充電器",
+        "屋内喫煙室",
+        "加熱式たばこプレイエリア"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "パチンコ・5円スロット: 先着順、8:30より整理券配布（東口駅前通り入口）",
+        "20円スロット: 8:30抽選参加券配布、9:00抽選開始（旧中山道側入口、1,100名で打ち切り）"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円",
+        "スロット 20円 / 5円"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "全レート等価交換"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "全レート無制限"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "大宮駅側出入り口出てすぐ",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "JR大宮駅徒歩2分",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2014年9月9日",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "special_days",
+      "before": null,
+      "after": [
+        "毎月1日・11日・22日（旧イベント日）",
+        "月と日がゾロ目の日（旧イベント日）",
+        "9月9日（周年）"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "notices",
+      "before": null,
+      "after": [
+        {
+          "date": "2026-09-28",
+          "title": "スロパチステーション来店取材",
+          "detail": "ページの表記は「9月28日」（年の記載なし。2026-09-25時点の予定として掲載）",
+          "source_id": "s3"
+        },
+        {
+          "date": "2026-10-28",
+          "title": "スロパチステーション来店取材",
+          "detail": "ページの表記は「10月28日」（年の記載なし。2026-09-25時点の予定として掲載）",
+          "source_id": "s3"
+        }
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s3"
+      ]
+    },
+    {
+      "field": "notices",
+      "before": null,
+      "after": [
+        {
+          "date": "2026-09-23",
+          "title": "9月23日(水)楽園大宮店❗全館10時開店ッ✨",
+          "detail": "",
+          "source_id": "s4"
+        },
+        {
+          "date": "2026-09-22",
+          "title": "9月22日(火)ウッケッケッ❗全館10時開店ッ❗",
+          "detail": "",
+          "source_id": "s4"
+        }
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s4"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "1日、11日、22日、月日ゾロ目",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "9月9日",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
+}

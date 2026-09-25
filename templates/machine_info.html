@@ -71,7 +71,7 @@
     </dl>
     {% endif %}
     {% if f.description %}<p class="text-sm text-gray-600 mt-2">{{ f.description }}</p>{% endif %}
-    {% if f.caution %}<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5 mt-2">⚠ {{ f.caution }}</p>{% endif %}
+    {% if f.caution %}<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5 mt-2">{{ icon('warning') }} {{ f.caution }}</p>{% endif %}
     {{ cite(f.source_ids) }}
 </article>
 {%- endmacro %}
@@ -90,7 +90,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">📖</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('book') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ m.name }}</h1>
 </div>
 {% endblock %}
@@ -167,10 +167,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4">
             {% if judge_spec %}
-            <a href="{{ url_for('judge.index', machine_name=m.name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">🎲 この機種で判別する</a>
+            <a href="{{ url_for('judge.index', machine_name=m.name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">{{ icon('dice') }} この機種で判別する</a>
             <span class="text-[11px] opacity-50">判別要素{{ judge_spec.judgeItems | length }}・選択肢型{{ judge_spec.categoricalGroups | length }}・確定演出{{ judge_spec.confirmations | length }}</span>
             {% endif %}
-            <a href="{{ url_for('live_chat.index', machine_id=m.id) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">💬 打ちながら相談する</a>
+            <a href="{{ url_for('live_chat.index', machine_id=m.id) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">{{ icon('chat') }} 打ちながら相談する</a>
         </div>
         <p class="text-[11px] opacity-50 mt-3">情報更新日 {{ m.updated_at }}</p>
     </div>

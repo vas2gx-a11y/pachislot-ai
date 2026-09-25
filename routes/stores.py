@@ -1,8 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
+import auth
 import common
 
 stores_bp = Blueprint("stores", __name__, url_prefix="/stores")
+# 店舗名の変更・削除は全員の記録と共有のホールデータに及ぶので、管理者だけにする
+stores_bp.before_request(auth.require_admin_for_blueprint)
 
 
 def _back(store_name=""):

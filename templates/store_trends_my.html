@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">📊</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('chart') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">自分の記録の集計</h1>
 </div>
 {% endblock %}
@@ -16,7 +16,7 @@
       店の全台データ(店舗傾向ページ)とは母数がまったく違うので、ページを分けている。
       こちらは「自分が打った台だけ」の集計。
     #}
-    {% call card("📊", "店舗と期間を選ぶ", None, "bg-gray-100",
+    {% call card("chart", "店舗と期間を選ぶ", None, "bg-gray-100",
          "自分が記録した台のデータだけを店舗ごとに集計します。店の全台データではないため、あくまで「自分が打った範囲での傾向」です。") %}
     {% if stores %}
     <form action="{{ url_for('store_trends.my_records') }}" method="GET" class="flex flex-col md:flex-row gap-3 md:items-end">
@@ -50,7 +50,7 @@
        class="card flex items-center justify-between gap-3 p-4 hover:bg-gray-50 transition">
         <span class="min-w-0">
             <span class="font-display font-bold text-gray-900 flex items-center gap-2">
-                <span>🏪 店の全台データを見る</span>
+                <span>{{ icon('store') }} 店の全台データを見る</span>
                 <span class="chip">取り込みデータ・店の全台が対象</span>
             </span>
             <span class="hint block">データの取り込み、旧イベント日の比較、機種別・台別の集計はこちら。</span>
@@ -67,7 +67,7 @@
     {% for label, value in period_choices %}{% if value == days %}{% set ns.period = label %}{% endif %}{% endfor %}
     <section>
     <h2 class="font-display font-bold text-base md:text-lg text-gray-900 mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">📊</span>
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-gray-700 text-base shrink-0">{{ icon('chart') }}</span>
         <span>自分の記録の集計</span>
         <span class="text-xs text-gray-400 font-normal font-sans">{{ ns.period }}・自分が打った台のみ</span>
     </h2>
@@ -82,7 +82,7 @@
 
     {% set h = trends.highlights %}
     {% if h.best_weekday or h.best_day_suffix or h.best_machine or h.best_number_suffix %}
-    {% call card("💡", "注目ポイント", None, "bg-amber-50",
+    {% call card("bulb", "注目ポイント", None, "bg-amber-50",
          "記録が" ~ trends.min_samples ~ "件以上ある区分の中で、平均差枚が最も高い/低いものです。該当が無い項目は、まだ判断できるだけの件数が溜まっていません。") %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
         {% for label, row, tone in [
@@ -113,7 +113,7 @@
     {% endif %}
 
     {# AI総評: 集計は常に表示し、AI呼び出しはボタンを押したときだけ行う #}
-    {% call card("🤖", "AIによる総評", None, "bg-blue-50",
+    {% call card("ai", "AIによる総評", None, "bg-blue-50",
          "上の集計結果をAIに渡して、狙い目になりそうな条件と注意点を文章にしてもらいます。押したときだけAIを呼び出します。") %}
     {% if ai_summary %}
     <div class="panel whitespace-pre-wrap text-sm text-gray-700 mb-3">{{ ai_summary }}</div>
@@ -134,29 +134,29 @@
     {% endcall %}
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-        {{ trend_section("📅", "日別（イベント日の当たりを探す）",
+        {{ trend_section("calendar", "日別（イベント日の当たりを探す）",
              "日付ごとの平均差枚。特定の日だけ突出していれば、その日に設定を使っている可能性があります。",
              trends.by_date, trends.min_samples, true) }}
 
-        {{ trend_section("🗓", "曜日別",
+        {{ trend_section("calendar", "曜日別",
              "曜日ごとの平均差枚。土日と平日で使い分けているホールを見つける用途です。",
              trends.by_weekday, trends.min_samples, false, false, false) }}
 
-        {{ trend_section("🔢", "日付の末尾別",
+        {{ trend_section("hash", "日付の末尾別",
              "「7の付く日」「ゾロ目の日」のような周期イベントの有無を見ます。",
              trends.by_day_suffix, trends.min_samples, false, false, false) }}
 
-        {{ trend_section("🎰", "機種別",
+        {{ trend_section("slot", "機種別",
              "その店がどの機種に設定を入れているかの目安。件数が多い機種ほど信頼できます。",
              trends.by_machine, trends.min_samples, true, true, false) }}
     </div>
 
-    {{ trend_section("🔟", "台番号の末尾別",
+    {{ trend_section("digit", "台番号の末尾別",
          "台番号を入力した記録だけが対象です。末尾を揃えて設定を入れるホールかどうかの目安になります。",
          trends.by_number_suffix, trends.min_samples, false, false, false) }}
 
     {% if trends.repdigit %}
-    {% call card("🎯", "ゾロ目台（111・222 など）", None, "bg-gray-100",
+    {% call card("target", "ゾロ目台（111・222 など）", None, "bg-gray-100",
          "桁がすべて同じ台番号の記録だけを集計したものです。角台かどうかは台番号だけでは判別できないため、ここには含まれていません。") %}
     <div class="grid grid-cols-3 gap-2 text-center">
         <div class="panel py-2">
@@ -183,7 +183,7 @@
     </p>
 
     {% elif store_name %}
-    {{ empty_state("🏢", "この店舗・期間の記録がまだありません。期間を「全期間」に広げるか、データ管理画面から記録を追加してください。") }}
+    {{ empty_state("building", "この店舗・期間の記録がまだありません。期間を「全期間」に広げるか、データ管理画面から記録を追加してください。") }}
     {% endif %}
     {{ back_link(url_for('store_trends.index', store_name=store_name, days=days), "店舗の傾向分析に戻る") }}
 </div>

@@ -90,24 +90,35 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">📅</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('calendar') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">イベントカレンダー</h1>
 </div>
 {% endblock %}
 
 {% block content %}
 {# 月を移動するときに、選んでいる店舗の絞り込みを保つためのパラメータ #}
-{% set filter_args = {"store_name": store_names} %}
+{% set filter_args = {"store_name": store_names, "pref": pref or None} %}
 
 <div class="stack">
-    {% call card("🔎", "表示する店舗", None, "bg-blue-50",
+    {% call card("search", "表示する店舗", None, "bg-blue-50",
          "総合カレンダーでは登録されている全店舗のイベント日が1つのカレンダーに並びます。店舗を選ぶと、その店だけの予定と稼働に絞り込めます。") %}
+    {# 都道府県の切り替え。店舗が増えると全国を1枚に並べても読めないので、まず地域で分ける #}
+    {% if prefectures | length > 1 %}
+    <div class="flex gap-1.5 overflow-x-auto pb-2 mb-2 -mx-1 px-1">
+        {% for p in [{"name": "", "count": prefectures | sum(attribute='count')}] + prefectures %}
+        <a href="{{ url_for('calendar.index', year=calendar.year, month=calendar.month, pref=p.name or None) }}"
+           class="shrink-0 text-xs px-3 py-1 rounded-full border {{ 'bg-blue-600 border-blue-600 text-white' if (p.name == (pref or '')) else 'bg-white border-gray-200 text-gray-600' }}">
+            {{ p.name or '全国' }} <span class="opacity-70">{{ p.count }}</span></a>
+        {% endfor %}
+    </div>
+    {% endif %}
     <form method="GET" action="{{ url_for('calendar.index') }}" class="flex flex-col sm:flex-row gap-2">
         {# 絞り込みを変えても同じ月を見続けられるようにする #}
         <input type="hidden" name="year" value="{{ calendar.year }}">
         <input type="hidden" name="month" value="{{ calendar.month }}">
+        {% if pref %}<input type="hidden" name="pref" value="{{ pref }}">{% endif %}
         <select name="store_name" class="input flex-1" onchange="this.form.submit()">
-            <option value="" {% if calendar.is_all_stores %}selected{% endif %}>全店舗（総合カレンダー）</option>
+            <option value="" {% if calendar.is_all_stores %}selected{% endif %}>{{ pref or '全国' }}の全店舗（総合カレンダー）</option>
             {% for name in calendar.all_stores %}
             <option value="{{ name }}" {% if name == store_name %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
@@ -123,11 +134,11 @@
     </div>
     {% endcall %}
 
-    {% call card("📅", calendar.label, "日付をタップすると、その日の詳細が出ます", "bg-amber-50", None) %}
+    {% call card("calendar", calendar.label, "日付をタップすると、その日の詳細が出ます", "bg-amber-50", None) %}
     {# 月の切り替え。今月から離れているときだけ「今月へ」を出す #}
     <div class="flex items-center justify-between gap-2 mb-3">
         <a href="{{ url_for('calendar.index', year=calendar.prev.year, month=calendar.prev.month, **filter_args) }}"
-           class="btn btn-ghost btn-sm">◀ 前月</a>
+           class="btn btn-ghost btn-sm">{{ icon('chev_left') }} 前月</a>
         <div class="text-center min-w-0">
             <div class="font-display font-extrabold text-base md:text-lg text-gray-900">{{ calendar.label }}</div>
             {% if not calendar.is_current_month %}
@@ -135,7 +146,7 @@
             {% endif %}
         </div>
         <a href="{{ url_for('calendar.index', year=calendar.next.year, month=calendar.next.month, **filter_args) }}"
-           class="btn btn-ghost btn-sm">次月 ▶</a>
+           class="btn btn-ghost btn-sm">次月 {{ icon('chev_right') }}</a>
     </div>
 
     <div class="cal-grid" id="cal-grid">
@@ -158,7 +169,7 @@
                   {% if detail and detail.date == cell.date %}is-selected{% endif %}">
             <div class="flex items-center justify-between gap-1">
                 <span class="cal-daynum">{{ cell.day }}</span>
-                {% if cell.record_count %}<span class="text-[10px] text-gray-400" title="自分の記録{{ cell.record_count }}件">📝</span>{% endif %}
+                {% if cell.record_count %}<span class="text-[10px] text-gray-400" title="自分の記録{{ cell.record_count }}件">{{ icon('memo') }}</span>{% endif %}
             </div>
 
             {% if cell.entries %}
@@ -175,7 +186,7 @@
                 <span class="cal-chip"
                       style="background: {{ e.color.bg }}; color: {{ e.color.text }}; border-color: {{ e.color.border }};"
                       title="{{ e.store_name }}{% if e.labels %} / {{ e.labels | join('、') }}{% endif %}">
-                    {{ e.kind_icon }} {{ e.short_name }}{% if e.labels %} {{ e.labels[0] }}{% endif %}
+                    {{ icon(e.kind_icon) }} {{ e.short_name }}{% if e.labels %} {{ e.labels[0] }}{% endif %}
                 </span>
                 {% endfor %}
                 {% if cell.entries | length > 3 %}
@@ -208,8 +219,8 @@
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                 <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ s.color.dot }}"></span>
                 <span class="font-bold text-gray-900">{{ s.name }}</span>
-                {% if s.event_days %}<span class="chip">🎯 {{ s.event_days }}</span>{% endif %}
-                {% if s.anniversary_days %}<span class="chip">🎂 {{ s.anniversary_days }}</span>{% endif %}
+                {% if s.event_days %}<span class="chip">{{ icon('target') }} {{ s.event_days }}</span>{% endif %}
+                {% if s.anniversary_days %}<span class="chip">{{ icon('cake') }} {{ s.anniversary_days }}</span>{% endif %}
                 {% if not s.has_rules %}
                 <span class="text-gray-400">イベント日は未登録</span>
                 <a href="{{ url_for('store_trends.index', store_name=s.name) }}" class="text-blue-600 underline">登録する</a>
@@ -218,14 +229,14 @@
             {% endfor %}
         </div>
         <p class="hint mt-2">
-            🎂 周年日 ／ 🎯 旧イベント日 ／ 📈 ホールデータのみ ／ 📝 自分の記録あり。
+            {{ icon('cake') }} 周年日 ／ {{ icon('target') }} 旧イベント日 ／ {{ icon('trend_up') }} ホールデータのみ ／ {{ icon('memo') }} 自分の記録あり。
             マスの上辺に色が付いている日がイベント日、太枠が今日です。
         </p>
     </div>
     {% endif %}
 
     {% if not calendar.stores %}
-    {{ empty_state("🏪", "店舗がまだ登録されていません。「店舗の管理」から店舗を追加してください。") }}
+    {{ empty_state("store", "店舗がまだ登録されていません。「店舗の管理」から店舗を追加してください。") }}
     {% elif calendar.summary.event_days == 0 %}
     <p class="hint mt-3">
         この月に当てはまるイベント日がありません。
@@ -240,7 +251,7 @@
         {% include "_calendar_day.html" %}
         {% else %}
         <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-base shrink-0">🔍</span>
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-gray-700 text-base shrink-0">{{ icon('search') }}</span>
             <span>日付の詳細</span>
         </h2>
         <p class="hint mt-2">カレンダーの日付を選ぶと、その日のイベント日・稼働・自分の記録をここに表示します。</p>
@@ -295,7 +306,7 @@
             if (!link) return;
             event.preventDefault();
 
-            title.textContent = '📅 ' + link.getAttribute('data-date');
+            title.innerHTML = '{{ icon('calendar') }} ' + link.getAttribute('data-date');
             body.innerHTML = '<p class="hint">読み込み中...</p>';
             open();
 

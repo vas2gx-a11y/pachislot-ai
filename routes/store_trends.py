@@ -8,6 +8,7 @@ from datetime import datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
+import auth
 import common
 
 store_trends_bp = Blueprint("store_trends", __name__, url_prefix="/store_trends")
@@ -267,6 +268,7 @@ def my_records():
 
 
 @store_trends_bp.route("/import")
+@auth.admin_required
 def import_page():
     """データ取り込みのページ(メニューから直接開く入口)"""
     store_name = request.args.get("store_name", "").strip()
@@ -310,6 +312,7 @@ def ai_summary():
 
 
 @store_trends_bp.route("/upload_stats", methods=["POST"])
+@auth.admin_required
 def upload_stats():
     """
     データサイト等のスクショから、店舗の年間データ(総差枚・平均差枚・平均G数・勝率)を
@@ -382,6 +385,7 @@ def upload_stats():
 
 
 @store_trends_bp.route("/save_stats", methods=["POST"])
+@auth.admin_required
 def save_stats():
     """AIの読み取り結果の修正・手入力での保存"""
     store_name = request.form.get("store_name", "").strip()
@@ -412,6 +416,7 @@ def save_stats():
 
 
 @store_trends_bp.route("/save_events", methods=["POST"])
+@auth.admin_required
 def save_events():
     """
     店舗の旧イベント日・周年日を登録する。
@@ -453,6 +458,7 @@ def save_events():
 
 
 @store_trends_bp.route("/import_daily", methods=["GET", "POST"])
+@auth.admin_required
 def import_daily():
     """
     ホールデータサイトの一覧表をコピーして貼り付けたテキストを解析し、
@@ -516,6 +522,7 @@ def import_daily():
 
 
 @store_trends_bp.route("/import_csv", methods=["GET", "POST"])
+@auth.admin_required
 def import_csv():
     """
     ホールデータ取り込みツール(tools/anaslo.py)が出すCSVを取り込む。
@@ -600,6 +607,7 @@ def import_csv():
 
 
 @store_trends_bp.route("/import_units", methods=["GET", "POST"])
+@auth.admin_required
 def import_units():
     """
     日別詳細ページ(機種・台番号ごとのデータ)をコピーして貼り付けたテキストを解析し、
@@ -668,6 +676,7 @@ def import_units():
 
 
 @store_trends_bp.route("/delete_imports", methods=["POST"])
+@auth.admin_required
 def delete_imports():
     """
     取り込みログで選んだぶんのデータを、まとめて取り消す。

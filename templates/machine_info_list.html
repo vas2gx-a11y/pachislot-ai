@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">📖</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('book') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">機種情報</h1>
 </div>
 {% endblock %}
@@ -46,7 +46,7 @@
         {% endfor %}
     </div>
     {% else %}
-    {{ empty_state("📖", "まだ機種情報がありません。machine_data/ に機種のJSONを置くとここに表示されます（書き方は machine_data/README.md）。") }}
+    {{ empty_state("book", "まだ機種情報がありません。machine_data/ に機種のJSONを置くとここに表示されます（書き方は machine_data/README.md）。") }}
     {% endif %}
 
 </div>

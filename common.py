@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import secrets
+import threading
 import time
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
@@ -14,9 +15,11 @@ from urllib.parse import urlparse
 import requests
 import gspread
 from google.oauth2.service_account import Credentials
-from flask import flash
+from flask import flash, g, has_request_context
+from werkzeug.security import check_password_hash, generate_password_hash
 
 import machine_info
+import store_info
 
 # --- ロギング設定 ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -38,9 +41,13 @@ logger = logging.getLogger(__name__)
 _cache = {}
 _CACHE_TTL_SECONDS = int(os.environ.get("CACHE_TTL_SECONDS", "300"))
 
-# 読み込み済みデータの世代番号。シートから読み直した時と、書き込みで捨てた時に進む。
+# 読み込み済みデータの世代番号。読み直した中身が前と変わっていた時と、書き込みで捨てた時に進む。
 # 集計結果のキャッシュ(_derived_cache)はこの番号をキーに含めているので、
 # 元データが変わればまとめて無効になる。
+#
+# 以前はTTL切れで読み直すたびに(中身が同じでも)番号を進めていたため、どれか1シートが
+# 5分おきに読み直されるだけで全ページの集計がやり直しになっていた。期限切れの値は
+# 比較用に残しておき、中身が変わった時だけ進める。
 _data_version = 0
 
 
@@ -50,15 +57,16 @@ def _cache_get(key):
         return None
     value, expires_at = entry
     if time.time() > expires_at:
-        del _cache[key]
         return None
     return value
 
 
 def _cache_set(key, value, ttl=_CACHE_TTL_SECONDS):
     global _data_version
+    previous = _cache.get(key)
     _cache[key] = (value, time.time() + ttl)
-    _data_version += 1
+    if previous is None or previous[0] != value:
+        _data_version += 1
 
 
 def _cache_invalidate(key):
@@ -73,6 +81,7 @@ def refresh_caches():
     _cache.clear()
     _derived_cache.clear()
     _data_version += 1
+    _forget_worksheets()
 
 
 # ---------------------------------------------------------------------------
@@ -94,8 +103,10 @@ def _cached_by_data_version(func):
         if _derived_cache_version != _data_version:
             _derived_cache.clear()
             _derived_cache_version = _data_version
-        # 「直近90日」のような相対期間は日付をまたぐと意味が変わるので、キーに日付を入れる
-        key = (func.__name__, datetime.now().strftime("%Y-%m-%d"),
+        # 「直近90日」のような相対期間は日付をまたぐと意味が変わるので、キーに日付を入れる。
+        # 自分の記録はユーザーごとに中身が違うので、見ている人もキーに入れる
+        # (入れないと、先に開いた人の集計結果が別の人に見えてしまう)
+        key = (func.__name__, datetime.now().strftime("%Y-%m-%d"), current_user_id(),
                args, tuple(sorted(kwargs.items())))
         if key in _derived_cache:
             return _derived_cache[key]
@@ -156,11 +167,15 @@ HEADERS = [
     # 実戦チャットの終了時に残す立ち回りの振り返り。既存シートのヘッダーが前方一致のまま
     # 自動で移行できるよう末尾に置いている
     "play_review",
+    # 誰の記録か(users シートの user_id)。複数人で使うようになってから足した列なので末尾。
+    # 空の行はそれ以前に登録したもので、管理者(OWNER_USER_ID)の記録として扱う
+    "user_id",
 ]
 
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
 CHAT_SHEET_NAME = os.environ.get("CHAT_SHEET_NAME", "chat_logs")
-CHAT_HEADERS = ["session_id", "date", "question", "answer"]
+# user_id の意味は records と同じ(空なら管理者のもの)
+CHAT_HEADERS = ["session_id", "date", "question", "answer", "user_id"]
 
 # store_daily シートの列構成(店舗の日別データ)
 # ホールデータサイトの「日付ごとの総差枚・平均差枚・平均G数・勝率」を貼り付けで取り込む。
@@ -226,27 +241,101 @@ IMPORT_LOG_HEADERS = [
 # 設定は日ごとに変わるので「台のくせ」を推測させるのではなく、事実だけを貯めて
 # 次に同じ台に座ったときに並べて見られるようにする。1実戦(session_id)で1行。
 UNIT_NOTES_SHEET_NAME = os.environ.get("UNIT_NOTES_SHEET_NAME", "unit_notes")
+# 台メモは打った人の観察なので、記録と同じくユーザーごとに分ける(user_id の意味も同じ)
 UNIT_NOTES_HEADERS = [
     "session_id", "store_name", "machine_number", "date", "machine_name", "note", "updated_at",
+    "user_id",
 ]
 
 # 取り込み種別(kind)と、消すときに触るシートの対応。
 # ログの表示名もここから引く(画面とロジックで二重に持たないため)。
 IMPORT_KINDS = {
-    "daily": {"label": "日別データ", "icon": "📅", "sheets": ("store_daily",)},
-    "units": {"label": "台別データ", "icon": "🎰", "sheets": ("store_units",)},
-    "csv": {"label": "CSV取り込み(台別+日別)", "icon": "📄", "sheets": ("store_units", "store_daily")},
-    "stats": {"label": "年間データ", "icon": "🏬", "sheets": ("store_stats",)},
-    "events": {"label": "旧イベント日・周年日", "icon": "🗓", "sheets": ("store_events",)},
+    "daily": {"label": "日別データ", "icon": "calendar", "sheets": ("store_daily",)},
+    "units": {"label": "台別データ", "icon": "slot", "sheets": ("store_units",)},
+    "csv": {"label": "CSV取り込み(台別+日別)", "icon": "file", "sheets": ("store_units", "store_daily")},
+    "stats": {"label": "年間データ", "icon": "store_info", "sheets": ("store_stats",)},
+    "events": {"label": "旧イベント日・周年日", "icon": "calendar", "sheets": ("store_events",)},
 }
 
 # ---------------------------------------------------------------------------
 # Googleスプレッドシート接続
 # ---------------------------------------------------------------------------
+# 以前は1シート読むたびに「認証 → スプレッドシートを開く → シートを探す → ヘッダー確認 → 本体」と
+# APIを約5回、順番に叩いていた。店舗傾向のように5〜6シート読むページでは30回近い往復になり、
+# 表示が数秒〜10秒かかるうえ、Sheets APIの読み込み上限(1分60回)にもすぐ届いていた。
+# 認証済みのクライアントとシートのオブジェクトはプロセス内で使い回し、ヘッダーの確認・移行も
+# シートごとに初回だけ行う。これで2回目以降の読み込みは本体の1回だけになる。
+# トークンの期限切れは gspread 側が自動で取り直すので、クライアントを作り直す必要はない。
+_spreadsheet = None
+_worksheets = {}
+_worksheet_lock = threading.Lock()
+
+
 def get_client():
     creds_dict = json.loads(SERVICE_ACCOUNT_JSON)
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return gspread.authorize(creds)
+
+
+def _get_spreadsheet():
+    global _spreadsheet
+    if _spreadsheet is None:
+        _spreadsheet = get_client().open_by_key(SPREADSHEET_ID)
+    return _spreadsheet
+
+
+def _forget_worksheets():
+    """
+    使い回しているシートのオブジェクトを捨てる(?refresh=1 のとき)。
+    スプレッドシート側でシート名を変えた・消した・列を足したといった変更を拾い直すため。
+    """
+    global _spreadsheet
+    with _worksheet_lock:
+        _spreadsheet = None
+        _worksheets.clear()
+
+
+def _get_worksheet(sheet_name, headers, rows, label):
+    """
+    シートを取得する(無ければ作る)。ヘッダーの確認・移行は初回だけ行い、以降は使い回す。
+
+    ロックを取るのは、起動直後に複数のリクエストが同時に来たとき、
+    同じシートを二重に作ったりヘッダーを二重に追記したりしないため。
+    """
+    ws = _worksheets.get(sheet_name)
+    if ws is not None:
+        return ws
+    with _worksheet_lock:
+        ws = _worksheets.get(sheet_name)
+        if ws is None:
+            ws = _open_worksheet(_get_spreadsheet(), sheet_name, headers, rows, label)
+            _worksheets[sheet_name] = ws
+        return ws
+
+
+def _open_worksheet(sheet, sheet_name, headers, rows, label):
+    try:
+        ws = sheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=sheet_name, rows=rows, cols=len(headers))
+        ws.append_row(headers)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(headers)
+    elif current_headers != headers and current_headers == headers[:len(current_headers)]:
+        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        _ensure_min_columns(ws, len(headers))
+        for i, header in enumerate(headers[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != headers:
+        # 想定外のヘッダー構成の場合、insert_row で行をズラすと本番データが破損するため何もしない。
+        logger.warning(
+            f"{label}のヘッダーが想定と異なります: {current_headers} (期待値: {headers})。"
+            f"列がズレている可能性があるため、内容を確認してください。"
+        )
+    return ws
 
 
 def _ensure_min_columns(ws, needed_cols):
@@ -263,176 +352,31 @@ def _ensure_min_columns(ws, needed_cols):
 
 
 def get_records_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=SHEET_NAME, rows=1000, cols=len(HEADERS))
-        ws.append_row(HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(HEADERS)
-    elif current_headers != HEADERS and current_headers == HEADERS[:len(current_headers)]:
-        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
-        _ensure_min_columns(ws, len(HEADERS))
-        for i, header in enumerate(HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != HEADERS:
-        # 想定外のヘッダー構成の場合、insert_row で行をズラすと本番データが破損するため何もしない。
-        logger.warning(
-            f"記録データシートのヘッダーが想定と異なります: {current_headers} (期待値: {HEADERS})。"
-            f"列がズレている可能性があるため、内容を確認してください。"
-        )
-    return ws
+    return _get_worksheet(SHEET_NAME, HEADERS, rows=1000, label="記録データシート")
 
 
 def get_chat_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(CHAT_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=CHAT_SHEET_NAME, rows=1000, cols=len(CHAT_HEADERS))
-        ws.append_row(CHAT_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(CHAT_HEADERS)
-    elif current_headers != CHAT_HEADERS and current_headers == CHAT_HEADERS[:len(current_headers)]:
-        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
-        _ensure_min_columns(ws, len(CHAT_HEADERS))
-        for i, header in enumerate(CHAT_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != CHAT_HEADERS:
-        logger.warning(
-            f"chat_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {CHAT_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(CHAT_SHEET_NAME, CHAT_HEADERS, rows=1000, label="chat_logsシート")
 
 
 def get_store_events_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(STORE_EVENTS_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=STORE_EVENTS_SHEET_NAME, rows=200, cols=len(STORE_EVENTS_HEADERS))
-        ws.append_row(STORE_EVENTS_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(STORE_EVENTS_HEADERS)
-    elif current_headers != STORE_EVENTS_HEADERS and current_headers == STORE_EVENTS_HEADERS[:len(current_headers)]:
-        _ensure_min_columns(ws, len(STORE_EVENTS_HEADERS))
-        for i, header in enumerate(STORE_EVENTS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != STORE_EVENTS_HEADERS:
-        logger.warning(
-            f"store_eventsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_EVENTS_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(STORE_EVENTS_SHEET_NAME, STORE_EVENTS_HEADERS, rows=200, label="store_eventsシート")
 
 
 def get_store_stats_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(STORE_STATS_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=STORE_STATS_SHEET_NAME, rows=200, cols=len(STORE_STATS_HEADERS))
-        ws.append_row(STORE_STATS_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(STORE_STATS_HEADERS)
-    elif current_headers != STORE_STATS_HEADERS and current_headers == STORE_STATS_HEADERS[:len(current_headers)]:
-        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
-        _ensure_min_columns(ws, len(STORE_STATS_HEADERS))
-        for i, header in enumerate(STORE_STATS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != STORE_STATS_HEADERS:
-        logger.warning(
-            f"store_statsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_STATS_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(STORE_STATS_SHEET_NAME, STORE_STATS_HEADERS, rows=200, label="store_statsシート")
 
 
 def get_store_daily_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(STORE_DAILY_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=STORE_DAILY_SHEET_NAME, rows=2000, cols=len(STORE_DAILY_HEADERS))
-        ws.append_row(STORE_DAILY_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(STORE_DAILY_HEADERS)
-    elif current_headers != STORE_DAILY_HEADERS and current_headers == STORE_DAILY_HEADERS[:len(current_headers)]:
-        _ensure_min_columns(ws, len(STORE_DAILY_HEADERS))
-        for i, header in enumerate(STORE_DAILY_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != STORE_DAILY_HEADERS:
-        logger.warning(
-            f"store_dailyシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_DAILY_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(STORE_DAILY_SHEET_NAME, STORE_DAILY_HEADERS, rows=2000, label="store_dailyシート")
 
 
 def get_store_units_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(STORE_UNITS_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=STORE_UNITS_SHEET_NAME, rows=5000, cols=len(STORE_UNITS_HEADERS))
-        ws.append_row(STORE_UNITS_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(STORE_UNITS_HEADERS)
-    elif current_headers != STORE_UNITS_HEADERS and current_headers == STORE_UNITS_HEADERS[:len(current_headers)]:
-        _ensure_min_columns(ws, len(STORE_UNITS_HEADERS))
-        for i, header in enumerate(STORE_UNITS_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != STORE_UNITS_HEADERS:
-        logger.warning(
-            f"store_unitsシートのヘッダーが想定と異なります: {current_headers} (期待値: {STORE_UNITS_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(STORE_UNITS_SHEET_NAME, STORE_UNITS_HEADERS, rows=5000, label="store_unitsシート")
 
 
 def get_import_logs_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(IMPORT_LOGS_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=IMPORT_LOGS_SHEET_NAME, rows=1000, cols=len(IMPORT_LOG_HEADERS))
-        ws.append_row(IMPORT_LOG_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(IMPORT_LOG_HEADERS)
-    elif current_headers != IMPORT_LOG_HEADERS and current_headers == IMPORT_LOG_HEADERS[:len(current_headers)]:
-        _ensure_min_columns(ws, len(IMPORT_LOG_HEADERS))
-        for i, header in enumerate(IMPORT_LOG_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != IMPORT_LOG_HEADERS:
-        logger.warning(
-            f"import_logsシートのヘッダーが想定と異なります: {current_headers} (期待値: {IMPORT_LOG_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(IMPORT_LOGS_SHEET_NAME, IMPORT_LOG_HEADERS, rows=1000, label="import_logsシート")
 
 
 NUMERIC_FIELDS = [
@@ -442,28 +386,7 @@ NUMERIC_FIELDS = [
 
 
 def get_unit_notes_worksheet():
-    client = get_client()
-    sheet = client.open_by_key(SPREADSHEET_ID)
-    try:
-        ws = sheet.worksheet(UNIT_NOTES_SHEET_NAME)
-    except gspread.exceptions.WorksheetNotFound:
-        ws = sheet.add_worksheet(title=UNIT_NOTES_SHEET_NAME, rows=500, cols=len(UNIT_NOTES_HEADERS))
-        ws.append_row(UNIT_NOTES_HEADERS)
-        return ws
-
-    current_headers = ws.row_values(1)
-    if not current_headers:
-        ws.append_row(UNIT_NOTES_HEADERS)
-    elif current_headers != UNIT_NOTES_HEADERS and current_headers == UNIT_NOTES_HEADERS[:len(current_headers)]:
-        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
-        _ensure_min_columns(ws, len(UNIT_NOTES_HEADERS))
-        for i, header in enumerate(UNIT_NOTES_HEADERS[len(current_headers):], start=len(current_headers) + 1):
-            ws.update_cell(1, i, header)
-    elif current_headers != UNIT_NOTES_HEADERS:
-        logger.warning(
-            f"unit_notesシートのヘッダーが想定と異なります: {current_headers} (期待値: {UNIT_NOTES_HEADERS})"
-        )
-    return ws
+    return _get_worksheet(UNIT_NOTES_SHEET_NAME, UNIT_NOTES_HEADERS, rows=500, label="unit_notesシート")
 
 
 def _to_int(value):
@@ -499,6 +422,11 @@ def _load_records_rows_fallback(ws):
 
 
 def load_records():
+    """ログイン中のユーザーの記録を新しい順で返す(全員分の行はキャッシュに持ち、ここで絞る)。"""
+    return _own_rows(_load_all_records())
+
+
+def _load_all_records():
     cached = _cache_get("records")
     if cached is not None:
         return cached
@@ -563,6 +491,7 @@ def load_records():
 def save_record(record):
     try:
         ws = get_records_worksheet()
+        record = {**record, "user_id": current_user_id() or OWNER_USER_ID}
         row = [record.get(h, "") for h in HEADERS]
         ws.append_row(row)
         _cache_invalidate("records")
@@ -571,10 +500,24 @@ def save_record(record):
         flash("スプレッドシートへの保存に失敗しました。")
 
 
-def _upsert_row_by_session(ws, session_id, values):
-    """1列目の session_id が一致する行を上書きし、無ければ末尾に足す。"""
+def _upsert_row_by_session(ws, session_id, values, headers):
+    """
+    1列目の session_id が一致し、かつ同じユーザーの行を上書きし、無ければ末尾に足す。
+
+    session_id はフォームから送られてくる値なので、持ち主まで見ないと
+    他人の session_id を送るだけでその人の行を書き換えられてしまう。
+    """
+    user_col = headers.index("user_id")
+    user_id = str(values[user_col] or "").strip() or OWNER_USER_ID
     existing = ws.col_values(1)  # 1行目はヘッダー
-    target_row = next((i for i, v in enumerate(existing[1:], start=2) if str(v) == session_id), None)
+    owners = ws.col_values(user_col + 1)
+
+    def _owner(row_number):
+        raw = owners[row_number - 1] if row_number - 1 < len(owners) else ""
+        return str(raw).strip() or OWNER_USER_ID
+
+    target_row = next((i for i, v in enumerate(existing[1:], start=2)
+                       if str(v) == session_id and _owner(i) == user_id), None)
     if target_row:
         ws.update([values], f"A{target_row}")
     else:
@@ -591,7 +534,8 @@ def upsert_record_by_session(record):
     """
     try:
         ws = get_records_worksheet()
-        _upsert_row_by_session(ws, record["session_id"], [record.get(h, "") for h in HEADERS])
+        record = {**record, "user_id": current_user_id() or OWNER_USER_ID}
+        _upsert_row_by_session(ws, record["session_id"], [record.get(h, "") for h in HEADERS], HEADERS)
     except Exception as e:
         logger.error(f"実戦チャットの記録の保存エラー: {e}")
         return False
@@ -600,10 +544,10 @@ def upsert_record_by_session(record):
 
 
 def load_unit_notes():
-    """台メモを全件、新しい順で返す。"""
+    """ログイン中のユーザーの台メモを、新しい順で返す。"""
     cached = _cache_get("unit_notes")
     if cached is not None:
-        return cached
+        return _own_rows(cached)
     try:
         notes = get_unit_notes_worksheet().get_all_records()
     except Exception as e:
@@ -611,7 +555,7 @@ def load_unit_notes():
         return []
     notes.sort(key=lambda n: str(n.get("date", "")), reverse=True)
     _cache_set("unit_notes", notes)
-    return notes
+    return _own_rows(notes)
 
 
 def unit_notes_for(store_name, machine_number, limit=10):
@@ -631,7 +575,9 @@ def save_unit_note(note):
     """台メモを保存する。同じ session_id なら上書き。戻り値: 成功したかどうか。"""
     try:
         ws = get_unit_notes_worksheet()
-        _upsert_row_by_session(ws, note["session_id"], [note.get(h, "") for h in UNIT_NOTES_HEADERS])
+        note = {**note, "user_id": current_user_id() or OWNER_USER_ID}
+        _upsert_row_by_session(ws, note["session_id"], [note.get(h, "") for h in UNIT_NOTES_HEADERS],
+                               UNIT_NOTES_HEADERS)
     except Exception as e:
         logger.error(f"台メモの保存エラー: {e}")
         return False
@@ -660,18 +606,18 @@ def get_records_sheet_diagnostics():
 
 def load_all_chat_history():
     """
-    chat_logs シートの全行を返す(スプレッドシートに追加された順=時系列順)。
+    chat_logs シートのうち、ログイン中のユーザーの行を返す(スプレッドシートに追加された順=時系列順)。
     一覧画面で各セッションごとの質問件数・直近の回答をまとめて表示するために使う
     (セッションごとに毎回シートを読みに行くと遅くなるため、1回の読み込みで済ませる)。
     """
     cached = _cache_get("chat_history_all")
     if cached is not None:
-        return cached
+        return _own_rows(cached)
     try:
         ws = get_chat_worksheet()
         rows = ws.get_all_records()
         _cache_set("chat_history_all", rows)
-        return rows
+        return _own_rows(rows)
     except Exception as e:
         logger.error(f"チャット全履歴読み込みエラー: {e}")
         return []
@@ -703,6 +649,7 @@ def save_chat_message(session_id, question, answer):
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             question,
             answer,
+            current_user_id() or OWNER_USER_ID,
         ])
         _cache_invalidate("chat_history_all")
         return True
@@ -931,12 +878,9 @@ def analyze_image_with_gemini(base64_image, mime_type="image/jpeg", machine_name
             }
         ]
     }
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "画像解析")
         response.raise_for_status()
     except requests.exceptions.Timeout:
         logger.error("Gemini API タイムアウト")
@@ -1509,12 +1453,9 @@ def estimate(machine_name, combined_text, stats=None, recent_history_text="", ha
     if base64_image:
         parts.append({"inlineData": {"mimeType": mime_type, "data": base64_image}})
     payload = {"contents": [{"parts": parts}]}
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "設定推測")
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         json_start = raw_text.find("{")
@@ -1656,12 +1597,9 @@ def answer_question(session_id, machine_name, question, chat_history=None):
     回答のみを出力してください(前置きや「回答:」等のラベル、Markdown記法は不要です)。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "記録へのQ&A")
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         if raw_text:
@@ -1748,12 +1686,9 @@ def estimate_expected_payout_with_gemini(machine_name, target_games, current_gam
     【目標ゲーム数】{target_games}G
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "期待値の概算")
         response.raise_for_status()
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
         json_start = raw_text.find("{")
@@ -2497,12 +2432,9 @@ def summarize_store_trends_with_gemini(trends, store_stats=None, daily_trends=No
     台別データがある場合は、狙う価値のありそうな台番号の特徴(末尾・端台・機種)にも1行触れてください。
     """
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "店舗傾向のAI総評")
         response.raise_for_status()
         text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         if not text:
@@ -2694,12 +2626,9 @@ def analyze_store_stats_image_with_gemini(base64_image, mime_type="image/jpeg"):
             }
         ]
     }
-    headers = {"Content-Type": "application/json"}
 
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, "年間データの画像解析")
         response.raise_for_status()
     except requests.exceptions.Timeout:
         logger.error("Gemini API タイムアウト(店舗年間データ解析)")
@@ -3147,6 +3076,43 @@ def load_store_events():
 
     _cache_set("store_events", events_by_store)
     return events_by_store
+
+
+def store_info_by_sheet_name():
+    """
+    店舗情報JSON(store_data/)を「シート側の店舗名 → 店舗」の辞書で返す。
+    シートの営業データ・イベント日と、JSONの基本情報(都道府県など)を突き合わせるために使う。
+    """
+    stores, _errors = store_info.load_all()
+    return {(s.get("sheet_store_name") or s["name"]): s for s in stores}
+
+
+def load_calendar_events():
+    """
+    カレンダー用のイベント日設定。シート(store_events)に、店舗情報JSONの旧イベント日・周年日を足したもの。
+
+    シートは店舗傾向の画面から人が登録したもの、JSONはWebから集めたもの。
+    どちらか片方にしか無い店舗もあるので、ルールは両方を合わせて重複だけ除く
+    (どちらかを正にすると、もう片方で登録した日がカレンダーから消えてしまうため)。
+    分析(店舗傾向)は今まで通りシートだけを見る。
+    """
+    merged = {name: dict(setting) for name, setting in load_store_events().items()}
+    for name, store in store_info_by_sheet_name().items():
+        info = store.get("info") or {}
+        texts = {
+            "event_rules": (info.get("event_days") or {}).get("value") or "",
+            "anniversary_rules": (info.get("anniversary_days") or {}).get("value") or "",
+        }
+        if not any(texts.values()):
+            continue
+        setting = merged.setdefault(name, {"store_name": name, "event_rules": [],
+                                           "anniversary_rules": [], "unknown": []})
+        for key, text in texts.items():
+            rules, unknown = parse_event_day_rules(text)
+            have = {(r["type"], r["value"]) for r in setting.get(key) or []}
+            setting[key] = (setting.get(key) or []) + [r for r in rules if (r["type"], r["value"]) not in have]
+            setting["unknown"] = (setting.get("unknown") or []) + unknown
+    return merged
 
 
 def save_store_events(store_name, event_days="", anniversary_days="", note="", source="", batch_id=""):
@@ -3930,7 +3896,7 @@ def load_import_logs(store_name="", limit=100):
                 "store_name": str(row.get("store_name", "")).strip(),
                 "kind": kind,
                 "kind_label": IMPORT_KINDS.get(kind, {}).get("label", kind or "取り込み"),
-                "kind_icon": IMPORT_KINDS.get(kind, {}).get("icon", "📥"),
+                "kind_icon": IMPORT_KINDS.get(kind, {}).get("icon", "import"),
                 "target": str(row.get("target", "")).strip(),
                 "row_count": _to_int(row.get("row_count")),
                 "added": _to_int(row.get("added")),
@@ -4364,10 +4330,10 @@ CALENDAR_WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"]
 
 # マスに出すマークの種類。周年日 > 旧イベント日 > データあり > 自分の記録のみ、の優先順。
 _CALENDAR_KINDS = {
-    "anniversary": {"label": "周年日", "icon": "🎂", "order": 0},
-    "event": {"label": "旧イベント日", "icon": "🎯", "order": 1},
-    "data": {"label": "データあり", "icon": "📈", "order": 2},
-    "record": {"label": "自分の記録", "icon": "📝", "order": 3},
+    "anniversary": {"label": "周年日", "icon": "cake", "order": 0},
+    "event": {"label": "旧イベント日", "icon": "target", "order": 1},
+    "data": {"label": "データあり", "icon": "trend_up", "order": 2},
+    "record": {"label": "自分の記録", "icon": "memo", "order": 3},
 }
 
 
@@ -4401,16 +4367,44 @@ def normalize_calendar_month(year=None, month=None):
     return year, month
 
 
-def _calendar_targets(store_names=None):
+# 店舗情報JSONが無い(都道府県が分からない)店舗のまとめ先
+CALENDAR_PREF_UNSET = "地域未登録"
+
+
+def _calendar_all_stores():
+    """
+    カレンダーに出しうる全店舗と、店舗ごとの都道府県。
+    シートにデータがある店舗に加え、店舗情報JSONだけがある店舗(イベント日だけ分かっている店)も含める。
+    """
+    json_by_name = store_info_by_sheet_name()
+    names = [s["name"] for s in list_store_names()]
+    names += [n for n in json_by_name if n not in set(names)]
+    region = {n: (json_by_name.get(n) or {}).get("region") or CALENDAR_PREF_UNSET for n in names}
+    return names, region
+
+
+def calendar_prefectures():
+    """都道府県の切り替えタブ用。店舗の多い順で、地域未登録は最後。"""
+    _names, region = _calendar_all_stores()
+    counts = {}
+    for pref in region.values():
+        counts[pref] = counts.get(pref, 0) + 1
+    return [{"name": p, "count": c} for p, c in
+            sorted(counts.items(), key=lambda kv: (kv[0] == CALENDAR_PREF_UNSET, -kv[1], kv[0]))]
+
+
+def _calendar_targets(store_names=None, pref=None):
     """
     カレンダーに出す店舗と、店舗ごとの色を決める。
 
-    store_names が空なら全店舗(総合カレンダー)。
+    store_names が空なら全店舗(総合カレンダー)。pref を指定するとその都道府県の店舗だけにする
+    (店舗が増えると1枚のカレンダーに並びきらないため)。
     色は全店舗の並び順で割り当てるので、絞り込んでも同じ店には同じ色が付く。
-    戻り値: (全店舗名, 対象店舗名, {店舗名: 色})
+    戻り値: (選択肢に出す店舗名, 対象店舗名, {店舗名: 色})
     """
-    all_stores = [s["name"] for s in list_store_names()]
-    known = set(all_stores)
+    everyone, region = _calendar_all_stores()
+    all_stores = [n for n in everyone if not pref or region[n] == pref]
+    known = set(everyone)
 
     wanted = [str(n).strip() for n in (store_names or []) if str(n).strip()]
     if wanted:
@@ -4421,7 +4415,7 @@ def _calendar_targets(store_names=None):
     else:
         targets = list(all_stores)
 
-    ordered = all_stores + [n for n in targets if n not in known]
+    ordered = everyone + [n for n in targets if n not in known]
     color_by_store = {
         name: CALENDAR_STORE_COLORS[i % len(CALENDAR_STORE_COLORS)]
         for i, name in enumerate(ordered)
@@ -4486,7 +4480,7 @@ def _calendar_entry(store_name, day, day_key, rules, color, daily, units, record
     }
 
 
-def build_event_calendar(year=None, month=None, store_names=None):
+def build_event_calendar(year=None, month=None, store_names=None, pref=None):
     """
     月別イベントカレンダーの表示データを組み立てる。
 
@@ -4501,10 +4495,10 @@ def build_event_calendar(year=None, month=None, store_names=None):
     first, next_first, prev_first = _month_bounds(year, month)
     last_day = next_first - timedelta(days=1)
 
-    all_stores, targets, color_by_store = _calendar_targets(store_names)
+    all_stores, targets, color_by_store = _calendar_targets(store_names, pref)
     target_set = set(targets)
 
-    events_by_store = load_store_events()
+    events_by_store = load_calendar_events()
     rules_by_store = {}
     for name in targets:
         setting = events_by_store.get(name) or {}
@@ -4653,7 +4647,7 @@ def _calendar_machine_rows(unit_rows):
     return rows
 
 
-def build_calendar_day_detail(date_str, store_names=None):
+def build_calendar_day_detail(date_str, store_names=None, pref=None):
     """
     カレンダーで選んだ1日の詳細を組み立てる(ポップアップ・詳細欄に出す中身)。
 
@@ -4667,9 +4661,9 @@ def build_calendar_day_detail(date_str, store_names=None):
         return None
 
     key = day.strftime("%Y-%m-%d")
-    _all_stores, targets, color_by_store = _calendar_targets(store_names)
+    _all_stores, targets, color_by_store = _calendar_targets(store_names, pref)
     target_set = set(targets)
-    events_by_store = load_store_events()
+    events_by_store = load_calendar_events()
 
     # その店の平均稼働(全期間)を基準に、その日が高いか低いかを出す
     daily_rows = load_store_daily()
@@ -4862,11 +4856,8 @@ def _live_chat_add_user_turn(contents, message, image_part=None):
 
 def _live_chat_call(payload, label):
     """Geminiを呼んで本文を返す。戻り値: (テキスト, エラー文言)。"""
-    headers = {"Content-Type": "application/json"}
     try:
-        response = requests.post(
-            GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
-        )
+        response = _post_gemini(payload, label)
         response.raise_for_status()
         text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         if text:
@@ -5044,3 +5035,390 @@ def save_live_chat_result(machine, data):
     if not saved:
         return True, "記録は保存しましたが、台メモの保存に失敗しました。もう一度保存してください。"
     return True, "記録と台メモを保存しました。"
+
+
+# ---------------------------------------------------------------------------
+# ユーザー(ログイン・メンバー管理)
+# ---------------------------------------------------------------------------
+# 複数人で使うため、ログインと「自分の記録は自分にだけ見える」分離を入れている。
+# ユーザーも他のデータと同じくシート(users)に置く。人数は数十人程度の想定なので
+# DBを別に立てるほどではなく、置き場所を増やさないほうが管理が楽なため。
+#
+# 分けるのは打った人の持ち物(records / chat_logs / unit_notes)だけ。各行の user_id で持ち主を決め、
+# load_records() などが読んだ時点でログイン中のユーザーの行に絞る。呼び出し側は今までどおり
+# load_records() を呼ぶだけで、分離を意識しなくていい(絞り忘れで他人の記録が見える事故を防ぐため)。
+# ホールデータ(日別・台別・年間・旧イベント日)は店の公開情報なので全員で共有し、
+# 書き込み(取り込み・店舗管理)は管理者だけに許す。
+#
+# 管理者は tools/create_admin.py で1人だけ作る(user_id は OWNER_USER_ID 固定)。
+# 複数人対応の前に登録した行は user_id が空なので、その持ち主を管理者とみなす
+# (シートを書き換えて埋め直さずに済むように)。画面から作れるのはメンバーだけ。
+USERS_SHEET_NAME = os.environ.get("USERS_SHEET_NAME", "users")
+USERS_HEADERS = [
+    "user_id", "login_id", "display_name", "password_hash", "role", "active",
+    "created_at", "updated_at",
+]
+OWNER_USER_ID = "owner"
+ROLE_ADMIN = "admin"
+ROLE_MEMBER = "member"
+
+LOGIN_ID_PATTERN = re.compile(r"[A-Za-z0-9_.-]{3,32}")
+PASSWORD_MIN_LENGTH = 8
+
+# 続けて間違えたらしばらくログインを止める(パスワードの総当たり対策)。
+# メモリに持つだけなので再起動で消えるが、総当たりの速度を落とせれば十分なのでこれでよい
+LOGIN_MAX_FAILURES = 5
+LOGIN_LOCK_SECONDS = 15 * 60
+_login_failures = {}
+
+# 存在しないログインIDでも照合と同じだけ時間をかけ、IDの有無を応答時間から悟られないようにする
+_DUMMY_PASSWORD_HASH = generate_password_hash(secrets.token_hex(16))
+
+
+def get_users_worksheet():
+    return _get_worksheet(USERS_SHEET_NAME, USERS_HEADERS, rows=100, label="usersシート")
+
+
+def load_users():
+    """全ユーザーを登録順で返す。active は bool にしておく。"""
+    cached = _cache_get("users")
+    if cached is not None:
+        return cached
+    try:
+        # ログインIDが数字だけでも数値に変換されないよう、すべて文字列のまま読む
+        rows = get_users_worksheet().get_all_records(numericise_ignore=["all"])
+    except Exception as e:
+        logger.error(f"ユーザーの読み込みエラー: {e}")
+        return []
+    users = []
+    for row in rows:
+        user = {h: str(row.get(h, "")).strip() for h in USERS_HEADERS}
+        if not user["user_id"]:
+            continue
+        user["active"] = user["active"] not in ("0", "false", "FALSE", "")
+        users.append(user)
+    _cache_set("users", users)
+    return users
+
+
+def find_user(user_id):
+    user_id = str(user_id or "").strip()
+    return next((u for u in load_users() if u["user_id"] == user_id), None) if user_id else None
+
+
+def _find_user_by_login(login_id):
+    login_id = str(login_id or "").strip().lower()
+    return next((u for u in load_users() if u["login_id"].lower() == login_id), None)
+
+
+def current_user():
+    """ログイン中のユーザー(ログイン画面などでは None)。app.py の before_request が g.user に入れる。"""
+    return g.get("user") if has_request_context() else None
+
+
+def current_user_id():
+    """
+    ログイン中のユーザーの user_id。
+
+    リクエストの外(tools/ のCLIなど)では None を返し、行を絞らない。
+    リクエスト中なのに未ログインなら "" を返し、誰の行にも一致させない(見せない側に倒す)。
+    """
+    if not has_request_context():
+        return None
+    user = g.get("user")
+    return user["user_id"] if user else ""
+
+
+def is_admin():
+    user = current_user()
+    return bool(user and user["role"] == ROLE_ADMIN)
+
+
+def _row_owner(row):
+    return str(row.get("user_id", "")).strip() or OWNER_USER_ID
+
+
+def _own_rows(rows):
+    """ログイン中のユーザーの行だけに絞る(リクエストの外ではそのまま返す)。"""
+    user_id = current_user_id()
+    if user_id is None:
+        return rows
+    return [r for r in rows if _row_owner(r) == user_id]
+
+
+def authenticate(login_id, password):
+    """
+    ログインIDとパスワードを照合する。
+    戻り値: (ユーザー, エラー文言)。成功時はエラー文言が None。
+    """
+    key = str(login_id or "").strip().lower()
+    now = time.time()
+    count, locked_until = _login_failures.get(key, (0, 0))
+    if locked_until > now:
+        minutes = int((locked_until - now) // 60) + 1
+        return None, f"続けて間違えたため、ログインを止めています。{minutes}分ほど待ってからお試しください。"
+
+    user = _find_user_by_login(key)
+    ok = check_password_hash(user["password_hash"] if user else _DUMMY_PASSWORD_HASH, password or "")
+    if not user or not ok:
+        count += 1
+        _login_failures[key] = (count, now + LOGIN_LOCK_SECONDS if count >= LOGIN_MAX_FAILURES else 0)
+        return None, "ログインIDかパスワードが違います。"
+    if not user["active"]:
+        return None, "このアカウントは停止されています。管理者に確認してください。"
+    _login_failures.pop(key, None)
+    return user, None
+
+
+def _validate_password(password):
+    if len(password or "") < PASSWORD_MIN_LENGTH:
+        return f"パスワードは{PASSWORD_MIN_LENGTH}文字以上にしてください。"
+    return None
+
+
+def create_user(login_id, display_name, password, role=ROLE_MEMBER, user_id=None):
+    """
+    ユーザーを追加する。戻り値: (成功したか, メッセージ)。
+    user_id は管理者を作るとき(OWNER_USER_ID)だけ指定する。メンバーはランダムに振る。
+    """
+    login_id = str(login_id or "").strip()
+    display_name = str(display_name or "").strip() or login_id
+    if not LOGIN_ID_PATTERN.fullmatch(login_id):
+        return False, "ログインIDは半角英数字と _ . - の3〜32文字にしてください。"
+    error = _validate_password(password)
+    if error:
+        return False, error
+    if _find_user_by_login(login_id):
+        return False, f"ログインID「{login_id}」はすでに使われています。"
+    user_id = user_id or "u_" + secrets.token_hex(6)
+    if find_user(user_id):
+        return False, "同じユーザーIDがすでにあります。"
+
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    row = {
+        "user_id": user_id, "login_id": login_id, "display_name": display_name,
+        "password_hash": generate_password_hash(password), "role": role, "active": "1",
+        "created_at": now_text, "updated_at": now_text,
+    }
+    try:
+        get_users_worksheet().append_row([row[h] for h in USERS_HEADERS])
+    except Exception as e:
+        logger.error(f"ユーザーの追加エラー: {e}")
+        return False, "ユーザーの保存に失敗しました。時間をおいてお試しください。"
+    _cache_invalidate("users")
+    return True, f"「{display_name}」(ログインID: {login_id})を追加しました。"
+
+
+def _update_user(user_id, changes):
+    """ユーザーの行の指定した列だけを書き換える。戻り値: 成功したかどうか。"""
+    try:
+        ws = get_users_worksheet()
+        ids = ws.col_values(1)
+        row_number = next((i for i, v in enumerate(ids[1:], start=2) if str(v).strip() == user_id), None)
+        if not row_number:
+            return False
+        changes = {**changes, "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        ws.batch_update([
+            {"range": f"{_column_letter(USERS_HEADERS.index(k) + 1)}{row_number}", "values": [[v]]}
+            for k, v in changes.items()
+        ])
+    except Exception as e:
+        logger.error(f"ユーザーの更新エラー: {e}")
+        return False
+    _cache_invalidate("users")
+    return True
+
+
+def set_user_password(user_id, password):
+    """パスワードを変える。戻り値: (成功したか, メッセージ)。"""
+    error = _validate_password(password)
+    if error:
+        return False, error
+    if not find_user(user_id):
+        return False, "ユーザーが見つかりません。"
+    if not _update_user(user_id, {"password_hash": generate_password_hash(password)}):
+        return False, "パスワードの保存に失敗しました。時間をおいてお試しください。"
+    return True, "パスワードを変更しました。"
+
+
+def set_user_active(user_id, active):
+    """
+    メンバーの利用を停止・再開する。戻り値: (成功したか, メッセージ)。
+
+    削除ではなく停止にしているのは、その人の記録をシートに残したまま
+    ログインだけ止めたいため(再開すれば元どおり使える)。
+    管理者は止められない(止めると誰もメンバーを管理できなくなる)。
+    """
+    user = find_user(user_id)
+    if not user:
+        return False, "ユーザーが見つかりません。"
+    if user["role"] == ROLE_ADMIN:
+        return False, "管理者は停止できません。"
+    if not _update_user(user_id, {"active": "1" if active else "0"}):
+        return False, "保存に失敗しました。時間をおいてお試しください。"
+    return True, f"「{user['display_name']}」の利用を{'再開' if active else '停止'}しました。"
+
+
+# ---------------------------------------------------------------------------
+# AIの使用量(アカウントごとのGemini使用料の概算)
+# ---------------------------------------------------------------------------
+# Googleの請求はAPIキー単位でしか出ないので、誰がどれだけ使ったかはこちらで数えるしかない。
+# Geminiの応答には使ったトークン数(usageMetadata)が入っているので、呼び出しのたびに
+# ユーザー・機能・トークン数を api_usage シートに1行残し、管理者画面で単価を掛けて集計する。
+#
+# 金額ではなくトークン数を残しているのは、単価が改定されても過去分を計算し直せるようにするため。
+# 無料枠の範囲で使っている間は実際の請求は0円なので、画面の金額は「有料枠の単価で使った場合」の目安。
+# スプレッドシートの行数(1ファイル1,000万セル)に対して1回1行なので、個人〜少人数なら当面は足りる。
+API_USAGE_SHEET_NAME = os.environ.get("API_USAGE_SHEET_NAME", "api_usage")
+API_USAGE_HEADERS = ["date", "user_id", "feature", "model", "input_tokens", "output_tokens"]
+
+# 有料枠(Standard)の100万トークンあたりの単価(USD)。出力には思考(thinking)のトークンも含む。
+# 2026年9月に https://ai.google.dev/gemini-api/docs/pricing で確認した値。
+# 表に無いモデルを使うときや単価が変わったときは、環境変数で上書きする。
+GEMINI_PRICES_PER_MILLION = {
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini-2.5-flash-lite": (0.10, 0.40),
+    "gemini-2.5-pro": (1.25, 10.00),  # 1回の入力が20万トークン以下の単価(このアプリの使い方では超えない)
+}
+USD_JPY_RATE = float(os.environ.get("USD_JPY_RATE", "150"))
+
+
+def gemini_price(model):
+    """(入力単価, 出力単価)。環境変数 GEMINI_PRICE_INPUT_PER_M / GEMINI_PRICE_OUTPUT_PER_M が優先。"""
+    default_in, default_out = GEMINI_PRICES_PER_MILLION.get(model, GEMINI_PRICES_PER_MILLION["gemini-2.5-flash"])
+    return (float(os.environ.get("GEMINI_PRICE_INPUT_PER_M", default_in)),
+            float(os.environ.get("GEMINI_PRICE_OUTPUT_PER_M", default_out)))
+
+
+def get_api_usage_worksheet():
+    return _get_worksheet(API_USAGE_SHEET_NAME, API_USAGE_HEADERS, rows=1000, label="api_usageシート")
+
+
+def _post_gemini(payload, feature):
+    """
+    Geminiを呼ぶ(呼び出しはすべてここを通す)。成功したら使用量を記録する。
+    例外や応答の解釈は、これまでどおり呼び出し側が行う。
+    """
+    response = requests.post(
+        GEMINI_URL, headers={"Content-Type": "application/json"},
+        data=json.dumps(payload), timeout=REQUEST_TIMEOUT,
+    )
+    if response.ok:
+        try:
+            usage = response.json().get("usageMetadata") or {}
+        except ValueError:
+            usage = {}
+        _record_api_usage(feature, usage)
+    return response
+
+
+def _record_api_usage(feature, usage):
+    """
+    使用量を1行書く。シートへの書き込みを待つとAIの応答がそのぶん遅れるので、別スレッドで書く。
+    記録の失敗で本来の処理(AIの回答)を止めないよう、エラーはログに残すだけにする。
+    """
+    input_tokens = _to_int(usage.get("promptTokenCount"))
+    # 思考のトークンは出力と同じ単価で請求されるので、出力に含めて数える
+    output_tokens = _to_int(usage.get("candidatesTokenCount")) + _to_int(usage.get("thoughtsTokenCount"))
+    if not input_tokens and not output_tokens:
+        return
+    row = [
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        # g はスレッドをまたいで読めないので、ここで確定させてから渡す
+        current_user_id() or OWNER_USER_ID,
+        feature, MODEL, input_tokens, output_tokens,
+    ]
+
+    def _write():
+        try:
+            get_api_usage_worksheet().append_row(row)
+            _cache_invalidate("api_usage")
+        except Exception as e:
+            logger.error(f"AI使用量の記録エラー: {e}")
+
+    threading.Thread(target=_write, daemon=True).start()
+
+
+def load_api_usage():
+    cached = _cache_get("api_usage")
+    if cached is not None:
+        return cached
+    try:
+        rows = get_api_usage_worksheet().get_all_records()
+    except Exception as e:
+        logger.error(f"AI使用量の読み込みエラー: {e}")
+        return []
+    for r in rows:
+        r["input_tokens"] = _to_int(r.get("input_tokens"))
+        r["output_tokens"] = _to_int(r.get("output_tokens"))
+        r["date"] = str(r.get("date", ""))
+    _cache_set("api_usage", rows)
+    return rows
+
+
+def _usage_cost_usd(row):
+    price_in, price_out = gemini_price(str(row.get("model", "")))
+    return (row["input_tokens"] * price_in + row["output_tokens"] * price_out) / 1_000_000
+
+
+def build_api_usage_report(month=None):
+    """
+    指定月(YYYY-MM、省略時は今月)の使用量を、アカウント別・機能別に集計する。
+    使っていないメンバーも0円で並べる(使っていないことも確認したいため)。
+    """
+    rows = load_api_usage()
+    months = sorted({r["date"][:7] for r in rows if len(r["date"]) >= 7}, reverse=True)
+    month = month if month and re.fullmatch(r"\d{4}-\d{2}", month) else datetime.now().strftime("%Y-%m")
+    if month not in months:
+        months = sorted(set(months) | {month}, reverse=True)
+
+    def _empty():
+        return {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+
+    def _add(acc, row, cost):
+        acc["calls"] += 1
+        acc["input_tokens"] += row["input_tokens"]
+        acc["output_tokens"] += row["output_tokens"]
+        acc["cost_usd"] += cost
+
+    users = {u["user_id"]: u for u in load_users()}
+    per_user = {uid: {**_empty(), "features": {}} for uid in users}
+    total = _empty()
+    for row in rows:
+        if not row["date"].startswith(month):
+            continue
+        cost = _usage_cost_usd(row)
+        entry = per_user.setdefault(_row_owner(row), {**_empty(), "features": {}})
+        _add(entry, row, cost)
+        _add(entry["features"].setdefault(str(row.get("feature", "")) or "不明", _empty()), row, cost)
+        _add(total, row, cost)
+
+    report_rows = []
+    for uid, entry in per_user.items():
+        user = users.get(uid)
+        report_rows.append({
+            **entry,
+            "user_id": uid,
+            # 行はあるがユーザーが見つからない場合(シートを直接いじった等)もIDで出しておく
+            "display_name": user["display_name"] if user else f"(不明なユーザー {uid})",
+            "login_id": user["login_id"] if user else "",
+            "active": user["active"] if user else False,
+            "cost_jpy": entry["cost_usd"] * USD_JPY_RATE,
+            "features": sorted(
+                ({"name": k, **v, "cost_jpy": v["cost_usd"] * USD_JPY_RATE} for k, v in entry["features"].items()),
+                key=lambda f: -f["cost_usd"],
+            ),
+        })
+    report_rows.sort(key=lambda r: (-r["cost_usd"], r["display_name"]))
+
+    price_in, price_out = gemini_price(MODEL)
+    return {
+        "month": month,
+        "months": months,
+        "rows": report_rows,
+        "total": {**total, "cost_jpy": total["cost_usd"] * USD_JPY_RATE},
+        "model": MODEL,
+        "price_input": price_in,
+        "price_output": price_out,
+        "usd_jpy": USD_JPY_RATE,
+    }

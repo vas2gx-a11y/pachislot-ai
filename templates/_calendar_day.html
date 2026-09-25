@@ -16,7 +16,7 @@
 
 {% if not embedded %}
 <h3 class="font-display font-bold text-base text-gray-900 mb-3">
-    📅 {{ detail.label }}{% if detail.is_today %}<span class="chip ml-2">今日</span>{% endif %}
+    {{ icon('calendar') }} {{ detail.label }}{% if detail.is_today %}<span class="chip ml-2">今日</span>{% endif %}
 </h3>
 {% endif %}
 
@@ -32,16 +32,16 @@
             <span class="inline-block w-2.5 h-2.5 rounded-full shrink-0" style="background: {{ s.color.dot }}"></span>
             <span class="font-bold text-sm text-gray-900 break-words">{{ s.store_name }}</span>
             {% for label in s.anniversary_labels %}
-            <span class="chip bg-white" style="color: {{ s.color.text }}">🎂 {{ label }}</span>
+            <span class="chip bg-white" style="color: {{ s.color.text }}">{{ icon('cake') }} {{ label }}</span>
             {% endfor %}
             {% for label in s.event_labels %}
-            <span class="chip bg-white" style="color: {{ s.color.text }}">🎯 {{ label }}</span>
+            <span class="chip bg-white" style="color: {{ s.color.text }}">{{ icon('target') }} {{ label }}</span>
             {% endfor %}
             {% if not s.anniversary_labels and not s.event_labels %}
             <span class="chip bg-white text-gray-400">通常日</span>
             {% endif %}
         </div>
-        {% if s.note %}<p class="hint mt-1">📝 {{ s.note }}</p>{% endif %}
+        {% if s.note %}<p class="hint mt-1">{{ icon('memo') }} {{ s.note }}</p>{% endif %}
 
         {# 店の全台データ(取り込み分)。稼働は店の平均と比べて見る #}
         {% if s.daily or s.unit_summary %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}ログイン{% endblock %}
+
+{% block content %}
+<div class="max-w-sm mx-auto mt-6 md:mt-16">
+    <section class="card card-body">
+        <h2 class="font-display font-bold text-lg text-gray-900 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-gray-700 text-base shrink-0">{{ icon('lock') }}</span>
+            ログイン
+        </h2>
+        <form action="{{ url_for('auth.login') }}" method="POST" class="mt-4 flex flex-col gap-3">
+            <input type="hidden" name="next" value="{{ next_path }}">
+            <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+                ログインID
+                <input type="text" name="login_id" value="{{ login_id }}" required autofocus
+                       autocomplete="username" autocapitalize="none" class="input">
+            </label>
+            <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+                パスワード
+                <input type="password" name="password" required autocomplete="current-password" class="input">
+            </label>
+            <button type="submit" class="btn btn-primary mt-1">ログイン</button>
+        </form>
+        <p class="hint mt-4">アカウントは管理者が発行します。パスワードを忘れたときは管理者に再設定を頼んでください。</p>
+    </section>
+</div>
+{% endblock %}

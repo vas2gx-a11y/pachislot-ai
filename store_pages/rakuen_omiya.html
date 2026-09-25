@@ -1,0 +1,426 @@
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>楽園大宮店 | 店舗情報</title>
+<style>
+/*
+  店舗ページ(単体HTML)の共通CSS。tools/store_build.py が各HTMLの <style> に埋め込む。
+  Flask版と見た目を揃えつつ、Tailwindに頼らずこのファイルだけで完結させている
+  (書き出したHTMLを1ファイルだけ開いても崩れないように)。
+*/
+:root {
+  --accent: #0f766e;
+  --bg: #f4f4f5;
+  --card: #fff;
+  --text: #18181b;
+  --sub: #71717a;
+  --line: #e4e4e7;
+  --link: #2563eb;
+  --plus: #059669;
+  --minus: #e11d48;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b; --card: #18181b; --text: #f4f4f5; --sub: #a1a1aa;
+    --line: #27272a; --link: #60a5fa; --plus: #34d399; --minus: #fb7185;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--link); }
+p { margin: 0; }
+code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 4px; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.stack { display: grid; gap: 16px; padding-top: 16px; padding-bottom: 24px; }
+
+/* ---- 店舗概要 ---- */
+.hero { background: #18181b; color: #fff; border-bottom: 4px solid var(--accent); padding: 20px 0; }
+.hero a { color: #fff; }
+.hero h1 { font-size: 1.6rem; margin: 4px 0 0; line-height: 1.3; }
+.crumb, .hero-meta { font-size: .75rem; opacity: .6; }
+.hero-meta { margin-top: 12px; }
+.hero-addr { font-size: .875rem; opacity: .75; margin-top: 4px; }
+.hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+.hero-stat { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px 12px; }
+.hero-stat span { display: block; font-size: .7rem; opacity: .6; }
+.hero-stat strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.hero-stat strong.small { font-size: .85rem; }
+.hero-stat em { font-style: normal; opacity: .5; }
+
+/* ---- 目次(スマホは横スクロール、PCは折り返し) ---- */
+.toc { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.toc-inner { display: flex; gap: 6px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; scrollbar-width: none; }
+.toc-inner::-webkit-scrollbar { display: none; }
+.toc a { flex-shrink: 0; font-size: .75rem; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--sub); text-decoration: none; }
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- セクション ---- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; scroll-margin-top: 52px; min-width: 0; }
+.card h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin: 0 0 12px; }
+.card h2::before { content: ""; width: 4px; height: 1.1em; border-radius: 2px; background: var(--accent); }
+
+.kv { width: 100%; border-collapse: collapse; }
+.kv th, .kv td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: .875rem; }
+.kv tr:last-child th, .kv tr:last-child td { border-bottom: 0; }
+.kv th { width: 34%; color: var(--sub); font-weight: 600; }
+.kv td { word-break: break-all; }
+
+.info-list { padding-left: 1.2em; margin: 0; font-size: .875rem; }
+.info-list li { margin: 4px 0; }
+.info-list li::marker { color: var(--accent); }
+
+.dated { border-top: 1px dashed var(--line); padding: 8px 0; font-size: .875rem; }
+.dated:first-child { border-top: 0; padding-top: 0; }
+.dated-date { font-size: .75rem; color: var(--sub); }
+.dated-title { font-weight: 700; }
+.dated-detail { color: var(--sub); margin-top: 2px; }
+.before { color: var(--sub); text-decoration: line-through; word-break: break-all; }
+.after { word-break: break-all; }
+
+.scroll-x { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.num { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .8125rem; }
+.num th, .num td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.num th:first-child, .num td:first-child { text-align: left; }
+.num thead th { color: var(--sub); font-weight: 600; font-size: .75rem; }
+.num td.wrap-cell { white-space: normal; text-align: left; min-width: 10em; }
+.plus { color: var(--plus); }
+.minus { color: var(--minus); }
+
+/* 確認状態。「不明」を目立たせすぎると空欄の多い店舗が読みにくいので、灰色に留める */
+.st-line { margin-top: 4px; }
+.st { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.st-ok { background: #ccfbf1; color: #115e59; }
+.st-check { background: #fef3c7; color: #92400e; }
+.st-none { background: var(--bg); color: var(--sub); }
+.cite { font-size: .7rem; text-decoration: none; }
+
+.muted { color: var(--sub); font-size: .875rem; }
+.hint { color: var(--sub); font-size: .75rem; margin-top: 8px; }
+.chip { display: inline-block; font-size: .7rem; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--sub); }
+.link-chip { display: inline-block; margin-right: 12px; }
+.panel { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .875rem; }
+.panel-title { font-size: .75rem; color: var(--sub); margin-bottom: 4px; }
+.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 8px; padding: 12px 16px; font-size: .875rem; }
+.warn ul { margin: 4px 0 0; padding-left: 1.2em; }
+
+.sources { padding-left: 1.4em; margin: 0; font-size: .875rem; }
+.sources li { margin: 6px 0; scroll-margin-top: 60px; }
+.src-date { display: block; font-size: .75rem; color: var(--sub); }
+.src-date .url { word-break: break-all; }
+
+.store-list { list-style: none; margin: 0; padding: 0; }
+.store-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+.store-list li:first-child { border-top: 0; padding-top: 0; }
+.store-list a { font-weight: 700; }
+.store-sub { display: block; font-size: .75rem; color: var(--sub); }
+
+.footer { font-size: .75rem; color: var(--sub); padding-bottom: 32px; }
+
+@media (min-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .hero-stats { grid-template-columns: repeat(4, 1fr); }
+  .toc-inner { flex-wrap: wrap; }
+  .card { padding: 20px; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <p class="crumb"><a href="index.html">店舗一覧</a> / 埼玉県 さいたま市大宮区</p>
+        <h1>楽園大宮店</h1>
+<p class="hero-addr">埼玉県さいたま市大宮区宮町一丁目63番地1 大宮RAKUUN内 地下1階・1階・2階</p>        <div class="hero-stats">
+            <div class="hero-stat"><span>総台数</span>
+                <strong><em>不明</em></strong></div>
+            <div class="hero-stat"><span>パチスロ</span>
+                <strong>1,446台</strong></div>
+            <div class="hero-stat"><span>パチンコ</span>
+                <strong>1,584台</strong></div>
+            <div class="hero-stat"><span>営業時間</span><strong class="small">10:00-22:40</strong></div>
+        </div>
+        <p class="hero-meta">基本情報 20 / 25 項目が判明 ・ 最終更新 2026-09-25</p>
+    </div>
+</header>
+
+<nav class="toc" aria-label="目次">
+    <div class="wrap toc-inner">
+<a href="#basic">基本情報</a><a href="#access">アクセス</a><a href="#hours">営業時間</a><a href="#prices">料金・交換率</a><a href="#units">設置台数</a><a href="#machines">設置機種</a><a href="#days">営業日・特定日</a><a href="#notices">イベント・告知</a><a href="#new">新台入替</a><a href="#daily">過去の営業データ</a><a href="#slot">パチスロデータ</a><a href="#features">店舗の特徴</a><a href="#sources">情報源</a><a href="#history">更新履歴</a>    </div>
+</nav>
+
+<main class="wrap stack">
+
+
+<section id="basic" class="card">
+    <h2>基本情報</h2>
+            <table class="kv"><tbody>
+<tr><th>住所</th><td>埼玉県さいたま市大宮区宮町一丁目63番地1 大宮RAKUUN内 地下1階・1階・2階
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>電話番号</th><td>048-640-3636
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>公式サイト</th><td><a href="https://rakuen01.lp-dokidoki.com/" target="_blank" rel="noopener">https://rakuen01.lp-dokidoki.com/</a>
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>SNS</th><td><span class="muted">不明</span>
+<div class="st-line"><span class="st st-none">不明</span></div></td></tr>
+<tr><th>LINE</th><td>LINE公式アカウントあり（ページにQRコード掲載）
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>グランドオープン日</th><td>2014年9月9日
+<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+</tbody></table>
+
+</section>
+<section id="access" class="card">
+    <h2>アクセス</h2>
+            <table class="kv"><tbody>
+<tr><th>アクセス</th><td>JR大宮駅徒歩2分
+<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+<tr><th>駐車場</th><td><span class="muted">不明</span>
+<div class="st-line"><span class="st st-none">不明</span></div></td></tr>
+</tbody></table>
+
+</section>
+<section id="hours" class="card">
+    <h2>営業時間</h2>
+            <table class="kv"><tbody>
+<tr><th>営業時間</th><td>10:00-22:40
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>入場方法</th><td>パチンコ・5円スロット: 先着順、8:30より整理券配布（東口駅前通り入口）<br>20円スロット: 8:30抽選参加券配布、9:00抽選開始（旧中山道側入口、1,100名で打ち切り）<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+</tbody></table>
+
+</section>
+<section id="prices" class="card">
+    <h2>遊技料金・交換率</h2>
+            <table class="kv"><tbody>
+<tr><th>貸玉・貸メダル料金</th><td>パチンコ 4円 / 1円<br>スロット 20円 / 5円<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+<tr><th>交換率</th><td>全レート等価交換<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+<tr><th>1日の再プレイ上限</th><td>全レート無制限<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+<tr><th>景品交換所</th><td>大宮駅側出入り口出てすぐ
+<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+</tbody></table>
+
+</section>
+<section id="units" class="card">
+    <h2>設置台数</h2>
+            <table class="kv"><tbody>
+<tr><th>総台数</th><td><span class="muted">不明</span>
+<div class="st-line"><span class="st st-none">不明</span></div></td></tr>
+<tr><th>パチンコ台数</th><td>1,584 台
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></div></td></tr>
+<tr><th>パチスロ台数</th><td>1,446 台
+<div class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+</tbody></table>
+
+</section>
+<section id="machines" class="card">
+    <h2>設置機種（パチスロ）</h2>
+    <p class="muted">不明</p>        <p class="st-line"><span class="st st-none">不明</span></p>
+
+</section>
+<section id="days" class="card">
+    <h2>営業日・特定日</h2>
+            <table class="kv"><tbody>
+<tr><th>旧イベント日</th><td>1日、11日、22日、月日ゾロ目
+<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+<tr><th>周年日</th><td>9月9日
+<div class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></div></td></tr>
+</tbody></table>
+        <div class="panel"><ul class="info-list"><li>毎月1日・11日・22日（旧イベント日）</li><li>月と日がゾロ目の日（旧イベント日）</li><li>9月9日（周年）</li></ul><p class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s2">[2]</a></p></div>
+
+</section>
+<section id="notices" class="card">
+    <h2>イベント・告知</h2>
+    <div class="dated">
+    <p class="dated-date">2026-10-28</p>
+    <p class="dated-title">スロパチステーション来店取材 <a class="cite" href="#src-s3">[3]</a></p>
+<p class="dated-detail">ページの表記は「10月28日」（年の記載なし。2026-09-25時点の予定として掲載）</p></div>
+<div class="dated">
+    <p class="dated-date">2026-09-28</p>
+    <p class="dated-title">スロパチステーション来店取材 <a class="cite" href="#src-s3">[3]</a></p>
+<p class="dated-detail">ページの表記は「9月28日」（年の記載なし。2026-09-25時点の予定として掲載）</p></div>
+<div class="dated">
+    <p class="dated-date">2026-09-23</p>
+    <p class="dated-title">9月23日(水)楽園大宮店❗全館10時開店ッ✨ <a class="cite" href="#src-s4">[4]</a></p>
+</div>
+<div class="dated">
+    <p class="dated-date">2026-09-22</p>
+    <p class="dated-title">9月22日(火)ウッケッケッ❗全館10時開店ッ❗ <a class="cite" href="#src-s4">[4]</a></p>
+</div>
+<p class="st-line"><span class="st st-check">未確認</span> <a class="cite" href="#src-s3">[3]</a> <a class="cite" href="#src-s4">[4]</a></p>
+</section><section id="new" class="card">
+    <h2>新台入替</h2>
+    <p class="muted">不明</p><p class="st-line"><span class="st st-none">不明</span></p>
+</section>
+<section id="daily" class="card">
+    <h2>過去の営業データ（日別）</h2>
+    <p class="muted">営業データはシート「楽園大宮店」側にあります。このページには読み込まずに生成しています（<code>--with-sheet</code> を付けると載ります）。</p>
+
+</section>
+<section id="slot" class="card">
+    <h2>パチスロデータ（台別）</h2>
+    <p class="muted">営業データはシート「楽園大宮店」側にあります。このページには読み込まずに生成しています（<code>--with-sheet</code> を付けると載ります）。</p>
+
+</section>
+<section id="features" class="card">
+    <h2>店舗の特徴</h2>
+    <ul class="info-list"><li>Wi-Fi</li><li>携帯充電器</li><li>屋内喫煙室</li><li>加熱式たばこプレイエリア</li></ul><p class="st-line"><span class="st st-ok">確認済</span> <a class="cite" href="#src-s1">[1]</a></p>
+</section>
+<section id="sources" class="card">
+    <h2>情報源</h2>
+            <ol class="sources">
+            <li id="src-s1">
+<a href="https://rakuen01.lp-dokidoki.com/" target="_blank" rel="noopener">楽園大宮店 店舗ページ（公式LP）</a>                <span class="chip">公式</span>
+                <span class="src-date">取得日 2026-09-25 ・ <span class="url">https://rakuen01.lp-dokidoki.com/</span></span>
+            </li>
+            <li id="src-s2">
+<a href="https://minpachi.com/rakuen-oomiyashinkan/" target="_blank" rel="noopener">みんぱち 楽園大宮新館</a>                <span class="chip">ポータル</span>
+                <span class="src-date">取得日 2026-09-25 ・ <span class="url">https://minpachi.com/rakuen-oomiyashinkan/</span></span>
+            </li>
+            <li id="src-s3">
+<a href="https://777.slopachi-station.com/shop_data/3581/" target="_blank" rel="noopener">スロパチステーション 楽園大宮店</a>                <span class="chip">ポータル</span>
+                <span class="src-date">取得日 2026-09-25 ・ <span class="url">https://777.slopachi-station.com/shop_data/3581/</span></span>
+            </li>
+            <li id="src-s4">
+<a href="https://p-town.dmm.com/shops/saitama/12321/informations" target="_blank" rel="noopener">DMMぱちタウン 楽園大宮店 お知らせ一覧（店舗投稿）</a>                <span class="chip">ポータル</span>
+                <span class="src-date">取得日 2026-09-25 ・ <span class="url">https://p-town.dmm.com/shops/saitama/12321/informations</span></span>
+            </li>
+        </ol>
+        <p class="hint">「確認済」は公式サイト・公式SNSで確認できた値、「未確認」はそれ以外の情報源の値、「不明」は確認できなかった項目です。</p>
+
+</section>
+<section id="history" class="card">
+    <h2>更新履歴</h2>
+            <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 周年日 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">9月9日</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 旧イベント日 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">1日、11日、22日、月日ゾロ目</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ イベント・告知 <a class="cite" href="#src-s4">[4]</a></p>
+            <p class="before">不明</p>
+            <p class="after">[{"date": "2026-09-23", "detail": "", "source_id": "s4", "title": "9\u670823\u65e5(\u6c34)\u697d\u5712\u5927\u5bae\u5e97\u2757\u5168\u992810\u6642\u958b\u5e97\u30c3\u2728"}, {"date": "2026-09-22", "detail": "", "source_id": "s4", "title": "9\u670822\u65e5(\u706b)\u30a6\u30c3\u30b1\u30c3\u30b1\u30c3\u2757\u5168\u992810\u6642\u958b\u5e97\u30c3\u2757"}]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ イベント・告知 <a class="cite" href="#src-s3">[3]</a></p>
+            <p class="before">不明</p>
+            <p class="after">[{"date": "2026-09-28", "detail": "\u30da\u30fc\u30b8\u306e\u8868\u8a18\u306f\u300c9\u670828\u65e5\u300d\uff08\u5e74\u306e\u8a18\u8f09\u306a\u3057\u30022026-09-25\u6642\u70b9\u306e\u4e88\u5b9a\u3068\u3057\u3066\u63b2\u8f09\uff09", "source_id": "s3", "title": "\u30b9\u30ed\u30d1\u30c1\u30b9\u30c6\u30fc\u30b7\u30e7\u30f3\u6765\u5e97\u53d6\u6750"}, {"date": "2026-10-28", "detail": "\u30da\u30fc\u30b8\u306e\u8868\u8a18\u306f\u300c10\u670828\u65e5\u300d\uff08\u5e74\u306e\u8a18\u8f09\u306a\u3057\u30022026-09-25\u6642\u70b9\u306e\u4e88\u5b9a\u3068\u3057\u3066\u63b2\u8f09\uff09", "source_id": "s3", "title": "\u30b9\u30ed\u30d1\u30c1\u30b9\u30c6\u30fc\u30b7\u30e7\u30f3\u6765\u5e97\u53d6\u6750"}]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 営業日・特定日 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["\u6bce\u67081\u65e5\u30fb11\u65e5\u30fb22\u65e5\uff08\u65e7\u30a4\u30d9\u30f3\u30c8\u65e5\uff09", "\u6708\u3068\u65e5\u304c\u30be\u30ed\u76ee\u306e\u65e5\uff08\u65e7\u30a4\u30d9\u30f3\u30c8\u65e5\uff09", "9\u67089\u65e5\uff08\u5468\u5e74\uff09"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ グランドオープン日 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">2014年9月9日</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ アクセス <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">JR大宮駅徒歩2分</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 景品交換所 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">大宮駅側出入り口出てすぐ</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 1日の再プレイ上限 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["\u5168\u30ec\u30fc\u30c8\u7121\u5236\u9650"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 交換率 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["\u5168\u30ec\u30fc\u30c8\u7b49\u4fa1\u4ea4\u63db"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 貸玉・貸メダル料金 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["\u30d1\u30c1\u30f3\u30b3 4\u5186 / 1\u5186", "\u30b9\u30ed\u30c3\u30c8 20\u5186 / 5\u5186"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 入場方法 <a class="cite" href="#src-s2">[2]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["\u30d1\u30c1\u30f3\u30b3\u30fb5\u5186\u30b9\u30ed\u30c3\u30c8: \u5148\u7740\u9806\u30018:30\u3088\u308a\u6574\u7406\u5238\u914d\u5e03\uff08\u6771\u53e3\u99c5\u524d\u901a\u308a\u5165\u53e3\uff09", "20\u5186\u30b9\u30ed\u30c3\u30c8: 8:30\u62bd\u9078\u53c2\u52a0\u5238\u914d\u5e03\u30019:00\u62bd\u9078\u958b\u59cb\uff08\u65e7\u4e2d\u5c71\u9053\u5074\u5165\u53e3\u30011,100\u540d\u3067\u6253\u3061\u5207\u308a\uff09"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 店舗の特徴 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">["Wi-Fi", "\u643a\u5e2f\u5145\u96fb\u5668", "\u5c4b\u5185\u55ab\u7159\u5ba4", "\u52a0\u71b1\u5f0f\u305f\u3070\u3053\u30d7\u30ec\u30a4\u30a8\u30ea\u30a2"]</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ LINE <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">LINE公式アカウントあり（ページにQRコード掲載）</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 公式サイト <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">https://rakuen01.lp-dokidoki.com/</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ パチスロ台数 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">1446</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ パチンコ台数 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">1584</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 営業時間 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">10:00-22:40</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 電話番号 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">048-640-3636</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 住所 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">埼玉県さいたま市大宮区宮町一丁目63番地1 大宮RAKUUN内 地下1階・1階・2階</p>
+        </div>
+        <div class="dated">
+            <p class="dated-date">2026-09-25 ・ 市区町村 <a class="cite" href="#src-s1">[1]</a></p>
+            <p class="before">不明</p>
+            <p class="after">さいたま市大宮区</p>
+        </div>
+
+</section>
+</main>
+
+<footer class="wrap footer">
+    最終更新日 2026-09-25 ・ ページ生成 2026-09-25 14:45 ・ 元データ store_data/rakuen_omiya.json
+</footer>
+
+</body>
+</html>

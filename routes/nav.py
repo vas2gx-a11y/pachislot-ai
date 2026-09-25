@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, abort
 
+import common
 import navigation
 
 nav_bp = Blueprint("nav", __name__, url_prefix="/c")
@@ -17,7 +18,7 @@ def category(key):
     if not target:
         abort(404)
 
-    items = navigation.visible_items(target)
+    items = navigation.visible_items(target, common.is_admin())
     if len(items) == 1:
         return redirect(url_for(items[0]["endpoint"]))
 

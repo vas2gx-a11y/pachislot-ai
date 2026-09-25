@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, stat_card, back_link %}
+
+{% block title %}AI使用料{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('coin') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">AI使用料（アカウント別）</h1>
+</div>
+{% endblock %}
+
+{% macro yen(v) %}{{ "{:,.0f}".format(v) if v >= 1 or v == 0 else "{:,.2f}".format(v) }}円{% endmacro %}
+{% macro usd(v) %}${{ "{:,.4f}".format(v) }}{% endmacro %}
+
+{% block content %}
+<div class="stack">
+    <form method="GET" class="flex items-center gap-2">
+        <label for="month" class="text-sm font-semibold text-gray-700">対象月</label>
+        <select id="month" name="month" class="input w-auto" onchange="this.form.submit()">
+            {% for m in report.months %}
+            <option value="{{ m }}" {% if m == report.month %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit" class="btn btn-ghost btn-sm">表示</button></noscript>
+    </form>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {{ stat_card("合計（円）", yen(report.total.cost_jpy)) }}
+        {{ stat_card("合計（USD）", usd(report.total.cost_usd)) }}
+        {{ stat_card("AI呼び出し回数", "{:,}".format(report.total.calls)) }}
+        {{ stat_card("トークン（入力／出力）", "{:,}".format(report.total.input_tokens) ~ " / " ~ "{:,}".format(report.total.output_tokens)) }}
+    </div>
+
+    {% call card("users", "アカウント別", report.month, "bg-gray-100",
+         "各アカウントがAIを呼んだ回数と、使ったトークン数から出した金額の目安です。行を開くと機能ごとの内訳が見られます。") %}
+    <div class="flex flex-col divide-y divide-gray-100">
+        {% for r in report.rows %}
+        <details class="py-2">
+            <summary class="cursor-pointer select-none flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span class="font-bold text-gray-900 {% if not r.active %}text-gray-400{% endif %}">{{ r.display_name }}</span>
+                {% if r.login_id %}<span class="text-xs text-gray-400 font-mono">{{ r.login_id }}</span>{% endif %}
+                <span class="ml-auto font-mono tabular-nums font-bold {% if not r.calls %}text-gray-300{% endif %}">{{ yen(r.cost_jpy) }}</span>
+                <span class="w-full sm:w-auto text-xs text-gray-500 font-mono tabular-nums">
+                    {{ "{:,}".format(r.calls) }}回 ・ 入力{{ "{:,}".format(r.input_tokens) }} ・ 出力{{ "{:,}".format(r.output_tokens) }}トークン ・ {{ usd(r.cost_usd) }}
+                </span>
+            </summary>
+            {% if r.features %}
+            <div class="overflow-x-auto mt-2">
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="text-[10px] text-gray-400 text-left border-b border-gray-100">
+                            <th class="pb-1 pr-3">機能</th>
+                            <th class="pb-1 pr-3 text-right">回数</th>
+                            <th class="pb-1 pr-3 text-right whitespace-nowrap">入力トークン</th>
+                            <th class="pb-1 pr-3 text-right whitespace-nowrap">出力トークン</th>
+                            <th class="pb-1 text-right">金額</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for f in r.features %}
+                        <tr>
+                            <td class="py-1.5 pr-3">{{ f.name }}</td>
+                            <td class="py-1.5 pr-3 text-right font-mono tabular-nums">{{ "{:,}".format(f.calls) }}</td>
+                            <td class="py-1.5 pr-3 text-right font-mono tabular-nums">{{ "{:,}".format(f.input_tokens) }}</td>
+                            <td class="py-1.5 pr-3 text-right font-mono tabular-nums">{{ "{:,}".format(f.output_tokens) }}</td>
+                            <td class="py-1.5 text-right font-mono tabular-nums whitespace-nowrap">{{ yen(f.cost_jpy) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="hint mt-2">この月の利用はありません。</p>
+            {% endif %}
+        </details>
+        {% endfor %}
+    </div>
+    {% endcall %}
+
+    <p class="hint">
+        金額は目安です。モデル {{ report.model }} の有料枠の単価（100万トークンあたり 入力${{ "%.2f"|format(report.price_input) }}／出力${{ "%.2f"|format(report.price_output) }}、出力には思考トークンを含む）と、
+        1ドル={{ report.usd_jpy | round | int }}円で計算しています。無料枠の範囲で使っている間は、実際の請求は0円です。
+        正確な請求額は Google AI Studio／Google Cloud の請求画面で確認してください。
+        この画面で数えているのは、この仕組みを入れた後の利用分だけです（店舗情報の収集ツールなど、PCから直接実行した分は含みません）。
+    </p>
+
+    {{ back_link(url_for('members.index'), "メンバー管理に戻る") }}
+</div>
+{% endblock %}

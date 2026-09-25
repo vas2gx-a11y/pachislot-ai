@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">💬</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('chat') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">実戦チャット</h1>
 </div>
 {% endblock %}
@@ -40,9 +40,9 @@
         <select id="chat-machine" class="input flex-1 min-w-0" aria-label="機種">
             {% for m in machines %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}
         </select>
-        <a id="chat-info-link" href="#" class="btn btn-ghost btn-sm" target="_blank">📖 機種情報</a>
-        <button type="button" id="chat-end-open" class="btn btn-accent btn-sm">🏁 実戦終了</button>
-        <button type="button" id="chat-reset" class="btn btn-ghost btn-sm">🗑 新しい実戦</button>
+        <a id="chat-info-link" href="#" class="btn btn-ghost btn-sm" target="_blank">{{ icon('book') }} 機種情報</a>
+        <button type="button" id="chat-end-open" class="btn btn-accent btn-sm">{{ icon('flag') }} 実戦終了</button>
+        <button type="button" id="chat-reset" class="btn btn-ghost btn-sm">{{ icon('trash') }} 新しい実戦</button>
     </div>
 
     {# 店舗と台番号は会話から拾うと表記がぶれて、台メモや店舗傾向と紐づかないので欄で持つ #}
@@ -53,7 +53,7 @@
     </div>
 
     <div id="chat-notes" class="hidden text-xs text-gray-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-        <div class="font-bold mb-1">📝 この台の過去メモ（AIにも渡しています）</div>
+        <div class="font-bold mb-1">{{ icon('memo') }} この台の過去メモ（AIにも渡しています）</div>
         <ul id="chat-notes-list" class="space-y-0.5"></ul>
     </div>
 
@@ -75,20 +75,20 @@
     <div id="chat-attach" class="hidden flex items-center gap-2 text-xs text-gray-600">
         <img id="chat-attach-img" alt="" class="h-14 w-14 object-cover rounded-lg border border-gray-200">
         <span>画像を添付中</span>
-        <button type="button" id="chat-attach-clear" class="btn btn-ghost btn-sm">✕ 外す</button>
+        <button type="button" id="chat-attach-clear" class="btn btn-ghost btn-sm">{{ icon('close') }} 外す</button>
     </div>
 
     <form id="chat-form" class="flex gap-2 items-end">
         {# capture属性は付けない。付けるとカメラ固定になり、撮り溜めたスクショを選べなくなる #}
         <label class="btn btn-ghost shrink-0 cursor-pointer" title="画像を添付" aria-label="画像を添付">
-            📷<input type="file" id="chat-file" accept="image/*" class="hidden">
+            {{ icon('camera') }}<input type="file" id="chat-file" accept="image/*" class="hidden">
         </label>
         <textarea id="chat-input" class="input flex-1" rows="2"
                   placeholder="例: 480G 弱チェ2 スイカ1 CZ失敗、差枚-350"></textarea>
         <button type="submit" id="chat-send" class="btn btn-primary">送信</button>
     </form>
     <section id="chat-end" class="hidden card card-body">
-        <h2 class="font-bold text-gray-900 mb-1">🏁 実戦のまとめ</h2>
+        <h2 class="font-bold text-gray-900 mb-1">{{ icon('flag') }} 実戦のまとめ</h2>
         <p class="hint mt-0 mb-3">AIが会話から作った下書きです。読み違いがあれば直してから保存してください。空欄は「不明」として保存します。</p>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
             {% for key, label in [("total_games", "総G数"), ("big_count", "BIG / AT初当り"), ("reg_count", "REG"), ("current_games", "ヤメ時のハマりG"), ("difference_slabs", "差枚")] %}
@@ -110,18 +110,18 @@
             <textarea id="end-{{ key }}" class="input" rows="{{ rows }}" data-end-text="{{ key }}"></textarea></div>
         {% endfor %}
         <div class="flex gap-2 mt-4">
-            <button type="button" id="chat-end-save" class="btn btn-primary">💾 保存</button>
+            <button type="button" id="chat-end-save" class="btn btn-primary">{{ icon('save') }} 保存</button>
             <button type="button" id="chat-end-close" class="btn btn-ghost">閉じる（会話に戻る）</button>
         </div>
     </section>
 
     <p class="hint mt-0">
         見たものをそのまま短く送ればOK。会話からAIが状況を積み上げます。
-        📷 でデータカウンターや設定示唆画面の写真を送ると、読み取って状況に反映します。
+        {{ icon('camera') }} でデータカウンターや設定示唆画面の写真を送ると、読み取って状況に反映します。
         根拠は機種情報（解析まとめ）だけで、未公表の数値は推測しません。会話はこの端末にだけ保存されます。
     </p>
     {% else %}
-    {{ empty_state("📖", "機種情報がまだありません。machine_data/ に機種情報のJSONを置くと、ここで相談できるようになります。") }}
+    {{ empty_state("book", "機種情報がまだありません。machine_data/ に機種情報のJSONを置くと、ここで相談できるようになります。") }}
     {% endif %}
 
 </div>
@@ -300,8 +300,8 @@
     $('chat-store').value = m.store || '';
     $('chat-unit').value = m.unit || '';
     $('chat-saved').classList.toggle('hidden', !m.savedAt);
-    $('chat-saved').textContent = m.savedAt
-      ? `✅ ${m.savedAt} に記録を保存済み。続けて打つなら会話を続け、もう一度「実戦終了」で保存し直せます（上書き）。`
+    $('chat-saved').innerHTML = m.savedAt
+      ? `{{ icon('check') }} ${m.savedAt} に記録を保存済み。続けて打つなら会話を続け、もう一度「実戦終了」で保存し直せます（上書き）。`
       : '';
   }
 
@@ -374,7 +374,7 @@
       alert(`まとめの作成に失敗しました（${e.message}）。電波を確認してもう一度押してください。`);
     } finally {
       btn.disabled = false;
-      btn.textContent = '🏁 実戦終了';
+      btn.innerHTML = '{{ icon('flag') }} 実戦終了';
     }
   }
 

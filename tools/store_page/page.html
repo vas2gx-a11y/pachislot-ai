@@ -5,7 +5,7 @@
   セクションの並びを変えるときは toc の並びも合わせて直す(目次とずれないように)。
 #}
 {% set toc = [
-    ('basic', '基本情報'), ('access', 'アクセス'), ('hours', '営業時間'), ('units', '設置台数'),
+    ('basic', '基本情報'), ('access', 'アクセス'), ('hours', '営業時間'), ('prices', '料金・交換率'), ('units', '設置台数'),
     ('machines', '設置機種'), ('days', '営業日・特定日'), ('notices', 'イベント・告知'),
     ('new', '新台入替'), ('daily', '過去の営業データ'), ('slot', 'パチスロデータ'),
     ('features', '店舗の特徴'), ('sources', '情報源'), ('history', '更新履歴'),
@@ -25,7 +25,7 @@
 {% elif v is number %}{{ '{:,}'.format(v) }} 台
 {% elif v is string %}{{ v }}
 {% elif key == 'sns' %}{% for l in v %}<a href="{{ l.url }}" target="_blank" rel="noopener" class="link-chip">{{ l.label or l.url }}</a>{% endfor %}
-{% else %}{{ v | join('、') }}{% endif %}
+{% else %}{% for x in v %}{{ x }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% endif %}
 {%- endmacro %}
 
 {% macro kv_rows(keys) -%}
@@ -48,7 +48,7 @@
 {% for x in sort_by(v, 'date') %}
 <div class="dated">
     <p class="dated-date">{{ x.date or '日付不明' }}</p>
-    <p class="dated-title">{{ x.title }}</p>
+    <p class="dated-title">{{ x.title }}{% if x.source_id in source_no %} <a class="cite" href="#src-{{ x.source_id }}">[{{ source_no[x.source_id] }}]</a>{% endif %}</p>
     {% if x.detail %}<p class="dated-detail">{{ x.detail }}</p>{% endif %}
 </div>
 {% endfor %}
@@ -119,7 +119,7 @@
     {% endif %}
 
     {% call section('basic', '基本情報') %}
-        {{ kv_rows(['address', 'phone', 'rates', 'official_url', 'sns', 'line']) }}
+        {{ kv_rows(['address', 'phone', 'official_url', 'sns', 'line', 'opened_on']) }}
     {% endcall %}
 
     {% call section('access', 'アクセス') %}
@@ -127,7 +127,11 @@
     {% endcall %}
 
     {% call section('hours', '営業時間') %}
-        {{ kv_rows(['hours']) }}
+        {{ kv_rows(['hours', 'entry']) }}
+    {% endcall %}
+
+    {% call section('prices', '遊技料金・交換率') %}
+        {{ kv_rows(['rates', 'exchange_rates', 'replay_limit', 'prize_exchange']) }}
     {% endcall %}
 
     {% call section('units', '設置台数') %}
@@ -147,7 +151,8 @@
     {% endcall %}
 
     {% call section('days', '営業日・特定日') %}
-        {{ list_block('special_days') }}
+        {{ kv_rows(['event_days', 'anniversary_days']) }}
+        <div class="panel">{{ list_block('special_days') }}</div>
         {% if ops and ops.events and (ops.events.event_days or ops.events.anniversary_days) %}
         <div class="panel">
             <p class="panel-title">分析に使っている旧イベント日（シート）</p>

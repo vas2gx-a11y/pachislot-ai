@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, empty_state %}
+
+{% block title %}メンバー管理{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('users') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">メンバー管理</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stack">
+    {% call card("users", "メンバー一覧", users | length ~ "人", "bg-gray-100",
+         "自分の記録・AIへの質問・台メモは、それぞれ登録した本人にしか見えません。店の全台データ・店舗情報・機種情報は全員で共有です（取り込みと店舗管理は管理者だけ）。") %}
+    {% if users %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs border-collapse">
+            <thead>
+                <tr class="text-[10px] text-gray-400 text-left border-b border-gray-100">
+                    <th class="pb-1 pr-3">名前</th>
+                    <th class="pb-1 pr-3">ログインID</th>
+                    <th class="pb-1 pr-3">権限</th>
+                    <th class="pb-1 pr-3">状態</th>
+                    <th class="pb-1 pr-3 whitespace-nowrap">登録日</th>
+                    <th class="pb-1 pr-3 text-right whitespace-nowrap">今月のAI</th>
+                    <th class="pb-1"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for u in users %}
+                <tr class="{% if not u.active %}text-gray-400{% endif %}">
+                    <td class="py-2 pr-3 font-bold break-words {% if u.active %}text-gray-900{% endif %}">{{ u.display_name }}</td>
+                    <td class="py-2 pr-3 font-mono">{{ u.login_id }}</td>
+                    <td class="py-2 pr-3 whitespace-nowrap">{{ "管理者" if u.role == "admin" else "メンバー" }}</td>
+                    <td class="py-2 pr-3 whitespace-nowrap">{{ "利用中" if u.active else "停止中" }}</td>
+                    <td class="py-2 pr-3 font-mono whitespace-nowrap">{{ u.created_at[:10] }}</td>
+                    {% set use = usage.get(u.user_id) %}
+                    <td class="py-2 pr-3 text-right font-mono tabular-nums whitespace-nowrap {% if not use or not use.calls %}text-gray-300{% endif %}">
+                        {{ "{:,.0f}".format(use.cost_jpy if use else 0) }}円
+                    </td>
+                    <td class="py-2 text-right">
+                        {% if u.role != "admin" %}
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <form action="{{ url_for('members.reset_password', user_id=u.user_id) }}" method="POST"
+                                  class="flex gap-1"
+                                  onsubmit='return confirm({{ (u.display_name ~ " のパスワードを再設定します。よろしいですか?") | tojson }});'>
+                                <input type="password" name="password" placeholder="新しい仮パスワード" required minlength="8"
+                                       autocomplete="new-password" class="input input-sm w-36">
+                                <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap">再設定</button>
+                            </form>
+                            <form action="{{ url_for('members.set_active', user_id=u.user_id) }}" method="POST"
+                                  onsubmit='return confirm({{ (u.display_name ~ " の利用を" ~ ("停止" if u.active else "再開") ~ "します。よろしいですか?") | tojson }});'>
+                                <input type="hidden" name="active" value="{{ '0' if u.active else '1' }}">
+                                <button type="submit" class="btn btn-ghost btn-sm whitespace-nowrap">{{ "停止する" if u.active else "再開する" }}</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">
+        停止したメンバーはログインできなくなりますが、記録は消えずに残ります（再開すれば元どおり使えます）。
+        「今月のAI」は使用料の目安です。内訳は <a href="{{ url_for('members.usage') }}" class="text-blue-600 underline">{{ icon('coin') }} AI使用料</a> で見られます。
+    </p>
+    {% else %}
+    {{ empty_state("users", "ユーザーが読み込めませんでした。") }}
+    {% endif %}
+    {% endcall %}
+
+    {% call card("plus", "メンバーを追加", None, "bg-emerald-50",
+         "仮のパスワードを決めて本人に伝えてください。ログイン後、本人が右上のメニュー「パスワード変更」で変えられます。") %}
+    <form action="{{ url_for('members.add') }}" method="POST" class="flex flex-col gap-3 max-w-lg">
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            名前（画面に出る名前）
+            <input type="text" name="display_name" required maxlength="40" class="input">
+        </label>
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            ログインID（半角英数字と _ . - の3〜32文字）
+            <input type="text" name="login_id" required pattern="[A-Za-z0-9_.\-]{3,32}" autocapitalize="none" class="input">
+        </label>
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            仮のパスワード（8文字以上）
+            <input type="text" name="password" required minlength="8" autocomplete="off" class="input">
+        </label>
+        <button type="submit" class="btn btn-primary self-start">追加する</button>
+    </form>
+    {% endcall %}
+</div>
+{% endblock %}

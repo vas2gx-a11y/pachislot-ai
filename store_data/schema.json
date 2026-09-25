@@ -22,7 +22,8 @@
       "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "units": { "type": ["integer", "null"] } } } } } }] },
     "dated": { "allOf": [{ "$ref": "#/definitions/item" }, { "properties": { "value": { "type": ["array", "null"], "items": {
       "type": "object", "required": ["title"], "properties": {
-        "date": { "type": ["string", "null"], "description": "YYYY-MM-DD" }, "title": { "type": "string" }, "detail": { "type": "string" } } } } } }] }
+        "date": { "type": ["string", "null"], "description": "YYYY-MM-DD" }, "title": { "type": "string" }, "detail": { "type": "string" },
+        "source_id": { "type": "string", "description": "この告知を取った出典(収集ツールが付ける)" } } } } } }] }
   },
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9_]+$", "description": "ファイル名と同じ" },
@@ -52,17 +53,24 @@
         "address": { "$ref": "#/definitions/text" },
         "phone": { "$ref": "#/definitions/text" },
         "hours": { "$ref": "#/definitions/text" },
+        "entry": { "$ref": "#/definitions/list" },
         "total_units": { "$ref": "#/definitions/int" },
         "pachinko_units": { "$ref": "#/definitions/int" },
         "slot_units": { "$ref": "#/definitions/int" },
         "rates": { "$ref": "#/definitions/list" },
+        "exchange_rates": { "$ref": "#/definitions/list" },
+        "replay_limit": { "$ref": "#/definitions/list" },
+        "prize_exchange": { "$ref": "#/definitions/text" },
         "parking": { "$ref": "#/definitions/text" },
         "access": { "$ref": "#/definitions/text" },
         "official_url": { "$ref": "#/definitions/text" },
         "sns": { "$ref": "#/definitions/links" },
         "line": { "$ref": "#/definitions/text" },
+        "opened_on": { "$ref": "#/definitions/text" },
         "features": { "$ref": "#/definitions/list" },
         "installed_machines": { "$ref": "#/definitions/machines" },
+        "event_days": { "$ref": "#/definitions/text" },
+        "anniversary_days": { "$ref": "#/definitions/text" },
         "special_days": { "$ref": "#/definitions/list" },
         "new_machines": { "$ref": "#/definitions/dated" },
         "notices": { "$ref": "#/definitions/dated" }

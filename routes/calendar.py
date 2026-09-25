@@ -20,6 +20,11 @@ def _selected_stores():
     return [n for n in names if not (n in seen or seen.add(n))]
 
 
+def _selected_pref():
+    """都道府県の絞り込み(空文字 = 全国)。店舗が増えても1枚のカレンダーが埋まらないようにするため。"""
+    return request.args.get("pref", "").strip()
+
+
 @calendar_bp.route("/")
 def index():
     """
@@ -32,19 +37,23 @@ def index():
     year, month = common.normalize_calendar_month(
         request.args.get("year"), request.args.get("month"))
     store_names = _selected_stores()
+    pref = _selected_pref()
 
-    calendar_data = common.build_event_calendar(year, month, store_names=store_names)
+    calendar_data = common.build_event_calendar(year, month, store_names=store_names, pref=pref)
 
     # 日付が指定されていればその日の詳細も一緒に描画する。
     # (JSが動かない環境でもポップアップと同じ内容を見られるようにするため)
     selected_date = request.args.get("date", "").strip()
-    detail = common.build_calendar_day_detail(selected_date, store_names=store_names) if selected_date else None
+    detail = (common.build_calendar_day_detail(selected_date, store_names=store_names, pref=pref)
+              if selected_date else None)
 
     return render_template(
         "calendar.html",
         calendar=calendar_data,
         store_names=store_names,
         store_name=store_names[0] if len(store_names) == 1 else "",
+        pref=pref,
+        prefectures=common.calendar_prefectures(),
         detail=detail,
     )
 
@@ -57,7 +66,7 @@ def day(date_str):
     表示の組み立てはページ側と同じテンプレートを使い回す。
     JSON+JSで組み立て直すと、書式の直しが2か所に分かれてしまうため。
     """
-    detail = common.build_calendar_day_detail(date_str, store_names=_selected_stores())
+    detail = common.build_calendar_day_detail(date_str, store_names=_selected_stores(), pref=_selected_pref())
     if not detail:
         return "<p class='hint'>日付を読み取れませんでした。</p>", 400
     return render_template("_calendar_day.html", detail=detail, embedded=True)

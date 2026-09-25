@@ -21,8 +21,10 @@ def index():
     dashboard_stats = common.build_dashboard_stats(all_history)
 
     # 一覧が空のときは「本当に未登録なのか、読み込みで何か問題が起きているのか」を
-    # その場で確認できるよう、シートの生の状態も取得しておく
-    sheet_diagnostics = common.get_records_sheet_diagnostics() if not all_history else None
+    # その場で確認できるよう、シートの生の状態も取得しておく。
+    # シートの生の行には他の人の記録も入っているので、管理者にだけ見せる
+    sheet_diagnostics = (common.get_records_sheet_diagnostics()
+                         if not all_history and common.is_admin() else None)
 
     # ページネーション: 一度に描画するのは最新分だけに絞り、件数が増えても表示が重くならないようにする
     try:

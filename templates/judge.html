@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">🎲</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('dice') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">設定判別</h1>
 </div>
 {% endblock %}
@@ -42,12 +42,12 @@
     {% endif %}
 
     {% if not machines %}
-    {{ empty_state("🎲", "判別に使える機種がありません。機種情報のJSON（machine_data/）に設定差（setting_estimation）を書くと、ここで推測できます。") }}
+    {{ empty_state("dice", "判別に使える機種がありません。機種情報のJSON（machine_data/）に設定差（setting_estimation）を書くと、ここで推測できます。") }}
     {{ back_link(url_for('machine_info.index'), "機種情報を見る") }}
     {% else %}
 
     {# 店舗条件: 一度入れたら変えないので既定では畳んでおく。値はlocalStorageに残る #}
-    {% call collapsible_card("🏪", "店舗条件", false, "bg-gray-100",
+    {% call collapsible_card("store", "店舗条件", false, "bg-gray-100",
          "貸出と交換のギャップ・持ち玉比率から、設定別の「実質」時給を出します。継続か撤退かはここで決まります。") %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -72,7 +72,7 @@
     {% endcall %}
 
     {# 事前確率: 何も指定しなければ均等ではなくホール配分を使う(実際のホールは均等に入れない) #}
-    {% call collapsible_card("🌅", "STEP 1-2　前日データ・朝一挙動", false, "bg-amber-50",
+    {% call collapsible_card("sunrise", "STEP 1-2　前日データ・朝一挙動", false, "bg-amber-50",
          "当日の観測を入れる前に「どの設定が入りやすいか」を決めます。前日の実測値を入れると、設定移行マトリクスを通して当日の事前確率を逆算します。") %}
     <div class="mb-4">
         <label class="label" for="prior-mode">事前確率の決め方</label>
@@ -146,7 +146,7 @@
     {% endcall %}
 
     {# 当日の観測。判別に効く順に並ぶので、上から埋めれば効率がよい #}
-    {% call card("🎯", "STEP 3　本日の実戦データ", none, "bg-amber-50") %}
+    {% call card("target", "STEP 3　本日の実戦データ", none, "bg-amber-50") %}
     <div class="mb-4">
         <label class="label" for="st-model-select">機種</label>
         <select id="st-model-select" class="input">
@@ -221,7 +221,7 @@
                 <input type="text" id="st-save-unit" class="input" placeholder="753">
             </div>
         </div>
-        <button type="button" id="st-save" class="btn btn-ghost w-full mt-3">📝 判別結果を保存する</button>
+        <button type="button" id="st-save" class="btn btn-ghost w-full mt-3">{{ icon('memo') }} 判別結果を保存する</button>
         <p class="hint">
             店舗名と台番号を入れて保存すると、次回この台を打つときに「この台の前回記録から」で事前確率を引き継げます。
             保存先はこの端末のブラウザ内（localStorage）で、他の端末とは共有されません。
@@ -229,7 +229,7 @@
     </div>
     {% endcall %}
 
-    {% call collapsible_card("📝", "保存した判別結果", false, "bg-gray-100",
+    {% call collapsible_card("memo", "保存した判別結果", false, "bg-gray-100",
          "この端末に保存されている判別結果です。店舗名と台番号が一致する記録が、翌日以降の事前確率になります。") %}
     <div id="judge-log-list" class="flex flex-col gap-2"></div>
     {% endcall %}

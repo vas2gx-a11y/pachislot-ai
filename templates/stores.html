@@ -5,14 +5,14 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">🏪</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('store') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">店舗の管理</h1>
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="stack">
-    {% call card("🏪", "登録されている店舗", None, "bg-gray-100",
+    {% call card("store", "登録されている店舗", None, "bg-gray-100",
          "店舗名はデータに紐づいて管理されています。どの店舗にどんなデータが入っているかを確認して、表記ゆれの統合や名前の修正ができます。") %}
     {% if overview %}
     <div class="overflow-x-auto">
@@ -35,7 +35,7 @@
                     <td class="py-2 pr-3 text-right font-mono tabular-nums {% if not s.record_count %}text-gray-300{% endif %}">
                         {{ s.record_count }}件
                     </td>
-                    <td class="py-2 pr-3 text-center">{% if s.has_stats %}✅{% else %}<span class="text-gray-300">—</span>{% endif %}</td>
+                    <td class="py-2 pr-3 text-center">{% if s.has_stats %}{{ icon('check') }}{% else %}<span class="text-gray-300">—</span>{% endif %}</td>
                     <td class="py-2 pr-3 text-right font-mono tabular-nums {% if not s.daily_days %}text-gray-300{% endif %}">
                         {% if s.daily_days %}{{ s.daily_days }}日<br><span class="text-[10px] text-gray-400">{{ s.daily_first }}〜{{ s.daily_last }}</span>{% else %}—{% endif %}
                     </td>
@@ -57,11 +57,11 @@
         取り込みミスで出来てしまった店舗（「0」「big_count」など）は、下の「いらない店舗を削除する」で消せます。
     </p>
     {% else %}
-    {{ empty_state("🏪", "まだ店舗が登録されていません。下の「新しい店舗を追加」から登録してください。") }}
+    {{ empty_state("store", "まだ店舗が登録されていません。下の「新しい店舗を追加」から登録してください。") }}
     {% endif %}
     {% endcall %}
 
-    {% call card("➕", "新しい店舗を追加", None, "bg-emerald-50",
+    {% call card("plus", "新しい店舗を追加", None, "bg-emerald-50",
          "これから通う店舗を先に登録しておけます。記録がなくても一覧に残ります。") %}
     <form action="{{ url_for('stores.add') }}" method="POST" class="flex flex-col sm:flex-row gap-2">
         <input type="text" name="store_name" placeholder="例: ○○ホール △△店" required class="input flex-1">
@@ -71,7 +71,7 @@
     {% endcall %}
 
     {% if overview %}
-    {% call card("✏️", "店舗名を変更する", None, "bg-gray-100",
+    {% call card("pencil", "店舗名を変更する", None, "bg-gray-100",
          "入力ミスや表記の修正に使います。記録・年間データ・旧イベント日・日別データ・台別データ、すべての店舗名が変わります。") %}
     <form action="{{ url_for('stores.rename') }}" method="POST"
           class="flex flex-col sm:flex-row gap-2"
@@ -88,7 +88,7 @@
     <p class="hint">元に戻したい場合は、もう一度この画面で逆方向に変更してください。</p>
     {% endcall %}
 
-    {% call card("🔗", "店舗を統合する", None, "bg-amber-50",
+    {% call card("link", "店舗を統合する", None, "bg-amber-50",
          "「大宮楽園」と「楽園大宮店」のように、同じ店が別々に登録されてしまった場合にまとめます。") %}
     <form action="{{ url_for('stores.merge') }}" method="POST"
           class="flex flex-col sm:flex-row gap-2"
@@ -125,7 +125,7 @@
       表記ゆれの統合ではまとめられないものをここで消す。
       自分の記録まで消える操作なので、チェック + 確認チェック + 確認ダイアログの3段構えにしている。
     #}
-    {% call card("🗑️", "いらない店舗を削除する", None, "bg-rose-50",
+    {% call card("trash", "いらない店舗を削除する", None, "bg-rose-50",
          "取り込みミスなどで出来てしまった店舗を、そのデータごと消します。元には戻せません。") %}
     <form action="{{ url_for('stores.delete') }}" method="POST" id="store-delete-form"
           onsubmit="return confirmDeleteStores(this);">

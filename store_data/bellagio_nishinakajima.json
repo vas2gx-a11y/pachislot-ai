@@ -50,6 +50,11 @@
         "s1"
       ]
     },
+    "entry": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
     "total_units": {
       "value": null,
       "status": "不明",
@@ -78,6 +83,21 @@
       "source_ids": [
         "s2"
       ]
+    },
+    "exchange_rates": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "parking": {
       "value": "115台",
@@ -110,6 +130,11 @@
       "status": "不明",
       "source_ids": []
     },
+    "opened_on": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
     "features": {
       "value": [
         "Wi-Fi完備",
@@ -123,6 +148,16 @@
       ]
     },
     "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "anniversary_days": {
       "value": null,
       "status": "不明",
       "source_ids": []

@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">🏬</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('store_info') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">店舗情報</h1>
 </div>
 {% endblock %}
@@ -42,7 +42,7 @@
         {% endfor %}
     </div>
     {% else %}
-    {{ empty_state("🏬", "まだ店舗情報がありません。tools/store_collect.py new で店舗を登録するとここに表示されます（書き方は store_data/README.md）。") }}
+    {{ empty_state("store_info", "まだ店舗情報がありません。tools/store_collect.py new で店舗を登録するとここに表示されます（書き方は store_data/README.md）。") }}
     {% endif %}
 
 </div>

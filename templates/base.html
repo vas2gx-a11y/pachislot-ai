@@ -14,6 +14,8 @@
         }
     </script>
     <title>{% block title %}パチスロAIデータ管理システム{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -58,6 +60,26 @@
 
         body {
             background: #f4f4f5; /* zinc-100 相当。参考画像の薄いグレー背景 */
+        }
+
+        /*
+          背景の透かし(static/demon.webp)。墨で描いた角の悪魔を、右下から本文をにらむ向きで大きく置く。
+          左右対称の紋章だと飾りっぽく収まりすぎるので、あえて片側に寄せて画面からはみ出させている。
+          中央に置くと表やフォームの文字と重なって読みにくいので、カードの少ない右下の余白に寄せた。
+          画像は単色+透明度で作ってあり、濃さはここの opacity だけで調整する。
+          背景(background-attachment: fixed)ではなく固定の疑似要素にしているのは、iOSのSafariが fixed の背景を無視するため。
+        */
+        body::before {
+            content: "";
+            position: fixed;
+            right: -10vmin;
+            bottom: -8vmin;
+            width: min(84vmin, 820px);
+            aspect-ratio: 1;
+            background: url("/static/demon.webp") right bottom / contain no-repeat;
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: -1;
         }
 
         /* ページ共通の横幅・左右余白(ヘッダーと本文で必ず同じ値を使う) */
@@ -120,6 +142,7 @@
             color: #3f3f46;
             transition: background-color 0.15s ease, color 0.15s ease;
         }
+        .sidebar-row > .ico, .sidebar-row > span:first-child > .ico { font-size: 1.125rem; }
         .sidebar-row:hover { background: #f4f4f5; }
         .sidebar-row.is-active { background: #18181b; color: #ffffff; }
 
@@ -135,7 +158,7 @@
         .sidebar-sub.is-active { background: #f4f4f5; color: #18181b; font-weight: 700; }
 
         /* アコーディオンの開閉マーク */
-        .sidebar-chev { margin-left: auto; font-size: 0.625rem; color: #a1a1aa; transition: transform 0.2s ease; }
+        .sidebar-chev { margin-left: auto; font-size: 0.75rem; color: #a1a1aa; transition: transform 0.2s ease; }
         details[open] > summary .sidebar-chev { transform: rotate(90deg); }
 
         /* スマホ: 下部固定のボトムナビ。親指の届く位置に主要導線を置く */
@@ -164,11 +187,18 @@
             font-weight: 600;
             color: #71717a;
         }
-        .bottom-nav .bottom-icon { font-size: 1.125rem; line-height: 1; }
+        .bottom-nav .bottom-icon { font-size: 1.375rem; line-height: 1; }
         .bottom-nav .is-active { color: #18181b; }
         /* ボトムナビに隠れて本文の末尾が読めなくならないようにする */
         @media (max-width: 767px) {
             body { padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom)); }
+        }
+        /* ログイン画面ではナビを出さないので、そのぶんの余白も空けない */
+        @media (min-width: 768px) {
+            body.no-nav .app-shell { padding-left: 0; }
+        }
+        @media (max-width: 767px) {
+            body.no-nav { padding-bottom: 0; }
         }
 
         /*
@@ -305,6 +335,17 @@
 
         /* details/summary の開閉に軽いアニメーション感を出す矢印 */
         summary .chev { transition: transform 0.2s ease; display: inline-block; }
+
+        /*
+          アイコン(icons.py のインラインSVG)。文字サイズに合わせた1em角で、文字の中心に揃える。
+          色は currentColor なので、置いた場所の文字色がそのまま付く。
+        */
+        .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; flex-shrink: 0; }
+        .inline-flex > .ico, .flex > .ico { vertical-align: 0; }
+        /* サイドバーの折りたたみボタンは、状態に応じて向きの違う矢印を出し分ける */
+        .sidebar-toggle-icon .when-compact { display: none; }
+        body.sidebar-compact .sidebar-toggle-icon .when-wide { display: none; }
+        body.sidebar-compact .sidebar-toggle-icon .when-compact { display: inline-block; }
         details[open] summary .chev { transform: rotate(90deg); }
 
         @keyframes fadeInUp {
@@ -349,10 +390,10 @@
     {# ページ固有のスタイル。共通で使える見た目はここではなく上の定義に足す #}
     {% block styles %}{% endblock %}
 </head>
-<body class="text-gray-900 min-h-screen font-sans antialiased">
+<body class="text-gray-900 min-h-screen font-sans antialiased {% if not current_user %}no-nav{% endif %}">
     <script>
         // 画像アップロード+AI解析のような時間のかかるフォーム送信に、
-        // 「📤 アップロード中 xx%」→「🤖 AI解析中...」の2段階のローディング表示を付ける。
+        // 「アップロード中 xx%」→「AI解析中...」の2段階のローディング表示を付ける。
         function wireAsyncForm(formId, opts) {
             const form = document.getElementById(formId);
             if (!form) return;
@@ -385,16 +426,16 @@
 
                 btn.disabled = true;
                 btn.classList.add('opacity-70', 'cursor-not-allowed');
-                btn.innerHTML = spinnerHTML('📤 ' + uploadingText);
+                btn.innerHTML = spinnerHTML('{{ icon('upload') }} ' + uploadingText);
 
                 xhr.upload.addEventListener('progress', function (evt) {
                     if (evt.lengthComputable) {
                         const pct = Math.round((evt.loaded / evt.total) * 100);
-                        btn.innerHTML = spinnerHTML('📤 ' + uploadingText + ' ' + pct + '%');
+                        btn.innerHTML = spinnerHTML('{{ icon('upload') }} ' + uploadingText + ' ' + pct + '%');
                     }
                 });
                 xhr.upload.addEventListener('load', function () {
-                    btn.innerHTML = spinnerHTML('🤖 ' + processingText);
+                    btn.innerHTML = spinnerHTML('{{ icon('ai') }} ' + processingText);
                 });
                 xhr.addEventListener('load', function () {
                     if (xhr.status >= 200 && xhr.status < 400) {
@@ -431,15 +472,15 @@
         {% if items | length > 1 %}
         <details class="mb-0.5" {% if is_active %}open{% endif %}>
             <summary class="sidebar-row cursor-pointer {% if is_active %}is-active{% endif %}" title="{{ c.label }}">
-                <span aria-hidden="true">{{ c.icon }}</span>
+                <span aria-hidden="true">{{ icon(c.icon) }}</span>
                 <span class="sidebar-label truncate">{{ c.label }}</span>
-                <span class="sidebar-chev" aria-hidden="true">▶</span>
+                <span class="sidebar-chev" aria-hidden="true">{{ icon('chev_right') }}</span>
             </summary>
             <div class="sidebar-items mt-0.5 mb-1">
                 {% for item in items %}
                 <a href="{{ url_for(item.endpoint) }}"
                    class="sidebar-sub truncate {% if item.endpoint == nav_active_item %}is-active{% endif %}">
-                    <span aria-hidden="true">{{ item.icon }}</span> {{ item.label }}
+                    <span aria-hidden="true">{{ icon(item.icon) }}</span> {{ item.label }}
                 </a>
                 {% endfor %}
             </div>
@@ -448,7 +489,7 @@
         {# 配下が1つだけのカテゴリは、開閉させずそのページへ直接飛ばす #}
         <a href="{{ url_for(items[0].endpoint) }}"
            class="sidebar-row mb-0.5 {% if is_active %}is-active{% endif %}" title="{{ c.label }}">
-            <span aria-hidden="true">{{ c.icon }}</span>
+            <span aria-hidden="true">{{ icon(c.icon) }}</span>
             <span class="sidebar-label truncate">{{ c.label }}</span>
         </a>
         {% endif %}
@@ -465,14 +506,14 @@
         {% set items = nav_visible_items(c) %}
         <a href="{{ url_for('nav.category', key=c.key) if items | length > 1 else url_for(items[0].endpoint) }}"
            class="{% if c.key == nav_active_category %}is-active{% endif %}">
-            <span class="bottom-icon" aria-hidden="true">{{ c.icon }}</span>
+            <span class="bottom-icon" aria-hidden="true">{{ icon(c.icon) }}</span>
             <span>{{ c.label }}</span>
         </a>
         {% endfor %}
         {% if nav_mobile_overflow %}
         <details class="flex-1 relative">
             <summary class="h-full {% if nav_active_category in nav_mobile_overflow | map(attribute='key') | list %}is-active{% endif %}">
-                <span class="bottom-icon" aria-hidden="true">⋯</span>
+                <span class="bottom-icon" aria-hidden="true">{{ icon('more') }}</span>
                 <span>その他</span>
             </summary>
             <div class="absolute bottom-full right-0 mb-1 w-48 card p-1">
@@ -480,7 +521,7 @@
                 {% set items = nav_visible_items(c) %}
                 <a href="{{ url_for('nav.category', key=c.key) if items | length > 1 else url_for(items[0].endpoint) }}"
                    class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">
-                    <span aria-hidden="true">{{ c.icon }}</span> {{ c.label }}
+                    <span aria-hidden="true">{{ icon(c.icon) }}</span> {{ c.label }}
                 </a>
                 {% endfor %}
             </div>
@@ -489,9 +530,10 @@
     {% endmacro %}
 
     {# PC: 左サイドバー。スマホでは非表示にして、代わりに下部のボトムナビを使う #}
+    {% if current_user %}
     <aside class="app-sidebar hidden md:flex">
         <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 px-3 py-3 border-b border-gray-100 min-w-0">
-            <span class="text-xl shrink-0" aria-hidden="true">🎰</span>
+            <span class="text-2xl shrink-0 text-gray-900" aria-hidden="true">{{ icon('logo') }}</span>
             <span class="sidebar-label font-display font-extrabold text-sm text-gray-900 truncate">パチスロAI</span>
         </a>
         <nav class="flex-1 overflow-y-auto p-2">
@@ -500,21 +542,42 @@
         <button type="button" id="sidebar-toggle"
                 class="sidebar-row m-2 text-xs text-gray-400 hover:text-gray-600"
                 title="サイドバーの幅を切り替える">
-            <span id="sidebar-toggle-icon" aria-hidden="true">◀</span>
+            <span class="sidebar-toggle-icon" aria-hidden="true">{{ icon('chev_left', 'when-wide') }}{{ icon('chev_right', 'when-compact') }}</span>
             <span class="sidebar-label">折りたたむ</span>
         </button>
     </aside>
+    {% endif %}
 
     <div class="app-shell">
     <header class="site-header">
         <div class="page-container flex items-center justify-between gap-4 py-2 md:py-3">
             {% block header %}
             <a href="{{ url_for('records.index') }}" class="flex items-center gap-2 min-w-0">
-                <span class="text-xl md:text-2xl shrink-0">🎰</span>
+                <span class="text-xl md:text-2xl shrink-0">{{ icon('logo') }}</span>
                 <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">パチスロAIデータ管理</h1>
             </a>
             {% endblock %}
 
+            {# ログイン中のユーザー。ページごとに差し替わる見出し(block header)の外に置いて全ページに出す #}
+            {% if current_user %}
+            <details class="relative shrink-0">
+                <summary class="cursor-pointer select-none flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 max-w-[9rem]">
+                    <span aria-hidden="true">{{ icon('user') }}</span>
+                    <span class="truncate">{{ current_user.display_name }}</span>
+                    {% if current_user_is_admin %}<span class="text-[10px] text-blue-600 shrink-0">管理者</span>{% endif %}
+                </summary>
+                <div class="absolute right-0 top-full mt-1 w-44 card p-1 z-50">
+                    <a href="{{ url_for('auth.account') }}" class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">{{ icon('key') }} パスワード変更</a>
+                    {% if current_user_is_admin %}
+                    <a href="{{ url_for('members.index') }}" class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">{{ icon('users') }} メンバー管理</a>
+                    <a href="{{ url_for('members.usage') }}" class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">{{ icon('coin') }} AI使用料</a>
+                    {% endif %}
+                    <form action="{{ url_for('auth.logout') }}" method="POST">
+                        <button type="submit" class="w-full text-left px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-gray-50">{{ icon('logout') }} ログアウト</button>
+                    </form>
+                </div>
+            </details>
+            {% endif %}
         </div>
     </header>
         {% with messages = get_flashed_messages() %}
@@ -522,7 +585,7 @@
                 <div class="mb-5 flex flex-col gap-2">
                     {% for message in messages %}
                     <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                        ⚠️ {{ message }}
+                        {{ icon('warning') }} {{ message }}
                     </div>
                     {% endfor %}
                 </div>
@@ -534,9 +597,11 @@
     </div>
 
     {# スマホ: 親指の届く画面下端に主要カテゴリを固定する #}
+    {% if current_user %}
     <nav class="bottom-nav md:hidden">
         {{ bottom_nav() }}
     </nav>
+    {% endif %}
 
     <script>
         // サイドバーの折りたたみ状態は、ページを移動しても保つ
@@ -544,11 +609,9 @@
             var KEY = 'sidebarCompact';
             var button = document.getElementById('sidebar-toggle');
             if (!button) return;
-            var icon = document.getElementById('sidebar-toggle-icon');
 
             function apply(compact) {
                 document.body.classList.toggle('sidebar-compact', compact);
-                if (icon) icon.textContent = compact ? '▶' : '◀';
                 button.setAttribute('aria-expanded', String(!compact));
             }
             apply(localStorage.getItem(KEY) === '1');

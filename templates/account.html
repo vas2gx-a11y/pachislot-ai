@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card %}
+
+{% block title %}パスワード変更{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('key') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">パスワード変更</h1>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="stack max-w-lg">
+    {% call card("user", current_user.display_name, "ログインID: " ~ current_user.login_id, "bg-gray-100",
+         "管理者から仮のパスワードを受け取った場合は、ここで自分だけが知っているものに変えてください。") %}
+    <form action="{{ url_for('auth.account') }}" method="POST" class="flex flex-col gap-3">
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            今のパスワード
+            <input type="password" name="current_password" required autocomplete="current-password" class="input">
+        </label>
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            新しいパスワード（8文字以上）
+            <input type="password" name="new_password" required minlength="8" autocomplete="new-password" class="input">
+        </label>
+        <label class="flex flex-col gap-1 text-sm font-semibold text-gray-700">
+            新しいパスワード（確認）
+            <input type="password" name="new_password_confirm" required minlength="8" autocomplete="new-password" class="input">
+        </label>
+        <button type="submit" class="btn btn-primary self-start">変更する</button>
+    </form>
+    {% endcall %}
+</div>
+{% endblock %}

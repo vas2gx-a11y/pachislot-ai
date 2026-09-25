@@ -8,7 +8,7 @@
 #}
 
 {% set toc = [
-    ('basic', '基本情報'), ('access', 'アクセス'), ('units', '設置台数'), ('machines', '設置機種'),
+    ('basic', '基本情報'), ('access', 'アクセス'), ('prices', '料金・交換率'), ('units', '設置台数'), ('machines', '設置機種'),
     ('days', '営業日・特定日'), ('notices', 'イベント・告知'), ('new', '新台入替'),
     ('daily', '過去の営業データ'), ('slot', 'パチスロデータ'), ('features', '店舗の特徴'),
     ('sources', '情報源'), ('history', '更新履歴'),
@@ -27,7 +27,7 @@
 {% elif key == 'official_url' %}<a href="{{ v }}" target="_blank" rel="noopener" class="text-blue-600 underline break-all">{{ v }}</a>
 {% elif v is string or v is number %}{{ v }}{% if v is number %} 台{% endif %}
 {% elif key == 'sns' %}{% for l in v %}<a href="{{ l.url }}" target="_blank" rel="noopener" class="text-blue-600 underline mr-3">{{ l.label or l.url }}</a>{% endfor %}
-{% else %}{{ v | join('、') }}{% endif %}
+{% else %}{% for x in v %}{{ x }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% endif %}
 {%- endmacro %}
 
 {# 1行1項目の表。値と確認状態を同じ行に並べる #}
@@ -51,7 +51,7 @@
 {% for x in sort_by(v, 'date') %}
 <div class="border-t border-dashed border-gray-200 py-2 first:border-t-0">
     <p class="text-xs text-gray-400">{{ x.date or '日付不明' }}</p>
-    <p class="font-bold text-sm text-gray-900">{{ x.title }}</p>
+    <p class="font-bold text-sm text-gray-900">{{ x.title }}{% if x.source_id in source_no %} <a class="cite" href="#src-{{ x.source_id }}">[{{ source_no[x.source_id] }}]</a>{% endif %}</p>
     {% if x.detail %}<p class="text-sm text-gray-600 mt-0.5">{{ x.detail }}</p>{% endif %}
 </div>
 {% endfor %}
@@ -77,7 +77,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">🏬</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('store_info') }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ s.name }}</h1>
 </div>
 {% endblock %}
@@ -137,8 +137,10 @@
                 <div class="font-bold text-sm mt-1">{{ (info.hours and info.hours.value) or '不明' }}</div></div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4">
-            <a href="{{ url_for('store_trends.index', store_name=s.sheet_store_name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">🏢 店舗傾向を見る</a>
-            <a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">📥 営業データを取り込む</a>
+            <a href="{{ url_for('store_trends.index', store_name=s.sheet_store_name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">{{ icon('building') }} 店舗傾向を見る</a>
+            {% if current_user_is_admin %}
+            <a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">{{ icon('import') }} 営業データを取り込む</a>
+            {% endif %}
         </div>
         <p class="text-[11px] opacity-50 mt-3">基本情報 {{ known }} / {{ field_count }} 項目が判明 ・ 最終更新 {{ s.updated_at }}</p>
     </div>
@@ -164,11 +166,15 @@
     {% endif %}
 
     {% call section('basic', '基本情報') %}
-        {{ kv_rows(['address', 'phone', 'hours', 'rates', 'official_url', 'sns', 'line']) }}
+        {{ kv_rows(['address', 'phone', 'hours', 'entry', 'official_url', 'sns', 'line', 'opened_on']) }}
     {% endcall %}
 
     {% call section('access', 'アクセス') %}
         {{ kv_rows(['access', 'parking']) }}
+    {% endcall %}
+
+    {% call section('prices', '遊技料金・交換率') %}
+        {{ kv_rows(['rates', 'exchange_rates', 'replay_limit', 'prize_exchange']) }}
     {% endcall %}
 
     {% call section('units', '設置台数') %}
@@ -189,7 +195,8 @@
     {% endcall %}
 
     {% call section('days', '営業日・特定日') %}
-        {{ list_block('special_days') }}
+        {{ kv_rows(['event_days', 'anniversary_days']) }}
+        <div class="mt-3">{{ list_block('special_days') }}</div>
         {% if ops.events and (ops.events.event_days or ops.events.anniversary_days) %}
         <div class="panel text-sm mt-3">
             <p class="text-xs text-gray-500 mb-1">分析に使っている旧イベント日（シート）</p>

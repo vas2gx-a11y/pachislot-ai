@@ -17,6 +17,7 @@ JSONには持たせず、sheet_store_name でシートの店舗名と紐づけ�
 Webから集めた値は merge() で既存JSONに重ねる。
   - 値が変わった項目だけ書き換え、変更前・変更後・日時・出典を history に残す
   - 集めたページに書かれていなかった項目(値が None)は、消えたとは限らないので触らない
+  - 告知・新台入替(dated)は置き換えずに追記する。各要素に source_id で出典を付ける
   - 推測で埋めた値を入れないよう、確認状態(status)は出典の種類からコード側で決める
 """
 
@@ -40,17 +41,30 @@ FIELDS = [
     ("address", "住所", "text"),
     ("phone", "電話番号", "text"),
     ("hours", "営業時間", "text"),
+    # 入場方法は「整理券あり」「抽選」「8:30配布」のように要素ごとに持つ(一部だけ変わったときに差分が読める)
+    ("entry", "入場方法", "list"),
     ("total_units", "総台数", "int"),
     ("pachinko_units", "パチンコ台数", "int"),
     ("slot_units", "パチスロ台数", "int"),
     ("rates", "貸玉・貸メダル料金", "list"),
+    # 交換率・再プレイ上限はレートごとに1要素("4円パチンコ 27.5玉" など)。期待値の見積もりに効くので分けて持つ
+    ("exchange_rates", "交換率", "list"),
+    ("replay_limit", "1日の再プレイ上限", "list"),
+    ("prize_exchange", "景品交換所", "text"),
     ("parking", "駐車場", "text"),
     ("access", "アクセス", "text"),
     ("official_url", "公式サイト", "text"),
     ("sns", "SNS", "links"),
     ("line", "LINE", "text"),
+    # 周年イベントの基準日。"2003-12-23" のように書けない表記もあるので文字列のまま持つ
+    ("opened_on", "グランドオープン日", "text"),
     ("features", "店舗の特徴", "list"),
     ("installed_machines", "設置機種（パチスロ）", "machines"),
+    # 旧イベント日・周年日はカレンダー(common.load_calendar_events)がルールとして読むので、
+    # common.parse_event_day_rules の書式(「1日、11日、月日ゾロ目」「6のつく日」「9月9日」)で書く。
+    # 読み取れない書き方の説明などは special_days の方に書く
+    ("event_days", "旧イベント日", "text"),
+    ("anniversary_days", "周年日", "text"),
     ("special_days", "営業日・特定日", "list"),
     ("new_machines", "新台入替", "dated"),
     ("notices", "イベント・告知", "dated"),
@@ -253,6 +267,11 @@ def _normalize(kind, v):
     return None if _is_empty(v) else v
 
 
+def _dated_key(x):
+    """同じ告知かどうかは日付と見出しで見る(本文の言い回しが出典ごとに違っても重複させない)。"""
+    return (x.get("date"), (x.get("title") or "").strip())
+
+
 def diff(store, values, reliability):
     """
     収集した値と今の値を比べ、変わる項目だけを返す(保存はしない)。
@@ -272,6 +291,16 @@ def diff(store, values, reliability):
             continue
         item = info.get(key) or {}
         old = _normalize(FIELD_KINDS[key], item.get("value"))
+        if FIELD_KINDS[key] == "dated":
+            # 告知・新台入替は出典ごとに一部しか載っていないので、置き換えずに足していく
+            # (置き換えると、別の出典で取った告知や過去の告知が消えてしまう)。
+            # 公式以外の出典でも「足す」だけなので、食い違い扱いにはしない。
+            seen = {_dated_key(x) for x in old or []}
+            added = [x for x in new if _dated_key(x) not in seen]
+            if added:
+                changes.append({"field": key, "before": old, "after": (old or []) + added,
+                                "added": added, "conflict": False})
+            continue
         if new != old:
             conflict = weaker and item.get("status") == "確認済"
             changes.append({"field": key, "before": old, "after": new, "conflict": conflict})
@@ -291,6 +320,20 @@ def merge(store, values, source_id, reliability, changed_at=None):
     changed_keys = {c["field"] for c in all_changes}
 
     for c in changes:
+        if "added" in c:
+            # 足した分にだけ出典を付ける。項目全体の確認状態は、公式以外が1件でも混ざれば「未確認」
+            for x in c["added"]:
+                x["source_id"] = source_id
+            old_item = store["info"].get(c["field"]) or {}
+            ids = [i for i in old_item.get("source_ids") or [] if i != source_id] + [source_id]
+            mixed = old_item.get("status") == "未確認" or status == "未確認"
+            store["info"][c["field"]] = {"value": c["after"], "status": "未確認" if mixed else "確認済",
+                                         "source_ids": ids}
+            store["history"].append({
+                "field": c["field"], "before": None, "after": c["added"],
+                "changed_at": changed_at, "source_ids": [source_id],
+            })
+            continue
         store["info"][c["field"]] = {"value": c["after"], "status": status, "source_ids": [source_id]}
         store["history"].append({
             "field": c["field"], "before": c["before"], "after": c["after"],

@@ -5,7 +5,7 @@
 
 {% block header %}
 <div class="flex items-center gap-2 min-w-0">
-    <span class="text-xl md:text-2xl shrink-0">{{ category.icon }}</span>
+    <span class="text-xl md:text-2xl shrink-0">{{ icon(category.icon) }}</span>
     <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ category.label }}</h1>
 </div>
 {% endblock %}
@@ -22,7 +22,7 @@
         {% for item in items %}
         <a href="{{ url_for(item.endpoint) }}"
            class="card p-4 md:p-5 flex items-start gap-3 hover:bg-gray-50 transition">
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 text-xl shrink-0" aria-hidden="true">{{ item.icon }}</span>
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-gray-100 text-gray-700 text-xl shrink-0" aria-hidden="true">{{ icon(item.icon) }}</span>
             <span class="min-w-0 flex-1">
                 <span class="font-display font-bold text-gray-900 block">{{ item.label }}</span>
                 <span class="hint block">{{ item.description }}</span>
