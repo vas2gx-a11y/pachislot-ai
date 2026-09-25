@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>店舗情報一覧</title>
+<style>
+/*
+  店舗ページ(単体HTML)の共通CSS。tools/store_build.py が各HTMLの <style> に埋め込む。
+  Flask版と見た目を揃えつつ、Tailwindに頼らずこのファイルだけで完結させている
+  (書き出したHTMLを1ファイルだけ開いても崩れないように)。
+*/
+:root {
+  --accent: #0f766e;
+  --bg: #f4f4f5;
+  --card: #fff;
+  --text: #18181b;
+  --sub: #71717a;
+  --line: #e4e4e7;
+  --link: #2563eb;
+  --plus: #059669;
+  --minus: #e11d48;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b; --card: #18181b; --text: #f4f4f5; --sub: #a1a1aa;
+    --line: #27272a; --link: #60a5fa; --plus: #34d399; --minus: #fb7185;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--link); }
+p { margin: 0; }
+code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 4px; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.stack { display: grid; gap: 16px; padding-top: 16px; padding-bottom: 24px; }
+
+/* ---- 店舗概要 ---- */
+.hero { background: #18181b; color: #fff; border-bottom: 4px solid var(--accent); padding: 20px 0; }
+.hero a { color: #fff; }
+.hero h1 { font-size: 1.6rem; margin: 4px 0 0; line-height: 1.3; }
+.crumb, .hero-meta { font-size: .75rem; opacity: .6; }
+.hero-meta { margin-top: 12px; }
+.hero-addr { font-size: .875rem; opacity: .75; margin-top: 4px; }
+.hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+.hero-stat { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px 12px; }
+.hero-stat span { display: block; font-size: .7rem; opacity: .6; }
+.hero-stat strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.hero-stat strong.small { font-size: .85rem; }
+.hero-stat em { font-style: normal; opacity: .5; }
+
+/* ---- 目次(スマホは横スクロール、PCは折り返し) ---- */
+.toc { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.toc-inner { display: flex; gap: 6px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; scrollbar-width: none; }
+.toc-inner::-webkit-scrollbar { display: none; }
+.toc a { flex-shrink: 0; font-size: .75rem; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--sub); text-decoration: none; }
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- セクション ---- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; scroll-margin-top: 52px; min-width: 0; }
+.card h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin: 0 0 12px; }
+.card h2::before { content: ""; width: 4px; height: 1.1em; border-radius: 2px; background: var(--accent); }
+
+.kv { width: 100%; border-collapse: collapse; }
+.kv th, .kv td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: .875rem; }
+.kv tr:last-child th, .kv tr:last-child td { border-bottom: 0; }
+.kv th { width: 34%; color: var(--sub); font-weight: 600; }
+.kv td { word-break: break-all; }
+
+.info-list { padding-left: 1.2em; margin: 0; font-size: .875rem; }
+.info-list li { margin: 4px 0; }
+.info-list li::marker { color: var(--accent); }
+
+.dated { border-top: 1px dashed var(--line); padding: 8px 0; font-size: .875rem; }
+.dated:first-child { border-top: 0; padding-top: 0; }
+.dated-date { font-size: .75rem; color: var(--sub); }
+.dated-title { font-weight: 700; }
+.dated-detail { color: var(--sub); margin-top: 2px; }
+.before { color: var(--sub); text-decoration: line-through; word-break: break-all; }
+.after { word-break: break-all; }
+
+.scroll-x { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.num { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .8125rem; }
+.num th, .num td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.num th:first-child, .num td:first-child { text-align: left; }
+.num thead th { color: var(--sub); font-weight: 600; font-size: .75rem; }
+.num td.wrap-cell { white-space: normal; text-align: left; min-width: 10em; }
+.plus { color: var(--plus); }
+.minus { color: var(--minus); }
+
+/* 確認状態。「不明」を目立たせすぎると空欄の多い店舗が読みにくいので、灰色に留める */
+.st-line { margin-top: 4px; }
+.st { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.st-ok { background: #ccfbf1; color: #115e59; }
+.st-check { background: #fef3c7; color: #92400e; }
+.st-none { background: var(--bg); color: var(--sub); }
+.cite { font-size: .7rem; text-decoration: none; }
+
+.muted { color: var(--sub); font-size: .875rem; }
+.hint { color: var(--sub); font-size: .75rem; margin-top: 8px; }
+.chip { display: inline-block; font-size: .7rem; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--sub); }
+.link-chip { display: inline-block; margin-right: 12px; }
+.panel { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .875rem; }
+.panel-title { font-size: .75rem; color: var(--sub); margin-bottom: 4px; }
+.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 8px; padding: 12px 16px; font-size: .875rem; }
+.warn ul { margin: 4px 0 0; padding-left: 1.2em; }
+
+.sources { padding-left: 1.4em; margin: 0; font-size: .875rem; }
+.sources li { margin: 6px 0; scroll-margin-top: 60px; }
+.src-date { display: block; font-size: .75rem; color: var(--sub); }
+.src-date .url { word-break: break-all; }
+
+.store-list { list-style: none; margin: 0; padding: 0; }
+.store-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+.store-list li:first-child { border-top: 0; padding-top: 0; }
+.store-list a { font-weight: 700; }
+.store-sub { display: block; font-size: .75rem; color: var(--sub); }
+
+.footer { font-size: .75rem; color: var(--sub); padding-bottom: 32px; }
+
+@media (min-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .hero-stats { grid-template-columns: repeat(4, 1fr); }
+  .toc-inner { flex-wrap: wrap; }
+  .card { padding: 20px; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <h1>店舗情報</h1>
+        <p class="hero-meta">2 店舗 ・ ページ生成 2026-09-25 08:57</p>
+    </div>
+</header>
+
+<main class="wrap stack">
+    <section class="card">
+        <h2>大阪府</h2>
+        <ul class="store-list">
+            <li>
+                <a href="bellagio_nishinakajima.html">ベラジオ西中島店</a>
+                <span class="store-sub">
+                    大阪府大阪市淀川区西中島5-10-6
+                    ・ 更新 2026-09-25
+                </span>
+            </li>
+        </ul>
+    </section>
+    <section class="card">
+        <h2>東京都</h2>
+        <ul class="store-list">
+            <li>
+                <a href="rakuen_ikebukuro.html">楽園池袋店</a>
+                <span class="store-sub">
+                    住所不明
+                    ・ 更新 2026-09-25
+                </span>
+            </li>
+        </ul>
+    </section>
+</main>
+
+</body>
+</html>

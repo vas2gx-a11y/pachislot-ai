@@ -20,7 +20,49 @@ JSONの `sheet_store_name` がシート側の店舗名と一致していれば�
                                                └─ store_units  日付 → 台番号 → 機種 → 実績 → 設定推測
 ```
 
-## 店舗を追加する
+## 店舗を追加する（チャットで依頼する）
+
+いまの基本の流れ。Claude Code に「〇〇店（地域）を登録して」と頼むと、次を行う。
+
+1. Webで公式サイト・ポータル（P-WORLDなど）を探して読む
+2. 読んだページごとに、値と**根拠の原文（evidence）**を `data/store_collected/<id>_<日付>.json` に書く
+3. `python3 tools/store_collect.py apply <そのファイル>` で差分を確認 → `--apply` で保存（店舗が無ければ作る）
+4. `python3 tools/store_build.py` で `store_pages/<id>.html` と `store_pages/index.html` を作り直す
+
+収集結果JSONの形:
+
+```json
+{
+  "store_id": "bellagio_nishinakajima",
+  "name": "ベラジオ西中島店",
+  "region": "大阪府",
+  "sources": [
+    {
+      "url": "https://...", "name": "出典名", "reliability": "公式", "checked_at": "2026-09-25",
+      "values": {
+        "hours": {"value": "10:00～22:40", "evidence": "ページ上の原文"}
+      }
+    }
+  ]
+}
+```
+
+- `sources` は公式を先に並べる（後に来たポータルの値が公式と食い違えば反映されず、食い違いとして表示される）
+- `evidence` が空の値は捨てる。計算で出せる値（パチンコ＋パチスロ＝総台数など）も、ページに書かれていなければ入れない
+- 同じ出典をもう一度 `apply` しても、値が変わっていなければ何も起きない
+
+## HTMLを作る
+
+```bash
+python3 tools/store_build.py                   # 全店舗
+python3 tools/store_build.py bellagio_nishinakajima
+python3 tools/store_build.py --with-sheet      # 営業データ（シート）も載せる。シートの環境変数が必要
+```
+
+`store_pages/` は生成物。直すときはJSONかテンプレート（`tools/store_page/`）を直して作り直す。
+CSSは各HTMLに埋め込んでいるので、1ファイルだけ渡しても崩れない。
+
+## 店舗を追加する（Geminiで集める旧来の方法）
 
 ```bash
 python3 tools/store_collect.py new rakuen_omiya "楽園大宮店" --region 埼玉県

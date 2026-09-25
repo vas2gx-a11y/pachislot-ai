@@ -17,6 +17,8 @@
   すべてこのJSONから都度組み立てる。画面からの編集手段は持たない。書き方は `machine_data/README.md`。
 - `store_info.py` / `store_data/*.json` — 店舗情報（住所・台数・特定日などの基本情報）。JSONが正で、`/store_info` はそれを描く。
   営業データ（日別・台別）はシートのままで、`sheet_store_name` で紐づけて同じページに並べる。書き方は `store_data/README.md`。
+  店舗の登録はチャットで依頼される運用：Webで調べて根拠つきの収集結果JSON（`data/store_collected/`）を書き、
+  `tools/store_collect.py apply` で反映、`tools/store_build.py` で単体HTML（`store_pages/`、生成物）を作る。
 - `tools/` — アナスロ(ana-slo.com)からホールデータを取り込むCLI（使い方は `tools/README.md`）と、
   店舗情報をWebから集める `store_collect.py`。
 - `data/` — 取り込みの中間ファイル置き場。コミット対象外の作業データ。

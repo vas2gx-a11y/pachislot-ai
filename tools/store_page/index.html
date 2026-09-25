@@ -1,0 +1,45 @@
+{# 店舗一覧(単体HTML)。tools/store_build.py が全店舗のJSONから生成する #}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>店舗情報一覧</title>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <h1>店舗情報</h1>
+        <p class="hero-meta">{{ stores | length }} 店舗 ・ ページ生成 {{ generated_at }}</p>
+    </div>
+</header>
+
+<main class="wrap stack">
+    {% for region, items in stores | groupby('region') %}
+    <section class="card">
+        <h2>{{ region or '地域不明' }}</h2>
+        <ul class="store-list">
+            {% for s in items %}
+            {% set info = s.info or {} %}
+            <li>
+                <a href="{{ s.id }}.html">{{ s.name }}</a>
+                <span class="store-sub">
+                    {{ (info.address and info.address.value) or (info.city and info.city.value) or '住所不明' }}
+                    {% if info.total_units and info.total_units.value is number %} ・ {{ '{:,}'.format(info.total_units.value) }}台{% endif %}
+                    ・ 更新 {{ s.updated_at }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% else %}
+    <p class="muted">店舗がまだありません。</p>
+    {% endfor %}
+</main>
+
+</body>
+</html>

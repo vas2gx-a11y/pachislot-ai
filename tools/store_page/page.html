@@ -1,0 +1,230 @@
+{#
+  店舗ページ(単体HTML)。tools/store_build.py が store_data/<id>.json から生成する。
+  Flask版(templates/store_info.html)と同じく、不明な項目は推測で埋めず「不明」と見せ、
+  値のある項目には確認状態と出典番号を必ず添える。
+  セクションの並びを変えるときは toc の並びも合わせて直す(目次とずれないように)。
+#}
+{% set toc = [
+    ('basic', '基本情報'), ('access', 'アクセス'), ('hours', '営業時間'), ('units', '設置台数'),
+    ('machines', '設置機種'), ('days', '営業日・特定日'), ('notices', 'イベント・告知'),
+    ('new', '新台入替'), ('daily', '過去の営業データ'), ('slot', 'パチスロデータ'),
+    ('features', '店舗の特徴'), ('sources', '情報源'), ('history', '更新履歴'),
+] %}
+
+{% macro status(key) -%}
+{% set item = info.get(key) or {} %}
+{% set st = item.status or '不明' %}
+<span class="st st-{{ {'確認済': 'ok', '未確認': 'check', '不明': 'none'}[st] }}">{{ st }}</span>
+{%- for sid in item.source_ids or [] if sid in source_no %} <a class="cite" href="#src-{{ sid }}">[{{ source_no[sid] }}]</a>{% endfor %}
+{%- endmacro %}
+
+{% macro value(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v is none or v == '' or v == [] %}<span class="muted">不明</span>
+{% elif key == 'official_url' %}<a href="{{ v }}" target="_blank" rel="noopener">{{ v }}</a>
+{% elif v is number %}{{ '{:,}'.format(v) }} 台
+{% elif v is string %}{{ v }}
+{% elif key == 'sns' %}{% for l in v %}<a href="{{ l.url }}" target="_blank" rel="noopener" class="link-chip">{{ l.label or l.url }}</a>{% endfor %}
+{% else %}{{ v | join('、') }}{% endif %}
+{%- endmacro %}
+
+{% macro kv_rows(keys) -%}
+<table class="kv"><tbody>
+{% for k in keys %}
+<tr><th>{{ field_labels[k] }}</th><td>{{ value(k) }}<div class="st-line">{{ status(k) }}</div></td></tr>
+{% endfor %}
+</tbody></table>
+{%- endmacro %}
+
+{% macro list_block(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v %}<ul class="info-list">{% for x in v %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}<p class="muted">不明</p>{% endif %}
+<p class="st-line">{{ status(key) }}</p>
+{%- endmacro %}
+
+{% macro dated_block(key) -%}
+{% set v = (info.get(key) or {}).value %}
+{% if v %}
+{% for x in sort_by(v, 'date') %}
+<div class="dated">
+    <p class="dated-date">{{ x.date or '日付不明' }}</p>
+    <p class="dated-title">{{ x.title }}</p>
+    {% if x.detail %}<p class="dated-detail">{{ x.detail }}</p>{% endif %}
+</div>
+{% endfor %}
+{% else %}<p class="muted">不明</p>{% endif %}
+<p class="st-line">{{ status(key) }}</p>
+{%- endmacro %}
+
+{% macro section(id, title) -%}
+<section id="{{ id }}" class="card">
+    <h2>{{ title }}</h2>
+    {{ caller() }}
+</section>
+{%- endmacro %}
+
+{% macro signed(v) -%}
+{% if v is none %}-{% else %}<span class="{{ 'plus' if v > 0 else 'minus' if v < 0 else '' }}">{{ '{:+,}'.format(v | int) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro sheet_missing(what) -%}
+{% if ops is none %}
+<p class="muted">営業データはシート「{{ s.sheet_store_name }}」側にあります。このページには読み込まずに生成しています（<code>--with-sheet</code> を付けると載ります）。</p>
+{% else %}
+<p class="muted">シート「{{ s.sheet_store_name }}」の{{ what }}はまだありません。</p>
+{% endif %}
+{%- endmacro %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ s.name }} | 店舗情報</title>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+
+{# ---- 店舗概要 ---- #}
+<header class="hero">
+    <div class="wrap">
+        <p class="crumb"><a href="index.html">店舗一覧</a> / {{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</p>
+        <h1>{{ s.name }}</h1>
+        {% if info.address and info.address.value %}<p class="hero-addr">{{ info.address.value }}</p>{% endif %}
+        <div class="hero-stats">
+            {% for key, label in [('total_units', '総台数'), ('slot_units', 'パチスロ'), ('pachinko_units', 'パチンコ')] %}
+            <div class="hero-stat"><span>{{ label }}</span>
+                <strong>{% if info[key] and info[key].value is number %}{{ '{:,}'.format(info[key].value) }}台{% else %}<em>不明</em>{% endif %}</strong></div>
+            {% endfor %}
+            <div class="hero-stat"><span>営業時間</span><strong class="small">{{ (info.hours and info.hours.value) or '不明' }}</strong></div>
+        </div>
+        <p class="hero-meta">基本情報 {{ known }} / {{ field_count }} 項目が判明 ・ 最終更新 {{ s.updated_at }}</p>
+    </div>
+</header>
+
+<nav class="toc" aria-label="目次">
+    <div class="wrap toc-inner">
+        {% for id, label in toc %}<a href="#{{ id }}">{{ label }}</a>{% endfor %}
+    </div>
+</nav>
+
+<main class="wrap stack">
+
+    {% if problems %}
+    <div class="warn">
+        <strong>JSONに不備があります</strong>（store_data/{{ s.id }}.json）
+        <ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% call section('basic', '基本情報') %}
+        {{ kv_rows(['address', 'phone', 'rates', 'official_url', 'sns', 'line']) }}
+    {% endcall %}
+
+    {% call section('access', 'アクセス') %}
+        {{ kv_rows(['access', 'parking']) }}
+    {% endcall %}
+
+    {% call section('hours', '営業時間') %}
+        {{ kv_rows(['hours']) }}
+    {% endcall %}
+
+    {% call section('units', '設置台数') %}
+        {{ kv_rows(['total_units', 'pachinko_units', 'slot_units']) }}
+    {% endcall %}
+
+    {% call section('machines', '設置機種（パチスロ）') %}
+        {% set v = (info.installed_machines or {}).value %}
+        {% if v %}
+        <div class="scroll-x"><table class="num"><thead><tr><th>機種</th><th>台数</th></tr></thead><tbody>
+            {% for m in sort_by(v, 'units') %}
+            <tr><td class="wrap-cell">{{ m.name }}</td><td>{{ m.units if m.units is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table></div>
+        {% else %}<p class="muted">不明</p>{% endif %}
+        <p class="st-line">{{ status('installed_machines') }}</p>
+    {% endcall %}
+
+    {% call section('days', '営業日・特定日') %}
+        {{ list_block('special_days') }}
+        {% if ops and ops.events and (ops.events.event_days or ops.events.anniversary_days) %}
+        <div class="panel">
+            <p class="panel-title">分析に使っている旧イベント日（シート）</p>
+            {% if ops.events.event_days %}<p>イベント日: <strong>{{ ops.events.event_days }}</strong></p>{% endif %}
+            {% if ops.events.anniversary_days %}<p>周年日: <strong>{{ ops.events.anniversary_days }}</strong></p>{% endif %}
+        </div>
+        {% endif %}
+    {% endcall %}
+
+    {% call section('notices', 'イベント・告知') %}{{ dated_block('notices') }}{% endcall %}
+    {% call section('new', '新台入替') %}{{ dated_block('new_machines') }}{% endcall %}
+
+    {% call section('daily', '過去の営業データ（日別）') %}
+        {% if ops and ops.daily %}
+        <div class="scroll-x"><table class="num"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th></tr></thead><tbody>
+            {% for d in ops.daily %}
+            <tr><td>{{ d.date }}</td><td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
+                <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
+                <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table></div>
+        <p class="hint">直近 {{ ops.daily | length }} 日分（全 {{ ops.daily_count }} 日）</p>
+        {% else %}{{ sheet_missing('日別データ') }}{% endif %}
+    {% endcall %}
+
+    {% call section('slot', 'パチスロデータ（台別）') %}
+        {% if ops and ops.latest_units %}
+        <p>最新 <strong>{{ ops.latest_unit_date }}</strong>（全 {{ ops.unit_date_count }} 日 / {{ '{:,}'.format(ops.unit_row_count) }} 行）</p>
+        <div class="scroll-x"><table class="num"><thead><tr><th>台番</th><th>機種</th><th>G数</th><th>差枚</th><th>BB</th><th>RB</th><th>AT/ART</th></tr></thead><tbody>
+            {% for u in ops.latest_units[:30] %}
+            <tr><td>{{ u.machine_number }}</td><td class="wrap-cell">{{ u.machine_name }}</td>
+                <td>{{ '{:,}'.format(u.total_games | int) if u.total_games is not none else '-' }}</td>
+                <td>{{ signed(u.difference_slabs) }}</td>
+                <td>{{ u.big_count | int if u.big_count is not none else '-' }}</td>
+                <td>{{ u.reg_count | int if u.reg_count is not none else '-' }}</td>
+                <td>{{ u.art_count | int if u.art_count is not none else '-' }}</td></tr>
+            {% endfor %}
+        </tbody></table></div>
+        <p class="hint">差枚の多い順に最大30台</p>
+        {% else %}{{ sheet_missing('台別データ') }}{% endif %}
+    {% endcall %}
+
+    {% call section('features', '店舗の特徴') %}{{ list_block('features') }}{% endcall %}
+
+    {% call section('sources', '情報源') %}
+        {% if s.sources %}
+        <ol class="sources">
+            {% for src in s.sources %}
+            <li id="src-{{ src.id }}">
+                {% if src.url %}<a href="{{ src.url }}" target="_blank" rel="noopener">{{ src.name }}</a>{% else %}{{ src.name }}{% endif %}
+                <span class="chip">{{ src.reliability }}</span>
+                <span class="src-date">取得日 {{ src.checked_at }}{% if src.url %} ・ <span class="url">{{ src.url }}</span>{% endif %}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}<p class="muted">まだ情報源がありません。</p>{% endif %}
+        <p class="hint">「確認済」は公式サイト・公式SNSで確認できた値、「未確認」はそれ以外の情報源の値、「不明」は確認できなかった項目です。</p>
+    {% endcall %}
+
+    {% call section('history', '更新履歴') %}
+        {% if history %}
+        {% for h in history %}
+        <div class="dated">
+            <p class="dated-date">{{ h.changed_at }} ・ {{ field_labels.get(h.field, h.field) }}
+                {%- for sid in h.source_ids or [] if sid in source_no %} <a class="cite" href="#src-{{ sid }}">[{{ source_no[sid] }}]</a>{% endfor %}</p>
+            <p class="before">{{ h.before if h.before is string else (h.before | tojson if h.before is not none else '不明') }}</p>
+            <p class="after">{{ h.after if h.after is string else h.after | tojson }}</p>
+        </div>
+        {% endfor %}
+        {% else %}<p class="muted">まだ変更はありません。</p>{% endif %}
+    {% endcall %}
+
+</main>
+
+<footer class="wrap footer">
+    最終更新日 {{ s.updated_at }} ・ ページ生成 {{ generated_at }} ・ 元データ store_data/{{ s.id }}.json
+</footer>
+
+</body>
+</html>

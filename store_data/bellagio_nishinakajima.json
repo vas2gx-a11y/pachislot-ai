@@ -5,27 +5,50 @@
   "region": "大阪府",
   "sheet_store_name": "ベラジオ西中島店",
   "updated_at": "2026-09-25",
-  "sources": [],
+  "sources": [
+    {
+      "id": "s1",
+      "name": "ベラジオ西中島店 店舗ページ（公式LP）",
+      "url": "https://bellagio03.lp-dokidoki.com/",
+      "reliability": "公式",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "s2",
+      "name": "P-WORLD ベラジオ西中島店",
+      "url": "https://www.p-world.co.jp/osaka/bellagio-nishinaka.htm",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-25"
+    }
+  ],
   "info": {
     "city": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "大阪市淀川区",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
     },
     "address": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "大阪府大阪市淀川区西中島5-10-6",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
     },
     "phone": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "06-6838-6600",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "hours": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "10:00～22:40",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
     },
     "total_units": {
       "value": null,
@@ -33,34 +56,49 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": 188,
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "slot_units": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": 272,
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "rates": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        "4円パチンコ 188台",
+        "20円スロット 272台"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "parking": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "115台",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "access": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "地下鉄御堂筋線「西中島南方駅」から徒歩5分、JR新大阪駅から徒歩5分",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
     },
     "official_url": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "https://bellagio03.lp-dokidoki.com/",
+      "status": "確認済",
+      "source_ids": [
+        "s1"
+      ]
     },
     "sns": {
       "value": null,
@@ -73,9 +111,16 @@
       "source_ids": []
     },
     "features": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        "Wi-Fi完備",
+        "喫煙エリア完備",
+        "カード式会員",
+        "現金還玉対応"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "installed_machines": {
       "value": null,
@@ -98,5 +143,113 @@
       "source_ids": []
     }
   },
-  "history": []
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "大阪市淀川区",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "大阪府大阪市淀川区西中島5-10-6",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:40",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "地下鉄御堂筋線「西中島南方駅」から徒歩5分、JR新大阪駅から徒歩5分",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "https://bellagio03.lp-dokidoki.com/",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "06-6838-6600",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 188,
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 272,
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 188台",
+        "20円スロット 272台"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "parking",
+      "before": null,
+      "after": "115台",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "Wi-Fi完備",
+        "喫煙エリア完備",
+        "カード式会員",
+        "現金還玉対応"
+      ],
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
 }

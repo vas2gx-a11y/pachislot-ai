@@ -21,6 +21,9 @@
     # 登録済みの全店舗を、前回使った出典URLから取り直す(定期実行用)
     python3 tools/store_collect.py refresh --apply
 
+    # チャット(Claude)で調べてもらった収集結果JSONを反映する。店舗が無ければ作る
+    python3 tools/store_collect.py apply data/store_collected/bellagio_nishinakajima_2026-09-25.json --apply
+
 【推測で埋めないための仕組み】
 AIには値と一緒に「ページ本文からそのまま抜き出した根拠(evidence)」を返させ、
 その文字列が本文に実在しない値は捨てる。確認状態(確認済/未確認)もAIには決めさせず、
@@ -189,6 +192,11 @@ def collect_one(store, url, file_path, source_name, reliability, apply):
         return False
 
     values, rejected = extract(store, text, url)
+    return _report_and_save(store, values, rejected, url, source_name, reliability, apply)
+
+
+def _report_and_save(store, values, rejected, url, source_name, reliability, apply, checked_at=None):
+    """差分を表示し、apply なら店舗JSONに重ねて保存する。collect と apply で共通。"""
     changes = store_info.diff(store, values, reliability)
     conflicts = [c for c in changes if c["conflict"]]
     changes = [c for c in changes if not c["conflict"]]
@@ -208,7 +216,7 @@ def collect_one(store, url, file_path, source_name, reliability, apply):
         print("  （確認のみ。保存するには --apply）")
         return bool(changes)
 
-    sid = store_info.upsert_source(store, url, source_name, reliability)
+    sid = store_info.upsert_source(store, url, source_name, reliability, checked_at)
     store_info.merge(store, values, sid, reliability)
     problems = store_info.validate(store, store["id"])
     store_info.save(store)
@@ -247,6 +255,60 @@ def cmd_refresh(args):
                 collect_one(store, s["url"], None, s.get("name"), s.get("reliability"), args.apply)
 
 
+def _values_from_payload(values):
+    """
+    収集結果JSONの values を {項目: 値} にする。戻り値は (values, rejected)。
+    根拠(evidence)の無い値は、Geminiで集めたときと同じく推測と区別できないので捨てる。
+    """
+    out, rejected = {}, []
+    for key, item in (values or {}).items():
+        if key not in store_info.FIELD_KINDS:
+            raise SystemExit(f"未定義の項目です: {key}（store_info.FIELDS を参照）")
+        v = item.get("value") if isinstance(item, dict) else None
+        if store_info._is_empty(v):
+            continue
+        if not str(item.get("evidence") or "").strip():
+            rejected.append((key, v, "evidence が空"))
+            continue
+        if not store_info._kind_ok(store_info.FIELD_KINDS[key], v):
+            rejected.append((key, v, "値の形が定義と違う"))
+            continue
+        out[key] = v
+    return out, rejected
+
+
+def cmd_apply(args):
+    """
+    チャット等で集めた収集結果JSONを反映する(書式は store_data/README.md)。
+    店舗がまだ無ければ、収集結果の name / region から作る(「店舗名＋地域」だけで登録できるように)。
+    """
+    with open(args.file, encoding="utf-8") as f:
+        payload = json.load(f)
+    store_id = payload.get("store_id")
+    store = store_info.load(store_id)
+    if store is None:
+        if not payload.get("name") or not payload.get("region"):
+            raise SystemExit(f"store_data/{store_id}.json が無いので、収集結果に name と region が必要です。")
+        store = store_info.new_store(store_id, payload["name"], payload["region"],
+                                     payload.get("sheet_store_name", ""))
+        print(f"新しい店舗として登録します: {payload['name']}（{payload['region']}）")
+        if store_info._path_of(store_id) is None:
+            raise SystemExit(f"店舗IDが不正です: {store_id!r}（英小文字・数字・_ のみ）")
+
+    for src in payload.get("sources") or []:
+        if src.get("reliability") not in store_info.RELIABILITIES:
+            raise SystemExit(f"reliability は {' / '.join(store_info.RELIABILITIES)} のいずれか: {src.get('url')}")
+        values, rejected = _values_from_payload(src.get("values"))
+        _report_and_save(store, values, rejected, src.get("url"), src.get("name"),
+                         src["reliability"], args.apply, src.get("checked_at"))
+        if not args.apply:
+            # 確認だけのときも、次の出典との比較が保存時と同じになるようメモリ上では重ねておく
+            # (公式の後にポータルを重ねたときの「食い違い」が確認の段階で見えるように)
+            sid = store_info.upsert_source(store, src.get("url"), src.get("name"),
+                                           src["reliability"], src.get("checked_at"))
+            store_info.merge(store, values, sid, src["reliability"])
+
+
 def main():
     p = argparse.ArgumentParser(description="店舗情報をWebから集めて store_data/ を更新する")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -271,6 +333,11 @@ def main():
     r.add_argument("store_id", nargs="?", help="省略時は全店舗")
     r.add_argument("--apply", action="store_true")
     r.set_defaults(func=cmd_refresh)
+
+    a = sub.add_parser("apply", help="収集結果JSON（チャットで集めたもの）を反映する")
+    a.add_argument("file", help="data/store_collected/<id>_<日付>.json など")
+    a.add_argument("--apply", action="store_true", help="差分を保存する")
+    a.set_defaults(func=cmd_apply)
 
     args = p.parse_args()
     args.func(args)
