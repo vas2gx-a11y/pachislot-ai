@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        /*
+          iOSは文字サイズ16px以上でも（アプリ内ブラウザ等で）入力欄のフォーカス時に自動ズームすることがあり、
+          打つたびに戻すのが手間なので maximum-scale=1 で止める。iOSはこれを付けても指でのズームは効く。
+          Androidでは指のズームまで禁止されてしまううえ、そもそも自動ズームしないのでiOSだけに付ける。
+        */
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1');
+        }
+    </script>
     <title>{% block title %}パチスロAIデータ管理システム{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
