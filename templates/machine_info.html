@@ -159,7 +159,7 @@
             <div class="hero-stat"><div class="text-[11px] opacity-60">機械割</div>
                 <div class="font-mono font-bold text-lg">{% if payout %}{{ '%.1f' % payout[0] }}〜{{ '%.1f' % payout[1] }}%{% else %}{{ unknown() }}{% endif %}</div></div>
             <div class="hero-stat"><div class="text-[11px] opacity-60">天井</div>
-                <div class="font-mono font-bold text-lg">{% if m.ceiling and not is_unknown(m.ceiling.games) %}{{ m.ceiling.games.value }}G+α{% else %}{{ unknown() }}{% endif %}</div></div>
+                <div class="font-mono font-bold text-lg">{% if m.ceiling and not is_unknown(m.ceiling.games) %}{% if m.ceiling.games.value is number %}{{ m.ceiling.games.value }}G+α{% else %}{{ m.ceiling.games.text }}{% endif %}{% else %}{{ unknown() }}{% endif %}</div></div>
             <div class="hero-stat"><div class="text-[11px] opacity-60">純増</div>
                 <div class="font-mono font-bold text-lg">{% if not is_unknown(m.basic.net_gain_per_game) %}約{{ m.basic.net_gain_per_game.value }}枚/G{% else %}{{ unknown() }}{% endif %}</div></div>
             <div class="hero-stat"><div class="text-[11px] opacity-60">導入日</div>

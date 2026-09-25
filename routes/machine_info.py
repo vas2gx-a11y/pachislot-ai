@@ -29,10 +29,19 @@ def _unknown_label(v):
     return v["status"] if isinstance(v, dict) and v.get("status") else "未公表"
 
 
+def _decimal(v):
+    """公表値の桁をそのまま見せる(最低1桁)。
+    ジャグラーのブドウ(1/5.66・1/5.76・1/5.78など)は小数2桁目に設定差があり、
+    1桁に丸めると別の設定が同じ値に見えてしまうため。
+    """
+    s = f"{v:.2f}".rstrip("0")
+    return s + "0" if s.endswith(".") else s
+
+
 def _fmt_num(v, fmt):
     if fmt == "fraction":
         # 整数で公表されている値(1/269など)に小数を足すと、ない精度があるように見えるのでそのまま出す
-        return f"1/{v}" if isinstance(v, int) else f"1/{v:.1f}"
+        return f"1/{v}" if isinstance(v, int) else f"1/{_decimal(v)}"
     if fmt == "percent":
         return f"{v:.1f}%"
     return str(v)
