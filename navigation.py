@@ -145,6 +145,29 @@ NAV = [
             # 今後ここに「設定予測」「台選定」「分析履歴」などを追加する
         ],
     },
+    {
+        # スロットとは見るもの(ボーダー・回転率)も置き場所(シート)も違うので、カテゴリごと分けている
+        "key": "pachinko",
+        "label": "パチンコ",
+        "icon": "pachinko",
+        "description": "パチンコの機種データ（ボーダー・遊タイム・止め打ちなど）と、実戦用の回転率計算です。",
+        "items": [
+            {
+                "endpoint": "pachinko.index",
+                "label": "機種データ",
+                "icon": "book",
+                "description": "スペック・各換算ボーダー・遊タイム・朝一ランプ・止め打ち・演出の期待度をまとめて見ます。",
+                # 一覧から各機種のページへ入るので、その配下も選択状態として扱う
+                "match": "/pachinko",
+            },
+            {
+                "endpoint": "pachinko.calc",
+                "label": "回転率計算",
+                "icon": "calculator",
+                "description": "投資と回転数から千円あたりの回転率を出し、機種のボーダーと比べます。",
+            },
+        ],
+    },
 ]
 
 
@@ -169,5 +192,5 @@ def mobile_primary():
 
 
 def mobile_overflow():
-    """ボトムナビに収まらず「その他」へ回すカテゴリ(現状は空)"""
+    """ボトムナビに収まらず「その他」へ回すカテゴリ"""
     return NAV[MOBILE_PRIMARY_COUNT:]

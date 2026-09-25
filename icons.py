@@ -35,6 +35,13 @@ ICONS = {
         '<path d="M17 12h2.5V6.5"/><circle cx="19.5" cy="5" r="1.5"/>'
     ),
     # G数（回転数）: 回るリール
+    # パチンコ: 釘の間を落ちる玉
+    "pachinko": (
+        f'<circle cx="12" cy="14.5" r="5" {_DUO}/>'
+        '<circle cx="12" cy="14.5" r="5"/>'
+        '<path d="M10 12.6a2.6 2.6 0 0 1 2-1"/>'
+        '<path d="M5 3.5v3M9.5 3.5v3M14.5 3.5v3M19 3.5v3"/>'
+    ),
     "counter": (
         f'<circle cx="12" cy="12" r="5" {_DUO}/>'
         '<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v3.5h-3.5"/>'

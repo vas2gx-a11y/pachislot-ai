@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, back_link %}
+
+{% block title %}{{ machine.name }}{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('pachinko') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ machine.name }}</h1>
+</div>
+{% endblock %}
+
+{% macro num(value, unit='', prefix='') -%}
+{%- if value is not none -%}{{ prefix }}{{ '%g' % value }}{{ unit }}{%- else -%}<span class="text-gray-300">未登録</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro memo(text) -%}
+{%- if text -%}<p class="text-sm text-gray-800 whitespace-pre-line break-words">{{ text }}</p>
+{%- else -%}<p class="text-sm text-gray-300">未登録</p>{%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <div class="flex flex-wrap items-center gap-2">
+        <span class="chip">{{ machine.spec_type or "タイプ未登録" }}</span>
+        <span class="text-xs text-gray-500">{{ machine.maker or "メーカー未登録" }} ・ 更新 {{ machine.updated_at }}</span>
+        <div class="ml-auto flex flex-wrap gap-2">
+            <a href="{{ url_for('pachinko.calc', machine_id=machine.machine_id) }}" class="btn btn-primary btn-sm gap-1">{{ icon('calculator') }} この機種で回転率計算</a>
+            {% if current_user_is_admin %}
+            <a href="{{ url_for('pachinko.edit', machine_id=machine.machine_id) }}" class="btn btn-ghost btn-sm gap-1">{{ icon('pencil') }} 編集</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% call card("chart", "スペック") %}
+    <dl class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div><dt class="label">大当り確率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.hit_prob, prefix='1/') }}</dd></div>
+        <div><dt class="label">RUSH中確率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.rush_hit_prob, prefix='1/') }}</dd></div>
+        <div><dt class="label">RUSH突入率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.rush_entry_rate, '%') }}</dd></div>
+        <div><dt class="label">RUSH継続率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.rush_continue_rate, '%') }}</dd></div>
+    </dl>
+    {% endcall %}
+
+    {% call card("target", "ボーダー（千円あたりの回転数）") %}
+    <dl class="grid grid-cols-3 gap-3 text-sm">
+        <div><dt class="label">等価（250玉）</dt><dd class="font-mono tabular-nums font-bold text-lg">{{ num(machine.border_equiv, '回') }}</dd></div>
+        <div><dt class="label">28玉交換</dt><dd class="font-mono tabular-nums font-bold text-lg">{{ num(machine.border_28, '回') }}</dd></div>
+        <div><dt class="label">33玉交換</dt><dd class="font-mono tabular-nums font-bold text-lg">{{ num(machine.border_33, '回') }}</dd></div>
+    </dl>
+    {% endcall %}
+
+    {% call card("sunrise", "遊タイム・朝一") %}
+    <dl class="grid grid-cols-2 gap-3 text-sm">
+        <div><dt class="label">遊タイム発動</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.yutime_games, '回転') }}</dd></div>
+        <div><dt class="label">遊タイム中の時短</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.yutime_spins, '回転') }}</dd></div>
+    </dl>
+    <div class="mt-3"><div class="label">遊タイムのメモ</div>{{ memo(machine.yutime_note) }}</div>
+    <div class="mt-3"><div class="label">朝一ランプ・リセット判別</div>{{ memo(machine.morning_lamp_note) }}</div>
+    {% endcall %}
+
+    {% call card("wrench", "止め打ち・ワンツー打法") %}
+    {{ memo(machine.technique_note) }}
+    {% endcall %}
+
+    {% call card("bulb", "演出の期待度（先バレ・示唆など）") %}
+    {% if machine.effects %}
+    <table class="w-full text-sm border-collapse">
+        <tbody class="divide-y divide-gray-100">
+            {% for e in machine.effects %}
+            <tr>
+                <td class="py-2 pr-3 text-gray-900 break-words">
+                    {{ e.name }}
+                    {% if e.note %}<div class="text-xs text-gray-500">{{ e.note }}</div>{% endif %}
+                </td>
+                <td class="py-2 text-right font-mono tabular-nums font-bold whitespace-nowrap">
+                    {% if e.rate is not none %}{{ '%g' % e.rate }}%{% else %}<span class="text-gray-300">—</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-sm text-gray-300">未登録</p>
+    {% endif %}
+    {% endcall %}
+
+    {% if machine.note or machine.source %}
+    {% call card("memo", "メモ・出典") %}
+    {% if machine.note %}{{ memo(machine.note) }}{% endif %}
+    {% if machine.source %}<p class="hint mt-2 break-words">出典: {{ machine.source }}</p>{% endif %}
+    {% endcall %}
+    {% endif %}
+
+    {{ back_link(url_for('pachinko.index'), "機種データの一覧に戻る") }}
+</div>
+</main>
+{% endblock %}

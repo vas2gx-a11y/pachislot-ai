@@ -5422,3 +5422,130 @@ def build_api_usage_report(month=None):
         "price_output": price_out,
         "usd_jpy": USD_JPY_RATE,
     }
+
+
+# ---------------------------------------------------------------------------
+# パチンコの機種データ
+# ---------------------------------------------------------------------------
+# スロットの機種情報(machine_data/*.json)とは別枠で持つ。スロットは解析まとめを出典付きで
+# 丁寧に書き、判別・AIの推測まで同じJSONから組み立てるが、パチンコで欲しいのは
+# ボーダー・遊タイム・止め打ちのような「ホールで見返すメモ」で、新台のたびに画面から足したい。
+# Renderはディスクが揮発性でJSONを画面から書き換えられないので、置き場所はシート(pachinko_machines)にする。
+#
+# 全員で共有するデータなので、書き込み(登録・編集・削除)は管理者だけ(routes/pachinko.py で制限)。
+# 演出の期待度は件数が機種ごとにばらばらなので、列を増やさず JSON 文字列で1セルに入れる。
+PACHINKO_SHEET_NAME = os.environ.get("PACHINKO_SHEET_NAME", "pachinko_machines")
+PACHINKO_HEADERS = [
+    "machine_id", "name", "maker", "spec_type",
+    "hit_prob", "rush_hit_prob", "rush_entry_rate", "rush_continue_rate",
+    "border_equiv", "border_28", "border_33",
+    "yutime_games", "yutime_spins", "yutime_note",
+    "morning_lamp_note", "technique_note", "effects", "note", "source", "updated_at",
+]
+PACHINKO_SPEC_TYPES = ["ミドル", "ライトミドル", "甘デジ", "ライト", "スマパチ", "その他"]
+# 数値として扱う列(空欄は None のまま持ち、「未登録」と「0」を区別する)
+PACHINKO_NUMERIC_FIELDS = [
+    "hit_prob", "rush_hit_prob", "rush_entry_rate", "rush_continue_rate",
+    "border_equiv", "border_28", "border_33", "yutime_games", "yutime_spins",
+]
+# ボーダーの換算は「1,000円で借りた玉を何玉で交換するか」で表す(等価=250玉 / 28玉交換=280玉 / 3.03円=330玉)。
+# 登録された3点の間を直線で結んで、任意の交換率のボーダーを概算する(店ごとの交換率に合わせるため)。
+# 計算は回転率の計算機(ブラウザ側)で行い、この対応表はページに埋め込んで渡す
+PACHINKO_BORDER_POINTS = [("border_equiv", 250), ("border_28", 280), ("border_33", 330)]
+
+
+def get_pachinko_worksheet():
+    return _get_worksheet(PACHINKO_SHEET_NAME, PACHINKO_HEADERS, rows=300, label="pachinko_machinesシート")
+
+
+def _to_float_or_none(value):
+    text = str(value if value is not None else "").strip().replace(",", "")
+    # 大当り確率は「1/319.7」と書かれることが多いので、分母だけ取る
+    if text.startswith("1/"):
+        text = text[2:]
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _parse_pachinko_row(row):
+    machine = {h: str(row.get(h, "")).strip() for h in PACHINKO_HEADERS}
+    for field in PACHINKO_NUMERIC_FIELDS:
+        machine[field] = _to_float_or_none(machine[field])
+    try:
+        effects = json.loads(machine["effects"]) if machine["effects"] else []
+    except json.JSONDecodeError:
+        effects = []
+    machine["effects"] = [e for e in effects if isinstance(e, dict) and str(e.get("name", "")).strip()]
+    return machine
+
+
+def load_pachinko_machines():
+    """パチンコの機種データを名前順で返す。"""
+    cached = _cache_get("pachinko_machines")
+    if cached is not None:
+        return cached
+    try:
+        # 機種名が数字だけでも数値に変わらないよう、文字列のまま読んでからこちらで変換する
+        rows = get_pachinko_worksheet().get_all_records(numericise_ignore=["all"])
+    except Exception as e:
+        logger.error(f"パチンコ機種データの読み込みエラー: {e}")
+        return []
+    machines = [_parse_pachinko_row(r) for r in rows if str(r.get("machine_id", "")).strip()]
+    machines.sort(key=lambda m: m["name"])
+    _cache_set("pachinko_machines", machines)
+    return machines
+
+
+def find_pachinko_machine(machine_id):
+    return next((m for m in load_pachinko_machines() if m["machine_id"] == machine_id), None)
+
+
+def save_pachinko_machine(machine):
+    """
+    機種データを保存する。同じ machine_id なら上書きし、無ければ足す。
+    戻り値: (成功したか, メッセージ, machine_id)。
+    """
+    name = str(machine.get("name", "")).strip()
+    if not name:
+        return False, "機種名を入力してください。", ""
+    machine_id = str(machine.get("machine_id", "")).strip() or "p_" + secrets.token_hex(5)
+    if any(m["name"] == name and m["machine_id"] != machine_id for m in load_pachinko_machines()):
+        return False, f"「{name}」はすでに登録されています。", machine_id
+
+    row = {**machine, "machine_id": machine_id, "name": name,
+           "effects": json.dumps(machine.get("effects") or [], ensure_ascii=False),
+           "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    values = ["" if row.get(h) is None else row.get(h) for h in PACHINKO_HEADERS]
+    try:
+        ws = get_pachinko_worksheet()
+        ids = ws.col_values(1)
+        row_number = next((i for i, v in enumerate(ids[1:], start=2) if str(v).strip() == machine_id), None)
+        if row_number:
+            ws.update([values], f"A{row_number}")
+        else:
+            ws.append_row(values)
+    except Exception as e:
+        logger.error(f"パチンコ機種データの保存エラー: {e}")
+        return False, "保存に失敗しました。時間をおいてお試しください。", machine_id
+    _cache_invalidate("pachinko_machines")
+    return True, f"「{name}」を保存しました。", machine_id
+
+
+def delete_pachinko_machine(machine_id):
+    """機種データを1件消す。戻り値: (成功したか, メッセージ)。"""
+    machine = find_pachinko_machine(machine_id)
+    if not machine:
+        return False, "機種が見つかりません。"
+    try:
+        ws = get_pachinko_worksheet()
+        ids = ws.col_values(1)
+        row_number = next((i for i, v in enumerate(ids[1:], start=2) if str(v).strip() == machine_id), None)
+        if row_number:
+            ws.delete_rows(row_number)
+    except Exception as e:
+        logger.error(f"パチンコ機種データの削除エラー: {e}")
+        return False, "削除に失敗しました。時間をおいてお試しください。"
+    _cache_invalidate("pachinko_machines")
+    return True, f"「{machine['name']}」を削除しました。"

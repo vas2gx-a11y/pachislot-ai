@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+
+{% block title %}パチンコ機種データ{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('pachinko') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">パチンコ機種データ</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* 絞り込みのチップ。押した状態を色で残す */
+    .chip-toggle { cursor: pointer; border: 1px solid #e4e4e7; user-select: none; }
+    .chip-toggle:hover { background: #e4e4e7; }
+    .chip-toggle.selected { background: #18181b; color: #ffffff; border-color: #18181b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ url_for('pachinko.calc') }}" class="btn btn-primary btn-sm gap-1">{{ icon('calculator') }} 回転率計算</a>
+        {% if current_user_is_admin %}
+        <a href="{{ url_for('pachinko.new') }}" class="btn btn-ghost btn-sm gap-1">{{ icon('plus') }} 機種を登録</a>
+        {% endif %}
+    </div>
+
+    {% if machines %}
+    <div class="card card-body">
+        <input type="search" id="pachinko-search" class="input" placeholder="機種名・メーカーで検索">
+        <div class="flex flex-wrap gap-1.5 mt-3" id="pachinko-types">
+            <span class="chip chip-toggle selected" data-type="">すべて</span>
+            {% for t in spec_types %}
+            <span class="chip chip-toggle" data-type="{{ t }}">{{ t }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2" id="pachinko-list">
+        {% for m in machines %}
+        <a href="{{ url_for('pachinko.detail', machine_id=m.machine_id) }}" class="card card-body block"
+           data-type="{{ m.spec_type }}" data-search="{{ (m.name ~ ' ' ~ m.maker) | lower }}">
+            <div class="font-bold text-gray-900">{{ m.name }}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ m.maker or "メーカー未登録" }}{% if m.spec_type %} ・ {{ m.spec_type }}{% endif %}</div>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+                {% if m.hit_prob %}<span class="chip">1/{{ '%g' % m.hit_prob }}</span>{% endif %}
+                {% if m.rush_continue_rate %}<span class="chip">継続 {{ '%g' % m.rush_continue_rate }}%</span>{% endif %}
+                {% if m.border_equiv %}<span class="chip">等価 {{ '%g' % m.border_equiv }}回</span>{% endif %}
+                {% if m.yutime_games %}<span class="chip">遊タイム {{ '%g' % m.yutime_games }}回転</span>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <p class="hint hidden" id="pachinko-no-hit">条件に合う機種がありません。</p>
+    {% else %}
+    {{ empty_state("pachinko", "まだ機種データがありません。" ~ ("上の「機種を登録」から追加してください。" if current_user_is_admin else "管理者の登録を待ってください。")) }}
+    {% endif %}
+
+</div>
+</main>
+
+<script>
+(function () {
+    const search = document.getElementById('pachinko-search');
+    const types = document.getElementById('pachinko-types');
+    if (!search || !types) return;
+    let selectedType = '';
+
+    // 件数は数十〜数百の想定なので、サーバーに問い合わせずその場で絞る
+    function apply() {
+        const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        let shown = 0;
+        document.querySelectorAll('#pachinko-list > a').forEach(function (card) {
+            const ok = (!selectedType || card.dataset.type === selectedType)
+                && words.every(function (w) { return card.dataset.search.includes(w); });
+            card.classList.toggle('hidden', !ok);
+            if (ok) shown++;
+        });
+        document.getElementById('pachinko-no-hit').classList.toggle('hidden', shown > 0);
+    }
+
+    search.addEventListener('input', apply);
+    types.addEventListener('click', function (e) {
+        const chip = e.target.closest('[data-type]');
+        if (!chip) return;
+        selectedType = chip.dataset.type;
+        types.querySelectorAll('[data-type]').forEach(function (c) { c.classList.toggle('selected', c === chip); });
+        apply();
+    });
+})();
+</script>
+{% endblock %}

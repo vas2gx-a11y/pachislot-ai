@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, back_link %}
+
+{% block title %}回転率計算{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('calculator') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">回転率計算</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .chip-toggle { cursor: pointer; border: 1px solid #e4e4e7; user-select: none; }
+    .chip-toggle:hover { background: #e4e4e7; }
+    .chip-toggle.selected { background: #18181b; color: #ffffff; border-color: #18181b; }
+    /* ホールで片手で押すので、数字の入力欄は大きめにする */
+    .input-big { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+    .diff-plus { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
+    .diff-minus { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+    .diff-none { color: #71717a; background: #fafafa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    {# 結果は入力のたびに動くので、スマホでも入力欄と一緒に目に入るよう一番上に置く #}
+    <section id="calc-result" class="card card-body border diff-none">
+        <div class="flex items-end justify-between gap-3">
+            <div>
+                <div class="text-xs opacity-70">千円あたりの回転率</div>
+                <div class="font-mono tabular-nums font-extrabold text-4xl" id="r-rate">—</div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs opacity-70">ボーダーとの差</div>
+                <div class="font-mono tabular-nums font-extrabold text-2xl" id="r-diff">—</div>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-3 opacity-80 font-mono tabular-nums">
+            <span>ボーダー <strong id="r-border">—</strong></span>
+            <span>総回転 <strong id="r-spins">0</strong>回</span>
+            <span>投資 <strong id="r-invest">0</strong>円</span>
+        </div>
+    </section>
+
+    {# 打ちながら何度も触るのは投資と回転数なので、結果のすぐ下に置く(機種・交換率は最初に1回決めるだけ) #}
+    {% call card("counter", "投資と回転数") %}
+    <div class="grid gap-3 grid-cols-2">
+        <div class="col-span-2">
+            <div class="flex items-center justify-between">
+                <span class="label mb-0">投資</span>
+                <div class="flex gap-1.5" id="c-unit">
+                    <span class="chip chip-toggle" data-unit="k">千円</span>
+                    <span class="chip chip-toggle" data-unit="ball">玉数</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+                <button type="button" class="btn btn-ghost" id="c-invest-minus" aria-label="減らす">−</button>
+                <input type="number" inputmode="decimal" step="any" min="0" id="c-invest" class="input input-big flex-1" value="0">
+                <button type="button" class="btn btn-primary" id="c-invest-plus"></button>
+            </div>
+        </div>
+        <div>
+            <label class="label" for="c-start">打ち始め回転数</label>
+            <input type="number" inputmode="numeric" step="1" min="0" id="c-start" class="input input-big" value="0">
+        </div>
+        <div>
+            <label class="label" for="c-current">現在回転数</label>
+            <input type="number" inputmode="numeric" step="1" min="0" id="c-current" class="input input-big" value="0">
+        </div>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-4">
+        <button type="button" class="btn btn-ghost btn-sm gap-1" id="c-split">{{ icon('flag') }} 大当り・台移動で区切る</button>
+        <button type="button" class="btn btn-ghost btn-sm gap-1" id="c-reset">{{ icon('refresh') }} 全部リセット</button>
+    </div>
+    <p class="hint">
+        大当りで台の回転数表示が0に戻るときは「区切る」を押してください。ここまでの回転数と投資を積み上げて、
+        次の区間を打ち始め0・投資0から数え直します。入力はこの端末に残るので、画面を閉じても続きから使えます。
+    </p>
+    <div id="c-segments" class="hidden mt-3">
+        <div class="label">区切った区間</div>
+        <table class="w-full text-xs font-mono tabular-nums">
+            <tbody id="c-segment-rows" class="divide-y divide-gray-100"></tbody>
+        </table>
+    </div>
+    {% endcall %}
+
+    {% call card("pachinko", "機種と交換率") %}
+    <div class="grid gap-3 md:grid-cols-2">
+        <div>
+            <label class="label" for="c-machine">機種</label>
+            <select id="c-machine" class="input">
+                <option value="">機種を選ばない（ボーダーを手入力）</option>
+                {% for m in machines %}
+                <option value="{{ m.machine_id }}">{{ m.name }}</option>
+                {% endfor %}
+            </select>
+            {% if not machines %}
+            <p class="hint">機種データがまだありません。<a href="{{ url_for('pachinko.index') }}" class="underline">機種データ</a>に登録するとボーダーを自動で出せます。</p>
+            {% endif %}
+        </div>
+        <div>
+            <span class="label">交換率</span>
+            <div class="flex flex-wrap gap-1.5" id="c-exchange">
+                <span class="chip chip-toggle" data-balls="250">等価</span>
+                <span class="chip chip-toggle" data-balls="280">28玉</span>
+                <span class="chip chip-toggle" data-balls="300">30玉</span>
+                <span class="chip chip-toggle" data-balls="330">33玉</span>
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+                <input type="number" inputmode="decimal" step="any" min="1" id="c-exchange-custom" class="input input-sm w-24" placeholder="例 27.5">
+                <span class="text-xs text-gray-500">玉交換（100円あたり）</span>
+            </div>
+        </div>
+        <div>
+            <label class="label" for="c-border-manual">ボーダー（回/千円）</label>
+            <input type="number" inputmode="decimal" step="any" min="0" id="c-border-manual" class="input" placeholder="空欄なら機種データから換算">
+            <p class="hint" id="c-border-hint"></p>
+        </div>
+        <div>
+            <label class="label" for="c-lend">貸玉（1,000円あたり）</label>
+            <input type="number" inputmode="numeric" step="1" min="1" id="c-lend" class="input" value="250">
+            <p class="hint">玉数で投資を入れたときの千円換算に使います（4円パチンコは250玉）。</p>
+        </div>
+    </div>
+    {% endcall %}
+
+    {{ back_link(url_for('pachinko.index'), "機種データの一覧に戻る") }}
+</div>
+</main>
+
+<script>
+(function () {
+    // サーバーが正の機種データ。ブラウザ側にコピーは持たず、描画のたびに埋め込む
+    const MACHINES = {{ machines | tojson }};
+    const BORDER_POINTS = {{ border_points | tojson }};
+    const PRESELECT_ID = {{ preselect_id | tojson }};
+    const STORAGE_KEY = 'pachinko_calc_v1';
+
+    const $ = function (id) { return document.getElementById(id); };
+    const DEFAULT_STATE = {
+        machineId: '', exchangeBalls: 250, borderManual: '', lend: 250,
+        unit: 'k', invest: 0, start: 0, current: 0, segments: [],
+    };
+    let state = load();
+    state.segments = Array.isArray(state.segments) ? state.segments.slice() : [];
+    if (PRESELECT_ID && MACHINES.some(function (m) { return m.machine_id === PRESELECT_ID; })) {
+        state.machineId = PRESELECT_ID;
+    }
+
+    // 保存できない環境(プライベートブラウズ等)でも計算はできるように、失敗は黙って無視する
+    function load() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+            return Object.assign({}, DEFAULT_STATE, saved || {});
+        } catch (e) {
+            return Object.assign({}, DEFAULT_STATE);
+        }
+    }
+    function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* 保存できなくても計算は続ける */ }
+    }
+
+    function num(value) {
+        const n = parseFloat(value);
+        return isFinite(n) ? n : 0;
+    }
+
+    // 投資を千円単位にそろえる(玉数で入れた区間と千円で入れた区間を足せるように)
+    function toThousand(invest, unit) {
+        return unit === 'ball' ? invest / (num(state.lend) || 250) : invest;
+    }
+
+    /*
+     * 交換率(1,000円分を何玉で交換するか)でのボーダーを、登録済みの点を直線で結んで概算する。
+     * 範囲の外は端の2点の傾きで伸ばす。実際は厳密な直線ではないが、店ごとの細かい差を見るには足りる。
+     */
+    function borderAt(machine, balls) {
+        const points = BORDER_POINTS
+            .map(function (p) { return [p.balls, machine[p.key]]; })
+            .filter(function (p) { return p[1]; });
+        if (!points.length) return null;
+        if (points.length === 1) return points[0][1];
+        let i = 0;
+        while (i < points.length - 2 && balls > points[i + 1][0]) i++;
+        const a = points[i], b = points[i + 1];
+        return a[1] + (b[1] - a[1]) * (balls - a[0]) / (b[0] - a[0]);
+    }
+
+    function currentBorder() {
+        if (state.borderManual !== '' && num(state.borderManual) > 0) {
+            return { value: num(state.borderManual), hint: '手入力のボーダーを使っています。' };
+        }
+        const machine = MACHINES.find(function (m) { return m.machine_id === state.machineId; });
+        if (!machine) return { value: null, hint: '機種を選ぶか、ボーダーを手入力してください。' };
+        const value = borderAt(machine, state.exchangeBalls);
+        if (value === null) return { value: null, hint: 'この機種はボーダーが未登録です。手入力してください。' };
+        const exact = BORDER_POINTS.some(function (p) { return p.balls === state.exchangeBalls && machine[p.key]; });
+        return { value: value, hint: exact ? '機種データのボーダーです。' : '登録済みのボーダーから換算した概算です。' };
+    }
+
+    function totals() {
+        let spins = 0, investK = 0;
+        state.segments.forEach(function (s) { spins += s.spins; investK += s.investK; });
+        spins += Math.max(0, num(state.current) - num(state.start));
+        investK += toThousand(num(state.invest), state.unit);
+        return { spins: spins, investK: investK };
+    }
+
+    function render() {
+        const t = totals();
+        const border = currentBorder();
+        const rate = t.investK > 0 ? t.spins / t.investK : null;
+
+        $('r-rate').textContent = rate === null ? '—' : rate.toFixed(1);
+        $('r-border').textContent = border.value === null ? '—' : border.value.toFixed(1) + '回';
+        $('r-spins').textContent = t.spins.toLocaleString();
+        $('r-invest').textContent = Math.round(t.investK * 1000).toLocaleString();
+        $('c-border-hint').textContent = border.hint;
+
+        const result = $('calc-result');
+        result.classList.remove('diff-plus', 'diff-minus', 'diff-none');
+        if (rate === null || border.value === null) {
+            $('r-diff').textContent = '—';
+            result.classList.add('diff-none');
+        } else {
+            const diff = rate - border.value;
+            $('r-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
+            result.classList.add(diff >= 0 ? 'diff-plus' : 'diff-minus');
+        }
+
+        $('c-segments').classList.toggle('hidden', !state.segments.length);
+        $('c-segment-rows').innerHTML = '';
+        state.segments.forEach(function (s, i) {
+            const tr = document.createElement('tr');
+            const r = s.investK > 0 ? (s.spins / s.investK).toFixed(1) : '—';
+            tr.innerHTML = '<td class="py-1">区間' + (i + 1) + '</td>'
+                + '<td class="py-1 text-right">' + s.spins + '回</td>'
+                + '<td class="py-1 text-right">' + Math.round(s.investK * 1000).toLocaleString() + '円</td>'
+                + '<td class="py-1 text-right">' + r + '回/k</td>';
+            $('c-segment-rows').appendChild(tr);
+        });
+        save();
+    }
+
+    function syncInputs() {
+        $('c-machine').value = state.machineId;
+        $('c-border-manual').value = state.borderManual;
+        $('c-lend').value = state.lend;
+        $('c-invest').value = state.invest;
+        $('c-start').value = state.start;
+        $('c-current').value = state.current;
+        const presets = ['250', '280', '300', '330'];
+        document.querySelectorAll('#c-exchange [data-balls]').forEach(function (chip) {
+            chip.classList.toggle('selected', num(chip.dataset.balls) === state.exchangeBalls);
+        });
+        $('c-exchange-custom').value = presets.includes(String(state.exchangeBalls)) ? '' : state.exchangeBalls / 10;
+        document.querySelectorAll('#c-unit [data-unit]').forEach(function (chip) {
+            chip.classList.toggle('selected', chip.dataset.unit === state.unit);
+        });
+        $('c-invest-plus').textContent = state.unit === 'ball' ? '+250玉' : '+1千円';
+    }
+
+    function step() { return state.unit === 'ball' ? (num(state.lend) || 250) : 1; }
+
+    $('c-machine').addEventListener('change', function () { state.machineId = this.value; render(); });
+    $('c-border-manual').addEventListener('input', function () { state.borderManual = this.value; render(); });
+    $('c-lend').addEventListener('input', function () { state.lend = num(this.value) || 250; syncInputs(); render(); });
+    $('c-invest').addEventListener('input', function () { state.invest = num(this.value); render(); });
+    $('c-start').addEventListener('input', function () { state.start = num(this.value); render(); });
+    $('c-current').addEventListener('input', function () { state.current = num(this.value); render(); });
+    $('c-exchange').addEventListener('click', function (e) {
+        const chip = e.target.closest('[data-balls]');
+        if (!chip) return;
+        state.exchangeBalls = num(chip.dataset.balls);
+        syncInputs(); render();
+    });
+    $('c-exchange-custom').addEventListener('input', function () {
+        const per100 = num(this.value);
+        if (per100 <= 0) return;
+        state.exchangeBalls = per100 * 10;
+        document.querySelectorAll('#c-exchange [data-balls]').forEach(function (chip) {
+            chip.classList.toggle('selected', num(chip.dataset.balls) === state.exchangeBalls);
+        });
+        render();
+    });
+    $('c-unit').addEventListener('click', function (e) {
+        const chip = e.target.closest('[data-unit]');
+        if (!chip || chip.dataset.unit === state.unit) return;
+        // 単位を切り替えても投資額の意味が変わらないよう、入っている値を換算する
+        const lend = num(state.lend) || 250;
+        state.invest = chip.dataset.unit === 'ball' ? Math.round(num(state.invest) * lend) : +(num(state.invest) / lend).toFixed(2);
+        state.unit = chip.dataset.unit;
+        syncInputs(); render();
+    });
+    $('c-invest-plus').addEventListener('click', function () {
+        state.invest = +(num(state.invest) + step()).toFixed(2); syncInputs(); render();
+    });
+    $('c-invest-minus').addEventListener('click', function () {
+        state.invest = Math.max(0, +(num(state.invest) - step()).toFixed(2)); syncInputs(); render();
+    });
+    $('c-split').addEventListener('click', function () {
+        const spins = Math.max(0, num(state.current) - num(state.start));
+        const investK = toThousand(num(state.invest), state.unit);
+        if (!spins && !investK) return;
+        state.segments.push({ spins: spins, investK: investK });
+        state.invest = 0; state.start = 0; state.current = 0;
+        syncInputs(); render();
+    });
+    $('c-reset').addEventListener('click', function () {
+        if (!confirm('投資・回転数・区切った区間をすべて消します。よろしいですか?')) return;
+        state = Object.assign({}, DEFAULT_STATE, {
+            machineId: state.machineId, exchangeBalls: state.exchangeBalls,
+            borderManual: state.borderManual, lend: state.lend, unit: state.unit, segments: [],
+        });
+        syncInputs(); render();
+    });
+
+    syncInputs();
+    render();
+})();
+</script>
+{% endblock %}

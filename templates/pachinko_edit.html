@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, back_link %}
+
+{% block title %}{{ machine.name if machine.machine_id else "機種を登録" }}{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('pencil') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">
+        {{ (machine.name ~ " を編集") if machine.machine_id else "パチンコ機種を登録" }}
+    </h1>
+</div>
+{% endblock %}
+
+{% set m = machine %}
+
+{# 数値の入力欄。未登録(None)は空欄で出す #}
+{% macro num_input(name, label, placeholder='', step='any', hint=None) %}
+<div>
+    <label class="label" for="f-{{ name }}">{{ label }}</label>
+    <input type="number" inputmode="decimal" step="{{ step }}" min="0" id="f-{{ name }}" name="{{ name }}"
+           value="{{ '%g' % m[name] if m[name] is not none else '' }}" placeholder="{{ placeholder }}" class="input">
+    {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, placeholder='') %}
+<div>
+    <label class="label" for="f-{{ name }}">{{ label }}</label>
+    <textarea id="f-{{ name }}" name="{{ name }}" rows="3" placeholder="{{ placeholder }}" class="input">{{ m[name] or '' }}</textarea>
+</div>
+{% endmacro %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<form action="{{ url_for('pachinko.save') }}" method="POST" class="stack">
+    <input type="hidden" name="machine_id" value="{{ m.machine_id or '' }}">
+
+    {% call card("pachinko", "基本情報") %}
+    <div class="grid gap-3 md:grid-cols-3">
+        <div class="md:col-span-3">
+            <label class="label" for="f-name">機種名（必須）</label>
+            <input type="text" id="f-name" name="name" value="{{ m.name or '' }}" required class="input" placeholder="例: e 北斗の拳10">
+        </div>
+        <div>
+            <label class="label" for="f-maker">メーカー</label>
+            <input type="text" id="f-maker" name="maker" value="{{ m.maker or '' }}" class="input">
+        </div>
+        <div>
+            <label class="label" for="f-spec_type">スペックタイプ</label>
+            <select id="f-spec_type" name="spec_type" class="input">
+                <option value="">未選択</option>
+                {% for t in spec_types %}
+                <option value="{{ t }}" {% if m.spec_type == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% endcall %}
+
+    {% call card("chart", "スペック") %}
+    <div class="grid gap-3 grid-cols-2 md:grid-cols-4">
+        {{ num_input("hit_prob", "大当り確率 1/", "319.7") }}
+        {{ num_input("rush_hit_prob", "RUSH中確率 1/", "99.9") }}
+        {{ num_input("rush_entry_rate", "RUSH突入率 %", "50") }}
+        {{ num_input("rush_continue_rate", "RUSH継続率 %", "80") }}
+    </div>
+    {% endcall %}
+
+    {% call card("target", "ボーダー（千円あたりの回転数）", None, "bg-gray-100",
+         "回転率計算では、この3点を結んで店ごとの交換率のボーダーを概算します。分かるものだけでかまいません。") %}
+    <div class="grid gap-3 grid-cols-3">
+        {{ num_input("border_equiv", "等価（250玉）", "18.0") }}
+        {{ num_input("border_28", "28玉交換", "19.5") }}
+        {{ num_input("border_33", "33玉交換", "21.0") }}
+    </div>
+    {% endcall %}
+
+    {% call card("sunrise", "遊タイム・朝一") %}
+    <div class="grid gap-3 grid-cols-2">
+        {{ num_input("yutime_games", "遊タイム発動（低確率の回転数）", "950", "1") }}
+        {{ num_input("yutime_spins", "遊タイム中の時短回数", "1214", "1") }}
+    </div>
+    <div class="grid gap-3 mt-3">
+        {{ textarea("yutime_note", "遊タイムのメモ", "狙い目・電サポ中の注意など") }}
+        {{ textarea("morning_lamp_note", "朝一ランプ・リセット判別", "リセット時はランプが〇色 など") }}
+    </div>
+    {% endcall %}
+
+    {% call card("wrench", "止め打ち・ワンツー打法") %}
+    {{ textarea("technique_note", "手順・効果", "電サポ中は〇個入れて止める、ワンツーのタイミング など") }}
+    {% endcall %}
+
+    {% call card("bulb", "演出の期待度", None, "bg-gray-100",
+         "先バレ・保留変化・カットインなど、機種ごとに見たい演出を好きなだけ足せます。名前を空にした行は保存されません。") %}
+    <div id="effect-rows" class="flex flex-col gap-2">
+        {% for e in m.effects + [{"name": "", "rate": none, "note": ""}] %}
+        <div class="effect-row grid gap-2 grid-cols-[1fr_6rem] md:grid-cols-[1fr_6rem_1fr]">
+            <input type="text" name="effect_name" value="{{ e.name or '' }}" placeholder="演出名（例: 先バレ）" class="input input-sm">
+            <input type="number" inputmode="decimal" step="any" min="0" max="100" name="effect_rate"
+                   value="{{ '%g' % e.rate if e.rate is not none else '' }}" placeholder="期待度%" class="input input-sm">
+            <input type="text" name="effect_note" value="{{ e.note or '' }}" placeholder="補足（任意）" class="input input-sm col-span-2 md:col-span-1">
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" id="effect-add" class="btn btn-ghost btn-sm gap-1 mt-3">{{ icon('plus') }} 行を足す</button>
+    {% endcall %}
+
+    {% call card("memo", "メモ・出典") %}
+    <div class="grid gap-3">
+        {{ textarea("note", "その他のメモ") }}
+        <div>
+            <label class="label" for="f-source">出典（URLなど）</label>
+            <input type="text" id="f-source" name="source" value="{{ m.source or '' }}" class="input">
+        </div>
+    </div>
+    {% endcall %}
+
+    <div class="flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-primary gap-1">{{ icon('save') }} 保存する</button>
+        <a href="{{ url_for('pachinko.detail', machine_id=m.machine_id) if m.machine_id else url_for('pachinko.index') }}" class="btn btn-ghost">やめる</a>
+    </div>
+</form>
+
+{% if m.machine_id %}
+<form action="{{ url_for('pachinko.delete', machine_id=m.machine_id) }}" method="POST" class="mt-8"
+      onsubmit='return confirm({{ ("「" ~ m.name ~ "」を削除します。元には戻せません。よろしいですか?") | tojson }});'>
+    <button type="submit" class="btn bg-red-600 text-white hover:bg-red-700 gap-1">{{ icon('trash') }} この機種を削除する</button>
+</form>
+{% endif %}
+</main>
+
+<script>
+    // 空の行を1つ複製して足す(入力済みの行を写すと中身まで増えてしまうので、値は消す)
+    document.getElementById('effect-add').addEventListener('click', function () {
+        const rows = document.getElementById('effect-rows');
+        const row = rows.querySelector('.effect-row').cloneNode(true);
+        row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+        rows.appendChild(row);
+        row.querySelector('input').focus();
+    });
+</script>
+{% endblock %}

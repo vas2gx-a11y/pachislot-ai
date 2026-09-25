@@ -20,6 +20,7 @@ from routes.live_chat import live_chat_bp
 from routes.store_info import store_info_bp
 from routes.auth import auth_bp
 from routes.members import members_bp
+from routes.pachinko import pachinko_bp
 
 app = Flask(__name__)
 # ログインをセッションで持つので、鍵が起動のたびに変わると再起動(Renderのスリープ復帰を含む)で
@@ -47,6 +48,7 @@ app.register_blueprint(live_chat_bp)
 app.register_blueprint(store_info_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(members_bp)
+app.register_blueprint(pachinko_bp)
 
 # ?refresh=1 の処理より先にログインを確認する(未ログインでキャッシュを捨てさせないため)
 app.before_request(auth.load_logged_in_user)
