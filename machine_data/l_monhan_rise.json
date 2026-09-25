@@ -1,0 +1,225 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_monhan_rise",
+  "name": "スマスロ モンスターハンターライズ",
+  "aliases": ["モンスターハンターライズ", "モンハンライズ", "モンハン", "スマスロ モンハンライズ", "Lモンスターハンターライズ"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#b5452b" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ モンスターハンターライズ」", "url": "https://www.p-world.co.jp/machine/database/10138", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ モンスターハンターライズ」", "url": "https://p-town.dmm.com/machines/4676", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "アデリオン",
+    "release_date": "2024-11-18",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナス「狩猟ボーナス」のループ）",
+    "model_name": "LモンスターハンターライズXA",
+    "certification_no": "430243",
+    "games_per_50_coins": { "value": 32.7, "unit": "G", "note": "約32.7G（設定1〜6）" },
+    "net_gain_per_game": { "value": 4.0, "unit": "枚", "note": "紫7ボーナス・上位AT 約4.0枚/G、赤7・BARボーナス 約2.7枚/G" },
+    "features": ["カムラポイントの規定ポイントでクエスト", "ポイント特化ゾーン「ライズゾーン」", "保障G数内にモンスターを討伐する超抽選バトル", "上位AT「気焔万丈」"],
+    "summary": "通常時はベル・レア役でカムラポイントを貯め、規定ポイント（100pt〜600pt）到達のクエストからAT「狩猟ボーナス」を目指す。CZはアイルーだるま落とし（リプレイの規定回数で当選）と上位CZ百竜夜行。狩猟ボーナスは保障G数内のモンスター討伐で剥ぎ取りチャンスを獲得して継続（平均討伐期待度約52%）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.8, "3": 100.3, "4": 105.4, "5": 110.1, "6": 114.3 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 309.5, "2": 301.4, "3": 290.8, "4": 256.4, "5": 237.1, "6": 230.8 }, "highlight": true },
+      { "key": "rise_zone", "label": "ライズゾーン突入率（実質）", "format": "fraction", "values": { "1": 75.6, "2": 75.2, "3": 72.9, "4": 71.8, "5": 68.9, "6": 68.2 } }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.3 },
+      { "key": "hazure3", "label": "ハズレ3枚役", "format": "fraction", "value": 6.5 },
+      { "key": "bell3", "label": "3枚ベル", "format": "fraction", "value": 8.1 },
+      { "key": "w_cherry", "label": "弱チェリー", "format": "fraction", "value": 114.9 },
+      { "key": "s_cherry", "label": "強チェリー", "format": "fraction", "value": 532.8 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 105.3 },
+      { "key": "w_chance", "label": "弱チャンス目", "format": "fraction", "value": 99.9 },
+      { "key": "s_chance", "label": "強チャンス目", "format": "fraction", "value": 585.1 },
+      { "key": "rare_total", "label": "レア役合算", "format": "fraction", "value": 31.4 }
+    ],
+    "note": "小役確率はすべて全設定共通。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "アイルーだるま落とし",
+        "facts": [{ "label": "継続", "value": "5G（STタイプ）" }, { "label": "契機", "value": "リプレイの規定回数（40〜200回）" }],
+        "description": "5個のだるまをすべて落とせば成功濃厚。規定リプレイ回数は高設定ほど少ない回数が選ばれやすい。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "百竜夜行",
+        "facts": [{ "label": "継続", "value": "12G" }],
+        "description": "上位CZ。成功時は大連続ボーナス濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ライズゾーン",
+        "facts": [{ "label": "継続", "value": "1セット5G" }],
+        "description": "カムラポイント特化ゾーン。成立役に応じてポイント＋セット継続率を獲得。20セット継続でAT当選濃厚。強レア役は内部状態不問で当選濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "狩猟ボーナス",
+        "facts": [{ "label": "紫7", "value": "純増約4.0枚・保障60Gor100G" }, { "label": "赤7", "value": "純増約2.7枚・保障40Gor50G" }, { "label": "BAR", "value": "純増約2.7枚・保障25G" }],
+        "description": "保障G数内にモンスターを討伐すれば剥ぎ取りチャンスを獲得して次セットへ。平均討伐期待度約52%。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "大連続ボーナス",
+        "facts": [],
+        "description": "突入時に決めたゲーム数がなくなるまでモンスターを討伐し続け、討伐数だけ剥ぎ取りチャンスをストック。ロングフリーズ時は超大連続ボーナス。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "百竜ノ淵源チャレンジ → 百竜ノ淵源ボーナス",
+        "facts": [{ "label": "チャレンジ", "value": "7G・期待度約67%" }, { "label": "ボーナス", "value": "100G・純増約4.0枚" }],
+        "description": "ナルハタタヒメ討伐で超剥ぎ取りチャンスG＋上位AT「気焔万丈」突入濃厚。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 999, "text": "ボーナス間 999G+α" },
+    "games_after_reset": { "status": "短縮の記載なし" },
+    "benefit": "赤7ボーナス以上に当選",
+    "notes": ["クエスト回数天井: AT間7回目のクエストで赤7ボーナス以上"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "100pt", "note": "モードD（ほぼモードD滞在中のみ当選）" }, { "games": "200pt・400pt・600pt", "note": "モードA・Cで当選しやすい" }, { "games": "300pt・500pt", "note": "モードBで当選しやすい" }],
+    "notes": ["ゲーム数ではなくカムラポイントの規定値（3枚ベル5pt / 弱レア役10pt / 強レア役20pt）"],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "reset": {
+    "items": ["内部状態は通常以上", "ポイントモードB以上濃厚", "75%以上でクエストテーブル天国準備以上", "カムラポイント・リプレイ回数が内部的にランダム加算", "約50%で朝イチ1回目のボーナスのモンスターに金冠（討伐で剥ぎ取りチャンスG）"],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": {
+    "items": ["ツラヌキ: モンスター10頭以上討伐時の一部 / 15頭以上討伐時 / 有利区間差枚数+2100枚到達で、エンディング後に百竜ノ淵源チャレンジへ"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT（狩猟ボーナス）初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 309.5, "2": 301.4, "3": 290.8, "4": 256.4, "5": 237.1, "6": 230.8 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "rise_zone", "label": "ライズゾーン突入率（実質）",
+        "observe": "通常時ゲーム数に対するライズゾーン突入回数",
+        "denom_base": "normal",
+        "values": { "1": 75.6, "2": 75.2, "3": 72.9, "4": 71.8, "5": 68.9, "6": 68.2 },
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "daruma_replay", "label": "アイルーだるま落とし当選までの規定リプレイ回数",
+        "observe": "前回のだるま落とし当選（またはボーナス）からのリプレイ回数",
+        "judge": false,
+        "outcomes": [
+          { "key": "r40", "label": "40回", "values": { "1": 12.5, "2": 13.3, "3": 15.6, "4": 19.5, "5": 21.9, "6": 22.7 } },
+          { "key": "r80", "label": "80回", "values": { "1": 12.5, "2": 13.3, "3": 15.6, "4": 19.5, "5": 21.9, "6": 22.7 } },
+          { "key": "r120", "label": "120回", "values": { "1": 25.0, "2": 24.2, "3": 21.9, "4": 20.3, "5": 19.5, "6": 18.8 } },
+          { "key": "r160", "label": "160回", "values": { "1": 25.0, "2": 24.6, "3": 23.4, "4": 20.3, "5": 18.4, "6": 18.0 } },
+          { "key": "r200", "label": "200回", "values": { "1": 25.0, "2": 24.6, "3": 23.4, "4": 20.3, "5": 18.4, "6": 18.0 } }
+        ],
+        "weight_note": "リプレイ回数の数え始め（リセットされる契機）が公表されておらず、設定変更時のランダム加算もあるので判別には入れない",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "エンタトロフィー（ボーナス終了画面）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンタトロフィー（ボーナス終了画面）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "エンタトロフィー（ボーナス終了画面）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンタトロフィー（ボーナス終了画面）", "pattern": "紅葉柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンタトロフィー（ボーナス終了画面）", "pattern": "レインボー（虹）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ボーナス終了画面", "pattern": "MG-滅-ワドウ丸 / ルーク / HARUTO", "meaning": "奇数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス終了画面", "pattern": "アッシュ / Mimi★chan", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス終了画面", "pattern": "つばき", "meaning": "設定1・4・5・6示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス終了画面", "pattern": "YOU＆オトモ", "meaning": "高設定示唆（弱）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス終了画面", "pattern": "Lara＆ミランダ＆隊長（装備あり）", "meaning": "高設定示唆（強）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "ボーナス終了画面", "pattern": "イオリ＆ヨモギ", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "ウツシ＆フゲン", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "全員集合（congratulation）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "ヒノエ＆ミノト＆エンタライオン", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "インナー姿の3人組", "meaning": "次回クエストテーブル天国示唆（設定示唆ではない）", "min_setting": null, "exact_setting": null, "level": "none" },
+
+      { "category": "ボーナス確定画面", "pattern": "MG-滅-ワドウ丸 / ルーク / HARUTO", "meaning": "奇数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス確定画面", "pattern": "アッシュ / Mimi★chan / つばき", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス確定画面", "pattern": "YOU", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス確定画面", "pattern": "Lara＆ミランダ＆隊長", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "ボーナス揃い時のボイス", "pattern": "仲間ボイスがウツシ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス揃い時のボイス", "pattern": "仲間ボイスがヒノエ / 紫7の1確ボイスがエンタライオン", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "ボーナス揃い時のボイス", "pattern": "「〇〇ボーナス！」のハンターが参戦しない / モンスターを得意としないハンター", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "早期討伐後のムービー", "pattern": "エンタライオンの紹介ムービー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "青", "meaning": "奇数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "緑", "meaning": "偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "赤", "meaning": "高設定示唆（強）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "紅葉柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のアイルーおみくじ", "pattern": "レインボー（虹）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ボーナス終了画面はPUSHボタンで変化。ルーク・HARUTOはDMMぱちタウンでは奇数設定示唆と明記（P-WORLDは表の区切りがMG-滅-ワドウ丸と同じ行）。ボーナス確定画面のつばきはDMMぱちタウンでは偶数設定示唆。エンタトロフィーは1回のATに1度しか出現抽選がない。",
+    "observations": [
+      { "label": "ボーナス直撃当選率（非前兆中のレア役）", "detail": "弱レア役 0.03%〜0.20% / 強レア役 1.56%〜6.25%（設定1〜6）。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "3枚ベルでの高確移行率", "detail": "6.25%〜9.38%（設定1〜6）。内部状態なので直接は見えない。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "クエストテーブル・ポイントモード移行率", "detail": "高設定ほど天国・モードC/Dへ移行しやすい。何回目のクエストでATに当選したか、どのポイントでクエストに入ったかでテーブル・モードを推測できる。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "ロングフリーズ確率", "detail": "約1/986413〜約1/492965（設定1〜6）。有利区間の差枚数が+400枚以下のときのみ抽選。", "official": true, "source_ids": ["pworld", "ptown"] }
+    ],
+    "pending": []
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/309.5 → 1/230.8）は設定4から大きく軽くなる",
+      "ライズゾーン突入率（1/75.6 → 1/68.2）も合わせて数える",
+      "ボーナス終了画面のエンタトロフィー（銅=2以上 / 銀=3以上 / 金=4以上 / 紅葉=5以上 / 虹=6）",
+      "終了画面のイオリ＆ヨモギ（設定2否定）・ウツシ＆フゲン（設定3否定）",
+      "ボーナス揃い時のボイス（ウツシ=5以上 / ヒノエ・エンタライオン=6）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["ライズゾーン突入率は実質値（内部状態込み）", "規定リプレイ回数の振り分けは数え方が曖昧なので判別に入れていない", "ボーナス直撃は前兆中のレア役を除いて抽選されるので、見た目での区別が難しい"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

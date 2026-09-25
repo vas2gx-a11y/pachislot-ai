@@ -1,0 +1,234 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_enen2",
+  "name": "Lパチスロ 炎炎ノ消防隊2",
+  "aliases": ["炎炎ノ消防隊2", "炎炎2", "スマスロ 炎炎ノ消防隊2", "炎炎ノ消防隊", "炎炎"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#e2571e" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 炎炎ノ消防隊2」", "url": "https://www.p-world.co.jp/machine/database/10415", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 炎炎ノ消防隊2」", "url": "https://p-town.dmm.com/machines/4926", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "SANKYO",
+    "release_date": "2026-02-02",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナス＋炎炎激闘チャンスのループ）",
+    "model_name": "L炎炎ノ消防隊2",
+    "certification_no": "530634",
+    "games_per_50_coins": { "value": 33.1, "unit": "G", "note": "約33.1G（設定1）" },
+    "net_gain_per_game": { "value": 5.8, "unit": "枚", "note": "ボーナス・炎炎大戦ラッシュ中 約5.8枚/G" },
+    "features": ["十字目変換", "疑似ボーナスと「炎炎激闘チャンス」のループ", "REG中のキャラ紹介で設定示唆（店長カスタム搭載）"],
+    "summary": "通常時は規定G数（88G・250G・450G・650G・850G）やレア小役・十字目変換からボーナスを目指す。SPECIALエピソードBONUS（約200枚）後は「炎炎激闘チャンス」（15G+α・ボーナス期待度約57%）へ。REG後は30G+αのエピソードBONUS高確「伝導者の罠」。上位の「炎炎大戦ラッシュ」も搭載。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている（初当りは整数での公表）。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 98.8, "3": 101.2, "4": 105.6, "5": 110.2, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 272, "2": 269, "3": 257, "4": 242, "5": 236, "6": 227 }, "highlight": true },
+      { "key": "gekito", "label": "炎炎激闘チャンス初当り", "format": "fraction", "values": { "1": 684, "2": 662, "3": 617, "4": 546, "5": 518, "6": 486 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 8.6 },
+      { "key": "replay_v", "label": "リプレイ小V", "format": "fraction", "value": 5.7 },
+      { "key": "cherry", "label": "チェリー", "format": "fraction", "value": 80 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 128 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 128 },
+      { "key": "cross_replay", "label": "十字リプレイ", "format": "fraction", "value": 5000 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 35 }
+    ],
+    "note": "小役確率はすべて全設定共通（約の値）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "伝導者の罠",
+        "facts": [{ "label": "継続", "value": "30G+α" }, { "label": "契機", "value": "REGULAR BONUS後" }],
+        "description": "エピソードBONUS高確率。リプレイ小Vでの十字目変換発生率とボーナス当選率は高設定ほど優遇（約42%〜約50% / 約30%〜約40%）。5回スルーで次回はSPECIALエピソードBONUS。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "アドラリンク",
+        "facts": [{ "label": "継続", "value": "3G" }],
+        "description": "前兆中の十字目変換から突入に期待するボーナス高確率。リプレイ小Vorレア小役でボーナス濃厚。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "SPECIALエピソードBONUS / REGULAR BONUS（初当り）",
+        "facts": [{ "label": "SPエピソード", "value": "約200枚 → 炎炎激闘チャンス" }, { "label": "REG", "value": "ベルナビ10回 → 伝導者の罠" }],
+        "description": "純増約5.8枚。REG中のキャラ紹介で設定示唆。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "エピソードBONUS",
+        "facts": [{ "label": "継続", "value": "ベルナビ10回" }],
+        "description": "当選時点で炎炎激闘チャンスの複数ストック濃厚。エピソードでストック数の期待度が変わる。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "炎炎激闘チャンス",
+        "facts": [{ "label": "継続", "value": "15G+α" }, { "label": "ボーナス期待度", "value": "約57%" }],
+        "description": "伝導者決戦に勝利でボーナス濃厚。ループ性があり、通常時を経由して再突入することもある。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "炎炎大戦ラッシュ",
+        "facts": [{ "label": "継続", "value": "15G+α" }, { "label": "純増", "value": "約5.8枚/G" }],
+        "description": "上位の炎炎激闘チャンス。高設定ほど炎炎大戦・紅J大戦に当選しやすい。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 850, "text": "ボーナス間 850G+α" },
+    "games_after_reset": { "value": 650, "text": "設定変更後 650G+α" },
+    "benefit": "ボーナスに当選",
+    "notes": ["モード別の天井: A 850G / B 650G / C 450G / D 250G / E 88G", "炎炎激闘チャンス間天井: 2000G+α（設定変更後1500G+α）でSPECIALエピソードBONUS", "伝導者の罠5回スルーで6回目はSPECIALエピソードBONUS"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "88G", "note": "モードE（88Gで中華半島へ移行しなければ上位モード期待）" }, { "games": "250G・450G・650G", "note": "規定G数" }, { "games": "850G", "note": "天井" }],
+    "notes": [],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "quit_timing": {
+    "items": ["伝導者の罠終了後、88Gの前兆を確認してからヤメ（十字目変換の前兆と重なった場合は判別不可）", "ボーナス終了画面の一部やアイキャッチでモードを示唆するので合わせて確認"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["ボーナス間天井が650G+αに短縮（天国の選択率も高い）", "炎炎ループ間天井が1500G+αに短縮"], "source_ids": ["ptown"] },
+
+  "favorable_zone": {
+    "items": ["エンディング発生時や炎炎ループ中の一部で有利区間リセット → 炎炎激闘の複数ストックや炎炎大戦（高設定ほど炎炎大戦・紅J大戦に期待）"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 272, "2": 269, "3": 257, "4": 242, "5": 236, "6": 227 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "gekito", "label": "炎炎激闘チャンス初当り確率",
+        "observe": "炎炎激闘チャンスへの初当り回数",
+        "judge": false,
+        "values": { "1": 684, "2": 662, "3": 617, "4": 546, "5": 518, "6": 486 },
+        "weight_note": "ボーナス初当りから突入するため重なる。判別には入れない", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "bonus_end_screen", "label": "ボーナス終了画面（REG・ACCEL BONUS・灰焔BONUS後）",
+        "observe": "REG・ACCEL・灰焔BONUS終了時の設定示唆画面（店長カスタム非使用時の値。カスタム報知ロゴが出ている台では使わない）",
+        "outcomes": [
+          { "key": "a", "label": "A（デフォルト）", "values": { "1": 77, "2": 74, "3": 71, "4": 63, "5": 59, "6": 55 }, "note": "100%からB〜Fの合計を引いた値" },
+          { "key": "b", "label": "B（高設定示唆）", "values": { "1": 20, "2": 22, "3": 24, "4": 26, "5": 28, "6": 30 } },
+          { "key": "c", "label": "C（高設定示唆・強）", "values": { "1": 3, "2": 4, "3": 5, "4": 6, "5": 8, "6": 9 } },
+          { "key": "d", "label": "D（設定4以上）", "values": { "1": 0, "2": 0, "3": 0, "4": 5, "5": 3, "6": 3 } },
+          { "key": "e", "label": "E（設定5以上）", "values": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 2, "6": 2 } },
+          { "key": "f", "label": "F（設定6）", "values": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 1 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "ending_minichara", "label": "エンディング中のミニキャラ（チェリー・スイカ・チャンス目成立時）",
+        "observe": "エンディング中の弱レア役で出たミニキャラ",
+        "outcomes": [
+          { "key": "shinra", "label": "シンラ（奇数）", "values": { "1": 51, "2": 32, "3": 48, "4": 28, "5": 39, "6": 22 } },
+          { "key": "arthur", "label": "アーサー（偶数）", "values": { "1": 34, "2": 48, "3": 32, "4": 42, "5": 26, "6": 33 } },
+          { "key": "tamaki", "label": "タマキ（高設定）", "values": { "1": 15, "2": 15, "3": 15, "4": 20, "5": 20, "6": 20 } },
+          { "key": "n119", "label": "119（設定2以上）", "values": { "1": 0, "2": 5, "3": 5, "4": 5, "5": 5, "6": 10 } },
+          { "key": "iris", "label": "アイリス（設定4以上）", "values": { "1": 0, "2": 0, "3": 0, "4": 5, "5": 5, "6": 5 } },
+          { "key": "benimaru", "label": "紅丸&ジョーカー（設定5以上）", "values": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 5, "6": 5 } },
+          { "key": "sho", "label": "ショウ（設定6）", "values": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 5 }, "highlight": true }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "獲得枚数表示", "pattern": "119枚OVER", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "246枚OVER", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ボーナス終了画面", "pattern": "D", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "E", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "F", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくんが1〜5番目に登場（アイリスシナリオ）", "meaning": "登場した順番の設定を否定（1番目なら設定1否定、2番目なら設定2否定…）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくん1番目", "meaning": "設定1否定", "min_setting": null, "exact_setting": null, "denied_settings": [1], "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくん2番目", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくん3番目", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくん4番目", "meaning": "設定4否定", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "まもるくん5番目", "meaning": "設定5否定", "min_setting": null, "exact_setting": null, "denied_settings": [5], "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "アイリスシナリオでまもるくんが登場しない", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "ラストに紅丸 / 大隊長シナリオ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "第8シナリオのラストがアイリス→金シンラ（第8④）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "伝導者シナリオのラストが特殊キャラ（伝導者④）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "黒野（金・どこかで出現）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "ジョーカー（金・どこかで出現）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "シンラ（死ノ圧・どこかで出現）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "第8シナリオでラスト2人が赤 / 伝導者シナリオのラストがインカ・オロチ・リツ", "meaning": "偶数示唆 / 奇数・高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "エンディング中のミニキャラ", "pattern": "119", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のミニキャラ", "pattern": "アイリス", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のミニキャラ", "pattern": "紅丸&ジョーカー", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のミニキャラ", "pattern": "ショウ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "REG中のキャラ紹介の法則はDMMぱちタウンの整理（P-WORLDのシナリオ表とも一致）。伝導者④のラストのキャラはP-WORLDでは森羅（シンラ）、DMMぱちタウンではショウとしており食い違う（どちらも設定5以上濃厚）。ボーナス終了画面は店長カスタムで表示タイミングを変えられる（1000G区切り）。",
+    "observations": [
+      { "label": "伝導者の罠の十字目変換", "detail": "リプレイ小V時の十字目変換発生率は設定1 約42% / 高設定 約50%、変換時のボーナス期待度は約30% / 約40%。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "炎炎ループ確率・炎炎大戦当選率", "detail": "高設定ほど高い（数値は未公表）。", "official": true, "source_ids": ["ptown"] }
+    ],
+    "pending": []
+  },
+
+  "effects": {
+    "items": [
+      { "name": "REG中のキャラ紹介シナリオ（一部）", "rows": [["第8①（デフォルト）", "シンラ→アーサー→タマキ→マキ→ヒナワ"], ["大隊長", "ジョヴァンニ→オウビ→アーグ→バーンズ→紅丸（設定4以上）"], ["アイリス①〜⑤", "まもるくんの登場位置の設定を否定"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "ボーナス初当り（1/272 → 1/227）を通常時ゲーム数と合わせて数える",
+      "REG中のキャラ紹介は、まもるくんの登場位置（設定否定）と金キャラ（黒野・ジョーカー・シンラ死ノ圧）に注目",
+      "REG・ACCEL・灰焔BONUS後の終了画面のほうが高設定示唆が出やすい",
+      "エンディング中の弱レア役でのミニキャラ（シンラ=奇数 / アーサー=偶数）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["炎炎激闘チャンス初当りはボーナス初当りと重なるため判別に入れていない", "終了画面の出現率は店長カスタム非使用時の値（約の値）", "初当り確率は整数での公表"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

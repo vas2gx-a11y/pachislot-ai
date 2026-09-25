@@ -1,0 +1,235 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_karakuri_circus2",
+  "name": "Lパチスロ からくりサーカス2",
+  "aliases": ["からくりサーカス2", "からくり2", "スマスロ からくりサーカス2", "からくりサーカス", "からくり"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#8b2d2d" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ からくりサーカス2」", "url": "https://www.p-world.co.jp/machine/database/10485", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ からくりサーカス2」", "url": "https://p-town.dmm.com/machines/5019", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "SANKYO（製造: ジェイビー）",
+    "release_date": "2026-07-06",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（差枚数管理型）",
+    "model_name": "Lからくりサーカス2jG",
+    "certification_no": "5S1811",
+    "games_per_50_coins": { "value": 31.8, "unit": "G", "note": "約31.8G" },
+    "net_gain_per_game": { "value": 2.8, "unit": "枚", "note": "AT約2.8枚/G、上位は約8.0枚/G" },
+    "features": ["CZ「機械仕掛けの女神」「幕間チャンス」「劇場ジャッジ」", "激情ジャッジ3回成功で上位CZ「運命の一劇」", "AT終了画面のタッチボイスで設定否定"],
+    "summary": "通常時は規定G数（液晶G数）到達時の抽選からCZ・ATを目指す。レア小役で懸糸傀儡演舞や運命盤を抽選。AT「からくりサーカス」は初期150枚・純増約2.8枚の差枚数管理型で、激情ジャッジ（4G・約50%）成功で3桁上乗せ。同一AT内で3回成功すると上位CZ「運命の一劇」の権利を獲得。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている（CZ・ATは整数での公表）。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 98.8, "3": 101.2, "4": 104.3, "5": 110.5, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 519, "2": 504, "3": 474, "4": 458, "5": 430, "6": 410 }, "highlight": true },
+      { "key": "cz", "label": "CZ", "format": "fraction", "values": { "1": 342, "2": 341, "3": 339, "4": 339, "5": 327, "6": 318 } }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.3 },
+      { "key": "bell3", "label": "3枚ベル", "format": "fraction", "value": 24 },
+      { "key": "chance_bell", "label": "チャンスベル", "format": "fraction", "value": 150 },
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 98 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 327 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 100 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 175 }
+    ],
+    "note": "小役確率はすべて全設定共通（約の値）。押し順ベル合成は約1/2.6（色目押し込みで約1/1.3）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "機械仕掛けの女神（CZ）",
+        "facts": [{ "label": "継続", "value": "10G+α" }, { "label": "成功期待度", "value": "約55%" }],
+        "description": "2G連続で小役を引ければ成功濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "幕間チャンス / 劇場ジャッジ",
+        "facts": [{ "label": "幕間チャンス", "value": "5or10G・約17%or約41%" }, { "label": "劇場ジャッジ", "value": "4G・約47%" }],
+        "description": "幕間チャンスはレア小役で成功濃厚。劇場ジャッジ成功時は3桁上乗せ＋激情ジャッジ1回成功扱いからAT。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "激情ジャッジ（AT中のCZ）",
+        "facts": [{ "label": "継続", "value": "4G" }, { "label": "成功期待度", "value": "約50%" }],
+        "description": "成功で3桁上乗せ。同一AT内で3回成功すると上位CZ「運命の一劇」の権利。登場キャラの順番（シナリオ）で設定示唆。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "からくりサーカス（AT）",
+        "facts": [{ "label": "初期", "value": "差枚150枚" }, { "label": "純増", "value": "約2.8枚/G" }],
+        "description": "激情ジャッジ高確・差枚数上乗せ・激情ジャッジ・特化ゾーン「ショータイム」を抽選。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "特化ゾーン",
+        "facts": [{ "label": "ショータイム", "value": "1G+α（小役で継続＋上乗せ）" }, { "label": "踊れ!オリンピア", "value": "10G+1G・平均約200枚" }, { "label": "極限舞踏", "value": "1G+α・平均約800枚以上" }],
+        "description": "踊れ!オリンピアは最終Gで上乗せ枚数が2〜4倍になる抽選あり。連打上乗せの数字で設定示唆。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1200, "text": "液晶G数 1200G（1100Gのゾーンが最深）" },
+    "games_after_reset": { "value": 500, "text": "設定変更後 液晶G数500G" },
+    "benefit": "CZ「機械仕掛けの女神」に当選",
+    "notes": [
+      "CZ間天井: 機械仕掛けの女神・AT間の実G数890G+α でCZ（幕間チャンスの失敗ではリセットされない）",
+      "CZスルー天井: CZでAT非当選が4回続くと、5回目のCZがAT＋成功濃厚の激情ジャッジストック",
+      "AT間天井: 実G数2500GでAT＋成功濃厚の激情ジャッジストック"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": { "items": [], "notes": ["規定G数は液晶G数で管理"], "source_ids": ["pworld"] },
+
+  "quit_timing": {
+    "items": ["AT終了後は示唆を確認して判断（AT終了後〜100Gまでの機械割は100%超）", "運命の一劇失敗後は128G消化まで"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["CZ間の液晶G数天井が500Gに短縮"], "source_ids": ["ptown", "pworld"] },
+
+  "favorable_zone": {
+    "items": ["規定枚数獲得でエンディングへ移行し、有利区間ツラヌキ → 運命の一劇に当選"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 519, "2": 504, "3": 474, "4": 458, "5": 430, "6": 410 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "cz", "label": "CZ確率",
+        "observe": "通常時ゲーム数に対するCZ突入回数",
+        "denom_base": "normal",
+        "values": { "1": 342, "2": 341, "3": 339, "4": 339, "5": 327, "6": 318 },
+        "weight_note": "設定1〜4はほぼ同じ。設定5・6の見分けに効く", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "at_stage", "label": "AT開始ステージ",
+        "observe": "AT開始時のステージ",
+        "outcomes": [
+          { "key": "narumi", "label": "鳴海ステージ", "values": { "1": 60, "2": 40, "3": 60, "4": 40, "5": 60, "6": 50 } },
+          { "key": "masaru", "label": "勝ステージ", "values": { "1": 40, "2": 60, "3": 40, "4": 60, "5": 40, "6": 50 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "judge_scenario", "label": "激情ジャッジのキャラシナリオ（1人目のキャラ）",
+        "observe": "ATで最初の激情ジャッジに登場したキャラ（失敗しても成功するまで同じキャラ。6回成功後は同じシナリオの1人目に戻る）",
+        "outcomes": [
+          { "key": "minshia", "label": "ミンシアから（奇数設定示唆）", "values": { "1": 56, "2": 37, "3": 54, "4": 36, "5": 51, "6": 42 } },
+          { "key": "george", "label": "ジョージから（奇数＋高設定示唆）", "values": { "1": 4, "2": 3, "3": 6, "4": 4, "5": 9, "6": 8 } },
+          { "key": "lieselotte", "label": "リーゼロッテから（偶数設定示唆）", "values": { "1": 38, "2": 54, "3": 37, "4": 52, "5": 35, "6": 42 } },
+          { "key": "wilma", "label": "ヴィルマから（偶数＋高設定示唆）", "values": { "1": 2, "2": 6, "3": 3, "4": 8, "5": 5, "6": 8 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "ending_panel_weak", "label": "エンディング中の上部パネル色（弱チェリー・スイカ・チャンスベル成立時）",
+        "observe": "エンディング中の弱レア役の次GのMAXBETで点灯した上部パネルの色（押し順ナビを無視すると以降白しか出ないことがある）",
+        "outcomes": [
+          { "key": "white", "label": "白", "values": { "1": 49, "2": 45, "3": 44, "4": 40, "5": 38, "6": 35 } },
+          { "key": "blue", "label": "青（奇数）", "values": { "1": 22, "2": 15, "3": 22, "4": 15, "5": 22, "6": 18 } },
+          { "key": "yellow", "label": "黄（偶数）", "values": { "1": 15, "2": 22, "3": 15, "4": 22, "5": 15, "6": 18 } },
+          { "key": "green", "label": "緑（高設定）", "values": { "1": 13, "2": 15, "3": 16, "4": 18, "5": 20, "6": 22 } },
+          { "key": "red", "label": "赤（設定2以上の期待度アップ）", "values": { "1": 1, "2": 3, "3": 3, "4": 3, "5": 3, "6": 3 }, "note": "設定1は「1%以下」" },
+          { "key": "purple", "label": "紫（設定4以上）", "values": { "1": 0, "2": 0, "3": 0, "4": 2, "5": 2, "6": 2 } },
+          { "key": "rainbow", "label": "レインボー（設定6）", "values": { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 2 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "strong_cherry_cz", "label": "強チェリー成立時のCZ/AT当選率（通常・低確滞在時）",
+        "observe": "内部状態（低確・高確）が見えないため判別には使わない（高確時は全設定約25%）",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "当選", "values": { "1": 9.8, "2": 10.2, "3": 12.5, "4": 13.7, "5": 14.8, "6": 16.4 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 90.2, "2": 89.8, "3": 87.5, "4": 86.3, "5": 85.2, "6": 83.6 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "獲得枚数表示", "pattern": "222OVER", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "246OVER", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "踊れ!オリンピアの連打上乗せ", "pattern": "+20", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "踊れ!オリンピアの連打上乗せ", "pattern": "+4", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "踊れ!オリンピアの連打上乗せ", "pattern": "+6", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面", "pattern": "エレオノール", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "最古の四人 / ルシール", "meaning": "奇数＋高設定示唆 / 偶数＋高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "必勝ヲ祈ッテ歯車", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "背中を守るもの", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "笑い泣き（泣き顔）のエレオノール", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面のタッチボイス", "pattern": "ルシール「人生は…そういうものだよ…」", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "AT終了画面のタッチボイス", "pattern": "リーゼロッテ「何を恐れることがある!」", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "AT終了画面のタッチボイス", "pattern": "鳴海「俺を…しろがねと呼びな!」", "meaning": "設定4否定", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "AT終了画面のタッチボイス", "pattern": "勝「ぼくはぼくさ!」", "meaning": "設定5否定", "min_setting": null, "exact_setting": null, "denied_settings": [5], "level": "confirm" },
+
+      { "category": "エンディング中の上部パネル", "pattern": "紫", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中の上部パネル", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "激情ジャッジのシナリオ番号はP-WORLDとDMMぱちタウンで振り方が逆になっているため、1人目のキャラで区別している（1人目のキャラと選択率は両出典で一致）。踊れ!オリンピアの「+77」は設定示唆ではなくトータル300枚上乗せ濃厚。",
+    "observations": [],
+    "pending": []
+  },
+
+  "effects": {
+    "items": [
+      { "name": "AT終了画面のタッチボイス（設定以外）", "rows": [["エレオノール「あるるかんがある限り、私は負けません！」", "ショータイムストック"], ["ピエロ「近づいてきているようです」", "スイカ規定回数 残り3回以下"], ["ピエロ「すぐそばまで来ているようです」", "スイカ規定回数 残り1回"], ["ピエロ「女神が留守のようです」", "次回運命盤報酬がAT直撃以上"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/519 → 1/410）とCZ（設定5・6で軽い）を通常時ゲーム数と合わせて数える",
+      "AT開始ステージ（勝=偶数寄り / 鳴海=奇数寄り）と、激情ジャッジの1人目のキャラを毎回記録する",
+      "AT終了画面は液晶をタッチしてボイスを確認。ルシール・リーゼロッテ・鳴海・勝は設定2〜5の否定",
+      "エンディング中はナビを守って、レア役後の上部パネル色を確認"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["CZ・AT・小役確率は整数（約の値）での公表", "強チェリーのCZ当選率は内部状態で変わるため判別には入れない", "コンプリート機能搭載"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_kaguya",
+  "name": "パチスロ かぐや様は告らせたい",
+  "aliases": ["かぐや様は告らせたい", "かぐや様", "かぐや", "スマスロ かぐや様", "Lかぐや様は告らせたい"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#c8325a" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「パチスロ かぐや様は告らせたい」", "url": "https://www.p-world.co.jp/machine/database/10091", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「パチスロ かぐや様は告らせたい」", "url": "https://p-town.dmm.com/machines/4618", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "SANKYO",
+    "release_date": "2024-09-02",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（疑似ボーナスの1G連ループ）",
+    "model_name": "Lかぐや様は告らせたいjA",
+    "certification_no": "4S0464",
+    "games_per_50_coins": { "value": 31.0, "unit": "G", "note": "約31.0G（設定1）" },
+    "net_gain_per_game": { "value": 9.0, "unit": "枚", "note": "疑似ボーナス中 約9.0枚/G" },
+    "features": ["純増約9.0枚の疑似ボーナス", "ボーナス中の1G連ストック抽選", "チャンス目の規定回数でCZ"],
+    "summary": "通常時はチャンス目の規定回数・強チャンス目・規定ゲーム数（130G・300G・600G）からCZ「告らせたいチャレンジ」（15G+α・成功期待度約58%）を目指す。疑似ボーナスはSUPER BIG・BIG・REGの3種類で、消化中に1G連ストックを抽選。非当選時は約100Gの引き戻しチャンス（期待度約25%以上）へ。上位ボーナスEXTRA BONUSは50Gor100G×80%ループ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている（初当りは整数での公表）。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 98.8, "3": 101.2, "4": 105.8, "5": 110.8, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 362, "2": 360, "3": 357, "4": 349, "5": 343, "6": 335 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "chance_normal", "label": "チャンス目（強含む）・通常（朝・昼）", "format": "fraction", "value": 22 },
+      { "key": "chance_high", "label": "チャンス目（強含む）・高確（夕）", "format": "fraction", "value": 11 },
+      { "key": "chance_super", "label": "チャンス目（強含む）・超高確（夜）", "format": "fraction", "value": 7 }
+    ],
+    "note": "チャンス目確率は内部状態（ステージ）別の約の値。強チャンス目は約35%でCZ当選。",
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "告らせたいチャレンジ",
+        "facts": [{ "label": "継続", "value": "15G+α" }, { "label": "成功期待度", "value": "約58%" }],
+        "description": "「サンド目を狙え!!カットイン」成功や一発告知演出でボーナス当選。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "SUPER BIG BONUS / BIG BONUS / REGULAR BONUS",
+        "facts": [{ "label": "純増", "value": "約9.0枚/G" }],
+        "description": "消化中は成立役に応じて1G連ストックを抽選（1G連はBIG以上濃厚、一部で特化ゾーン）。1G連非当選時は引き戻しチャンスへ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "EXTRA BONUS",
+        "facts": [{ "label": "初期G数", "value": "50Gor100G×80%ループ" }, { "label": "平均期待枚数", "value": "約3450枚" }],
+        "description": "BIG当選時の一部で昇格する上位ボーナス。昇格率は高設定ほど優遇（設定1はBIG約1% / SUPER BIG約2%）。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "引き戻しチャンス",
+        "facts": [{ "label": "継続", "value": "約100G" }, { "label": "引き戻し期待度", "value": "約25%以上" }],
+        "description": "引き戻し時はBIG以上濃厚。上位の「奇跡的相性 MODE」は32G以内のSUPER BIG当選が濃厚。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1100, "text": "ボーナス間 1100G+α" },
+    "games_after_reset": { "value": 800, "text": "設定変更後 800G+α" },
+    "benefit": "BIG以上に当選",
+    "notes": ["REG後は900G+αに短縮", "天井まで残り100G以内で当選したボーナスもBIG以上濃厚", "CZスルー回数天井: 最大7回スルーで次回CZがボーナス（BIG以上）に書き換え（設定変更後は最大4回に短縮される模様）", "前兆（+α）は最大32G"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "130G", "note": "CZ期待度 低" }, { "games": "300G・600G", "note": "CZ期待度 高" }],
+    "notes": ["チャンス目の回数は1の位が0・4・5・9がチャンス（特に5の倍数回）", "ゲーム数表示が青や赤に変化すれば期待度アップ"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "quit_timing": {
+    "items": ["ボーナス終了後、130G+αの前兆を消化してCZに当選しなければヤメ", "引き戻し期待度は約25%（5連目以降は50%）なので、ボーナス後即ヤメでもOK"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["天井が800G+αに短縮", "CZスルー回数天井が最大4回に短縮される模様", "電断時は初回ボーナスまでゲーム数表示の色が変化しない（設定変更の有無を問わない）"], "source_ids": ["pworld", "ptown"] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 362, "2": 360, "3": 357, "4": 349, "5": 343, "6": 335 },
+        "weight_note": "設定差が小さいので単独ではほぼ判別できない", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "ending_episode", "label": "エンディング中のエピソード",
+        "observe": "エンディングで発生したエピソード（大量上乗せ時は必ず「2人の恋の行方」になるので、その回は数えない）",
+        "outcomes": [
+          { "key": "balloon", "label": "風船ゲーム（デフォルト）", "values": { "1": 48, "2": 48, "3": 44, "4": 44, "5": 42, "6": 42 } },
+          { "key": "koi", "label": "2人の恋の行方（デフォルト）", "values": { "1": 32, "2": 32, "3": 29, "4": 29, "5": 28, "6": 28 } },
+          { "key": "shirogane", "label": "白銀エピソード（奇数示唆）", "values": { "1": 15, "2": 5, "3": 20, "4": 7, "5": 23, "6": 7 } },
+          { "key": "kaguya", "label": "かぐやエピソード（偶数示唆）", "values": { "1": 5, "2": 15, "3": 7, "4": 20, "5": 7, "6": 23 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "reg_chara", "label": "REG中のキャラ紹介シナリオ",
+        "observe": "REG中に出たキャラ紹介の並び",
+        "outcomes": [
+          { "key": "seitokai_a", "label": "生徒会A（かぐや→白銀→藤原→石上）", "values": { "1": 30, "2": 28, "3": 28, "4": 23, "5": 23, "6": 23 } },
+          { "key": "seitokai_b", "label": "生徒会B（白銀→かぐや→石上→藤原）", "values": { "1": 31, "2": 28, "3": 28, "4": 23, "5": 23, "6": 23 } },
+          { "key": "kei", "label": "白銀圭（白銀→白銀圭→かぐや→石上）", "values": { "1": 10, "2": 10, "3": 10, "4": 15, "5": 15, "6": 15 } },
+          { "key": "hayasaka", "label": "早坂（かぐや→藤原→早坂→伊井野）", "values": { "1": 0, "2": 5, "3": 5, "4": 5, "5": 5, "6": 5 } },
+          { "key": "papa", "label": "白銀パパ（かぐや→白銀パパ→白銀→藤原）", "values": { "1": 0, "2": 0, "3": 0, "4": 5, "5": 5, "6": 5 } },
+          { "key": "mode", "label": "大仏 or ベツィー（モード示唆）", "values": { "1": 29, "2": 29, "3": 29, "4": 29, "5": 29, "6": 29 } }
+        ],
+        "note": "虹背景（設定4以上＋1G連濃厚）は振り分けが「抽選あり・低め」としか公表されていないので含めない（虹背景が出た回は数えない）。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "獲得枚数表示", "pattern": "246枚over", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚over", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚over", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ボーナス終了画面", "pattern": "赤枠", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス終了画面", "pattern": "紫枠", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "銀枠", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "金枠", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "生徒会メンバー（SDキャラ・デフォルメ）", "meaning": "引き戻し期待度約70%＋設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ボーナス終了画面", "pattern": "白銀＆かぐや", "meaning": "1G連or引き戻し濃厚。どちらも否定すれば設定4以上濃厚", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "ボーナス終了画面", "pattern": "劇画調 / 藤原＆かぐや", "meaning": "引き戻し示唆（設定示唆ではない）", "min_setting": null, "exact_setting": null, "level": "none" },
+
+      { "category": "ミニ藤原の衣装チェンジ", "pattern": "LOVE探偵→制服", "meaning": "設定2以上濃厚（高設定ほど出やすい）", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ミニ藤原の衣装チェンジ", "pattern": "体操服→LOVE探偵", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ミニ藤原の衣装チェンジ", "pattern": "体操服→制服", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "ミニ藤原の衣装チェンジ", "pattern": "制服→LOVE探偵 / 制服→体操服 / LOVE探偵→体操服", "meaning": "モード示唆（通常B以上 / 通常C以上）", "min_setting": null, "exact_setting": null, "level": "none" },
+
+      { "category": "REG中のキャラ紹介", "pattern": "早坂が登場", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "白銀パパが登場", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "虹背景（ALLレインボー）", "meaning": "設定4以上＋1G連濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "REG中のキャラ紹介", "pattern": "白銀圭が登場", "meaning": "高設定示唆（弱）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "REG中のキャラ紹介", "pattern": "大仏 / ベツィーが登場", "meaning": "モード示唆（大仏は上位モード示唆、ベツィーは通常A否定）", "min_setting": null, "exact_setting": null, "level": "none" },
+
+      { "category": "エンディング中のエピソード", "pattern": "白銀エピソード", "meaning": "奇数設定かつ高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のエピソード", "pattern": "かぐやエピソード", "meaning": "偶数設定かつ高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ボーナス終了画面の白銀＆かぐやは、P-WORLDでは基本的な画面の1つとして扱い、DMMぱちタウンでは「1G連or引き戻し濃厚、否定すれば設定4以上濃厚」としている。後から結果が分かって初めて意味が決まるので、判別には取り込まない。ベツィーはP-WORLDでは「モードB以上濃厚」、DMMぱちタウンでは「通常A否定」（同じ意味）。",
+    "observations": [
+      { "label": "初当り時のBIG比率・SUPER BIG / EXTRA BONUS出現率・特化ゾーン当選率・ロングフリーズ発生率", "detail": "高設定ほど優遇（数値は未公表）。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "ボーナス終了画面の出現率", "detail": "枠あり画面は全状況を考慮した約1〜3%の出現率のみ公表。設定変更直後は設定示唆画面が出やすい。", "official": true, "source_ids": ["pworld", "ptown"] }
+    ],
+    "pending": []
+  },
+
+  "practical_points": {
+    "items": [
+      "初当りの設定差は小さい（1/362 → 1/335）ので、示唆演出を中心に見る",
+      "ボーナス終了画面の枠の色（紫=2以上 / 銀=4以上 / 金=6）",
+      "ミニ藤原の衣装チェンジ（LOVE探偵→制服 / 体操服→LOVE探偵 / 体操服→制服）",
+      "REG中のキャラ紹介（早坂=2以上 / 白銀パパ=4以上 / 虹背景=4以上）",
+      "エンディングのエピソード（白銀=奇数 / かぐや=偶数）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["ボーナス初当りは設定差が小さい", "REG中のキャラ紹介の虹背景は振り分けが未公表なので判別の比率から外している", "ミニ藤原はCZ・ボーナス後などではなく、衣装チェンジで変化した場合のみが対象"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

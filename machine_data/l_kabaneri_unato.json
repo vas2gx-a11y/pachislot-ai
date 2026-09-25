@@ -1,0 +1,277 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_kabaneri_unato",
+  "name": "スマスロ 甲鉄城のカバネリ 海門決戦",
+  "aliases": ["カバネリ海門決戦", "カバネリ2", "海門決戦", "うなと", "カバネリ"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#8c1c13" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 甲鉄城のカバネリ 海門(うなと)決戦」", "url": "https://www.p-world.co.jp/machine/database/10399", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 甲鉄城のカバネリ 海門（うなと）決戦」", "url": "https://p-town.dmm.com/machines/4930", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "サミー（製造: タイヨーエレック）",
+    "release_date": "2026-03-02",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ST＋疑似ボーナス）",
+    "model_name": "L 甲鉄城のカバネリ 海門決戦 XX",
+    "certification_no": "5S1358",
+    "games_per_50_coins": { "value": 31, "unit": "G", "note": "約31G" },
+    "net_gain_per_game": { "value": 6.0, "unit": "枚", "note": "ボーナス中 約6.0枚/G" },
+    "features": ["ST「KABANERI OF THE IRON FORTRESS」とカバネリBONUSのループ", "上位ST（景之ST・真景之ST・裏景之ST）", "コンプリート機能搭載"],
+    "summary": "通常時はチャンス目（約1/15）で無名・生駒ポイントを貯めてCZ、カバネチャンス目で周期抽選を行い、EPISODE BONUSや駿城ボーナスからST（25G・継続率約76%）を目指す。ST中のボーナスは枚数上乗せ特化ゾーン「カバネリATTACK」を経由。海門回想で4thエピソードに到達するとフリーズ高確率「復讐の焔」から上位STへ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。キャラ紹介・ボイスは偶数設定と設定3・5で出方が異なる。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.5, "2": 98.5, "3": 100.8, "4": 106.0, "5": 111.0, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 254.2, "2": 242.3, "3": 239.6, "4": 214.0, "5": 203.2, "6": 195.1 }, "highlight": true },
+      { "key": "st", "label": "ST確率", "format": "fraction", "values": { "1": 422.5, "2": 405.9, "3": 398.7, "4": 357.2, "5": 332.6, "6": 318.5 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "lower_bell", "label": "下段ベル", "format": "fraction", "values": { "1": 121.1, "2": 114.4, "3": 112.8, "4": 106.2, "5": 104.2, "6": 99.1 }, "highlight": true },
+      { "key": "chance_mumei", "label": "無名チャンス目", "format": "fraction", "value": 38.9 },
+      { "key": "chance_kabane", "label": "カバネチャンス目", "format": "fraction", "value": 77.7 },
+      { "key": "chance_ikoma", "label": "生駒チャンス目", "format": "fraction", "value": 44.5 },
+      { "key": "chance_double", "label": "複合チャンス目（各）", "format": "fraction", "value": 546.1 },
+      { "key": "allstar", "label": "オールスター目", "format": "fraction", "value": 7281.0 },
+      { "key": "chance_total", "label": "チャンス目合成", "format": "fraction", "value": 15.0 }
+    ],
+    "note": "下段ベルのみ設定差あり。チャンス目は全設定共通（チャンス目高確率中は1/6.3、カバネリATTACK中は1/6.1）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "カバネリチャンス（CZ）",
+        "facts": [
+          { "label": "無名CZ", "value": "10G+α・成功期待度 約36%" },
+          { "label": "生駒CZ", "value": "最大20G・成功期待度 約46%" },
+          { "label": "銅藍CZ", "value": "10G・成功期待度 約78%" }
+        ],
+        "description": "無名・生駒チャンス目のポイントが規定到達でCZ。無名CZと生駒CZに同時当選すると銅藍CZ（六根清浄目でボーナス濃厚）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "周期抽選",
+        "facts": [
+          { "label": "契機", "value": "カバネチャンス目のカバネポイントが規定到達" },
+          { "label": "天井", "value": "6周期（設定変更後など4周期）" }
+        ],
+        "description": "周期到達時にボーナスを抽選。3・4周期目の当選率に設定差がある。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "EPISODE BONUS",
+        "facts": [{ "label": "純増", "value": "約6.0枚/G" }, { "label": "恩恵", "value": "ST突入濃厚" }],
+        "description": "エピソードの種類でSTの種類を示唆。天井到達時もこのボーナス。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "駿城ボーナス",
+        "facts": [{ "label": "継続", "value": "20G" }, { "label": "ST期待度", "value": "約20%" }],
+        "description": "駿城ポイントを貯め、最終ポイント数でST突入を抽選。単独チャンス目での3000pt獲得率に設定差あり（設定1 1.2% / 設定6 2.3%）。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "カバネリBONUS",
+        "facts": [{ "label": "純増", "value": "約6.0枚/G" }],
+        "description": "黒血漿メーターMAXで六根魂＝次回ST開始時にカバネリ高確。キャラ紹介と逆押しカットイン成功ボイスで設定示唆。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "ST「KABANERI OF THE IRON FORTRESS」",
+        "facts": [{ "label": "継続", "value": "25G" }, { "label": "継続率", "value": "約76%" }, { "label": "ボーナス期待度", "value": "25%以上（チャンス目時）" }],
+        "description": "カバネリ高確ランプの対応役で期待度アップ。当選時は4Gの「カバネリATTACK」（超は6G）で枚数上乗せ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "上位ST",
+        "facts": [{ "label": "景之ST", "value": "継続率 約83%" }, { "label": "真景之ST", "value": "継続率 約89%" }, { "label": "裏景之ST", "value": "プレミアムST" }],
+        "description": "海門回想（70G）で4thエピソード到達→復讐の焔（チャンス目の約25%でフリーズ）→真景之ST or 裏景之ST。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 996, "text": "通常時 996G+α" },
+    "games_after_reset": { "value": 596, "text": "設定変更後・ST駆け抜け後・景之ST後 596G+α" },
+    "benefit": "EPISODE BONUSに当選",
+    "notes": ["周期天井: 6周期（設定変更後・ST駆け抜け後・景之ST後は4周期）", "設定変更時の機械割は100%以上"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [],
+    "notes": ["ゲーム数のゾーンはなく、カバネチャンス目による周期で管理", "1・2周期目の到達時もボーナス期待度が高い"],
+    "source_ids": ["ptown"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "ST駆け抜け後・景之ST後は天井が596G・4周期に短縮（景之ST後は景之STループにも期待）",
+      "ST終了後20G間はカバネチャンス目のカバネリ高確に滞在するので、即周期到達に期待",
+      "無名・生駒ポイントはST当選前を引き継ぐ（有利区間リセット時を除く）ので、蓄積状況も見てヤメ時を判断"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["天井が596G・最大4周期に短縮", "設定変更時の機械割は100%以上"],
+    "source_ids": ["ptown", "pworld"]
+  },
+
+  "favorable_zone": { "items": [], "source_ids": [] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数（EPISODE BONUS・駿城ボーナスなど）",
+        "denom_base": "normal",
+        "values": { "1": 254.2, "2": 242.3, "3": 239.6, "4": 214.0, "5": 203.2, "6": 195.1 },
+        "weight_note": "設定3と4の間に段差がある", "source_ids": ["pworld"]
+      },
+      {
+        "key": "lower_bell", "label": "下段ベル確率",
+        "observe": "通常時ゲーム数に対する下段ベルの回数",
+        "denom_base": "normal",
+        "values": { "1": 121.1, "2": 114.4, "3": 112.8, "4": 106.2, "5": 104.2, "6": 99.1 },
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "st", "label": "ST確率",
+        "observe": "ST突入回数",
+        "judge": false,
+        "values": { "1": 422.5, "2": 405.9, "3": 398.7, "4": 357.2, "5": 332.6, "6": 318.5 },
+        "weight_note": "ボーナス初当りと重なるため判別には入れない", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "chara_intro", "label": "カバネリBONUS中のキャラ紹介（1〜5000G消化時）",
+        "observe": "当日5000G消化までのカバネリBONUSで出たキャラ（女性=無名・菖蒲・鰍&侑那 / 男性=生駒・来栖・景之 / 美馬）",
+        "outcomes": [
+          { "key": "male", "label": "男性キャラ", "values": { "1": 50.0, "2": 42.5, "3": 58.5, "4": 41.4, "5": 60.0, "6": 39.85 } },
+          { "key": "female", "label": "女性キャラ", "values": { "1": 50.0, "2": 57.5, "3": 41.5, "4": 58.5, "5": 39.9, "6": 60.0 }, "highlight": true },
+          { "key": "mima", "label": "美馬", "values": { "1": 0, "2": 0, "3": 0, "4": 0.10, "5": 0.10, "6": 0.15 }, "note": "設定1〜3は出現しない（ー表記）" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "cycle3", "label": "3周期目到達時のボーナス当選率",
+        "observe": "3周期目に到達した回数と、そこでボーナスに当選した回数",
+        "outcomes": [
+          { "key": "win", "label": "ボーナス当選", "values": { "1": 18.4, "2": 23.8, "3": 21.1, "4": 28.5, "5": 32.4, "6": 37.1 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 81.6, "2": 76.2, "3": 78.9, "4": 71.5, "5": 67.6, "6": 62.9 }, "note": "100%から当選率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "cycle4", "label": "4周期目到達時のボーナス当選率",
+        "observe": "4周期目に到達した回数と、そこでボーナスに当選した回数",
+        "outcomes": [
+          { "key": "win", "label": "ボーナス当選", "values": { "1": 33.6, "2": 35.2, "3": 36.3, "4": 40.2, "5": 43.4, "6": 46.9 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 66.4, "2": 64.8, "3": 63.7, "4": 59.8, "5": 56.6, "6": 53.1 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "fukushu", "label": "復讐の焔成功時の振り分け",
+        "observe": "復讐の焔でフリーズした回数と、そのうち裏景之STだった回数",
+        "outcomes": [
+          { "key": "shin", "label": "真景之ST", "values": { "1": 93.8, "2": 93.8, "3": 93.4, "4": 89.1, "5": 75.0, "6": 66.8 } },
+          { "key": "ura", "label": "裏景之ST", "values": { "1": 6.2, "2": 6.2, "3": 6.6, "4": 10.9, "5": 25.0, "6": 33.2 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "アイテムくじ", "pattern": "来栖の刀", "meaning": "設定2・3否定（設定6で出やすい）", "min_setting": null, "exact_setting": null, "denied_settings": [2, 3], "level": "confirm" },
+      { "category": "アイテムくじ", "pattern": "無名のけん玉", "meaning": "設定1・3否定（設定6で出やすい）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3], "level": "confirm" },
+      { "category": "アイテムくじ", "pattern": "小吉 安心して遊技せよ", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "アイテムくじ", "pattern": "中吉 良き知らせ迷う必要なし", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "アイテムくじ", "pattern": "大吉 最高の幸運が訪れるでしょう", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "アイテムくじ", "pattern": "菖蒲の弓 / ミヤマカラスアゲハ", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "アイテムくじ", "pattern": "自決袋 / 無名の短銃 / ツラヌキ筒", "meaning": "設定1 / 3 / 4で出にくい", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "カバネリATTACK中の連打上乗せ", "pattern": "+44", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "カバネリATTACK中の連打上乗せ", "pattern": "+55", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "カバネリATTACK中の連打上乗せ", "pattern": "+66 / +77", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "カバネリBONUS中のキャラ紹介", "pattern": "美馬", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "逆押しカットイン成功ボイス", "pattern": "景之以外の男性キャラ / 女性キャラ", "meaning": "設定3or5示唆 / 偶数設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "逆押しカットイン成功ボイス", "pattern": "景之（3種類）", "meaning": "高設定示唆（弱・中・強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "逆押しカットイン成功ボイス", "pattern": "無名「やっぱりこの台…普通じゃないね」", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "逆押しカットイン成功ボイス", "pattern": "ボイスなし", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "456OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ST終了画面", "pattern": "鉄下駄", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "ST終了画面", "pattern": "甲鉄城キャラ（メンバー）", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ST終了画面", "pattern": "無名&菖蒲（水着）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "サミートロフィー（ST終了画面）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（ST終了画面）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（ST終了画面）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（ST終了画面）", "pattern": "キリン柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（ST終了画面）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ST終了画面の設定6濃厚画面はP-WORLDでは「無名&菖蒲」、DMMぱちタウンでは「水着」と表記。美馬・設定6画面・トロフィーは当日の消化G数で出現率が変わる（5001〜8000Gで上がる）。",
+    "observations": [
+      { "label": "景之STループ", "detail": "高設定ほど景之STのループ（景之ST後の次回STも景之ST）に当選しやすい（数値は未公表）。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "CZ当選率", "detail": "高設定ほど高いとされる（数値は未公表）。", "official": true, "source_ids": ["ptown"] }
+    ],
+    "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
+  },
+
+  "effects": {
+    "items": [
+      { "name": "アイテムくじで特定の示唆が出やすいタイミング", "rows": [["朝イチ〜5回目", "小吉の出やすさ: 1回目は設定6、2回目は設定2・6、3回目は設定3・6、4回目は設定4・6、5回目は設定5・6"], ["5の倍数回目", "特定の設定示唆が出やすい"]] },
+      { "name": "ボイス時のサブ液晶ランプ", "rows": [["下部が発光", "景之以外の男性キャラ"], ["上部が発光", "女性キャラ"], ["上下が発光", "景之"], ["上下＋ストロボ", "無名（設定2以上）"], ["発光せず", "ボイスなし（設定5以上）"]] }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "ボーナス初当り（1/254.2 → 1/195.1）と下段ベル（1/121.1 → 1/99.1）を通常時ゲーム数と合わせて数える",
+      "カバネリBONUS中のキャラ紹介は、女性キャラなら偶数設定、男性キャラなら設定3・5寄り。5000Gまでの回数で数える",
+      "3周期目でボーナスに当たれば高設定寄り（設定1 18.4% → 設定6 37.1%）",
+      "アイテムくじ（おみくじ）は設定示唆の「アイテムくじ」を選ぶ。来栖の刀・無名のけん玉は設定否定",
+      "逆押しカットインは成功させてボイスを確認。「ボイスなし」は設定5以上濃厚"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": [
+      "キャラ紹介・ST終了画面・トロフィーは当日の消化G数で出現率が変わる。キャラ紹介の判別は1〜5000Gの値を使っている",
+      "ST確率はボーナス初当りと重なるため判別には入れない",
+      "コンプリート機能搭載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

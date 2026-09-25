@@ -1,0 +1,218 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_hokuto",
+  "name": "スマスロ北斗の拳",
+  "aliases": ["スマスロ北斗", "北斗の拳", "スマ北斗", "北斗"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#1f3b73" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ北斗の拳」", "url": "https://www.p-world.co.jp/machine/database/9786", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ北斗の拳」", "url": "https://p-town.dmm.com/machines/4301", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "サミー（製造: タイヨーエレック）",
+    "release_date": "2023-04-03",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（バトルボーナスのセット継続型）",
+    "model_name": "L パチスロ北斗の拳AD XR",
+    "certification_no": "2S1502",
+    "games_per_50_coins": { "value": 34.7, "unit": "G", "note": "1000円（50枚）あたり約34.7G" },
+    "net_gain_per_game": { "value": 4.1, "unit": "枚", "note": "約4.1枚/G" },
+    "features": ["初代北斗の拳を再現したバトルボーナス", "内部状態（地獄・通常・天国）とレア役での本前兆", "設定3なし（設定L搭載機）"],
+    "summary": "通常時はレア役で内部状態（地獄→通常→天国）を上げ、本前兆に移行すれば32G以内にBB（バトルボーナス）が告知される。BBは30G+αの小役パートと8or9Gのバトルパートで構成され、ケンシロウが敗北しなければセット継続。有利区間リセット時は継続率84%以上。無想転生バトルは平均94%ループ。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "4", "5", "6"],
+    "note": "設定3は非搭載（設定1・2・4・5・6）。設定Lは下パネルが常に明滅する。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 98.0, "2": 98.9, "4": 105.7, "5": 110.0, "6": 113.0 }, "highlight": true },
+      { "key": "first_hit", "label": "BB初当り合算", "format": "fraction", "values": { "1": 383.4, "2": 370.5, "4": 297.8, "5": 258.7, "6": 235.1 }, "highlight": true },
+      { "key": "hokuto_soroi", "label": "北斗揃い", "format": "fraction", "values": { "1": 7274.0, "2": 7274.0, "4": 7274.0, "5": 7274.0, "6": 7274.0 }, "note": "全設定共通" }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "weak_suika", "label": "弱スイカ", "format": "fraction", "values": { "1": 109.0, "2": 108.7, "4": 105.9, "5": 100.7, "6": 98.3 }, "highlight": true },
+      { "key": "strong_suika", "label": "強スイカ合算", "format": "fraction", "values": { "1": 409.6, "2": 404.5, "4": 376.6, "5": 352.3, "6": 337.8 }, "highlight": true },
+      { "key": "suika_total", "label": "スイカ合算", "format": "fraction", "values": { "1": 86.1, "2": 85.7, "4": 82.6, "5": 78.3, "6": 76.1 } },
+      { "key": "mid_cherry", "label": "中段チェリー合算", "format": "fraction", "values": { "1": 210.1, "2": 204.8, "4": 199.8, "5": 195.0, "6": 190.5 }, "highlight": true },
+      { "key": "reach_me", "label": "リーチ目役", "format": "fraction", "values": { "1": 16384.0, "2": 13107.2, "4": 10922.7, "5": 9362.3, "6": 8192.0 } }
+    ],
+    "note": "小役確率は通常時・AT中とも設定差あり。強スイカ・中段チェリーはA・Bに分かれるが、中押し消化だと判別しづらいので合算で数えるのがおすすめ（マイスロもA・Bを分けない）。リーチ目役はマイスロに表示されないので自分で数える。",
+    "source_ids": ["ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "内部状態と本前兆",
+        "facts": [{ "label": "状態", "value": "地獄 / 通常 / 天国" }, { "label": "本前兆", "value": "32G以内にBB告知" }],
+        "description": "レア役で状態移行・本前兆を抽選。高設定ほど地獄・通常中の弱レア役（弱スイカ・角チェリー）で本前兆へ移行しやすい。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "バトルボーナス（BB）",
+        "facts": [{ "label": "構成", "value": "小役パート30G+α＋バトルパート8or9G" }, { "label": "純増", "value": "約4.1枚/G" }],
+        "description": "バトルパートでケンシロウが敗北しなければセット継続。有利区間はBB中に切れる可能性があり（外見では判別不可）、リセット時は継続率84%以上。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "無想転生バトル",
+        "facts": [{ "label": "ループ率", "value": "平均94%（平均16.6連）" }],
+        "description": "途中で有利区間が切れる可能性も含めた平均値。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1268, "text": "通常時 1268G+α" },
+    "games_after_reset": { "value": 800, "text": "設定変更後 800G+α" },
+    "benefit": "BB当選（北斗揃い期待度アップ＆赤7揃い時の高継続率選択率アップ）",
+    "notes": [
+      "300G・777G・800G到達時に天井短縮抽選。当選時は最大32Gの本前兆へ（高設定ほど当選しやすい）",
+      "777G天井時は北斗揃い濃厚",
+      "設定変更後は800G到達時に必ず天井短縮抽選に当選する（高設定挙動ではない）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "300G", "note": "天井短縮抽選" },
+      { "games": "777G", "note": "天井短縮抽選（北斗揃い濃厚）" },
+      { "games": "800G", "note": "天井短縮抽選（設定変更後は必ず当選）" }
+    ],
+    "notes": [],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": ["BB終了後は即ヤメでOK。ただし天国（移行率25.82%〜35.94%）や本前兆（0.71%〜0.74%）の可能性があるので、10G前後様子を見るのもあり"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["天井が800G+αに短縮", "天国移行率17.57%〜27.92%、本前兆0.63%〜1.32%（高設定ほど天国以上に移行しやすい）"],
+    "source_ids": ["ptown"]
+  },
+
+  "favorable_zone": {
+    "items": ["有利区間はBB中に切れる可能性があり、どこでリセットされたかは外見では判別できない（ラオウ昇天時でもリセットされていないことがある）。リセット時は継続率84%以上"],
+    "source_ids": ["pworld"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "BB初当り確率",
+        "observe": "通常時ゲーム数に対するBB初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 383.4, "2": 370.5, "4": 297.8, "5": 258.7, "6": 235.1 },
+        "weight_note": "設定2と4の間に大きな段差がある", "source_ids": ["pworld"]
+      },
+      {
+        "key": "weak_suika", "label": "弱スイカ確率",
+        "observe": "総ゲーム数に対する弱スイカの回数（通常時・AT中とも）",
+        "denom_base": "total",
+        "values": { "1": 109.0, "2": 108.7, "4": 105.9, "5": 100.7, "6": 98.3 },
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "strong_suika", "label": "強スイカ確率（A・B合算）",
+        "observe": "総ゲーム数に対する強スイカの回数",
+        "denom_base": "total",
+        "values": { "1": 409.6, "2": 404.5, "4": 376.6, "5": 352.3, "6": 337.8 },
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "mid_cherry", "label": "中段チェリー確率（A・B合算）",
+        "observe": "総ゲーム数に対する中段チェリーの回数",
+        "denom_base": "total",
+        "values": { "1": 210.1, "2": 204.8, "4": 199.8, "5": 195.0, "6": 190.5 },
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "reach_me", "label": "リーチ目役確率",
+        "observe": "総ゲーム数に対するリーチ目役の回数（マイスロに表示されない）",
+        "denom_base": "total",
+        "values": { "1": 16384.0, "2": 13107.2, "4": 10922.7, "5": 9362.3, "6": 8192.0 },
+        "weight_note": "設定1と6で2倍の差。1回の重みは大きいが頻度は低い", "source_ids": ["ptown"]
+      },
+      {
+        "key": "suika_total", "label": "スイカ合算確率",
+        "observe": "弱スイカ＋強スイカ",
+        "judge": false,
+        "values": { "1": 86.1, "2": 85.7, "4": 82.6, "5": 78.3, "6": 76.1 },
+        "weight_note": "弱スイカ・強スイカを個別に使っているため判別には入れない", "source_ids": ["ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "bb_end_voice", "label": "BB終了時のボイス（1G連非当選時）",
+        "observe": "BB終了後の通常時1G目にサブ液晶をタッチして出たキャラ（1G連当選時のボイスは除く）",
+        "outcomes": [
+          { "key": "shin", "label": "シン", "values": { "1": 5.65, "2": 6.10, "4": 6.26, "5": 6.71, "6": 7.17 } },
+          { "key": "souther", "label": "サウザー", "values": { "1": 5.04, "2": 5.34, "4": 6.26, "5": 6.71, "6": 7.17 } },
+          { "key": "jagi", "label": "ジャギ", "values": { "1": 3.36, "2": 3.81, "4": 6.26, "5": 6.71, "6": 7.17 } },
+          { "key": "amiba", "label": "アミバ", "values": { "1": 1.22, "2": 1.53, "4": 6.26, "5": 6.71, "6": 7.17 }, "highlight": true },
+          { "key": "other", "label": "それ以外（リン・バットなど）", "values": { "1": 84.73, "2": 83.22, "4": 74.96, "5": 73.16, "6": 71.32 }, "note": "100%から4キャラの合計を引いた値" }
+        ],
+        "source_ids": ["ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "BB終了時のボイス", "pattern": "シン / サウザー / ジャギ / アミバ", "meaning": "高設定示唆（弱 / 弱 / 中 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "BB終了時のボイス", "pattern": "ケンシロウA「戦うのが北斗神拳伝承者としての宿命だ!!」", "meaning": "設定4以上の期待大", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "BB終了時のボイス", "pattern": "ユリア", "meaning": "設定5以上の期待大", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "サミートロフィー", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー", "pattern": "キリン柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚突破", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚突破", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "初代画面", "pattern": "連続演出（シン・サウザー・ジャギ）やBB中の復活（リン・ユリア）で初代の画面", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" }
+    ],
+    "hints_source_ids": ["ptown"],
+    "hints_note": "「期待大」のボイス（ケンシロウA・ユリア）は濃厚ではないため判別スペックには取り込まない。ケンシロウBは1G連の告知。",
+    "observations": [
+      { "label": "内部状態の移行率", "detail": "高設定ほど地獄・通常中の弱スイカ・角チェリーで本前兆に移行しやすい（例: 通常中の角チェリー→本前兆 設定1 0.28% / 設定6 3.91%）。状態が見えないため判別には使わない。", "official": true, "source_ids": ["ptown"] },
+      { "label": "天井短縮抽選", "detail": "高設定ほど当選しやすいが当選率は低い。確認できれば高設定期待度が大幅アップ（設定変更後の800Gは除く）。", "official": true, "source_ids": ["pworld"] }
+    ],
+    "pending": [{ "label": "設定Lの数値", "status": "未公表", "note": "設定Lは下パネルが常に明滅する。" }]
+  },
+
+  "effects": {
+    "items": [
+      { "name": "強スイカ・中段チェリーのA/B", "rows": [["強スイカA", "中押し時、右リールに9番のスイカを狙うと斜めに揃う"], ["強スイカB", "中押し時は斜めに揃う"], ["中段チェリーA", "基本的に中段チェリーが停止"], ["中段チェリーB", "左1st時は角チェリーの形から3連チェリー"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "BB初当り（1/383.4 → 1/235.1）は設定2と4の間で大きく変わる",
+      "弱スイカ・強スイカ・中段チェリー・リーチ目役は総ゲーム数で数える（リーチ目役はマイスロに出ないので自分で数える）",
+      "BB終了後はサブ液晶をタッチしてボイスを確認。アミバ・ジャギが多ければ高設定寄り",
+      "地獄・通常濃厚の場面での弱レア役からのBBは高設定の可能性アップ"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["設定3は非搭載。判別は設定1・2・4・5・6の5段階", "スイカ合算は弱スイカ・強スイカと重なるため判別には入れない", "コンプリート機能搭載"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

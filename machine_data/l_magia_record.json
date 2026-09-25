@@ -1,0 +1,233 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_magia_record",
+  "name": "スマスロ マギアレコード 魔法少女まどか☆マギカ外伝",
+  "aliases": ["マギアレコード", "マギレコ", "スマスロ マギレコ", "マギレコ まどマギ"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#d0447a" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ マギアレコード 魔法少女まどか☆マギカ外伝」", "url": "https://www.p-world.co.jp/machine/database/10211", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ マギアレコード 魔法少女まどか☆マギカ外伝」", "url": "https://p-town.dmm.com/machines/4745", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "ミズホ",
+    "release_date": "2025-04-07",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（G数管理型＋疑似ボーナス）",
+    "model_name": "L／スマスロマギアレコード／RN",
+    "certification_no": "4S1598",
+    "games_per_50_coins": { "value": 32.6, "unit": "G", "note": "約32.6G（設定1）" },
+    "net_gain_per_game": { "value": 2.6, "unit": "枚", "note": "約2.6枚/G" },
+    "features": ["ボーナス4種類（ビッグ・みたま・エピソード・アリナミュージアム）", "魔法少女モード", "ストーリーの話数順とキャラ紹介で設定示唆"],
+    "summary": "通常時は規定ポイント到達やレア小役からボーナスを目指し、前兆「調整屋」で告知。スイカでCZ（マギアチャレンジ約40%・黒江チャレンジ）を抽選。ビッグボーナス中の小さいキュゥべえ揃いなどでAT「マギアラッシュ」（純増約2.6枚のG数管理型）。マギウスバトル勝利で報酬（ストーリー・決戦神浜聖女・マギアボーナス）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.6, "2": 98.9, "3": 102.0, "4": 106.0, "5": 110.4, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "ボーナス初当り", "format": "fraction", "values": { "1": 240.6, "2": 236.1, "3": 222.8, "4": 208.5, "5": 195.1, "6": 184.3 }, "highlight": true },
+      { "key": "at_first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 654.6, "2": 633.1, "3": 571.8, "4": 516.6, "5": 456.5, "6": 416.7 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "values": { "1": 60.0, "2": 57.7, "3": 55.5, "4": 53.5, "5": 51.7, "6": 50.0 }, "highlight": true },
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.3 },
+      { "key": "bell_a", "label": "共通ベルA（上段ベル）", "format": "fraction", "value": 8.2 },
+      { "key": "bell_b", "label": "共通ベルB（斜めベル）", "format": "fraction", "value": 39.7 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 79.9 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 256.0 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 327.7 }
+    ],
+    "note": "弱チェリーのみ設定差あり。中段チェリーは通常時エピソードボーナス（約50%でロングフリーズ）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "マギアチャレンジ / 黒江チャレンジ（CZ）",
+        "facts": [{ "label": "マギアチャレンジ", "value": "成功期待度 約40%（BAR揃いでボーナス濃厚）" }, { "label": "黒江チャレンジ", "value": "突入時点でボーナス濃厚（BAR揃いでエピソードボーナス）" }],
+        "description": "スイカ成立時に抽選。マギアチャレンジ本前兆中のスイカで黒江チャレンジへの昇格抽選。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "ビッグボーナス",
+        "facts": [{ "label": "継続", "value": "30G+α" }],
+        "description": "小さいキュゥべえ図柄揃いでAT濃厚。終了画面で設定示唆。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "みたまボーナス",
+        "facts": [{ "label": "継続", "value": "ベルナビ8回" }],
+        "description": "最終的な報酬で発展先が変化。「発展」選択時のAT当選率に設定差あり。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "エピソードボーナス / アリナミュージアム",
+        "facts": [{ "label": "エピソード", "value": "50G・AT濃厚" }, { "label": "アリナミュージアム", "value": "30G・AT濃厚＋毎G上乗せ" }],
+        "description": "エピソードの種類（やちよ・鶴乃・さな・フェリシア・黒江）の振り分けに設定差あり。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "at": [
+      {
+        "name": "マギアラッシュ（AT）",
+        "facts": [{ "label": "初期G数", "value": "不定（マギアアタックで決定）" }, { "label": "純増", "value": "約2.6枚/G" }],
+        "description": "G数上乗せ・報酬獲得を抽選。マギウスバトル勝利で「ういチャンス」→報酬。ストーリーのカウント8でエンブリオ・イブ覚醒。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "text": "ボーナス間 950pt+α" },
+    "games_after_reset": { "text": "設定変更後 600〜699pt+α" },
+    "benefit": "ボーナスに当選",
+    "notes": ["天井はゲーム数ではなくポイントで管理"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": { "items": [], "notes": [], "source_ids": [] },
+
+  "quit_timing": {
+    "items": ["ボーナス・AT後は100G以内の引き戻しがあるが頻度は高くないので、状況次第で即ヤメもあり"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["天井が600〜699pt+αに短縮"], "source_ids": ["ptown"] },
+
+  "favorable_zone": {
+    "items": ["エンディング到達で有利区間ツラヌキ → エンブリオ・イブ覚醒へ（差枚数上限到達後やストーリーコンプリート後）"],
+    "source_ids": ["ptown"]
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "ボーナス初当り確率",
+        "observe": "通常時ゲーム数に対するボーナス初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 240.6, "2": 236.1, "3": 222.8, "4": 208.5, "5": 195.1, "6": 184.3 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "weak_cherry", "label": "弱チェリー確率",
+        "observe": "通常時ゲーム数に対する弱チェリーの回数",
+        "denom_base": "normal",
+        "values": { "1": 60.0, "2": 57.7, "3": 55.5, "4": 53.5, "5": 51.7, "6": 50.0 },
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "at_first_hit", "label": "AT初当り確率",
+        "observe": "AT初当り回数",
+        "judge": false,
+        "values": { "1": 654.6, "2": 633.1, "3": 571.8, "4": 516.6, "5": 456.5, "6": 416.7 },
+        "weight_note": "ATはボーナスから当選するため、ボーナス初当りと重なる。判別には入れない", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "episode", "label": "エピソードボーナスの種類",
+        "observe": "エピソードボーナスで流れたエピソード（黒江チャレンジ経由の黒江、ドッペルモードのいろは、ロングフリーズのういは数えない）",
+        "outcomes": [
+          { "key": "yachiyo", "label": "やちよ", "values": { "1": 28.1, "2": 32.7, "3": 23.4, "4": 28.1, "5": 17.2, "6": 23.4 } },
+          { "key": "tsuruno", "label": "鶴乃", "values": { "1": 28.1, "2": 23.4, "3": 31.3, "4": 15.6, "5": 21.9, "6": 14.1 } },
+          { "key": "sana", "label": "さな", "values": { "1": 21.9, "2": 21.9, "3": 21.9, "4": 31.3, "5": 23.4, "6": 31.3 } },
+          { "key": "felicia", "label": "フェリシア", "values": { "1": 21.9, "2": 21.9, "3": 21.9, "4": 23.4, "5": 31.3, "6": 25.0 } },
+          { "key": "kuroe", "label": "黒江", "values": { "1": 0.1, "2": 0.1, "3": 1.6, "4": 1.6, "5": 6.3, "6": 6.3 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "suika_cz", "label": "スイカ成立時のCZ当選率（さなモード以外）",
+        "observe": "魔法少女モードは見た目で確定できない（さなモード中は値が変わる）ため判別には使わない",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "CZ当選", "values": { "1": 20.3, "2": 22.7, "3": 25.0, "4": 28.1, "5": 30.9, "6": 33.6 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 79.7, "2": 77.3, "3": 75.0, "4": 71.9, "5": 69.1, "6": 66.4 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "BIG終了画面", "pattern": "楽曲対応画面（ごまかし・アリシア・ケアレス・Lapis）", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "BIG終了画面", "pattern": "いろは&フェリシア / いろは&さな", "meaning": "設定3・5・6示唆 / 設定2・4・6示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "BIG終了画面", "pattern": "いろは&やちよ&鶴乃 / いろは&やちよ&ももこチーム", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "BIG終了画面", "pattern": "水着みかづき荘（みかづき荘バケーション）", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "BIG終了画面", "pattern": "2nd Season キービジュアル", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "BIG終了画面", "pattern": "1st Season キービジュアル", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "BIG終了画面", "pattern": "小さいキュゥべえ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面", "pattern": "マギウスメンバー / みかづき荘メンバー", "meaning": "設定3・5・6示唆 / 設定2・4・6示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "まどか&いろは", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ストーリーの話数順", "pattern": "5話→1話→2話→3話→4話", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "5話→2話→1話→3話→4話", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "5話→3話→1話→2話→4話", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "5話→4話→2話→1話→3話", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "5話→4話→3話→1話→2話", "meaning": "設定2以上濃厚＋高設定示唆", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "5話→4話→3話→2話→1話", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ストーリーの話数順", "pattern": "1〜4話から始まる順番", "meaning": "奇数・偶数（＋高設定）示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "ストーリー中のキャラ紹介", "pattern": "5人目に小さいキュゥべえ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ストーリー中のキャラ紹介", "pattern": "まどか→さやか→マミ→杏子→ほむら など", "meaning": "高設定示唆（弱〜強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "エンディング中のサブ液晶カード", "pattern": "ウワサ系カード", "meaning": "奇数・偶数・高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "石中魚の魔女", "meaning": "設定2否定", "min_setting": null, "exact_setting": null, "denied_settings": [2], "level": "confirm" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "立ち耳の魔女", "meaning": "設定3否定", "min_setting": null, "exact_setting": null, "denied_settings": [3], "level": "confirm" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "振子の魔女", "meaning": "設定4否定", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "ヨダカの魔女", "meaning": "設定4否定＋高設定示唆", "min_setting": null, "exact_setting": null, "denied_settings": [4], "level": "confirm" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "委員長の魔女", "meaning": "設定2以上濃厚＋高設定示唆", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のサブ液晶カード", "pattern": "舞台装置の魔女", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "ユニバプレート（AT終了時・実戦上）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（AT終了時・実戦上）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（AT終了時・実戦上）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（AT終了時・実戦上）", "pattern": "花火柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ユニバプレート（AT終了時・実戦上）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ストーリー話数順はP-WORLDのパターン⑬〜⑱（5話から始まる順番）を話数で表記した。ユニバプレートはDMMぱちタウンの実戦上の示唆。",
+    "observations": [
+      { "label": "魔法少女モード移行率", "detail": "高設定ほどいろは以外のモードへ移行しやすい（有利区間移行時・AT終了時のいろは: 設定1 75.0% / 設定6 50.0%）。モードは見た目で確定できないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "みたまボーナス「発展」選択時のAT当選率", "detail": "ランク2: 設定1 0.8% → 設定6 7.8%、ランク3: 5.1% → 12.5%。ランクの判別方法が明確でないため判別には使わない。", "official": true, "source_ids": ["pworld"] }
+    ],
+    "pending": []
+  },
+
+  "effects": {
+    "items": [
+      { "name": "中段チェリーの恩恵", "rows": [["通常時", "エピソードボーナス（約50%でロングフリーズ）"], ["みたまボーナス中", "ドッペルモード突入"], ["BIG中", "AT濃厚＋ドッペルモード"], ["AT中", "+100G上乗せ"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "ボーナス初当り（1/240.6 → 1/184.3）と弱チェリー（1/60.0 → 1/50.0）を通常時ゲーム数と合わせて数える",
+      "エピソードボーナスで黒江エピソード（黒江チャレンジ経由以外）が出たら設定5以上の期待大",
+      "ストーリーの話数順（5話から始まるパターン）と、エンディングの魔女カードは設定の否定・確定系",
+      "BIG終了画面のキービジュアル（2nd=設定4以上、1st=設定5以上）と小さいキュゥべえ（設定6）に注目"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["AT初当りはボーナス初当りと重なるため判別に入れていない", "天井はポイント管理", "コンプリート機能搭載"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

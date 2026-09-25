@@ -1,0 +1,215 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_valvrave2",
+  "name": "Lパチスロ 革命機ヴァルヴレイヴ2",
+  "aliases": ["ヴァルヴレイヴ2", "ヴヴヴ2", "スマスロ ヴヴヴ2", "ヴァルヴレイヴ", "ヴヴヴ"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#c4122f" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://www.p-world.co.jp/machine/database/10352", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://p-town.dmm.com/machines/4885", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "SANKYO（製造: ジェイビー）",
+    "release_date": "2025-11-04",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ループ率管理型＋疑似ボーナス）",
+    "model_name": "L革命機ヴァルヴレイヴ2jF",
+    "certification_no": "5S0736",
+    "games_per_50_coins": { "value": 32.7, "unit": "G", "note": "約32.7G（設定1）" },
+    "net_gain_per_game": { "value": 9.0, "unit": "枚", "note": "AT・革命BONUS中 約9.0枚/G" },
+    "features": ["純増約9.0枚のAT「(超)革命RUSH」", "設定3なし", "終了画面の店長カスタム搭載"],
+    "summary": "通常時は毎G1pt以上のポイントが規定（100・200・400・600pt）に到達すると周期抽選→CZ「ドルシア攻防戦」（約60%）。CZ成功で革命BONUS（AT期待度約53%）や決戦BONUS（約46%）。AT「革命RUSH」は1セット10〜100G+α・継続率約75%で、3回継続すると超革命RUSH（最大継続率約90%）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "4", "5", "6"],
+    "note": "設定3は非搭載（設定1・2・4・5・6）。CZ確率は全設定共通、初当りの設定差はごく小さく、判別は終了画面などの示唆が中心。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.7, "2": 99.3, "4": 104.7, "5": 110.8, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り合成", "format": "fraction", "values": { "1": 476, "2": 473, "4": 464, "5": 459, "6": 456 }, "highlight": true },
+      { "key": "cz", "label": "CZ", "format": "fraction", "values": { "1": 324, "2": 324, "4": 324, "5": 324, "6": 324 }, "note": "全設定共通" }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 28 },
+      { "key": "bar", "label": "BAR揃い", "format": "fraction", "value": 682, "note": "約1/682（DMMぱちタウン）" }
+    ],
+    "note": "小役確率は全設定共通なのでカウントは不要（DMMぱちタウン）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "ドルシア攻防戦（CZ）",
+        "facts": [{ "label": "継続", "value": "11G+α" }, { "label": "成功期待度", "value": "約60%" }],
+        "description": "小役成立でバトルに発展し、敵を撃破できればボーナス濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "ルーンドライブ / 電脳ZONE",
+        "facts": [{ "label": "ルーンドライブ", "value": "CZ高確率ゾーン（BAR揃いから）" }, { "label": "電脳ZONE", "value": "ポイント上乗せ特化（レア小役から）" }],
+        "description": "通常時のBAR揃いはルーンドライブ（ハイパー）またはAT直撃。AT直撃の割合は高設定ほど高い。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "革命BONUS",
+        "facts": [{ "label": "継続", "value": "45G+α" }, { "label": "純増", "value": "約9.0枚/G" }, { "label": "AT期待度", "value": "約53%" }],
+        "description": "払い出し666枚到達でAT濃厚。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "決戦BONUS",
+        "facts": [{ "label": "継続", "value": "最低9G+α" }, { "label": "AT期待度", "value": "約46%" }],
+        "description": "3種類のミッションをクリアできればAT濃厚。AT間で3連続すると次回は革命BONUS。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "at": [
+      {
+        "name": "(超)革命RUSH",
+        "facts": [{ "label": "1セット", "value": "10〜100G+α" }, { "label": "純増", "value": "約9.0枚/G" }, { "label": "継続率", "value": "革命RUSH 約75% / 超革命RUSH 最大約90%" }],
+        "description": "G数消化でハラキリチャレンジへ、ブラックアウトで継続。ハラキリDRIVEなら50G以上。3回継続で超革命RUSHへ昇格。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1500, "text": "ボーナス・AT間 1500G" },
+    "games_after_reset": { "value": 1000, "text": "設定変更後 1000G" },
+    "benefit": "革命BONUS・決戦BONUS・AT（1:1:1）",
+    "notes": ["周期天井: 6周期（設定変更後は3周期）でCZ", "CZ間天井: 999G+αでCZ", "決戦BONUSが3連続すると次回は革命BONUS", "規定ポイントは最大600pt（設定変更後の1周期目は300pt）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "100/200/400/600pt", "note": "周期到達に期待（マギウスマーク付きの周期はCZ期待度 約50%）" }],
+    "notes": [],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": { "items": [], "source_ids": [] },
+
+  "reset": {
+    "items": ["周期天井が3周期、AT・ボーナス間天井が1000Gに短縮", "1周期目の規定ポイントは最大300pt"],
+    "source_ids": ["ptown"]
+  },
+
+  "favorable_zone": { "items": [], "source_ids": [] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "初当り合成確率",
+        "observe": "通常時ゲーム数に対するボーナス・AT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 476, "2": 473, "4": 464, "5": 459, "6": 456 },
+        "weight_note": "設定差はごく小さい。単独ではほぼ判別できない", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "end_screen", "label": "CZ・ボーナス終了画面",
+        "observe": "CZ・ボーナス終了時の画面（店長カスタム非使用時の値。カスタム報知のロゴが出ている台では使わない）",
+        "outcomes": [
+          { "key": "white", "label": "白（コックピット）", "values": { "1": 74, "2": 65, "4": 60, "5": 60, "6": 60 } },
+          { "key": "blue1", "label": "青①（ライゾウ）", "values": { "1": 8, "2": 5, "4": 5, "5": 10, "6": 5 } },
+          { "key": "blue2", "label": "青②（サキ）", "values": { "1": 8, "2": 10, "4": 10, "5": 5, "6": 10 } },
+          { "key": "red1", "label": "赤①（コックピット）", "values": { "1": 7, "2": 7, "4": 9, "5": 9, "6": 9 } },
+          { "key": "red2", "label": "赤②（ドルシア軍）", "values": { "1": 3, "2": 3, "4": 6, "5": 6, "6": 6 } },
+          { "key": "purple", "label": "紫（サキ&ショーコ）", "values": { "1": 0, "2": 10, "4": 8, "5": 8, "6": 7 }, "highlight": true },
+          { "key": "silver", "label": "銀（ピノ&プルー）", "values": { "1": 0, "2": 0, "4": 2, "5": 2, "6": 2 } },
+          { "key": "gold", "label": "金（全員集合）", "values": { "1": 0, "2": 0, "4": 0, "5": 0, "6": 1 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "bar_direct", "label": "通常時BAR揃い時の恩恵",
+        "observe": "通常時のBAR揃い回数と、そのうちAT直撃だった回数",
+        "outcomes": [
+          { "key": "rune", "label": "ルーンドライブ（ハイパー）", "values": { "1": 97, "2": 96, "4": 95, "5": 94, "6": 93 } },
+          { "key": "direct", "label": "AT直撃", "values": { "1": 3, "2": 4, "4": 5, "5": 6, "6": 7 }, "highlight": true }
+        ],
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "buffe", "label": "サブモニターのバッフェ",
+        "observe": "通常時のサブモニターに出たバッフェの種類",
+        "outcomes": [
+          { "key": "unmanned", "label": "無人タイプ", "values": { "1": 55, "2": 45, "4": 45, "5": 55, "6": 45 } },
+          { "key": "manned", "label": "有人タイプ", "values": { "1": 45, "2": 55, "4": 55, "5": 45, "6": 55 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "CZ・ボーナス終了画面", "pattern": "紫（サキ&ショーコ）", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "CZ・ボーナス終了画面", "pattern": "銀（ピノ&プルー）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "CZ・ボーナス終了画面", "pattern": "金（全員集合）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "CZ・ボーナス終了画面", "pattern": "青① / 青② / 赤① / 赤②", "meaning": "奇数＆高設定示唆（弱） / 偶数設定示唆 / 高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+
+      { "category": "マギウスマーク（周期表示）", "pattern": "4個", "meaning": "天国＋設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "マギウスマーク（周期表示）", "pattern": "5個", "meaning": "天国＋設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "マギウスマーク（周期表示）", "pattern": "6個", "meaning": "天国＋設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ATセット開始時の初期G数", "pattern": "+22G", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ATセット開始時の初期G数", "pattern": "+44G", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ATセット開始時の初期G数", "pattern": "+66G", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ATセット開始画面（10の倍数セット）", "pattern": "マリエ水着 / ルーン漏れ1号機", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ATセット開始画面（10の倍数セット）", "pattern": "200年後のサキ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ATセット開始画面（10の倍数セット）", "pattern": "リーゼロッテ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "456枚OVER!!!", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "555枚OVER!!!", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER!!!", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ハラキリチャレンジ", "pattern": "夢夢ちゃんピース / ミニキャラ群", "meaning": "ハラキリDRIVE100G＋設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "ディスプレイ背景（写真あり）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "終了画面の色はDMMぱちタウン、キャラ名はP-WORLDの表記。初代とは法則が異なり、赤枠は高設定示唆（設定1でも確認例あり）。終了画面は店長カスタムで表示タイミングを変えられる（1000G単位）。",
+    "observations": [
+      { "label": "ハラキリDRIVEの発生頻度", "detail": "設定1は15〜20連に1回、設定4は6〜8連に1回とされる（設定2・5・6は未記載）。", "official": true, "source_ids": ["pworld"] },
+      { "label": "初当りの革命BONUS＋AT直撃比率", "detail": "設定1 約55%、設定6 約60%（設定2〜5は調査中）。", "official": true, "source_ids": ["ptown"] },
+      { "label": "特定設定以上示唆の出現期待値", "detail": "設定2以上なら5000Gで5割以上の確率で特定設定濃厚の示唆が出る（店長カスタム非使用時）。", "official": true, "source_ids": ["ptown"] }
+    ],
+    "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
+  },
+
+  "effects": {
+    "items": [
+      { "name": "サブモニターの機体（モード示唆）", "rows": [["ヴァルヴレイヴ3号機", "3周期以内CZ 約80%・2周期以内 約50%"], ["ヴァルヴレイヴ5号機", "5周期以内のCZ濃厚"], ["PFネーム火人", "2周期以内のCZ濃厚"], ["PFネーム火遊", "通常B以上濃厚"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "CZ確率は全設定共通、初当りの差もごく小さいので、確率より示唆で判断する機種",
+      "CZ・ボーナス終了画面は紫で設定2以上、銀で設定4以上、金で設定6。赤枠は高設定示唆（弱〜強）",
+      "BAR揃いからのAT直撃は高設定ほど多い（設定1 約3% → 設定6 約7%）",
+      "10の倍数セットの開始画面（200年後のサキで設定4以上）と、初期G数のゾロ目（+22G/+44G/+66G）に注目"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["設定3は非搭載。判別は設定1・2・4・5・6の5段階", "終了画面の出現率は店長カスタム非使用時の値。カスタム使用中の台では選択肢型の判別に使わない", "終了画面の出現割合は「約」の値"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

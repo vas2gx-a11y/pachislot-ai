@@ -1,0 +1,256 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_monkey_turn5",
+  "name": "スマスロモンキーターンV",
+  "aliases": ["モンキーターン5", "モンキーターンⅤ", "モンキー5", "モンキーターン", "モンキー"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#1a5fb4" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロモンキーターンV」", "url": "https://www.p-world.co.jp/machine/database/9923", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロモンキーターンV」", "url": "https://p-town.dmm.com/machines/4450", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "山佐",
+    "release_date": "2023-12-04",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（セット継続型）",
+    "model_name": "Lモンキーターン5CE",
+    "certification_no": "3S0772",
+    "games_per_50_coins": { "value": 32, "unit": "G", "note": "約32G・全設定共通" },
+    "net_gain_per_game": { "value": 2.5, "unit": "枚", "note": "AT「SGラッシュ」約2.5枚/G、上位AT「青島SG」約4.0枚/G" },
+    "features": ["激走ポイントの周期抽選", "設定3なし（設定L搭載機）", "SGレース勝利でセット継続"],
+    "summary": "通常時は毎G貯まる激走ポイントが規定（111pt・222pt…のゾロ目）に到達すると周期到達→前兆「優出モード」でAT抽選。1周期以内のAT当選率は約40%、2周期以内は約64%。レア小役からCZ「超抜チャレンジ」（約50%）も。AT「SGラッシュ」は1セット40G+αでSGレースに勝てば継続。上位AT「青島SG」は継続率約83%。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "4", "5", "6"],
+    "note": "設定3は非搭載（設定1・2・4・5・6）。設定L（ロング稼働用）の数値は調査中。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.9, "4": 104.5, "5": 110.2, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 299.8, "2": 295.5, "4": 258.8, "5": 235.7, "6": 222.9 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 69.9 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 569.9 },
+      { "key": "boat", "label": "ボート", "format": "fraction", "value": 89.9 },
+      { "key": "weak_chance", "label": "弱チャンス目", "format": "fraction", "value": 297.9 },
+      { "key": "strong_chance", "label": "強チャンス目", "format": "fraction", "value": 448.9 }
+    ],
+    "note": "小役確率はすべて全設定共通。究極目はAT直撃以上。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "優出モード（周期抽選）",
+        "facts": [{ "label": "契機", "value": "規定激走ポイント到達（平均100G、1周期目は平均80G）" }, { "label": "AT当選率", "value": "1周期以内 約40% / 2周期以内 約64%" }],
+        "description": "激走ポイントメーターの背景色で期待度を示唆（緑=優出モード濃厚、赤=AT期待度アップ、紫=青島SGに期待）。555pt以上の周期の次は222pt以下。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "超抜チャレンジ（CZ）",
+        "facts": [{ "label": "契機", "value": "通常時のレア小役" }, { "label": "成功期待度", "value": "約50%" }],
+        "description": "ペラ・レア小役でAT当選に期待。失敗時の一部で上位CZ「グランドスラムチャレンジ」（突入時点でAT濃厚）へ。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "激走チャージ",
+        "facts": [{ "label": "天井", "value": "激走チャージ間131G（設定変更後・AT終了後は81G）" }],
+        "description": "消化中のEXアイテム獲得率に設定差あり。終了時のサブ液晶タッチで設定示唆。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "SGラッシュ（AT）",
+        "facts": [{ "label": "1セット", "value": "40G+α" }, { "label": "純増", "value": "約2.5枚/G" }],
+        "description": "レア小役で高確移行・G数上乗せ・特化ゾーンを抽選。セット終盤のSGレースに勝てば継続（継続率はシナリオで管理）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "青島SG（上位AT）",
+        "facts": [{ "label": "1セット", "value": "31G+α" }, { "label": "純増", "value": "約4.0枚/G" }, { "label": "継続率", "value": "約83%（Vストック込み）" }],
+        "description": "セット終盤の青島vs波多野で勝利すれば継続。ラウンド開始画面で設定示唆。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 795, "text": "通常時 795G+α" },
+    "games_after_reset": { "value": 495, "text": "設定変更後・青島vs波多野敗北後 495G+α" },
+    "benefit": "ATに当選",
+    "notes": ["周期天井: 6周期目（設定変更後・青島vs波多野敗北後は4周期目）", "激走チャージ間天井: 131G（設定変更後・AT終了後は81G）でレア小役から激走チャージorCZ"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "111pt〜666pt", "note": "激走ポイントのゾロ目で周期到達に期待" }],
+    "notes": ["1周期目は111pt・444ptに期待、2〜5周期目は222pt、6周期目は222ptか天井"],
+    "source_ids": ["pworld"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "AT終了画面・設定変更後1G目にレア役を引いた場合は通常B以上濃厚なので次回ATまで続行",
+      "それ以外はAT後即ヤメでOK。ただしサブ液晶のヘルメットがロゴ＋キラキラなら通常Bor天国濃厚、ロゴ＋Vなら天国濃厚なので1周期目まで"
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": {
+    "items": ["天井が495G・4周期に短縮", "モード移行率はAT終了後の振り分けと同じ"],
+    "source_ids": ["ptown"]
+  },
+
+  "favorable_zone": { "items": [], "source_ids": [] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 299.8, "2": 295.5, "4": 258.8, "5": 235.7, "6": 222.9 },
+        "weight_note": "設定2と4の間に段差がある", "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "soku_yushutsu", "label": "AT終了後の即優出モード移行率",
+        "observe": "AT終了回数と、そのうち次ゲームで即優出モード（すぐの前兆も含む）へ移行した回数",
+        "outcomes": [
+          { "key": "yes", "label": "即優出", "values": { "1": 1.6, "2": 1.7, "4": 2.2, "5": 3.0, "6": 3.7 }, "highlight": true },
+          { "key": "no", "label": "移行なし", "values": { "1": 98.4, "2": 98.3, "4": 97.8, "5": 97.0, "6": 96.3 }, "note": "100%から移行率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "strong_rare_direct", "label": "強チェリー・強チャンス目でのAT直撃",
+        "observe": "通常時の強チェリー・強チャンス目の回数と、そこからAT直撃した回数",
+        "outcomes": [
+          { "key": "hit", "label": "AT直撃", "values": { "1": 0.4, "2": 1.2, "4": 2.0, "5": 3.9, "6": 6.3 }, "highlight": true },
+          { "key": "miss", "label": "直撃なし", "values": { "1": 99.6, "2": 98.8, "4": 98.0, "5": 96.1, "6": 93.7 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "ex_item_boat", "label": "激走チャージ中のEXアイテム獲得率（ボート・弱チェリー）",
+        "observe": "激走チャージ中のボート・弱チェリーの回数と、そこでEXアイテムを獲得した回数",
+        "outcomes": [
+          { "key": "get", "label": "獲得", "values": { "1": 25.0, "2": 26.2, "4": 32.8, "5": 39.1, "6": 43.0 }, "highlight": true },
+          { "key": "none", "label": "獲得なし", "values": { "1": 75.0, "2": 73.8, "4": 67.2, "5": 60.9, "6": 57.0 } }
+        ],
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "aoshima_dress", "label": "青島SGのラウンド開始画面「ドレス」（継続ストックなし時）",
+        "observe": "青島周回中のラウンド開始画面の回数と、そのうちドレスだった回数（青島SPフリーズ後を除く）",
+        "outcomes": [
+          { "key": "dress", "label": "ドレス", "values": { "1": 20.0, "2": 25.0, "4": 35.0, "5": 37.5, "6": 37.5 }, "highlight": true },
+          { "key": "other", "label": "それ以外", "values": { "1": 80.0, "2": 75.0, "4": 65.0, "5": 62.5, "6": 62.5 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "hatano_serifu", "label": "激走チャージ終了時の波多野（青ランプ）のセリフ",
+        "observe": "サブ液晶タッチで波多野が出たときのセリフ（A=落ち着くんだ憲二… / B=この気配は！？）",
+        "outcomes": [
+          { "key": "a", "label": "波多野A（落ち着くんだ憲二…）", "values": { "1": 50.0, "2": 40.0, "4": 40.0, "5": 70.0, "6": 40.0 } },
+          { "key": "b", "label": "波多野B（この気配は！？）", "values": { "1": 50.0, "2": 60.0, "4": 60.0, "5": 30.0, "6": 60.0 }, "highlight": true }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "ending_voice", "label": "エンディング中のレア役成立時のサブ液晶（ランプ・キャラ）",
+        "observe": "エンディング中のレア役成立時にサブ液晶をタッチして出たキャラとランプ色",
+        "outcomes": [
+          { "key": "blue_hatano", "label": "青：波多野", "values": { "1": 50.0, "2": 37.5, "4": 30.0, "5": 50.0, "6": 30.0 } },
+          { "key": "blue_aoshima", "label": "青：青島", "values": { "1": 35.0, "2": 45.0, "4": 42.5, "5": 15.0, "6": 35.0 } },
+          { "key": "yellow_hatano", "label": "黄：波多野", "values": { "1": 12.0, "2": 12.0, "4": 15.0, "5": 20.0, "6": 20.0 } },
+          { "key": "green_arisa", "label": "緑：ありさ", "values": { "1": 3.0, "2": 3.0, "4": 7.5, "5": 10.0, "6": 10.0 } },
+          { "key": "red_enoki", "label": "赤：榎木", "values": { "1": 0, "2": 2.5, "4": 2.5, "5": 0, "6": 1.25 } },
+          { "key": "purple_enoki", "label": "紫：榎木", "values": { "1": 0, "2": 0, "4": 2.5, "5": 2.5, "6": 1.25 } },
+          { "key": "purple_aoshima", "label": "紫：青島", "values": { "1": 0, "2": 0, "4": 0, "5": 2.5, "6": 1.25 } },
+          { "key": "purple_sumi", "label": "紫：澄", "values": { "1": 0, "2": 0, "4": 0, "5": 0, "6": 1.25 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "激走チャージ終了時のサブ液晶", "pattern": "榎木（ランプ赤）", "meaning": "設定2or4or6濃厚", "min_setting": null, "exact_setting": null, "denied_settings": [1, 5], "level": "confirm" },
+      { "category": "激走チャージ終了時のサブ液晶", "pattern": "榎木（ランプ紫）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "サブ液晶の舟券（50G以降100G刻み）", "pattern": "青 / 黄", "meaning": "ライバルモード示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "サブ液晶の舟券（50G以降100G刻み）", "pattern": "銀", "meaning": "設定2or4or6濃厚", "min_setting": null, "exact_setting": null, "denied_settings": [1, 5], "level": "confirm" },
+      { "category": "サブ液晶の舟券（50G以降100G刻み）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サブ液晶の舟券（50G以降100G刻み）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT直撃", "pattern": "ボート・弱チェリー・弱チャンス目からのAT直撃", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+
+      { "category": "ラウンド開始画面", "pattern": "波多野周回中のボートケロット", "meaning": "設定5以上＋「14.艇王」濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ラウンド開始画面", "pattern": "青島周回中のレース服 / ドレス", "meaning": "偶数設定示唆 / 高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ラウンド開始画面", "pattern": "青島周回中の青島&波多野", "meaning": "設定5以上＋継続濃厚（青島SPフリーズ時を除く）", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "456OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "803OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "AT終了画面のSGメダル", "pattern": "青 / 黄 / 黒", "meaning": "偶数設定示唆 / 高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面のケロットトロフィー", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面のケロットトロフィー", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面のケロットトロフィー", "pattern": "ケロット柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面のケロットトロフィー", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "エンディング中のサブ液晶", "pattern": "赤：榎木", "meaning": "設定2or4or6濃厚", "min_setting": null, "exact_setting": null, "denied_settings": [1, 5], "level": "confirm" },
+      { "category": "エンディング中のサブ液晶", "pattern": "紫：榎木", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のサブ液晶", "pattern": "紫：青島", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "エンディング中のサブ液晶", "pattern": "紫：澄", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "設定3が非搭載のため「設定2or4or6濃厚」は設定1・5の否定として扱う。黒メダル出現後の次回AT終了画面はトロフィー出現率が大幅に上がる。",
+    "observations": [
+      { "label": "ライバルモード移行率", "detail": "高設定ほど榎木・蒲生・浜岡モードへ移行しやすい（移行せず: 設定1 70.0% → 設定6 56.0%）。モードは見た目で確定できないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "黒メダル出現率", "detail": "設定1 1.25% / 2 1.5% / 4 4.0% / 5 4.5% / 6 4.5%（各条件を考慮した平均値）。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "その他", "detail": "通常モード選択率・超抜チャレンジ確率にも設定差あり（数値は未公表）。", "official": true, "source_ids": ["pworld"] }
+    ],
+    "pending": [{ "label": "設定Lの数値", "status": "調査中", "note": "P-WORLDで調査中。" }]
+  },
+
+  "effects": {
+    "items": [
+      { "name": "通常時ステージ", "rows": [["ピット周辺・ペラ小屋", "基本"], ["平和島", "高確示唆"], ["足合わせ", "激走チャージorCZ濃厚"], ["終電", "AT当選期待度 高"], ["初代ステージ（波多野）", "AT当選濃厚"], ["初代ステージ（青島）", "青島優出へ（青島SG期待度 50%）"]] },
+      { "name": "激走ポイントメーターの背景色", "rows": [["青", "規定ポイント到達示唆"], ["緑", "優出モード濃厚"], ["赤", "AT当選期待度アップ"], ["紫", "青島SGに期待"]] }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/299.8 → 1/222.9）は設定2と4の間で大きく変わる",
+      "ボート・弱チェリー・弱チャンス目からのAT直撃は設定4以上濃厚。強レア役からの直撃も高設定ほど多い",
+      "AT終了後の即優出（次ゲームでの前兆）は高設定ほど多い",
+      "激走チャージ終了時とエンディング中はサブ液晶をタッチして示唆を確認",
+      "舟券（50G・150G…）は銀で偶数、金で設定4以上、虹で設定6"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["設定3は非搭載。判別は設定1・2・4・5・6の5段階", "設定L搭載機（数値は調査中）"],
+    "source_ids": ["pworld"]
+  }
+}

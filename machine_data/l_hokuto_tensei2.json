@@ -1,0 +1,208 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_hokuto_tensei2",
+  "name": "スマスロ 北斗の拳 転生の章2",
+  "aliases": ["北斗転生2", "転生の章2", "転生2", "北斗の拳 転生の章2"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#6b1d1d" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 北斗の拳 転生の章2」", "url": "https://www.p-world.co.jp/machine/database/10370", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 北斗の拳 転生の章2」", "url": "https://p-town.dmm.com/machines/4909", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "サミー（製造: 銀座）",
+    "release_date": "2026-01-05",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（セット数管理型）",
+    "model_name": "L スマスロ北斗の拳 転生の章2 MW",
+    "certification_no": "5S1206",
+    "games_per_50_coins": { "value": 31.5, "unit": "G", "note": "約31.5G・全設定共通" },
+    "net_gain_per_game": { "value": 4.0, "unit": "枚", "note": "約4.0枚/G" },
+    "features": ["あべし（毎G1あべし）による規定到達でAT", "あべし加算ゾーン「天破の刻」", "上位AT「裏闘神演舞」"],
+    "summary": "通常時は毎G1あべしを獲得し、規定あべし到達（最大1536あべし）でAT。レア小役であべし加算ゾーン「天破の刻」やAT直撃を抽選。AT「闘神演舞」は1セット30G・純増約4.0枚で、勝舞魂を貯めて継続バトル「神拳勝舞」に勝てば継続。上位CZ「天撃」成功で上位AT「裏闘神演舞」。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.6, "2": 98.4, "3": 100.7, "4": 106.2, "5": 111.1, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 366.0, "2": 357.0, "3": 336.3, "4": 298.7, "5": 283.2, "6": 273.1 }, "highlight": true },
+      { "key": "tenpa", "label": "天破の刻（実質）", "format": "fraction", "values": { "1": 100.2, "2": 99.4, "3": 97.1, "4": 91.4, "5": 85.8, "6": 81.3 }, "highlight": true }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 8.7 },
+      { "key": "bell", "label": "ベル", "format": "fraction", "value": 8.2 },
+      { "key": "weak_cherry", "label": "弱チェリー合成", "format": "fraction", "value": 99.6 },
+      { "key": "strong_cherry", "label": "強チェリー合成", "format": "fraction", "value": 198.6 },
+      { "key": "kakutei_cherry", "label": "確定チェリー", "format": "fraction", "value": 16384.0 },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 79.9 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 199.2 },
+      { "key": "shobu", "label": "勝舞揃い", "format": "fraction", "value": 198.6 },
+      { "key": "rare_total", "label": "レア小役合成", "format": "fraction", "value": 26.5 }
+    ],
+    "note": "小役確率はすべて全設定共通。スイカハズレはチャンス目。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "天破の刻（あべし加算ゾーン）",
+        "facts": [{ "label": "実質確率", "value": "設定1 1/100.2 〜 設定6 1/81.3" }],
+        "description": "レア小役でAT直撃に漏れたときに抽選。低確・通常中の弱レア役での当選率に設定差がある。",
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "name": "天撃（上位CZ）",
+        "facts": [{ "label": "継続", "value": "4G" }, { "label": "成功期待度", "value": "設定1 50.6% 〜 設定6 60.8%" }],
+        "description": "成功で上位AT「裏闘神演舞」、失敗しても必ず天国へ。突入G・最終Gのハズレでの成功率に設定差。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "闘神演舞（AT）",
+        "facts": [{ "label": "1セット", "value": "30G" }, { "label": "純増", "value": "約4.0枚/G" }],
+        "description": "成立役で勝舞魂を獲得し、奥義発動でさらに上乗せ。セット後の「神拳勝舞」に勝てば継続。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "特化ゾーン",
+        "facts": [{ "label": "拳王強襲", "value": "バトル型（勝利で継続＋勝舞魂2個以上）" }, { "label": "SPバトル(特闘)", "value": "継続率型（EXバトル(極闘)は継続率約90%）" }],
+        "description": "勝舞魂の上乗せ特化ゾーン。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "裏闘神演舞（上位AT）",
+        "facts": [{ "label": "1セット", "value": "30G+α" }, { "label": "純増", "value": "約4.0枚/G" }],
+        "description": "赤勝舞魂の獲得期待度と裏神拳勝舞の勝利期待度がアップ。敗北しても必ず天撃へ。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "text": "1536あべし" },
+    "games_after_reset": { "text": "設定変更後 1280あべし" },
+    "benefit": "ATに当選（1473あべしを超えた場合はATレベル3以上濃厚）",
+    "notes": ["モード別の天井: モードA 1536 / モードB 896 / モードC 576 / 天国 128あべし", "通常時は毎G1あべし獲得"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [],
+    "notes": ["規定あべしはモードで管理（高設定ほど通常モードが優遇され、1000あべしを超えにくい）"],
+    "source_ids": ["ptown"]
+  },
+
+  "quit_timing": { "items": [], "source_ids": [] },
+
+  "reset": {
+    "items": ["天井が1280あべしに短縮", "規定あべしの抽選も優遇され、比較的早めに当たりやすい", "あべし数がランダムに加算されてスタートするので、朝イチはゾーンがずれることがある"],
+    "source_ids": ["ptown"]
+  },
+
+  "favorable_zone": { "items": [], "source_ids": [] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 366.0, "2": 357.0, "3": 336.3, "4": 298.7, "5": 283.2, "6": 273.1 },
+        "weight_note": "設定3と4の間に段差がある", "source_ids": ["pworld"]
+      },
+      {
+        "key": "tenpa", "label": "天破の刻確率（実質）",
+        "observe": "通常時ゲーム数に対する天破の刻の回数（伝承モード中のループも含む）",
+        "denom_base": "normal",
+        "values": { "1": 100.2, "2": 99.4, "3": 97.1, "4": 91.4, "5": 85.8, "6": 81.3 },
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "tengeki_hazure", "label": "天撃の突入G・最終Gのハズレでの成功率",
+        "observe": "天撃の突入ゲームと最終ゲームでハズレだった回数と、そこで成功した回数",
+        "outcomes": [
+          { "key": "win", "label": "成功", "values": { "1": 4.7, "2": 4.7, "3": 5.1, "4": 5.5, "5": 9.4, "6": 16.4 }, "highlight": true },
+          { "key": "lose", "label": "失敗", "values": { "1": 95.3, "2": 95.3, "3": 94.9, "4": 94.5, "5": 90.6, "6": 83.6 }, "note": "100%から成功率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "reset_256", "label": "設定変更時の256あべし以内のAT当選",
+        "observe": "設定変更（朝イチリセット）が確実な台で、256あべしまでにATに当選したか",
+        "outcomes": [
+          { "key": "yes", "label": "256あべし以内に当選", "values": { "1": 36.4, "2": 37.1, "3": 41.0, "4": 47.7, "5": 51.4, "6": 52.6 }, "highlight": true },
+          { "key": "no", "label": "当選せず", "values": { "1": 63.6, "2": 62.9, "3": 59.0, "4": 52.3, "5": 48.6, "6": 47.4 } }
+        ],
+        "source_ids": ["ptown", "pworld"]
+      },
+      {
+        "key": "lamp_white", "label": "筐体上部中央ランプの白点灯・白点滅",
+        "observe": "通常時100Gごとに筐体上部中央（トップレンズ）が白く光ったときの点灯か点滅か",
+        "outcomes": [
+          { "key": "on", "label": "白点灯", "values": { "1": 50.0, "2": 60.0, "3": 40.0, "4": 60.0, "5": 40.0, "6": 50.0 } },
+          { "key": "blink", "label": "白点滅", "values": { "1": 50.0, "2": 40.0, "3": 60.0, "4": 40.0, "5": 60.0, "6": 50.0 } }
+        ],
+        "source_ids": ["pworld"]
+      }
+    ],
+    "hints": [
+      { "category": "筐体上部中央ランプ（100Gごと）", "pattern": "白点灯 / 白点滅", "meaning": "設定2or4示唆 / 設定3or5示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "筐体上部中央ランプ（100Gごと）", "pattern": "水色点灯 / 水色点滅", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "筐体上部中央ランプ（100Gごと）", "pattern": "黄緑点灯", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "筐体上部中央ランプ（100Gごと）", "pattern": "黄緑点滅", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "筐体上部中央ランプ（100Gごと）", "pattern": "金点灯", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "筐体上部両サイドランプ", "pattern": "黄緑・金・紫（モード否定時）", "meaning": "滞在モードと矛盾すれば設定2以上 / 4以上 / 6濃厚", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "サミートロフィー（AT終了時）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT終了時）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT終了時）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT終了時）", "pattern": "キリン柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT終了時）", "pattern": "レインボー", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "両サイドランプは滞在モードを示唆し、後からモードと矛盾したと分かったときだけ設定示唆になるため判別スペックには取り込まない。トロフィーは設定5・6を8000G回しても20%前後しか出ない。",
+    "observations": [
+      { "label": "内部状態移行", "detail": "伝承モード終了時や低確中のレア役で、高設定ほど通常・高確へ移行しやすい（伝承モード終了時の低確: 設定1 71.9% / 設定6 39.1%）。状態は見えないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] }
+    ],
+    "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
+  },
+
+  "effects": {
+    "items": [
+      { "name": "通常時の前兆", "rows": [["天命の刻", "前兆ステージ（最終的に連続演出でAT告知）"]] }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/366.0 → 1/273.1）と天破の刻（1/100.2 → 1/81.3）を通常時ゲーム数と合わせて数える",
+      "100Gごとの筐体上部中央ランプの色を確認（黄緑点灯で設定2以上、黄緑点滅で設定4以上、金で設定6）",
+      "天撃の突入G・最終Gのハズレで成功したら高設定寄り（設定6 16.4%）",
+      "設定変更が確実な台は256あべしまでの当選に注目（設定6 52.6%）"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["天井はゲーム数ではなくあべし数（毎G1あべし＋天破の刻で加算）", "コンプリート機能搭載"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

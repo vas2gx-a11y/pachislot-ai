@@ -1,0 +1,203 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_god_eater_resurrection",
+  "name": "スマスロ ゴッドイーター リザレクション",
+  "aliases": ["ゴッドイーター リザレクション", "ゴッドイーターR", "ゴッドイーター", "GER"],
+  "updated_at": "2026-09-25",
+  "theme": { "accent": "#b22222" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ ゴッドイーター リザレクション」", "url": "https://www.p-world.co.jp/machine/database/10086", "checked_at": "2026-09-25" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ゴッドイーター リザレクション」", "url": "https://p-town.dmm.com/machines/4602", "checked_at": "2026-09-25" }
+  ],
+
+  "basic": {
+    "maker": "セブンリーグ（山佐ネクスト販売）",
+    "release_date": "2024-07-22",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（AT＋STループ）",
+    "model_name": "LパチスロゴッドイーターリザレクションSLED",
+    "certification_no": "4S0159",
+    "games_per_50_coins": null,
+    "net_gain_per_game": { "value": 9.0, "unit": "枚", "note": "ストーリーパート・神堕 約9.0枚/G" },
+    "features": ["AT「アラガミバースト」＝ストーリーパート→ST「アラガミ交戦」→報酬パート", "上位ST「漆黒の捕喰者」・プレミアムAT「神堕」", "チェリー変換"],
+    "summary": "通常時は規定G数到達（前兆「作戦区域」）やCZ「アラガミ防衛戦」「殲滅モード」からAT「アラガミバースト」を目指す。ATはストーリーパート（純増約9.0枚、初回100枚）→ST「アラガミ交戦」（25G+α・勝利期待度平均76%）→報酬パート（神を喰らえ／神機覚醒）のループ。上位ST「漆黒の捕喰者」は勝利期待度約84%。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.9, "3": 101.1, "4": 105.6, "5": 110.0, "6": 114.9 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 351.9, "2": 344.5, "3": 330.1, "4": 317.0, "5": 302.2, "6": 290.3 }, "highlight": true },
+      { "key": "cz", "label": "CZ", "format": "fraction", "values": { "1": 392.0, "2": 378.3, "3": 359.1, "4": 343.4, "5": 324.3, "6": 310.6 }, "highlight": true }
+    ],
+    "source_ids": ["pworld"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 8.5 },
+      { "key": "bell3", "label": "3枚ベル", "format": "fraction", "value": 9.8 },
+      { "key": "weak_cherry", "label": "弱チェリー", "format": "fraction", "value": 102.4 },
+      { "key": "strong_cherry", "label": "強チェリー", "format": "fraction", "value": 799.2, "note": "変換を含むと約1/695" },
+      { "key": "god_cherry", "label": "神チェリー", "format": "fraction", "value": 16384.0, "note": "変換を含むと約1/10772" },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "value": 79.9 },
+      { "key": "chance_a", "label": "チャンス目A", "format": "fraction", "value": 312.1 },
+      { "key": "chance_b", "label": "チャンス目B", "format": "fraction", "value": 312.1 }
+    ],
+    "note": "小役確率はすべて全設定共通。チェリー停止後の次ゲームのレバーONでリール演出が起きると上位チェリーへの変換のチャンス。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "アラガミ防衛戦 / 殲滅モード（CZ）",
+        "facts": [{ "label": "契機", "value": "レア小役の抽選など" }],
+        "description": "ゲーム性と成功期待度がそれぞれ異なる2種類のCZ。通常滞在中の弱チェリー・スイカでのCZ当選は高設定に期待。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "アラガミバースト（AT）",
+        "facts": [{ "label": "ストーリーパート", "value": "純増約9.0枚（初回100枚固定）" }, { "label": "ST「アラガミ交戦」", "value": "1セット25G+α・勝利期待度 平均76%" }],
+        "description": "ストーリーパート中はリプレイ・レア小役でフェンリルポイントを抽選し、MAXで結合崩壊STOCKか枚数上乗せ。STで勝利すると報酬パート（神を喰らえ=200枚以上 / 神機覚醒=8G+α毎G30枚以上）。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "漆黒の捕喰者（上位ST） / 神堕（プレミアムAT）",
+        "facts": [{ "label": "漆黒の捕喰者", "value": "勝利期待度 約84%" }, { "label": "神堕", "value": "1セット4GのST・覚醒成功で510枚以上" }],
+        "description": "エンディング後など有利区間リセット時は漆黒の捕喰者以上へ。",
+        "source_ids": ["pworld", "ptown"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1000, "text": "通常時 1000G+α" },
+    "games_after_reset": { "value": 600, "text": "設定変更後・漆黒の捕喰者終了後 600G+α" },
+    "benefit": "ATに当選",
+    "notes": ["逆鱗ハンニバル討伐戦敗北後は100GのゾーンでのAT当選濃厚"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "100G", "note": "規定G数の100G選択率が比較的高い" }, { "games": "200G・450G", "note": "AT当選率に設定差あり（高設定ほど当選しやすい）" }],
+    "notes": [],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "quit_timing": {
+    "items": ["出玉に余裕があれば100G付近の前兆終了まで続行。早めに切り上げるならAT後即ヤメでもOK", "逆鱗ハンニバル討伐戦敗北後は100GのゾーンでAT濃厚なので100Gまで"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["天井が600G+αに短縮（有利区間リセット後も含む）"], "source_ids": ["ptown"] },
+
+  "favorable_zone": { "items": ["エンディング到達後に有利区間ツラヌキ → 漆黒の捕喰者 or 神堕"], "source_ids": ["ptown"] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 351.9, "2": 344.5, "3": 330.1, "4": 317.0, "5": 302.2, "6": 290.3 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "cz", "label": "CZ確率",
+        "observe": "通常時ゲーム数に対するCZ突入回数",
+        "denom_base": "normal",
+        "values": { "1": 392.0, "2": 378.3, "3": 359.1, "4": 343.4, "5": 324.3, "6": 310.6 },
+        "source_ids": ["pworld"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "strong_cherry_direct", "label": "強チェリー成立時のAT直撃",
+        "observe": "通常時の強チェリー（変換強チェリーを含む）の回数と、そこからAT直撃した回数",
+        "outcomes": [
+          { "key": "hit", "label": "AT直撃", "values": { "1": 0.4, "2": 1.2, "3": 2.4, "4": 4.3, "5": 5.1, "6": 5.9 }, "highlight": true },
+          { "key": "miss", "label": "直撃なし", "values": { "1": 99.6, "2": 98.8, "3": 97.6, "4": 95.7, "5": 94.9, "6": 94.1 }, "note": "100%から直撃率を引いた値" }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "weak_rare_cz", "label": "通常滞在時の弱チェリー・スイカでのCZ当選",
+        "observe": "内部状態（通常滞在）を正確に判別できないため判別には使わない",
+        "judge": false,
+        "outcomes": [
+          { "key": "win", "label": "CZ当選", "values": { "1": 0.2, "2": 0.4, "3": 0.6, "4": 0.8, "5": 1.0, "6": 1.2 }, "highlight": true },
+          { "key": "lose", "label": "非当選", "values": { "1": 99.8, "2": 99.6, "3": 99.4, "4": 99.2, "5": 99.0, "6": 98.8 } }
+        ],
+        "source_ids": ["pworld", "ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "ヒバリ / サクヤ", "meaning": "偶数設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "ソーマ / レン", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "ユウ「信じられる仲間がいるから、俺たちは戦えるんだ!」", "meaning": "設定2・3否定", "min_setting": null, "exact_setting": null, "denied_settings": [2, 3], "level": "confirm" },
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "エリナ「私、大きくなったらアラガミのいない世界を作る!」", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "リンドウ「いつでも、お前の背中は預かってやるからな」", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "ストーリー終了時・エンディング中のボイス", "pattern": "シオ「いただきま～す!」", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+
+      { "category": "AT終了画面", "pattern": "キャラなし", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "AT終了画面", "pattern": "アリサ / サクヤ（緑背景）", "meaning": "偶数設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "コウタ / ソーマ（緑背景）", "meaning": "高設定示唆（弱 / 強）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面", "pattern": "ユウ", "meaning": "設定2・3・4否定", "min_setting": null, "exact_setting": null, "denied_settings": [2, 3, 4], "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "リンドウ（赤背景）", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "シオ（赤背景）", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "カフェ", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "全員集合（キャラ集合）", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面", "pattern": "デフォルメキャラ（ミニキャラ）", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "獲得枚数表示", "pattern": "246OVER", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "555OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "報酬パートの連打上乗せ（ミズチ・サクヤ）", "pattern": "+44", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "報酬パートの連打上乗せ（ミズチ・サクヤ）", "pattern": "+55", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "報酬パートの連打上乗せ（ミズチ・サクヤ）", "pattern": "+66", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ユウタイマー演出", "pattern": "タイマーが「6」から始まり、作戦区域がフェイク前兆（AT非当選）", "meaning": "設定6濃厚", "min_setting": null, "exact_setting": null, "level": "strong" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "ユウタイマーの「6」は前兆の結果が非当選と分かったときだけ設定6濃厚になるため、判別スペックには取り込まない（該当したら判別画面の汎用の確定演出から選ぶ）。",
+    "observations": [
+      { "label": "規定G数（200G・450G）でのAT当選率", "detail": "高設定ほど当選しやすい（数値は未公表）。DMMぱちタウンは250G・450Gと記載。", "official": true, "source_ids": ["pworld", "ptown"] }
+    ],
+    "pending": []
+  },
+
+  "effects": {
+    "items": [
+      { "name": "神チェリーの恩恵", "rows": [["通常時", "フリーズ抽選（非発生時もAT濃厚＋勝利ストック抽選）"], ["CZ中", "勝利濃厚"]] }
+    ],
+    "source_ids": ["ptown"]
+  },
+
+  "practical_points": {
+    "items": [
+      "AT初当り（1/351.9 → 1/290.3）とCZ（1/392.0 → 1/310.6）を通常時ゲーム数と合わせて数える",
+      "強チェリー（変換も含む）からのAT直撃は高設定ほど多い（設定6 5.9%）",
+      "ストーリー終了時はサブ液晶をタッチしてボイスを確認（ユウで設定2・3否定、エリナで偶数、シオで設定5以上）",
+      "AT終了画面・報酬パートの連打上乗せ（+44/+55/+66）・獲得枚数表示は確定系"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["通常滞在中の弱レア役のCZ当選率は内部状態で変わるため判別には入れない", "コンプリート機能搭載"],
+    "source_ids": ["pworld", "ptown"]
+  }
+}
