@@ -1,0 +1,333 @@
+{
+  "$schema": "./schema.json",
+  "id": "gogo_juggler3",
+  "name": "ゴーゴージャグラー3",
+  "aliases": [
+    "ゴージャグ3",
+    "ゴーゴージャグラー",
+    "ゴージャグ"
+  ],
+  "updated_at": "2026-09-25",
+  "theme": {
+    "accent": "#f08a24"
+  },
+  "sources": [
+    {
+      "id": "pworld",
+      "name": "P-WORLD 機種データベース「ゴーゴージャグラー3」",
+      "url": "https://www.p-world.co.jp/machine/database/9848",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "ptown",
+      "name": "DMMぱちタウン 機種ページ「ゴーゴージャグラー3」",
+      "url": "https://p-town.dmm.com/machines/4375",
+      "checked_at": "2026-09-25"
+    }
+  ],
+  "basic": {
+    "maker": "北電子",
+    "release_date": "2023-07-03",
+    "category": "6号機",
+    "type": "ノーマルタイプ（完全告知）",
+    "model_name": "Sゴーゴージャグラー3KA",
+    "certification_no": "2S0743",
+    "games_per_50_coins": {
+      "value": 40,
+      "unit": "G",
+      "note": "1000円（50枚）あたり約40G"
+    },
+    "net_gain_per_game": null,
+    "features": [
+      "豆電球風のGOGO!ランプ",
+      "告知は第3停止後の後告知のみ・告知音なし",
+      "違和感系プレミアム"
+    ],
+    "summary": "ゴーゴージャグラーシリーズ第3弾。ボーナス確率が高く、GOGO!ランプは第3停止後の後告知のみ（告知音なし）。BIGの設定差は小さく、REGに大きめの設定差がある。設定5・6はBIGとREGが同じ確率。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "settings": {
+    "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "note": "ボーナス確率・出玉率はP-WORLDの独自調査値。ブドウ・チェリーの設定別の値は調査中。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "spec": {
+    "rows": [
+      {
+        "key": "payout",
+        "label": "機械割",
+        "format": "percent",
+        "values": {
+          "1": 97.2,
+          "2": 98.2,
+          "3": 99.4,
+          "4": 101.6,
+          "5": 103.8,
+          "6": 106.5
+        },
+        "highlight": true
+      },
+      {
+        "key": "big",
+        "label": "BIG",
+        "format": "fraction",
+        "values": {
+          "1": 259.0,
+          "2": 258.0,
+          "3": 257.0,
+          "4": 254.0,
+          "5": 247.3,
+          "6": 234.9
+        },
+        "highlight": true
+      },
+      {
+        "key": "reg",
+        "label": "REG",
+        "format": "fraction",
+        "values": {
+          "1": 354.2,
+          "2": 332.7,
+          "3": 306.2,
+          "4": 268.6,
+          "5": 247.3,
+          "6": 234.9
+        },
+        "highlight": true
+      },
+      {
+        "key": "first_hit",
+        "label": "ボーナス合算",
+        "format": "fraction",
+        "values": {
+          "1": 149.6,
+          "2": 145.3,
+          "3": 139.7,
+          "4": 130.5,
+          "5": 123.7,
+          "6": 117.4
+        }
+      }
+    ],
+    "source_ids": [
+      "pworld"
+    ]
+  },
+  "probabilities": {
+    "koyaku": [],
+    "note": "ブドウ・チェリーの設定別の値は調査中（設定6の実戦値はブドウ1/6.1、チェリー1/31.8、4515G）。",
+    "source_ids": [
+      "ptown",
+      "pworld"
+    ]
+  },
+  "features": {
+    "cz": [],
+    "bonus": [
+      {
+        "name": "BIG",
+        "facts": [],
+        "description": "全リールフリー打ちでOK。",
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "name": "REG",
+        "facts": [],
+        "description": "全リールフリー打ちでOK。",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "at": []
+  },
+  "ceiling": {
+    "games": {
+      "text": "なし"
+    },
+    "games_after_reset": {
+      "text": "天井なし"
+    },
+    "benefit": null,
+    "notes": [
+      "ノーマルタイプのため天井・ゾーンはない"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "zones": {
+    "items": [],
+    "notes": [
+      "ゾーンなし"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "quit_timing": {
+    "items": [
+      "好きなときにヤメてOK（ボーナス成立中は揃えてから）"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "reset": {
+    "items": [],
+    "source_ids": []
+  },
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "big",
+        "label": "BIG確率",
+        "observe": "総ゲーム数に対するBIG回数（データカウンターのBIG）",
+        "denom_base": "total",
+        "values": {
+          "1": 259.0,
+          "2": 258.0,
+          "3": 257.0,
+          "4": 254.0,
+          "5": 247.3,
+          "6": 234.9
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "reg",
+        "label": "REG確率",
+        "observe": "総ゲーム数に対するREG回数（データカウンターのREG）",
+        "denom_base": "total",
+        "values": {
+          "1": 354.2,
+          "2": 332.7,
+          "3": 306.2,
+          "4": 268.6,
+          "5": 247.3,
+          "6": 234.9
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "bonus_total",
+        "label": "ボーナス合算確率",
+        "observe": "BIG＋REG",
+        "judge": false,
+        "values": {
+          "1": 149.6,
+          "2": 145.3,
+          "3": 139.7,
+          "4": 130.5,
+          "5": 123.7,
+          "6": 117.4
+        },
+        "weight_note": "BIG・REGを個別に使っているため判別には入れない",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "ratios": [],
+    "hints": [],
+    "hints_source_ids": [],
+    "hints_note": "ジャグラーシリーズには設定示唆演出がない。判別はボーナス確率と小役確率で行う。",
+    "observations": [
+      {
+        "label": "設定6の小役実戦値",
+        "detail": "ブドウ1/6.1、チェリー1/31.8（4515G）。",
+        "official": false,
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "pending": [
+      {
+        "label": "ブドウ・チェリーの設定差",
+        "status": "調査中",
+        "note": "P-WORLDで設定1〜5は調査中。"
+      }
+    ]
+  },
+  "effects": {
+    "items": [
+      {
+        "name": "プレミアム告知（一部）",
+        "rows": [
+          [
+            "一気に点灯",
+            "告知ランプの点灯スピードが速い"
+          ],
+          [
+            "もわもわ点滅",
+            "ゆっくり点滅"
+          ],
+          [
+            "第1停止音ダブり",
+            "停止音が2回"
+          ],
+          [
+            "3秒フリーズ",
+            "第3停止後に3秒フリーズ"
+          ],
+          [
+            "スタート音の無音",
+            "リール回転時の音が無音"
+          ],
+          [
+            "隠れツノっち",
+            "リール左上の隅にツノっち出現"
+          ]
+        ]
+      }
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "practical_points": {
+    "items": [
+      "REGの設定差が大きい（設定1 1/354.2 → 設定6 1/234.9）。BIGはほとんど差がない",
+      "ボーナス確率が高いぶん、合算だけでは設定の判断が難しい"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "cautions": {
+    "items": [
+      "ボーナス確率・出玉率は独自調査値",
+      "ブドウ・チェリーの設定差は調査中のため、判別はBIG・REGのみ"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  }
+}

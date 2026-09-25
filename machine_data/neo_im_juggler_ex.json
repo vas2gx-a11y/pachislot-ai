@@ -1,0 +1,382 @@
+{
+  "$schema": "./schema.json",
+  "id": "neo_im_juggler_ex",
+  "name": "ネオアイムジャグラーEX",
+  "aliases": [
+    "ネオアイム",
+    "ネオアイムジャグラー",
+    "アイムジャグラー",
+    "アイム"
+  ],
+  "updated_at": "2026-09-25",
+  "theme": {
+    "accent": "#d9272e"
+  },
+  "sources": [
+    {
+      "id": "pworld",
+      "name": "P-WORLD 機種データベース「ネオアイムジャグラーEX」",
+      "url": "https://www.p-world.co.jp/machine/database/10269",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "ptown",
+      "name": "DMMぱちタウン 機種ページ「ネオアイムジャグラーEX」",
+      "url": "https://p-town.dmm.com/machines/4801",
+      "checked_at": "2026-09-25"
+    }
+  ],
+  "basic": {
+    "maker": "北電子",
+    "release_date": "2025-09-01",
+    "category": "6号機",
+    "type": "ノーマルタイプ（完全告知）",
+    "model_name": "SネオアイムジャグラーEX-KK",
+    "certification_no": "4S0346",
+    "games_per_50_coins": null,
+    "net_gain_per_game": null,
+    "features": [
+      "GOGO!ランプの完全告知（先告知1/4・後告知3/4）",
+      "後告知の1/2で告知音（ガコッ!）",
+      "BIGは約252枚（280枚超で終了）"
+    ],
+    "summary": "アイムジャグラーの正統後継機。GOGO!ランプが光ればボーナス濃厚の王道ゲーム性で、BIG約252枚・REG約96枚。チェリー成立時はボーナス同時抽選。REGは設定1の1/439.8から設定5・6の1/255.0まで大きく差があり、設定5・6はREGが同じ確率になる。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "settings": {
+    "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "note": "P-WORLD掲載のボーナス確率・出玉率。ブドウはDMMぱちタウン（ガリぞう調べ）。単独/重複REGの内訳は未公表。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "spec": {
+    "rows": [
+      {
+        "key": "payout",
+        "label": "機械割",
+        "format": "percent",
+        "values": {
+          "1": 97.0,
+          "2": 98.0,
+          "3": 99.5,
+          "4": 101.1,
+          "5": 103.3,
+          "6": 105.5
+        },
+        "highlight": true
+      },
+      {
+        "key": "big",
+        "label": "BIG",
+        "format": "fraction",
+        "values": {
+          "1": 273.1,
+          "2": 269.7,
+          "3": 269.7,
+          "4": 259.0,
+          "5": 259.0,
+          "6": 255.0
+        },
+        "highlight": true
+      },
+      {
+        "key": "reg",
+        "label": "REG",
+        "format": "fraction",
+        "values": {
+          "1": 439.8,
+          "2": 399.6,
+          "3": 331.0,
+          "4": 315.1,
+          "5": 255.0,
+          "6": 255.0
+        },
+        "highlight": true
+      },
+      {
+        "key": "first_hit",
+        "label": "ボーナス合算",
+        "format": "fraction",
+        "values": {
+          "1": 168.5,
+          "2": 161.0,
+          "3": 148.6,
+          "4": 142.2,
+          "5": 128.5,
+          "6": 127.5
+        }
+      }
+    ],
+    "source_ids": [
+      "pworld"
+    ]
+  },
+  "probabilities": {
+    "koyaku": [
+      {
+        "key": "budou",
+        "label": "ブドウ",
+        "format": "fraction",
+        "values": {
+          "1": 6.02,
+          "2": 6.02,
+          "3": 6.02,
+          "4": 6.02,
+          "5": 6.02,
+          "6": 5.78
+        },
+        "highlight": true,
+        "note": "ガリぞう調べ"
+      },
+      {
+        "key": "piero",
+        "label": "ピエロ",
+        "format": "fraction",
+        "value": 1092.27
+      },
+      {
+        "key": "bell",
+        "label": "ベル",
+        "format": "fraction",
+        "value": 1092.27
+      }
+    ],
+    "note": "ブドウは設定6だけ設定差あり（ガリぞう調べ）。チェリーの設定別の値は未公表。",
+    "source_ids": [
+      "ptown",
+      "pworld"
+    ]
+  },
+  "features": {
+    "cz": [],
+    "bonus": [
+      {
+        "name": "BIG CHANCE",
+        "facts": [
+          {
+            "label": "終了条件",
+            "value": "280枚を超える払い出し"
+          },
+          {
+            "label": "平均獲得",
+            "value": "約252枚"
+          }
+        ],
+        "description": "ボーナス後1GのBIGは軍艦マーチ、2〜5Gは第九、100G以内のゾロ目は運命、BIG後55Gはみんなのゴーゴーチャンス。",
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "name": "BONUS GAME（REG）",
+        "facts": [
+          {
+            "label": "終了条件",
+            "value": "98枚を超える払い出し"
+          },
+          {
+            "label": "平均獲得",
+            "value": "約96枚"
+          }
+        ],
+        "description": "全リール適当打ちでOK。",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "at": []
+  },
+  "ceiling": {
+    "games": {
+      "text": "なし"
+    },
+    "games_after_reset": {
+      "text": "天井なし"
+    },
+    "benefit": null,
+    "notes": [
+      "ノーマルタイプのため天井・ゾーンはない"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "zones": {
+    "items": [],
+    "notes": [
+      "ゾーンなし"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "quit_timing": {
+    "items": [
+      "好きなときにヤメてOK（ボーナス成立中は揃えてから）"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "reset": {
+    "items": [],
+    "source_ids": []
+  },
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "big",
+        "label": "BIG確率",
+        "observe": "総ゲーム数に対するBIG回数（データカウンターのBIG）",
+        "denom_base": "total",
+        "values": {
+          "1": 273.1,
+          "2": 269.7,
+          "3": 269.7,
+          "4": 259.0,
+          "5": 259.0,
+          "6": 255.0
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "reg",
+        "label": "REG確率",
+        "observe": "総ゲーム数に対するREG回数（データカウンターのREG）",
+        "denom_base": "total",
+        "values": {
+          "1": 439.8,
+          "2": 399.6,
+          "3": 331.0,
+          "4": 315.1,
+          "5": 255.0,
+          "6": 255.0
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "budou",
+        "label": "ブドウ確率",
+        "observe": "総ゲーム数に対するブドウの回数（ボーナス中は数えない）",
+        "denom_base": "total",
+        "values": {
+          "1": 6.02,
+          "2": 6.02,
+          "3": 6.02,
+          "4": 6.02,
+          "5": 6.02,
+          "6": 5.78
+        },
+        "weight_note": "設定1〜5は同じ値で、設定6だけ軽い。設定6かどうかの見分けに効く",
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "bonus_total",
+        "label": "ボーナス合算確率",
+        "observe": "BIG＋REG",
+        "judge": false,
+        "values": {
+          "1": 168.5,
+          "2": 161.0,
+          "3": 148.6,
+          "4": 142.2,
+          "5": 128.5,
+          "6": 127.5
+        },
+        "weight_note": "BIG・REGを個別に使っているため判別には入れない",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "ratios": [],
+    "hints": [],
+    "hints_source_ids": [],
+    "hints_note": "ジャグラーシリーズには設定示唆演出がない。判別はボーナス確率と小役確率で行う。",
+    "observations": [],
+    "pending": [
+      {
+        "label": "単独REG・チェリー重複REGの設定差",
+        "status": "未公表",
+        "note": "今回確認した出典に記載なし。"
+      }
+    ]
+  },
+  "effects": {
+    "items": [
+      {
+        "name": "プレミアム演出（一部）",
+        "rows": [
+          [
+            "告知キャラプレミアム",
+            "GOGO!ランプのまわりにキャラクター"
+          ],
+          [
+            "GOGO!のみ点灯",
+            "CHANCEが消灯のまま"
+          ],
+          [
+            "先CHANCE点灯",
+            "レバーON時にCHANCEが先に点灯"
+          ],
+          [
+            "遅れガコッ!",
+            "第3ボタンを離した後に告知音が遅れる"
+          ],
+          [
+            "CHANCEレインボー",
+            "CHANCEがレインボーに点灯"
+          ]
+        ]
+      }
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "practical_points": {
+    "items": [
+      "BIG確率に設定差が大きい（設定1 1/273.1 → 設定6 1/255.0）",
+      "REGは設定5・6が同じ（1/255.0）なので、REGだけでは設定5と6を分けられない",
+      "ブドウは設定6だけ1/5.78（設定1〜5は1/6.02）"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "cautions": {
+    "items": [
+      "最高設定の機械割は105.5%と低め",
+      "単独/重複REGの内訳は未公表のため、REGは合算で判別に使っている"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  }
+}

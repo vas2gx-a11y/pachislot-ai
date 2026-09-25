@@ -1,0 +1,454 @@
+{
+  "$schema": "./schema.json",
+  "id": "happy_juggler8",
+  "name": "ハッピージャグラーVIII",
+  "aliases": [
+    "ハッピージャグラーVⅢ",
+    "ハッピージャグラー8",
+    "ハッピー8",
+    "ハッピージャグラー",
+    "ハッピー"
+  ],
+  "updated_at": "2026-09-25",
+  "theme": {
+    "accent": "#e6b800"
+  },
+  "sources": [
+    {
+      "id": "pworld",
+      "name": "P-WORLD 機種データベース「ハッピージャグラーV III」",
+      "url": "https://www.p-world.co.jp/machine/database/9705",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "ptown",
+      "name": "DMMぱちタウン 機種ページ「ハッピージャグラーVⅢ」",
+      "url": "https://p-town.dmm.com/machines/4230",
+      "checked_at": "2026-09-25"
+    }
+  ],
+  "basic": {
+    "maker": "北電子",
+    "release_date": "2022-10-24",
+    "category": "6号機",
+    "type": "ノーマルタイプ（完全告知）",
+    "model_name": "SハッピージャグラーVIIIEA",
+    "certification_no": "2S0196",
+    "games_per_50_coins": null,
+    "net_gain_per_game": null,
+    "features": [
+      "黄色いGOGO!ランプ",
+      "全消灯SP・VレインボーSP（ボーナス後55G以内）",
+      "逆押しで全小役をフォロー可能"
+    ],
+    "summary": "ハッピージャグラーシリーズ第3弾。BIG約240枚・REG約96枚の完全告知ノーマル。BIG・REGとも設定差が大きく、特にREG確率に注目。非同時当選チェリーは高設定ほど重くなる珍しい設定差がある。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "settings": {
+    "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "note": "ボーナス確率・出玉率はP-WORLDの独自調査値。ブドウ・チェリー・単独/重複REGはDMMぱちタウン（ガリぞう調べ）。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "spec": {
+    "rows": [
+      {
+        "key": "payout",
+        "label": "機械割",
+        "format": "percent",
+        "values": {
+          "1": 97.0,
+          "2": 98.1,
+          "3": 99.9,
+          "4": 102.9,
+          "5": 105.8,
+          "6": 108.4
+        },
+        "highlight": true
+      },
+      {
+        "key": "big",
+        "label": "BIG",
+        "format": "fraction",
+        "values": {
+          "1": 273.1,
+          "2": 270.8,
+          "3": 263.2,
+          "4": 254.0,
+          "5": 239.2,
+          "6": 226.0
+        },
+        "highlight": true
+      },
+      {
+        "key": "reg",
+        "label": "REG",
+        "format": "fraction",
+        "values": {
+          "1": 397.2,
+          "2": 362.1,
+          "3": 332.7,
+          "4": 300.6,
+          "5": 273.1,
+          "6": 256.0
+        },
+        "highlight": true
+      },
+      {
+        "key": "first_hit",
+        "label": "ボーナス合算",
+        "format": "fraction",
+        "values": {
+          "1": 161.8,
+          "2": 154.9,
+          "3": 146.9,
+          "4": 137.7,
+          "5": 127.5,
+          "6": 120.0
+        }
+      }
+    ],
+    "source_ids": [
+      "pworld"
+    ]
+  },
+  "probabilities": {
+    "koyaku": [
+      {
+        "key": "budou",
+        "label": "ブドウ",
+        "format": "fraction",
+        "values": {
+          "1": 6.04,
+          "2": 6.01,
+          "3": 5.98,
+          "4": 5.84,
+          "5": 5.81,
+          "6": 5.79
+        },
+        "highlight": true,
+        "note": "ガリぞう調べ"
+      },
+      {
+        "key": "cherry_single",
+        "label": "チェリー（非同時当選）",
+        "format": "fraction",
+        "values": {
+          "1": 62.24,
+          "2": 62.47,
+          "3": 62.95,
+          "4": 64.0,
+          "5": 64.57,
+          "6": 65.34
+        }
+      },
+      {
+        "key": "piero",
+        "label": "ピエロ",
+        "format": "fraction",
+        "value": 655.36
+      },
+      {
+        "key": "bell",
+        "label": "ベル",
+        "format": "fraction",
+        "value": 655.36
+      }
+    ],
+    "note": "ブドウ・非同時当選チェリーに設定差あり（ガリぞう調べ）。チェリーは高設定ほど重い。",
+    "source_ids": [
+      "ptown",
+      "pworld"
+    ]
+  },
+  "features": {
+    "cz": [],
+    "bonus": [
+      {
+        "name": "BIG CHANCE",
+        "facts": [
+          {
+            "label": "平均獲得",
+            "value": "約240枚"
+          }
+        ],
+        "description": "ボーナス後55G以内のBIGでスペシャルボーナス音。3連目のBIGは第3停止ボタンをねじるとボーナス音を選べる。",
+        "source_ids": [
+          "pworld",
+          "ptown"
+        ]
+      },
+      {
+        "name": "BONUS GAME（REG）",
+        "facts": [
+          {
+            "label": "平均獲得",
+            "value": "約96枚"
+          }
+        ],
+        "description": "全リール適当打ちでOK。",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "at": []
+  },
+  "ceiling": {
+    "games": {
+      "text": "なし"
+    },
+    "games_after_reset": {
+      "text": "天井なし"
+    },
+    "benefit": null,
+    "notes": [
+      "ノーマルタイプのため天井・ゾーンはない"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "zones": {
+    "items": [],
+    "notes": [
+      "ゾーンなし"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "quit_timing": {
+    "items": [
+      "好きなときにヤメてOK（ボーナス成立中は揃えてから）"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "reset": {
+    "items": [],
+    "source_ids": []
+  },
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "big",
+        "label": "BIG確率",
+        "observe": "総ゲーム数に対するBIG回数（データカウンターのBIG）",
+        "denom_base": "total",
+        "values": {
+          "1": 273.1,
+          "2": 270.8,
+          "3": 263.2,
+          "4": 254.0,
+          "5": 239.2,
+          "6": 226.0
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "reg_single",
+        "label": "単独REG確率",
+        "observe": "総ゲーム数に対する単独REG（チェリーを伴わないREG）の回数",
+        "denom_base": "total",
+        "values": {
+          "1": 636.27,
+          "2": 569.88,
+          "3": 532.81,
+          "4": 478.36,
+          "5": 436.91,
+          "6": 425.56
+        },
+        "weight_note": "設定差はチェリー重複REGと同程度",
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "reg_cherry",
+        "label": "チェリー重複REG確率",
+        "observe": "総ゲーム数に対するチェリーと同時に当選したREGの回数",
+        "denom_base": "total",
+        "values": {
+          "1": 1057.03,
+          "2": 992.97,
+          "3": 885.62,
+          "4": 809.09,
+          "5": 728.18,
+          "6": 642.51
+        },
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "reg_total",
+        "label": "REG確率（合算）",
+        "observe": "単独REG＋チェリー重複REG",
+        "judge": false,
+        "values": {
+          "1": 397.2,
+          "2": 362.1,
+          "3": 332.7,
+          "4": 300.6,
+          "5": 273.1,
+          "6": 256.0
+        },
+        "weight_note": "単独REGとチェリー重複REGを別々に判別に使っているため、合算を入れると二重に数える",
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "budou",
+        "label": "ブドウ確率",
+        "observe": "総ゲーム数に対するブドウの回数（ボーナス中は数えない）",
+        "denom_base": "total",
+        "values": {
+          "1": 6.04,
+          "2": 6.01,
+          "3": 5.98,
+          "4": 5.84,
+          "5": 5.81,
+          "6": 5.79
+        },
+        "weight_note": "設定3と4の間に段差がある",
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "cherry_single",
+        "label": "チェリー（非同時当選）確率",
+        "observe": "総ゲーム数に対するボーナスを伴わないチェリーの回数",
+        "denom_base": "total",
+        "values": {
+          "1": 62.24,
+          "2": 62.47,
+          "3": 62.95,
+          "4": 64.0,
+          "5": 64.57,
+          "6": 65.34
+        },
+        "weight_note": "高設定ほど重くなる（低設定ほど多い）。差は小さい",
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "bonus_total",
+        "label": "ボーナス合算確率",
+        "observe": "BIG＋REG",
+        "judge": false,
+        "values": {
+          "1": 161.8,
+          "2": 154.9,
+          "3": 146.9,
+          "4": 137.7,
+          "5": 127.5,
+          "6": 120.0
+        },
+        "weight_note": "BIG・REGを個別に使っているため判別には入れない",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "ratios": [],
+    "hints": [],
+    "hints_source_ids": [],
+    "hints_note": "ジャグラーシリーズには設定示唆演出がない。判別はボーナス確率と小役確率で行う。",
+    "observations": [],
+    "pending": []
+  },
+  "effects": {
+    "items": [
+      {
+        "name": "プレミアム告知",
+        "rows": [
+          [
+            "全消灯",
+            "GOGO!ランプ点灯時にパネルが消灯（55G以内は全消灯SP）"
+          ],
+          [
+            "Vレインボー",
+            "筐体上部のV型ランプが虹色（55G以内はVレインボーSP）"
+          ],
+          [
+            "隠れオっぽスロー点灯",
+            "中パネル左隅のオっぽランプがゆっくり点灯"
+          ],
+          [
+            "フライング告知",
+            "リール回転より先にスタート音"
+          ],
+          [
+            "先ガコッ!",
+            "レバーON時に告知音"
+          ]
+        ]
+      },
+      {
+        "name": "打ち方ごとの機械割（ガリぞう調べ）",
+        "rows": [
+          [
+            "設定1",
+            "市場調査値97.0% / チェリー狙い97.90% / フル攻略98.78%"
+          ],
+          [
+            "設定4",
+            "102.9% / 104.20% / 105.08%"
+          ],
+          [
+            "設定6",
+            "108.4% / 110.34% / 111.22%"
+          ]
+        ]
+      }
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "practical_points": {
+    "items": [
+      "BIG・REGとも設定差が大きい。REGは単独かチェリー重複かを分けて数える",
+      "ブドウは設定3と4の間で大きく変わる（1/5.98 → 1/5.84）",
+      "非同時当選チェリーは低設定ほど多いので、チェリーが多すぎる台は注意"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "cautions": {
+    "items": [
+      "ボーナス確率・出玉率は独自調査値",
+      "REG合算とボーナス合算は内訳と重なるため判別には入れない"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  }
+}

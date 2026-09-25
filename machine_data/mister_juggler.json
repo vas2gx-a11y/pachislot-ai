@@ -1,0 +1,409 @@
+{
+  "$schema": "./schema.json",
+  "id": "mister_juggler",
+  "name": "ミスタージャグラー",
+  "aliases": [
+    "ミスジャグ",
+    "ミスター"
+  ],
+  "updated_at": "2026-09-25",
+  "theme": {
+    "accent": "#2b2b2b"
+  },
+  "sources": [
+    {
+      "id": "pworld",
+      "name": "P-WORLD 機種データベース「ミスタージャグラー」",
+      "url": "https://www.p-world.co.jp/machine/database/10056",
+      "checked_at": "2026-09-25"
+    },
+    {
+      "id": "ptown",
+      "name": "DMMぱちタウン 機種ページ「ミスタージャグラー」",
+      "url": "https://p-town.dmm.com/machines/4588",
+      "checked_at": "2026-09-25"
+    }
+  ],
+  "basic": {
+    "maker": "北電子",
+    "release_date": "2024-07-22",
+    "category": "6号機",
+    "type": "ノーマルタイプ（完全告知）",
+    "model_name": "SミスタージャグラーKK",
+    "certification_no": "3S0174",
+    "games_per_50_coins": null,
+    "net_gain_per_game": null,
+    "features": [
+      "ピエロとボーナスの同時当選",
+      "告知は後告知のみ（1/2で告知音）",
+      "消灯系プレミアム"
+    ],
+    "summary": "ジャグラーの新シリーズ。黒い筐体とピエロ・チェリーとのボーナス同時抽選が特徴。GOGO!ランプは後告知のみ。BIG約240枚・REG約96枚。設定6はBIGとREGが同じ確率（1/237.4）。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "settings": {
+    "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "note": "ボーナス確率・出玉率はP-WORLD。ブドウ・小役はDMMぱちタウン（ガリぞう調べ）。DMMぱちタウンの市場調査値の機械割（設定1 97.27%〜設定6 107.69%）とは小数点以下が異なる。",
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "spec": {
+    "rows": [
+      {
+        "key": "payout",
+        "label": "機械割",
+        "format": "percent",
+        "values": {
+          "1": 97.0,
+          "2": 98.0,
+          "3": 99.8,
+          "4": 102.7,
+          "5": 105.5,
+          "6": 107.3
+        },
+        "highlight": true
+      },
+      {
+        "key": "big",
+        "label": "BIG",
+        "format": "fraction",
+        "values": {
+          "1": 268.6,
+          "2": 267.5,
+          "3": 260.1,
+          "4": 249.2,
+          "5": 240.9,
+          "6": 237.4
+        },
+        "highlight": true
+      },
+      {
+        "key": "reg",
+        "label": "REG",
+        "format": "fraction",
+        "values": {
+          "1": 374.5,
+          "2": 354.2,
+          "3": 331.0,
+          "4": 291.3,
+          "5": 257.0,
+          "6": 237.4
+        },
+        "highlight": true
+      },
+      {
+        "key": "first_hit",
+        "label": "ボーナス合算",
+        "format": "fraction",
+        "values": {
+          "1": 156.4,
+          "2": 152.4,
+          "3": 145.6,
+          "4": 134.3,
+          "5": 124.4,
+          "6": 118.7
+        }
+      }
+    ],
+    "source_ids": [
+      "pworld"
+    ]
+  },
+  "probabilities": {
+    "koyaku": [
+      {
+        "key": "budou",
+        "label": "ブドウ",
+        "format": "fraction",
+        "values": {
+          "1": 6.29,
+          "2": 6.22,
+          "3": 6.15,
+          "4": 6.09,
+          "5": 6.02,
+          "6": 5.96
+        },
+        "highlight": true,
+        "note": "ガリぞう調べ"
+      },
+      {
+        "key": "cherry",
+        "label": "チェリー",
+        "format": "fraction",
+        "value": 37.24,
+        "note": "設定1の値"
+      },
+      {
+        "key": "piero",
+        "label": "ピエロ",
+        "format": "fraction",
+        "value": 420.1,
+        "note": "同時当選1/1680.4、非同時当選1/560.1（25%でボーナス）"
+      },
+      {
+        "key": "bell",
+        "label": "ベル",
+        "format": "fraction",
+        "value": 655.4
+      }
+    ],
+    "note": "ブドウに設定差あり（ガリぞう調べ）。ピエロ・チェリーはボーナスと同時当選することがある。",
+    "source_ids": [
+      "ptown",
+      "pworld"
+    ]
+  },
+  "features": {
+    "cz": [],
+    "bonus": [
+      {
+        "name": "BIG CHANCE",
+        "facts": [
+          {
+            "label": "終了条件",
+            "value": "266枚を超える払い出し"
+          },
+          {
+            "label": "平均獲得",
+            "value": "約240枚"
+          }
+        ],
+        "description": "ボーナス後1GのBIGは軍艦マーチ、100G以内のゾロ目はラ・カンパネラなど。",
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "name": "REG CHANCE",
+        "facts": [
+          {
+            "label": "終了条件",
+            "value": "98枚を超える払い出し"
+          },
+          {
+            "label": "平均獲得",
+            "value": "約96枚"
+          }
+        ],
+        "description": "[赤7・赤7・BAR]揃い。",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "at": []
+  },
+  "ceiling": {
+    "games": {
+      "text": "なし"
+    },
+    "games_after_reset": {
+      "text": "天井なし"
+    },
+    "benefit": null,
+    "notes": [
+      "ノーマルタイプのため天井・ゾーンはない"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "zones": {
+    "items": [],
+    "notes": [
+      "ゾーンなし"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "quit_timing": {
+    "items": [
+      "好きなときにヤメてOK（ボーナス成立中は揃えてから）"
+    ],
+    "source_ids": [
+      "ptown"
+    ]
+  },
+  "reset": {
+    "items": [],
+    "source_ids": []
+  },
+  "favorable_zone": {
+    "items": [],
+    "source_ids": []
+  },
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "big",
+        "label": "BIG確率",
+        "observe": "総ゲーム数に対するBIG回数（データカウンターのBIG）",
+        "denom_base": "total",
+        "values": {
+          "1": 268.6,
+          "2": 267.5,
+          "3": 260.1,
+          "4": 249.2,
+          "5": 240.9,
+          "6": 237.4
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "reg",
+        "label": "REG確率",
+        "observe": "総ゲーム数に対するREG回数（データカウンターのREG）",
+        "denom_base": "total",
+        "values": {
+          "1": 374.5,
+          "2": 354.2,
+          "3": 331.0,
+          "4": 291.3,
+          "5": 257.0,
+          "6": 237.4
+        },
+        "source_ids": [
+          "pworld"
+        ]
+      },
+      {
+        "key": "budou",
+        "label": "ブドウ確率",
+        "observe": "総ゲーム数に対するブドウの回数（ボーナス中は数えない）",
+        "denom_base": "total",
+        "values": {
+          "1": 6.29,
+          "2": 6.22,
+          "3": 6.15,
+          "4": 6.09,
+          "5": 6.02,
+          "6": 5.96
+        },
+        "weight_note": "設定ごとに均等に差がある",
+        "source_ids": [
+          "ptown"
+        ]
+      },
+      {
+        "key": "bonus_total",
+        "label": "ボーナス合算確率",
+        "observe": "BIG＋REG",
+        "judge": false,
+        "values": {
+          "1": 156.4,
+          "2": 152.4,
+          "3": 145.6,
+          "4": 134.3,
+          "5": 124.4,
+          "6": 118.7
+        },
+        "weight_note": "BIG・REGを個別に使っているため判別には入れない",
+        "source_ids": [
+          "pworld"
+        ]
+      }
+    ],
+    "ratios": [],
+    "hints": [],
+    "hints_source_ids": [],
+    "hints_note": "ジャグラーシリーズには設定示唆演出がない。判別はボーナス確率と小役確率で行う。",
+    "observations": [],
+    "pending": [
+      {
+        "label": "単独REG・チェリー重複REGの設定差",
+        "status": "未公表",
+        "note": "今回確認した出典に記載なし。"
+      }
+    ]
+  },
+  "effects": {
+    "items": [
+      {
+        "name": "プレミアム演出",
+        "rows": [
+          [
+            "レバーON消灯",
+            "上下のパネルが消灯"
+          ],
+          [
+            "全消灯",
+            "第3ボタンを離した瞬間に全消灯"
+          ],
+          [
+            "下パネル消灯",
+            "停止ボタンで下パネルが消灯"
+          ],
+          [
+            "JUGGLERランプ消灯",
+            "リール停止ごとに消灯"
+          ],
+          [
+            "Mr.フラッシュ",
+            "第3ボタンを離した瞬間"
+          ],
+          [
+            "違和感テンパイ",
+            "普段と異なる出目でテンパイ音"
+          ]
+        ]
+      },
+      {
+        "name": "打ち方ごとの機械割（ガリぞう調べ）",
+        "rows": [
+          [
+            "設定1",
+            "市場調査値97.27% / チェリー狙い98.09% / フル攻略99.50%"
+          ],
+          [
+            "設定4",
+            "103.03% / 103.84% / 105.24%"
+          ],
+          [
+            "設定6",
+            "107.69% / 108.49% / 109.89%"
+          ]
+        ]
+      }
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "practical_points": {
+    "items": [
+      "REGの設定差が大きい（設定1 1/374.5 → 設定6 1/237.4）",
+      "ブドウは1/6.29〜1/5.96と他のジャグラーより重めで、設定ごとに均等に差がある",
+      "ピエロをフォローする場合は14番のBARを上段に狙う"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  },
+  "cautions": {
+    "items": [
+      "単独/重複REGの内訳は未公表のため、REGは合算で判別に使っている",
+      "機械割はP-WORLDとDMMぱちタウンで小数点以下が異なる（P-WORLDを採用）"
+    ],
+    "source_ids": [
+      "pworld",
+      "ptown"
+    ]
+  }
+}
