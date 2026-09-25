@@ -1,15 +1,15 @@
 {
   "$schema": "./schema.json",
-  "id": "rakuen_ikebukuro",
-  "name": "楽園池袋店",
+  "id": "maruhan_ikebukuro",
+  "name": "マルハン池袋店",
   "region": "東京都",
-  "sheet_store_name": "楽園池袋店",
+  "sheet_store_name": "マルハン池袋店",
   "updated_at": "2026-09-25",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち 楽園池袋店",
-      "url": "https://minpachi.com/rakuen-ikebukuro/",
+      "name": "みんぱち マルハン池袋店",
+      "url": "https://minpachi.com/maruhan-ikebukuro/",
       "reliability": "ポータル",
       "checked_at": "2026-09-25"
     }
@@ -23,7 +23,7 @@
       ]
     },
     "address": {
-      "value": "東京都豊島区南池袋1-24-5",
+      "value": "東京都豊島区東池袋1-43-5",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -35,7 +35,7 @@
       "source_ids": []
     },
     "hours": {
-      "value": "10:00〜22:40",
+      "value": "10:00〜23:00",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -44,9 +44,9 @@
     "entry": {
       "value": [
         "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "パチンコとスロットで別々に抽選"
+        "配布方法: モバイル抽選（入場くんオンライン）",
+        "配布時間: 9:30",
+        "当日0:00〜9:30参加受付、9:30〜9:45番号表示・意思確認、9:45番号確定、9:50整列、10:00入場開始"
       ],
       "status": "未確認",
       "source_ids": [
@@ -59,14 +59,14 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": 922,
+      "value": 478,
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "slot_units": {
-      "value": 607,
+      "value": 255,
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -75,7 +75,7 @@
     "rates": {
       "value": [
         "パチンコ 4円 / 1円",
-        "スロット 21.73円 / 5円"
+        "スロット 21.73円"
       ],
       "status": "未確認",
       "source_ids": [
@@ -85,9 +85,8 @@
     "exchange_rates": {
       "value": [
         "4円パチンコ 28玉",
-        "1円パチンコ 112.4玉",
-        "21.73円スロット 5.2枚",
-        "5円スロット 22.4枚"
+        "1円パチンコ 112玉",
+        "21.73円スロット 5.2枚"
       ],
       "status": "未確認",
       "source_ids": [
@@ -95,16 +94,12 @@
       ]
     },
     "replay_limit": {
-      "value": [
-        "全レート共通 2,500玉または500枚"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "prize_exchange": {
-      "value": "1階景品カウンターから左手側の出口を出て右に進み、左手の地下に入る階段の先",
+      "value": "店舗の出入り口の交差点付近（マルハン池袋の対角のブロック）",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -116,9 +111,11 @@
       "source_ids": []
     },
     "access": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "池袋駅東口徒歩3分",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "official_url": {
       "value": null,
@@ -136,7 +133,7 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2011年11月3日",
+      "value": "2000年12月29日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -153,14 +150,14 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "7のつく日、1日、11日、21日、22日、月日ゾロ目",
+      "value": "7のつく日、11日、22日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "anniversary_days": {
-      "value": "11月3日",
+      "value": "12月29日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -195,7 +192,7 @@
     {
       "field": "address",
       "before": null,
-      "after": "東京都豊島区南池袋1-24-5",
+      "after": "東京都豊島区東池袋1-43-5",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -204,7 +201,7 @@
     {
       "field": "hours",
       "before": null,
-      "after": "10:00〜22:40",
+      "after": "10:00〜23:00",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -215,9 +212,9 @@
       "before": null,
       "after": [
         "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "パチンコとスロットで別々に抽選"
+        "配布方法: モバイル抽選（入場くんオンライン）",
+        "配布時間: 9:30",
+        "当日0:00〜9:30参加受付、9:30〜9:45番号表示・意思確認、9:45番号確定、9:50整列、10:00入場開始"
       ],
       "changed_at": "2026-09-25",
       "source_ids": [
@@ -227,7 +224,7 @@
     {
       "field": "pachinko_units",
       "before": null,
-      "after": 922,
+      "after": 478,
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -236,7 +233,7 @@
     {
       "field": "slot_units",
       "before": null,
-      "after": 607,
+      "after": 255,
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -247,7 +244,7 @@
       "before": null,
       "after": [
         "パチンコ 4円 / 1円",
-        "スロット 21.73円 / 5円"
+        "スロット 21.73円"
       ],
       "changed_at": "2026-09-25",
       "source_ids": [
@@ -259,20 +256,8 @@
       "before": null,
       "after": [
         "4円パチンコ 28玉",
-        "1円パチンコ 112.4玉",
-        "21.73円スロット 5.2枚",
-        "5円スロット 22.4枚"
-      ],
-      "changed_at": "2026-09-25",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "replay_limit",
-      "before": null,
-      "after": [
-        "全レート共通 2,500玉または500枚"
+        "1円パチンコ 112玉",
+        "21.73円スロット 5.2枚"
       ],
       "changed_at": "2026-09-25",
       "source_ids": [
@@ -282,7 +267,16 @@
     {
       "field": "prize_exchange",
       "before": null,
-      "after": "1階景品カウンターから左手側の出口を出て右に進み、左手の地下に入る階段の先",
+      "after": "店舗の出入り口の交差点付近（マルハン池袋の対角のブロック）",
+      "changed_at": "2026-09-25",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "池袋駅東口徒歩3分",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -291,7 +285,7 @@
     {
       "field": "opened_on",
       "before": null,
-      "after": "2011年11月3日",
+      "after": "2000年12月29日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -300,7 +294,7 @@
     {
       "field": "event_days",
       "before": null,
-      "after": "7のつく日、1日、11日、21日、22日、月日ゾロ目",
+      "after": "7のつく日、11日、22日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -309,7 +303,7 @@
     {
       "field": "anniversary_days",
       "before": null,
-      "after": "11月3日",
+      "after": "12月29日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"

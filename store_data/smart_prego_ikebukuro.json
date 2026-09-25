@@ -1,15 +1,15 @@
 {
   "$schema": "./schema.json",
-  "id": "rakuen_ikebukuro",
-  "name": "楽園池袋店",
+  "id": "smart_prego_ikebukuro",
+  "name": "スマートプレゴ池袋",
   "region": "東京都",
-  "sheet_store_name": "楽園池袋店",
+  "sheet_store_name": "スマートプレゴ池袋",
   "updated_at": "2026-09-25",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち 楽園池袋店",
-      "url": "https://minpachi.com/rakuen-ikebukuro/",
+      "name": "みんぱち スマートプレゴ池袋",
+      "url": "https://minpachi.com/smart-prego/",
       "reliability": "ポータル",
       "checked_at": "2026-09-25"
     }
@@ -23,7 +23,7 @@
       ]
     },
     "address": {
-      "value": "東京都豊島区南池袋1-24-5",
+      "value": "東京都豊島区南池袋1-21-2 地下1F",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -44,9 +44,8 @@
     "entry": {
       "value": [
         "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "パチンコとスロットで別々に抽選"
+        "配布方法: モバイル抽選（777コンパス）",
+        "～09:19予約締切、09:20～入場順抽選"
       ],
       "status": "未確認",
       "source_ids": [
@@ -59,14 +58,12 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": 922,
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "slot_units": {
-      "value": 607,
+      "value": 195,
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -74,7 +71,6 @@
     },
     "rates": {
       "value": [
-        "パチンコ 4円 / 1円",
         "スロット 21.73円 / 5円"
       ],
       "status": "未確認",
@@ -84,8 +80,6 @@
     },
     "exchange_rates": {
       "value": [
-        "4円パチンコ 28玉",
-        "1円パチンコ 112.4玉",
         "21.73円スロット 5.2枚",
         "5円スロット 22.4枚"
       ],
@@ -95,16 +89,12 @@
       ]
     },
     "replay_limit": {
-      "value": [
-        "全レート共通 2,500玉または500枚"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "prize_exchange": {
-      "value": "1階景品カウンターから左手側の出口を出て右に進み、左手の地下に入る階段の先",
+      "value": "店舗入り口左隣「繁昌社南池袋ビル」地下1階",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -126,9 +116,20 @@
       "source_ids": []
     },
     "sns": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        {
+          "label": "X",
+          "url": "https://x.com/smartprego"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@prego5879"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "line": {
       "value": null,
@@ -136,7 +137,7 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2011年11月3日",
+      "value": "2023年4月5日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -153,14 +154,14 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "7のつく日、1日、11日、21日、22日、月日ゾロ目",
+      "value": "5のつく日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "anniversary_days": {
-      "value": "11月3日",
+      "value": "4月5日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -195,7 +196,7 @@
     {
       "field": "address",
       "before": null,
-      "after": "東京都豊島区南池袋1-24-5",
+      "after": "東京都豊島区南池袋1-21-2 地下1F",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -215,19 +216,9 @@
       "before": null,
       "after": [
         "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "パチンコとスロットで別々に抽選"
+        "配布方法: モバイル抽選（777コンパス）",
+        "～09:19予約締切、09:20～入場順抽選"
       ],
-      "changed_at": "2026-09-25",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "pachinko_units",
-      "before": null,
-      "after": 922,
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -236,7 +227,7 @@
     {
       "field": "slot_units",
       "before": null,
-      "after": 607,
+      "after": 195,
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -246,7 +237,6 @@
       "field": "rates",
       "before": null,
       "after": [
-        "パチンコ 4円 / 1円",
         "スロット 21.73円 / 5円"
       ],
       "changed_at": "2026-09-25",
@@ -258,8 +248,6 @@
       "field": "exchange_rates",
       "before": null,
       "after": [
-        "4円パチンコ 28玉",
-        "1円パチンコ 112.4玉",
         "21.73円スロット 5.2枚",
         "5円スロット 22.4枚"
       ],
@@ -269,20 +257,27 @@
       ]
     },
     {
-      "field": "replay_limit",
+      "field": "prize_exchange",
       "before": null,
-      "after": [
-        "全レート共通 2,500玉または500枚"
-      ],
+      "after": "店舗入り口左隣「繁昌社南池袋ビル」地下1階",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
       ]
     },
     {
-      "field": "prize_exchange",
+      "field": "sns",
       "before": null,
-      "after": "1階景品カウンターから左手側の出口を出て右に進み、左手の地下に入る階段の先",
+      "after": [
+        {
+          "label": "X",
+          "url": "https://x.com/smartprego"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@prego5879"
+        }
+      ],
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -291,7 +286,7 @@
     {
       "field": "opened_on",
       "before": null,
-      "after": "2011年11月3日",
+      "after": "2023年4月5日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -300,7 +295,7 @@
     {
       "field": "event_days",
       "before": null,
-      "after": "7のつく日、1日、11日、21日、22日、月日ゾロ目",
+      "after": "5のつく日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
@@ -309,7 +304,7 @@
     {
       "field": "anniversary_days",
       "before": null,
-      "after": "11月3日",
+      "after": "4月5日",
       "changed_at": "2026-09-25",
       "source_ids": [
         "s1"
