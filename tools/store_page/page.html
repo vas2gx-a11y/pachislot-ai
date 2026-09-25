@@ -31,7 +31,7 @@
 {% macro kv_rows(keys) -%}
 <table class="kv"><tbody>
 {% for k in keys %}
-<tr><th>{{ field_labels[k] }}</th><td>{{ value(k) }}<div class="st-line">{{ status(k) }}</div></td></tr>
+<tr><th>{{ field_labels[k] }}</th><td{% if k == 'anniversary_days' %} class="anniv"{% endif %}>{{ value(k) }}<div class="st-line">{{ status(k) }}</div></td></tr>
 {% endfor %}
 </tbody></table>
 {%- endmacro %}
@@ -157,7 +157,7 @@
         <div class="panel">
             <p class="panel-title">分析に使っている旧イベント日（シート）</p>
             {% if ops.events.event_days %}<p>イベント日: <strong>{{ ops.events.event_days }}</strong></p>{% endif %}
-            {% if ops.events.anniversary_days %}<p>周年日: <strong>{{ ops.events.anniversary_days }}</strong></p>{% endif %}
+            {% if ops.events.anniversary_days %}<p>周年日: <strong class="anniv">{{ ops.events.anniversary_days }}</strong></p>{% endif %}
         </div>
         {% endif %}
     {% endcall %}
