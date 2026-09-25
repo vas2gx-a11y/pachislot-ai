@@ -20,6 +20,7 @@
     .msg-error { margin-right: auto; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
     .quick { cursor: pointer; border: 1px solid #e4e4e7; background: #ffffff; }
     .quick:hover { background: #f4f4f5; }
+    .msg img { display: block; max-width: 100%; max-height: 12rem; border-radius: 0.75rem; margin-bottom: 0.375rem; }
 </style>
 {% endblock %}
 
@@ -40,8 +41,23 @@
             {% for m in machines %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}
         </select>
         <a id="chat-info-link" href="#" class="btn btn-ghost btn-sm" target="_blank">📖 機種情報</a>
+        <button type="button" id="chat-end-open" class="btn btn-accent btn-sm">🏁 実戦終了</button>
         <button type="button" id="chat-reset" class="btn btn-ghost btn-sm">🗑 新しい実戦</button>
     </div>
+
+    {# 店舗と台番号は会話から拾うと表記がぶれて、台メモや店舗傾向と紐づかないので欄で持つ #}
+    <div class="flex gap-2">
+        <input type="text" id="chat-store" class="input flex-1 min-w-0" list="chat-store-list" placeholder="店舗名" aria-label="店舗名">
+        <datalist id="chat-store-list">{% for name in store_names %}<option value="{{ name }}">{% endfor %}</datalist>
+        <input type="text" id="chat-unit" class="input w-28" inputmode="numeric" placeholder="台番号" aria-label="台番号">
+    </div>
+
+    <div id="chat-notes" class="hidden text-xs text-gray-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <div class="font-bold mb-1">📝 この台の過去メモ（AIにも渡しています）</div>
+        <ul id="chat-notes-list" class="space-y-0.5"></ul>
+    </div>
+
+    <div id="chat-saved" class="hidden text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"></div>
 
     <label id="chat-judge" class="hidden flex items-start gap-2 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
         <input type="checkbox" id="chat-judge-use" class="mt-0.5" checked>
@@ -56,13 +72,52 @@
         {% endfor %}
     </div>
 
+    <div id="chat-attach" class="hidden flex items-center gap-2 text-xs text-gray-600">
+        <img id="chat-attach-img" alt="" class="h-14 w-14 object-cover rounded-lg border border-gray-200">
+        <span>画像を添付中</span>
+        <button type="button" id="chat-attach-clear" class="btn btn-ghost btn-sm">✕ 外す</button>
+    </div>
+
     <form id="chat-form" class="flex gap-2 items-end">
+        {# capture属性は付けない。付けるとカメラ固定になり、撮り溜めたスクショを選べなくなる #}
+        <label class="btn btn-ghost shrink-0 cursor-pointer" title="画像を添付" aria-label="画像を添付">
+            📷<input type="file" id="chat-file" accept="image/*" class="hidden">
+        </label>
         <textarea id="chat-input" class="input flex-1" rows="2"
                   placeholder="例: 480G 弱チェ2 スイカ1 CZ失敗、差枚-350"></textarea>
         <button type="submit" id="chat-send" class="btn btn-primary">送信</button>
     </form>
+    <section id="chat-end" class="hidden card card-body">
+        <h2 class="font-bold text-gray-900 mb-1">🏁 実戦のまとめ</h2>
+        <p class="hint mt-0 mb-3">AIが会話から作った下書きです。読み違いがあれば直してから保存してください。空欄は「不明」として保存します。</p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {% for key, label in [("total_games", "総G数"), ("big_count", "BIG / AT初当り"), ("reg_count", "REG"), ("current_games", "ヤメ時のハマりG"), ("difference_slabs", "差枚")] %}
+            <div><label class="label" for="end-{{ key }}">{{ label }}</label>
+                <input type="number" id="end-{{ key }}" class="input" data-end-num="{{ key }}"></div>
+            {% endfor %}
+        </div>
+        <div class="mt-3">
+            <span class="label">設定の見込み（%）</span>
+            <div class="grid grid-cols-6 gap-1">
+                {% for n in range(1, 7) %}
+                <input type="number" class="input px-1 text-center" data-end-prob="{{ n }}" min="0" max="100" aria-label="設定{{ n }}" placeholder="{{ n }}">
+                {% endfor %}
+            </div>
+            <p class="hint">判断材料が無ければ空欄のままでOK（均等にはせず「不明」として残します）。</p>
+        </div>
+        {% for key, label, rows in [("estimation", "設定の見立て", 2), ("other_info", "見えた示唆・演出", 2), ("user_note", "結果とヤメ理由", 2), ("play_review", "立ち回りの振り返り（判断の良し悪し）", 4), ("unit_note", "台メモ（次に座るときの事実だけ・店舗と台番号が必要）", 2)] %}
+        <div class="mt-3"><label class="label" for="end-{{ key }}">{{ label }}</label>
+            <textarea id="end-{{ key }}" class="input" rows="{{ rows }}" data-end-text="{{ key }}"></textarea></div>
+        {% endfor %}
+        <div class="flex gap-2 mt-4">
+            <button type="button" id="chat-end-save" class="btn btn-primary">💾 保存</button>
+            <button type="button" id="chat-end-close" class="btn btn-ghost">閉じる（会話に戻る）</button>
+        </div>
+    </section>
+
     <p class="hint mt-0">
         見たものをそのまま短く送ればOK。会話からAIが状況を積み上げます。
+        📷 でデータカウンターや設定示唆画面の写真を送ると、読み取って状況に反映します。
         根拠は機種情報（解析まとめ）だけで、未公表の数値は推測しません。会話はこの端末にだけ保存されます。
     </p>
     {% else %}
@@ -86,20 +141,72 @@
   const PRESELECT = {{ preselect_id | tojson }};
   const INFO_URL = {{ url_for('machine_info.detail', machine_id='__ID__') | tojson }};
   const API_URL = {{ url_for('live_chat.api') | tojson }};
+  const NOTES_URL = {{ url_for('live_chat.unit_notes') | tojson }};
+  const SUMMARIZE_URL = {{ url_for('live_chat.summarize') | tojson }};
+  const SAVE_URL = {{ url_for('live_chat.save') | tojson }};
 
   const $ = id => document.getElementById(id);
   const machineSel = $('chat-machine'), log = $('chat-log'), input = $('chat-input'), sendBtn = $('chat-send');
 
-  let state = { lastMachineId: null, chats: {} };
+  // meta は機種ごとの { sessionId, store, unit, savedAt }。sessionId は記録シートで上書き保存するためのキー
+  let state = { lastMachineId: null, chats: {}, meta: {} };
   let sending = false;
+  let attached = null;  // { mime_type, data(base64), thumb(dataURL) }
+
+  // 送る画像は、データカウンターの小さい数字が読める程度まで縮める(スマホの原寸は数MBあり、
+  // ホールの回線だと送信だけで待たされる)。会話に残すのは表示用の小さいサムネだけ。
+  const SEND_MAX_PX = 1600, THUMB_MAX_PX = 240;
+
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('画像を開けませんでした')); };
+      img.src = url;
+    });
+  }
+  function shrink(img, maxPx, quality) {
+    const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', quality);
+  }
+
+  async function attach(file) {
+    if (!file) return;
+    try {
+      const img = await loadImage(file);
+      const dataUrl = shrink(img, SEND_MAX_PX, 0.85);
+      attached = { mime_type: 'image/jpeg', data: dataUrl.split(',')[1], thumb: shrink(img, THUMB_MAX_PX, 0.6) };
+      $('chat-attach-img').src = attached.thumb;
+      $('chat-attach').classList.remove('hidden');
+    } catch (e) {
+      alert(`${e.message}。HEICなど開けない形式の場合は、スクショかJPEGで送ってください。`);
+    }
+  }
+  function clearAttach() {
+    attached = null;
+    $('chat-file').value = '';
+    $('chat-attach').classList.add('hidden');
+  }
 
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-      if (saved && typeof saved === 'object') state = { lastMachineId: saved.lastMachineId || null, chats: saved.chats || {} };
+      if (saved && typeof saved === 'object') {
+        state = { lastMachineId: saved.lastMachineId || null, chats: saved.chats || {}, meta: saved.meta || {} };
+      }
     } catch (e) { console.warn('会話の読み込みに失敗しました:', e); }
   }
   function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); return; }
+    catch (e) { console.warn('会話の保存に失敗しました:', e); }
+    // 容量超過はサムネが溜まったときに起きる。画像の中身はAIの「📷 読み取り」行に文字で残っているので、
+    // 古いサムネから捨てて会話の文字だけは守る
+    Object.values(state.chats).flat().forEach(m => { delete m.thumb; });
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
     catch (e) { console.warn('会話の保存に失敗しました:', e); }  // 保存できなくても会話は続けられる
   }
@@ -107,6 +214,42 @@
   const currentId = () => machineSel.value;
   const currentMachine = () => MACHINES.find(m => m.id === currentId());
   const chat = () => (state.chats[currentId()] ||= []);
+  const meta = () => (state.meta[currentId()] ||= {});
+  function sessionId() {
+    const m = meta();
+    m.sessionId ||= 'chat-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    return m.sessionId;
+  }
+
+  async function postJson(url, body) {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+  const historyForAi = () => chat().filter(m => !m.error)
+    .map(m => ({ role: m.role, text: (m.image ? '（画像を送信）' : '') + m.text }));
+
+  // 店舗・台番号を打っている途中で毎回問い合わせないよう、入力が止まってから引く
+  let notesTimer = null;
+  function loadNotes() {
+    clearTimeout(notesTimer);
+    const { store, unit } = meta();
+    if (!store || !unit) { $('chat-notes').classList.add('hidden'); return; }
+    notesTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${NOTES_URL}?${new URLSearchParams({ store_name: store, machine_number: unit })}`);
+        const { notes } = await res.json();
+        const list = $('chat-notes-list');
+        list.innerHTML = '';
+        notes.forEach(n => {
+          const li = document.createElement('li');
+          li.textContent = `${n.date} ${n.machine_name}：${n.note}`;
+          list.appendChild(li);
+        });
+        $('chat-notes').classList.toggle('hidden', notes.length === 0);
+      } catch (e) { console.warn('台メモの読み込みに失敗しました:', e); }
+    }, 500);
+  }
 
   // 判別ページで保存したこの機種の最新結果。ログは新しい順に並んでいる
   function latestJudge() {
@@ -126,10 +269,16 @@
     $('chat-judge-text').textContent = note || '';
   }
 
-  function bubble(role, text) {
+  function bubble(role, text, thumb) {
     const div = document.createElement('div');
     div.className = `msg msg-${role} rounded-2xl px-3 py-2 text-sm`;
-    div.textContent = text;  // AIの出力をHTMLとして解釈させない
+    if (thumb) {
+      const img = document.createElement('img');
+      img.src = thumb;
+      img.alt = '送った画像';
+      div.appendChild(img);
+    }
+    div.appendChild(document.createTextNode(text));  // AIの出力をHTMLとして解釈させない
     log.appendChild(div);
     return div;
   }
@@ -143,22 +292,31 @@
       p.textContent = `「${currentMachine().name}」で実戦開始。ゲーム数や当たり、小役などを送ってください。`;
       log.appendChild(p);
     }
-    msgs.forEach(m => bubble(m.error ? 'error' : m.role, m.text));
+    msgs.forEach(m => bubble(m.error ? 'error' : m.role, m.text, m.thumb));
     log.scrollTop = log.scrollHeight;
     $('chat-info-link').href = INFO_URL.replace('__ID__', currentId());
     renderJudge();
+    const m = meta();
+    $('chat-store').value = m.store || '';
+    $('chat-unit').value = m.unit || '';
+    $('chat-saved').classList.toggle('hidden', !m.savedAt);
+    $('chat-saved').textContent = m.savedAt
+      ? `✅ ${m.savedAt} に記録を保存済み。続けて打つなら会話を続け、もう一度「実戦終了」で保存し直せます（上書き）。`
+      : '';
   }
 
   async function send(text) {
     text = text.trim();
-    if (!text || sending) return;
+    const image = attached;
+    if ((!text && !image) || sending) return;
     sending = true;
     sendBtn.disabled = true;
+    clearAttach();
 
     const msgs = chat();
-    // エラー表示は会話ではないのでAIには送らない
-    const history = msgs.filter(m => !m.error).map(m => ({ role: m.role, text: m.text }));
-    msgs.push({ role: 'user', text, at: Date.now() });
+    // エラー表示は会話ではないのでAIには送らない。過去の画像は再送せず、送った事実だけ文字で伝える
+    const history = historyForAi();
+    msgs.push({ role: 'user', text, image: !!image || undefined, thumb: image ? image.thumb : undefined, at: Date.now() });
     save();
     render();
     const pending = bubble('model', '考え中…');
@@ -167,13 +325,11 @@
     const judgeNote = $('chat-judge-use').checked ? latestJudge() : null;
     let reply, isError;
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ machine_id: currentId(), history, message: text, judge_note: judgeNote }),
+      const data = await postJson(API_URL, {
+        machine_id: currentId(), history, message: text, judge_note: judgeNote,
+        store_name: meta().store || '', machine_number: meta().unit || '',
+        image: image ? { mime_type: image.mime_type, data: image.data } : null,
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
       reply = data.reply; isError = data.error;
     } catch (e) {
       reply = `送信に失敗しました（${e.message}）。電波を確認してもう一度送ってください。`;
@@ -187,27 +343,112 @@
     sendBtn.disabled = false;
   }
 
+  /* ---- 実戦終了 ---- */
+  const endBox = $('chat-end');
+  const numInputs = [...document.querySelectorAll('[data-end-num]')];
+  const probInputs = [...document.querySelectorAll('[data-end-prob]')];
+  const textInputs = [...document.querySelectorAll('[data-end-text]')];
+
+  function fillEnd(d) {
+    numInputs.forEach(el => { el.value = d[el.dataset.endNum] ?? ''; });
+    probInputs.forEach(el => { el.value = d.setting_probabilities ? d.setting_probabilities[el.dataset.endProb] : ''; });
+    textInputs.forEach(el => { el.value = d[el.dataset.endText] || ''; });
+  }
+
+  async function openEnd() {
+    if (!chat().some(m => !m.error)) { alert('まだ会話がありません。'); return; }
+    if (sending) return;
+    const btn = $('chat-end-open');
+    btn.disabled = true;
+    btn.textContent = 'まとめ中…';
+    try {
+      const data = await postJson(SUMMARIZE_URL, {
+        machine_id: currentId(), history: historyForAi(), session_id: sessionId(),
+        store_name: meta().store || '', machine_number: meta().unit || '',
+      });
+      if (data.error) { alert(data.error); return; }
+      fillEnd(data.draft);
+      endBox.classList.remove('hidden');
+      endBox.scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      alert(`まとめの作成に失敗しました（${e.message}）。電波を確認してもう一度押してください。`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🏁 実戦終了';
+    }
+  }
+
+  async function saveEnd() {
+    const body = { machine_id: currentId(), session_id: sessionId(), store_name: meta().store || '', machine_number: meta().unit || '' };
+    numInputs.forEach(el => { body[el.dataset.endNum] = el.value; });
+    textInputs.forEach(el => { body[el.dataset.endText] = el.value; });
+    // 全部空なら「不明」。一部だけ入っていれば空欄は0として扱う(合計はサーバーで100に揃える)
+    if (probInputs.some(el => el.value !== '')) {
+      body.setting_probabilities = Object.fromEntries(probInputs.map(el => [el.dataset.endProb, Number(el.value) || 0]));
+    }
+    const btn = $('chat-end-save');
+    btn.disabled = true;
+    try {
+      const data = await postJson(SAVE_URL, body);
+      alert(data.message);
+      if (data.ok) {
+        meta().savedAt = new Date().toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        save();
+        endBox.classList.add('hidden');
+        render();
+        loadNotes();
+      }
+    } catch (e) {
+      alert(`保存に失敗しました（${e.message}）。電波を確認してもう一度保存してください。`);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   load();
   const initial = [PRESELECT, state.lastMachineId].find(id => id && MACHINES.some(m => m.id === id));
   if (initial) machineSel.value = initial;
 
-  machineSel.addEventListener('change', () => { state.lastMachineId = currentId(); save(); render(); });
+  machineSel.addEventListener('change', () => {
+    state.lastMachineId = currentId();
+    endBox.classList.add('hidden');
+    save(); render(); loadNotes();
+  });
+  $('chat-store').addEventListener('input', e => { meta().store = e.target.value.trim(); save(); loadNotes(); });
+  $('chat-unit').addEventListener('input', e => { meta().unit = e.target.value.trim(); save(); loadNotes(); });
+  $('chat-end-open').addEventListener('click', openEnd);
+  $('chat-end-save').addEventListener('click', saveEnd);
+  $('chat-end-close').addEventListener('click', () => endBox.classList.add('hidden'));
   $('chat-form').addEventListener('submit', e => { e.preventDefault(); const t = input.value; input.value = ''; send(t); });
   // Enterで送信、Shift+Enterで改行。日本語変換の確定Enterでは送らない
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('chat-form').requestSubmit(); }
   });
+  $('chat-file').addEventListener('change', e => attach(e.target.files[0]));
+  $('chat-attach-clear').addEventListener('click', clearAttach);
+  // PCではスクショをそのまま貼り付けられるようにする
+  input.addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (item) { e.preventDefault(); attach(item.getAsFile()); }
+  });
   document.querySelectorAll('[data-quick]').forEach(b => b.addEventListener('click', () => send(b.dataset.quick)));
   $('chat-reset').addEventListener('click', () => {
-    if (!chat().length || !confirm('この機種の会話を消して、新しい実戦として始めます。よろしいですか？')) return;
+    if (!chat().length) return;
+    const warn = meta().savedAt ? '' : '\n※この実戦はまだ記録を保存していません。';
+    if (!confirm(`この機種の会話を消して、新しい実戦として始めます。よろしいですか？${warn}`)) return;
     state.chats[currentId()] = [];
+    // 同じ店で台を移ることが多いので店舗名は残し、台番号と実戦IDだけ新しくする
+    state.meta[currentId()] = { store: meta().store };
+    endBox.classList.add('hidden');
     save();
     render();
+    loadNotes();
   });
 
   state.lastMachineId = currentId();
   save();
   render();
+  loadNotes();
 })();
 </script>
 {% endif %}

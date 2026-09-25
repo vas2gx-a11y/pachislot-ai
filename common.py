@@ -1,3 +1,4 @@
+import base64
 import csv
 import io
 import os
@@ -152,6 +153,9 @@ HEADERS = [
     "other_info", "user_note", "estimation", "setting_probabilities",
     "max_difference_slabs", "hamari_600_plus", "hamari_800_plus",
     "max_renchan", "graph_shape_tags", "category_scores", "suggestion_observations",
+    # 実戦チャットの終了時に残す立ち回りの振り返り。既存シートのヘッダーが前方一致のまま
+    # 自動で移行できるよう末尾に置いている
+    "play_review",
 ]
 
 # chat_logs シートの列構成(セッションごとのQ&A履歴)
@@ -215,6 +219,15 @@ IMPORT_LOGS_SHEET_NAME = os.environ.get("IMPORT_LOGS_SHEET_NAME", "import_logs")
 IMPORT_LOG_HEADERS = [
     "batch_id", "imported_at", "store_name", "kind", "target",
     "row_count", "added", "updated", "source", "detail",
+]
+
+# unit_notes シートの列構成(台メモ)
+# 実戦チャットの終了時に、店舗×台番号ごとの観察事実(見えた示唆・朝一の挙動など)を残す。
+# 設定は日ごとに変わるので「台のくせ」を推測させるのではなく、事実だけを貯めて
+# 次に同じ台に座ったときに並べて見られるようにする。1実戦(session_id)で1行。
+UNIT_NOTES_SHEET_NAME = os.environ.get("UNIT_NOTES_SHEET_NAME", "unit_notes")
+UNIT_NOTES_HEADERS = [
+    "session_id", "store_name", "machine_number", "date", "machine_name", "note", "updated_at",
 ]
 
 # 取り込み種別(kind)と、消すときに触るシートの対応。
@@ -428,6 +441,31 @@ NUMERIC_FIELDS = [
 ]
 
 
+def get_unit_notes_worksheet():
+    client = get_client()
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    try:
+        ws = sheet.worksheet(UNIT_NOTES_SHEET_NAME)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sheet.add_worksheet(title=UNIT_NOTES_SHEET_NAME, rows=500, cols=len(UNIT_NOTES_HEADERS))
+        ws.append_row(UNIT_NOTES_HEADERS)
+        return ws
+
+    current_headers = ws.row_values(1)
+    if not current_headers:
+        ws.append_row(UNIT_NOTES_HEADERS)
+    elif current_headers != UNIT_NOTES_HEADERS and current_headers == UNIT_NOTES_HEADERS[:len(current_headers)]:
+        # 列が後から追加された場合のみ、既存データをズラさずに不足ヘッダーだけ追記する
+        _ensure_min_columns(ws, len(UNIT_NOTES_HEADERS))
+        for i, header in enumerate(UNIT_NOTES_HEADERS[len(current_headers):], start=len(current_headers) + 1):
+            ws.update_cell(1, i, header)
+    elif current_headers != UNIT_NOTES_HEADERS:
+        logger.warning(
+            f"unit_notesシートのヘッダーが想定と異なります: {current_headers} (期待値: {UNIT_NOTES_HEADERS})"
+        )
+    return ws
+
+
 def _to_int(value):
     """スプレッドシートのセルが空文字や文字列で返ってきても安全にintへ変換する"""
     try:
@@ -531,6 +569,74 @@ def save_record(record):
     except Exception as e:
         logger.error(f"スプレッドシート書き込みエラー: {e}")
         flash("スプレッドシートへの保存に失敗しました。")
+
+
+def _upsert_row_by_session(ws, session_id, values):
+    """1列目の session_id が一致する行を上書きし、無ければ末尾に足す。"""
+    existing = ws.col_values(1)  # 1行目はヘッダー
+    target_row = next((i for i, v in enumerate(existing[1:], start=2) if str(v) == session_id), None)
+    if target_row:
+        ws.update([values], f"A{target_row}")
+    else:
+        ws.append_row(values)
+
+
+def upsert_record_by_session(record):
+    """
+    実戦チャットの記録を保存する。同じ session_id の行があれば上書きする。
+
+    save_record() は画像を送るたびに1行ずつ足していく使い方だが、実戦チャットは
+    1実戦で1行なので、保存をやり直しても行が増えないようにしている。
+    戻り値: 成功したかどうか。
+    """
+    try:
+        ws = get_records_worksheet()
+        _upsert_row_by_session(ws, record["session_id"], [record.get(h, "") for h in HEADERS])
+    except Exception as e:
+        logger.error(f"実戦チャットの記録の保存エラー: {e}")
+        return False
+    _cache_invalidate("records")
+    return True
+
+
+def load_unit_notes():
+    """台メモを全件、新しい順で返す。"""
+    cached = _cache_get("unit_notes")
+    if cached is not None:
+        return cached
+    try:
+        notes = get_unit_notes_worksheet().get_all_records()
+    except Exception as e:
+        logger.error(f"台メモの読み込みエラー: {e}")
+        return []
+    notes.sort(key=lambda n: str(n.get("date", "")), reverse=True)
+    _cache_set("unit_notes", notes)
+    return notes
+
+
+def unit_notes_for(store_name, machine_number, limit=10):
+    """同じ店舗・同じ台番号の台メモ。どちらかが空なら同じ台と特定できないので返さない。"""
+    store_name = str(store_name or "").strip()
+    machine_number = str(machine_number or "").strip()
+    if not store_name or not machine_number:
+        return []
+    return [
+        n for n in load_unit_notes()
+        if str(n.get("store_name", "")).strip() == store_name
+        and str(n.get("machine_number", "")).strip() == machine_number
+    ][:limit]
+
+
+def save_unit_note(note):
+    """台メモを保存する。同じ session_id なら上書き。戻り値: 成功したかどうか。"""
+    try:
+        ws = get_unit_notes_worksheet()
+        _upsert_row_by_session(ws, note["session_id"], [note.get(h, "") for h in UNIT_NOTES_HEADERS])
+    except Exception as e:
+        logger.error(f"台メモの保存エラー: {e}")
+        return False
+    _cache_invalidate("unit_notes")
+    return True
 
 
 def get_records_sheet_diagnostics():
@@ -4650,9 +4756,22 @@ def build_calendar_day_detail(date_str, store_names=None):
 
 LIVE_CHAT_MAX_TURNS = 40  # 送られてきた履歴のうち使う発言数。長時間打つと際限なく伸びるので古い方を捨てる
 LIVE_CHAT_MAX_CHARS = 2000  # 1発言の上限。貼り付けの事故でプロンプトが膨らまないように
+# 画像はブラウザ側で縮小してから送るので通常は数百KB。ここは縮小をすり抜けたときの歯止め
+LIVE_CHAT_IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+LIVE_CHAT_IMAGE_MAX_BYTES = 4 * 1024 * 1024
 
 
-def _live_chat_system_prompt(machine, judge_note):
+LIVE_CHAT_SESSION_PREFIX = "chat-"  # 記録シートで、実戦チャット由来の行を見分けるため
+LIVE_CHAT_REVIEW_HISTORY = 8  # 終了時の振り返りで参照する、過去の振り返りの件数
+
+
+def _format_unit_notes(notes):
+    if not notes:
+        return "なし"
+    return "\n".join(f"- {n.get('date', '')} {n.get('machine_name', '')}: {n.get('note', '')}" for n in notes)
+
+
+def _live_chat_system_prompt(machine, judge_note, unit_notes=None):
     # $schema や表示色はAIの判断に関係ないので渡さない
     info = {k: v for k, v in machine.items() if k not in ("$schema", "theme")}
     return f"""あなたはパチスロを打っている最中のユーザーに付き添う立ち回りアシスタントです。
@@ -4672,25 +4791,48 @@ def _live_chat_system_prompt(machine, judge_note):
 - 打ちながら読むので短く。基本は3〜6行、必要なときだけ箇条書き。Markdownの見出しや太字記号は使わない。
 - 状況が曖昧なら、判断に必要な数字を1つだけ聞き返す。
 
+【画像が送られたとき】
+データカウンター・液晶・終了画面・設定示唆演出などの写真やスクショが届く。
+- 回答の1行目は必ず「📷 読み取り: 」で始め、画像から読み取れた数値・演出を1行で並べる。
+  以降の会話では画像を再送しないので、この1行が画像の記録として残る。判断に使う値は漏らさず書く。
+- 読み取れない・写っていない数値は書かない(推測で埋めない)。ブレや反射で怪しい値には「?」を付ける。
+- 設定示唆の画面・演出なら、【機種情報JSON】の設定示唆の項目と照らし合わせ、何を示唆するかを述べる。
+  JSONに載っていない演出なら、そう言って意味を断定しない。
+- 2行目以降は、読み取った内容を会話の状況に反映したうえで、通常どおり短く助言する。
+
 【ブラウザ側の設定判別(ベイズ推定)の最新結果】
 {judge_note or "なし(判別ページで推定・保存した結果がこの機種に無い)"}
+
+【この台(同じ店舗・同じ台番号)の過去の台メモ】
+過去の日の観察事実。設定は日ごとに変わりうるので、据え置きやリセットの判断材料として参照するだけにし、
+今日の設定を断定する根拠にはしない。
+{_format_unit_notes(unit_notes)}
 
 【機種情報JSON】
 {json.dumps(info, ensure_ascii=False)}
 """
 
 
-def live_chat_reply(machine, history, message, judge_note=""):
+def live_chat_image_part(mime_type, data):
     """
-    機種情報JSONと会話履歴をもとに、打ちながらの相談に答える。
-
-    history は [{"role": "user"|"model", "text": "..."}, ...](古い順)。
-    戻り値: (回答テキスト, エラーかどうか)。エラー時は画面にそのまま出せる文言を返す。
+    ブラウザから来た画像(base64)を検証して、Geminiに渡す形にする。
+    戻り値: (part, エラー文言)。画像なしなら (None, None)。
     """
-    message = (message or "").strip()[:LIVE_CHAT_MAX_CHARS]
-    if not message:
-        return "メッセージが空でした。", True
+    if not data:
+        return None, None
+    if mime_type not in LIVE_CHAT_IMAGE_MIME_TYPES:
+        return None, "対応していない画像形式です(JPEG/PNG/WebPのみ)。"
+    try:
+        raw = base64.b64decode(data, validate=True)
+    except (ValueError, TypeError):
+        return None, "画像データが壊れています。もう一度選び直してください。"
+    if len(raw) > LIVE_CHAT_IMAGE_MAX_BYTES:
+        return None, "画像が大きすぎます。"
+    return {"inlineData": {"mimeType": mime_type, "data": data}}, None
 
+
+def _live_chat_contents(history):
+    """ブラウザから来た履歴を、Geminiの contents の形に整える。"""
     contents = []
     for h in (history or [])[-LIVE_CHAT_MAX_TURNS:]:
         role = h.get("role") if isinstance(h, dict) else None
@@ -4705,17 +4847,22 @@ def live_chat_reply(machine, history, message, judge_note=""):
     # 先頭がモデルの発言だと弾かれるので、ユーザー発言から始まるように揃える
     while contents and contents[0]["role"] != "user":
         contents.pop(0)
+    return contents
+
+
+def _live_chat_add_user_turn(contents, message, image_part=None):
     if contents and contents[-1]["role"] == "user":
         contents[-1]["parts"][0]["text"] += "\n" + message
     else:
         contents.append({"role": "user", "parts": [{"text": message}]})
+    if image_part:
+        contents[-1]["parts"].append(image_part)
+    return contents
 
-    payload = {
-        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note)}]},
-        "contents": contents,
-    }
+
+def _live_chat_call(payload, label):
+    """Geminiを呼んで本文を返す。戻り値: (テキスト, エラー文言)。"""
     headers = {"Content-Type": "application/json"}
-
     try:
         response = requests.post(
             GEMINI_URL, headers=headers, data=json.dumps(payload), timeout=REQUEST_TIMEOUT
@@ -4723,14 +4870,177 @@ def live_chat_reply(machine, history, message, judge_note=""):
         response.raise_for_status()
         text = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         if text:
-            return text, False
-        logger.error("実戦チャット: 空の応答")
+            return text, None
+        logger.error(f"{label}: 空の応答")
     except requests.exceptions.Timeout:
-        logger.error("実戦チャット タイムアウト")
-        return "AIの応答が時間切れになりました。もう一度送ってください。", True
+        logger.error(f"{label} タイムアウト")
+        return None, "AIの応答が時間切れになりました。もう一度送ってください。"
     except requests.exceptions.RequestException as e:
-        logger.error(f"実戦チャット 通信エラー: {e}")
+        logger.error(f"{label} 通信エラー: {e}")
     except (KeyError, IndexError) as e:
-        logger.error(f"実戦チャット レスポンス構造エラー: {e}")
+        logger.error(f"{label} レスポンス構造エラー: {e}")
+    return None, "回答の生成に失敗しました。もう一度送ってください。"
 
-    return "回答の生成に失敗しました。もう一度送ってください。", True
+
+def live_chat_reply(machine, history, message, judge_note="", image_part=None, unit_notes=None):
+    """
+    機種情報JSONと会話履歴をもとに、打ちながらの相談に答える。
+
+    history は [{"role": "user"|"model", "text": "..."}, ...](古い順)。
+    image_part は live_chat_image_part() の戻り値。今回の発言にだけ付ける
+    (過去の画像はAIの「📷 読み取り」行が文字で残っているので再送しない)。
+    unit_notes は unit_notes_for() の戻り値(この台の過去の台メモ)。
+    戻り値: (回答テキスト, エラーかどうか)。エラー時は画面にそのまま出せる文言を返す。
+    """
+    message = (message or "").strip()[:LIVE_CHAT_MAX_CHARS]
+    if not message and image_part:
+        message = "この画像を読み取って、今の状況に反映してください。"
+    if not message:
+        return "メッセージが空でした。", True
+
+    contents = _live_chat_add_user_turn(_live_chat_contents(history), message, image_part)
+    payload = {
+        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note, unit_notes)}]},
+        "contents": contents,
+    }
+    text, error = _live_chat_call(payload, "実戦チャット")
+    return (error, True) if error else (text, False)
+
+
+# ---- 実戦の終了(記録・振り返り・台メモ) ----
+# 終了時にAIが会話から記録の下書きを作り、ユーザーが画面で直してから保存する。
+# AIは画像の数値を読み違えることがあるので、確認を挟まずに保存はしない。
+#
+# 振り返りは勝ち負けではなく「判断」を評価させる。1回の収支は運の影響が大きく、
+# 結果から改善点を出すと、負けた日の正しい判断まで悪いと言われてしまうため。
+# 過去の振り返りも渡して、同じ癖が続いていればそれを指摘させる(打ち手の傾向)。
+
+LIVE_CHAT_NUMERIC_FIELDS = ["total_games", "big_count", "reg_count", "current_games", "difference_slabs"]
+
+
+def _recent_play_reviews(exclude_session_id, limit=LIVE_CHAT_REVIEW_HISTORY):
+    reviews = [
+        r for r in load_records()
+        if str(r.get("play_review", "")).strip() and str(r.get("session_id", "")) != exclude_session_id
+    ][:limit]
+    if not reviews:
+        return "なし(振り返りの記録がまだない)"
+    return "\n".join(
+        f"- {str(r.get('date', ''))[:10]} {r.get('store_name', '')} {r.get('machine_name', '')}"
+        f" 差枚{r.get('difference_slabs', 0)}枚: {r.get('play_review', '')}"
+        for r in reviews
+    )
+
+
+def live_chat_summarize(machine, history, session_id, store_name="", machine_number=""):
+    """
+    実戦チャットの会話から、記録・振り返り・台メモの下書きを作る。
+    戻り値: (下書きの辞書, エラー文言)。
+    """
+    contents = _live_chat_contents(history)
+    if not contents:
+        return None, "会話がまだありません。"
+
+    unit_notes = unit_notes_for(store_name, machine_number)
+    instruction = f"""ここで実戦を終了します。ここまでの会話から、以下のJSONだけを出力してください(前後の文章は不要)。
+
+{{"total_games": 総ゲーム数,
+  "big_count": BIG回数(AT機ならAT初当り回数),
+  "reg_count": REG回数(無い機種は0),
+  "current_games": ヤメた時点のハマりゲーム数,
+  "difference_slabs": 最終の差枚(マイナスあり),
+  "setting_probabilities": {{"1": %, "2": %, "3": %, "4": %, "5": %, "6": %}},
+  "estimation": "設定の見立てを1〜2文。根拠にした要素と試行回数の少なさにも触れる",
+  "other_info": "見えた設定示唆・確定演出・特徴的な挙動を事実だけ列挙",
+  "user_note": "結果の要約とヤメた理由を1〜2文",
+  "play_review": "立ち回りの振り返り。良かった判断1つと改善点1〜2つ",
+  "unit_note": "この台の観察事実だけ(示唆・朝一の挙動・リセット/据え置きの気配など)"}}
+
+- 会話に出てこなかった数値は推測せず null にする。
+- setting_probabilities は判断材料がほとんど無ければ null にする。
+- play_review は勝ち負けではなく判断を評価する。機種情報JSONのヤメ時・ゾーン・天井・リセット情報と照らして、
+  ゾーンや天井の手前でのヤメ、示唆を見落とした続行/ヤメ、根拠の無い深追いなどを具体的に指摘する。
+  負けても判断が正しければそう言う。
+  下の【過去の振り返り】と同じ傾向が続いていれば「前回も〜」と打ち手の癖として指摘する。
+- unit_note に「くせ」や設定の推測は書かない。次に同じ台に座ったとき役立つ事実だけを書く。書くことが無ければ空文字。
+
+【過去の振り返り(新しい順)】
+{_recent_play_reviews(session_id)}
+"""
+    contents = _live_chat_add_user_turn(contents, instruction)
+    payload = {
+        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, "", unit_notes)}]},
+        "contents": contents,
+    }
+    text, error = _live_chat_call(payload, "実戦チャットの終了")
+    if error:
+        return None, error
+    try:
+        draft = json.loads(text[text.find("{"):text.rfind("}") + 1])
+    except (ValueError, TypeError):
+        logger.error(f"実戦チャットの終了: JSON解析エラー raw={text!r}")
+        return None, "AIのまとめを読み取れませんでした。もう一度押してください。"
+    if not isinstance(draft, dict):
+        return None, "AIのまとめを読み取れませんでした。もう一度押してください。"
+
+    for field in LIVE_CHAT_NUMERIC_FIELDS:
+        # AIや入力欄からは "1,234" "-350枚" のような表記も来るので、数値部分だけを取る
+        value = _to_number(draft.get(field))
+        draft[field] = int(value) if value is not None else None
+    probs = draft.get("setting_probabilities")
+    draft["setting_probabilities"] = _normalize_setting_probabilities(probs) if isinstance(probs, dict) else None
+    for field in ("estimation", "other_info", "user_note", "play_review", "unit_note"):
+        draft[field] = str(draft.get(field) or "").strip()
+    return draft, None
+
+
+def save_live_chat_result(machine, data):
+    """
+    終了画面で確認・修正した内容を、記録シートと台メモに保存する。
+    どちらも session_id で上書きするので、保存し直しても行は増えない。
+    戻り値: (成功したかどうか, 画面に出す文言)。
+    """
+    session_id = str(data.get("session_id") or "")
+    if not re.fullmatch(re.escape(LIVE_CHAT_SESSION_PREFIX) + r"[0-9a-z]{6,32}", session_id):
+        return False, "実戦のIDが不正です。ページを読み込み直してください。"
+
+    store_name = str(data.get("store_name") or "").strip()
+    machine_number = str(data.get("machine_number") or "").strip()
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    probs = data.get("setting_probabilities")
+    record = {
+        "session_id": session_id,
+        "date": now_text,
+        "machine_name": machine.get("name", ""),
+        "machine_number": machine_number,
+        "store_name": store_name,
+        # 記録シートの他の列(グラフの形など)は画像解析の流れで埋まるもので、ここでは空のまま
+        "setting_probabilities": json.dumps(_normalize_setting_probabilities(probs)) if isinstance(probs, dict) else "",
+    }
+    for field in LIVE_CHAT_NUMERIC_FIELDS:
+        value = _to_number(data.get(field))
+        record[field] = int(value) if value is not None else ""
+    for field in ("estimation", "other_info", "user_note", "play_review"):
+        record[field] = str(data.get(field) or "").strip()[:LIVE_CHAT_MAX_CHARS]
+
+    if not upsert_record_by_session(record):
+        return False, "記録の保存に失敗しました。時間をおいてもう一度保存してください。"
+
+    unit_note = str(data.get("unit_note") or "").strip()[:LIVE_CHAT_MAX_CHARS]
+    if not unit_note:
+        return True, "記録を保存しました。"
+    if not store_name or not machine_number:
+        return True, "記録を保存しました。台メモは店舗名と台番号が無いため保存していません。"
+    saved = save_unit_note({
+        "session_id": session_id,
+        "store_name": store_name,
+        "machine_number": machine_number,
+        "date": now_text[:10],
+        "machine_name": machine.get("name", ""),
+        "note": unit_note,
+        "updated_at": now_text,
+    })
+    if not saved:
+        return True, "記録は保存しましたが、台メモの保存に失敗しました。もう一度保存してください。"
+    return True, "記録と台メモを保存しました。"
