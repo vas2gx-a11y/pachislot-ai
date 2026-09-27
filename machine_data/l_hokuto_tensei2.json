@@ -28,6 +28,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "毎G 1あべし獲得・規定あべし（最大1536）でAT"},
+      {"id": "tenpa", "label": "天破の刻", "kind": "other", "tag": "あべし加算", "note": "あべし加算ゾーン"},
+      {"id": "at", "label": "闘神演舞", "kind": "at", "note": "1セット30G・純増 約4.0枚/G"},
+      {"id": "tokka", "label": "拳王強襲 / SPバトル", "kind": "special", "note": "勝舞魂の上乗せ特化"},
+      {"id": "shoubu", "label": "神拳勝舞", "kind": "other", "tag": "継続バトル", "note": "勝舞魂を使った継続バトル"},
+      {"id": "tengeki", "label": "天撃", "kind": "cz", "tag": "上位CZ", "note": "4G・成功期待度 50.6%〜60.8%", "row": 2},
+      {"id": "ura", "label": "裏闘神演舞", "kind": "at", "tag": "上位AT", "note": "1セット30G+α"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "tenpa", "label": "レア小役"},
+      {"from": "tenpa", "to": "normal", "label": "あべし加算"},
+      {"from": "normal", "to": "at", "label": "規定あべし到達・直撃"},
+      {"from": "at", "to": "tokka"},
+      {"from": "tokka", "to": "at"},
+      {"from": "at", "to": "shoubu", "label": "セット終了"},
+      {"from": "shoubu", "to": "at", "label": "勝利で継続"},
+      {"from": "shoubu", "to": "normal", "label": "敗北"},
+      {"from": "tengeki", "to": "ura", "label": "成功"},
+      {"from": "tengeki", "to": "normal", "label": "失敗（必ず天国へ）"},
+      {"from": "ura", "to": "tengeki", "label": "敗北しても必ず"}
+    ],
+    "notes": ["裏闘神演舞以外からの天撃の突入契機はこのJSONに未記載（情報確認中）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

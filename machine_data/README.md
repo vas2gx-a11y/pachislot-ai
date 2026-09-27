@@ -32,6 +32,34 @@ X(旧Twitter)の投稿から拾った立ち回り情報。解析サイトの値�
 - 投稿1件を `sources` に1件登録する（`name` は `X @アカウント名`、`url` は投稿のURL）
 - AIの設定推測・期待値概算（`to_rule`）には渡さない。実戦チャットにはJSONごと渡るので参照される
 
+## ゲームフロー図（`game_flow`）
+
+解析サイトの「ゲームフロー」画像と同じ、通常時 → CZ・ボーナス → AT → 特化ゾーン の図を `/info/<id>` に出す。
+箱（`nodes`）と矢印（`edges`）だけを書けば、段の並べ方・矢印の引き回しはページ側で自動で決まる（座標は書かない）。
+
+```json
+"game_flow": {
+  "nodes": [
+    { "id": "normal", "label": "通常時", "kind": "normal", "note": "レア小役・規定G数で抽選" },
+    { "id": "cz", "label": "レミニセンス", "kind": "cz", "note": "8G・成功期待度 約50%" },
+    { "id": "at", "label": "東京喰種咬", "kind": "at", "note": "初期 差枚 約150枚" }
+  ],
+  "edges": [
+    { "from": "normal", "to": "cz" },
+    { "from": "cz", "to": "at", "label": "成功" },
+    { "from": "cz", "to": "normal", "label": "失敗" }
+  ],
+  "source_ids": ["pworld"]
+}
+```
+
+- 先頭の箱（ふつうは通常時）が一番上になる。`kind` は箱の色（`normal` / `cz` / `bonus` / `at` / `special`=特化ゾーン / `other`=前兆・バトルなど）、
+  帯の文言を変えたいときは `tag`（「上位CZ」「ST」など）
+- 前の状態に戻る矢印（CZ失敗→通常時、特化ゾーン→AT など）は線を引かず、元の箱の下に「↩ 失敗 → 通常時」と書かれる
+- `note` と矢印の `label` は短く。細かい条件は `features` に書く
+- 出典に無い遷移は矢印にしない。突入契機が分からない箱は `row`（この段より上に置かない）で位置だけ合わせ、`notes` に「情報確認中」と書く
+- AIの設定推測・Q&A・期待値概算（`to_rule` の `game_flow`）にもそのまま渡る
+
 ## このJSONを使う機能
 
 機種データはこのJSONだけが正。画面から編集する手段はなく、JSONを直してデプロイする。
@@ -39,9 +67,9 @@ X(旧Twitter)の投稿から拾った立ち回り情報。解析サイトの値�
 
 | 機能 | 使うところ | 変換 |
 |---|---|---|
-| 機種情報ページ `/info` | 全体 | そのまま表示 |
+| 機種情報ページ `/info` | 全体 | そのまま表示（`game_flow` は `machine_info.flow_layout` で図にする） |
 | 設定判別 `/judge` | `setting_estimation`・`settings.list`・`spec` の機械割 | `machine_info.to_client_spec` |
-| 記録登録時のAI設定推測・Q&A・期待値のAI概算 | `spec`・`setting_estimation`・`features` など | `machine_info.to_rule` |
+| 記録登録時のAI設定推測・Q&A・期待値のAI概算 | `spec`・`setting_estimation`・`game_flow`・`features` など | `machine_info.to_rule` |
 | 実戦チャット `/chat` | 全体 | JSONをそのままAIに渡す |
 
 機種名は `name` と `aliases` の両方で探す（記録登録の手入力に表記ゆれがあるため）。

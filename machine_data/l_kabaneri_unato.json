@@ -27,6 +27,31 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "チャンス目（約1/15）でポイント、カバネチャンス目で周期"},
+      {"id": "cz", "label": "カバネリチャンス", "kind": "cz", "note": "無名 約36% / 生駒 約46% / 銅藍 約78%"},
+      {"id": "shuki", "label": "周期抽選", "kind": "other", "tag": "周期", "note": "天井6周期（設定変更後など4周期）"},
+      {"id": "bonus", "label": "EPISODE BONUS / 駿城ボーナス", "kind": "bonus", "note": "EPISODEはST濃厚 / 駿城はST期待度 約20%"},
+      {"id": "st", "label": "KABANERI OF THE IRON FORTRESS", "kind": "at", "tag": "ST", "note": "25G・継続率 約76%"},
+      {"id": "attack", "label": "カバネリATTACK", "kind": "special", "note": "4G（超は6G）・枚数上乗せ"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "無名・生駒ポイント"},
+      {"from": "normal", "to": "shuki", "label": "カバネポイント"},
+      {"from": "cz", "to": "bonus", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "shuki", "to": "bonus", "label": "当選"},
+      {"from": "shuki", "to": "normal", "label": "非当選"},
+      {"from": "bonus", "to": "st", "label": "ST突入"},
+      {"from": "st", "to": "attack", "label": "ボーナス当選"},
+      {"from": "attack", "to": "st"},
+      {"from": "st", "to": "normal", "label": "非継続"}
+    ],
+    "notes": ["上位ST（景之ST 約83% / 真景之ST 約89%）は海門回想で4thエピソード到達→復讐の焔から"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。キャラ紹介・ボイスは偶数設定と設定3・5で出方が異なる。",

@@ -28,6 +28,14 @@
     "summary": "",
     "source_ids": []
   },
+  "game_flow": {
+    "nodes": [
+      { "id": "normal", "label": "通常時", "kind": "normal", "note": "" }
+    ],
+    "edges": [],
+    "notes": [],
+    "source_ids": []
+  },
   "settings": {
     "list": [
       "1",

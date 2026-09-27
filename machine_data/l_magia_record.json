@@ -30,6 +30,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "規定ポイント・レア小役でボーナス（前兆「調整屋」）"},
+      {"id": "cz", "label": "マギアチャレンジ / 黒江チャレンジ", "kind": "cz", "note": "約40% / ボーナス濃厚"},
+      {"id": "big", "label": "ビッグボーナス", "kind": "bonus", "note": "30G+α"},
+      {"id": "ep", "label": "エピソードボーナス", "kind": "bonus", "note": "50G・AT濃厚"},
+      {"id": "at", "label": "マギアラッシュ", "kind": "at", "note": "純増 約2.6枚/G（G数管理型）"},
+      {"id": "battle", "label": "マギウスバトル", "kind": "other", "tag": "バトル"},
+      {"id": "reward", "label": "ストーリー / 決戦神浜聖女 / マギアボーナス", "kind": "special", "tag": "報酬"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "スイカ"},
+      {"from": "normal", "to": "big", "label": "規定pt・レア小役"},
+      {"from": "cz", "to": "big", "label": "ボーナス当選"},
+      {"from": "cz", "to": "ep", "label": "BAR揃い（黒江）"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "big", "to": "at", "label": "小さいキュゥべえ揃いなど"},
+      {"from": "big", "to": "normal", "label": "AT非当選"},
+      {"from": "ep", "to": "at"},
+      {"from": "at", "to": "battle"},
+      {"from": "battle", "to": "reward", "label": "勝利"},
+      {"from": "reward", "to": "at"},
+      {"from": "at", "to": "normal", "label": "終了"}
+    ],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

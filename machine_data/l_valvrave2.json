@@ -27,6 +27,34 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "毎G 1pt以上・規定pt（100/200/400/600）で周期抽選"},
+      {"id": "cz", "label": "ドルシア攻防戦", "kind": "cz", "note": "11G+α・成功期待度 約60%"},
+      {"id": "kakumei", "label": "革命BONUS", "kind": "bonus", "note": "45G+α・AT期待度 約53%"},
+      {"id": "kessen", "label": "決戦BONUS", "kind": "bonus", "note": "最低9G+α・AT期待度 約46%"},
+      {"id": "rush", "label": "革命RUSH", "kind": "at", "note": "1セット10〜100G+α・継続率 約75%"},
+      {"id": "harakiri", "label": "ハラキリチャレンジ", "kind": "other", "tag": "継続抽選"},
+      {"id": "super", "label": "超革命RUSH", "kind": "at", "tag": "上位AT", "note": "最大継続率 約90%"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "周期"},
+      {"from": "normal", "to": "rush", "label": "BAR揃い（直撃）"},
+      {"from": "cz", "to": "kakumei", "label": "成功"},
+      {"from": "cz", "to": "kessen", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "kakumei", "to": "rush", "label": "666枚到達など"},
+      {"from": "kakumei", "to": "normal", "label": "AT非当選"},
+      {"from": "kessen", "to": "rush", "label": "ミッションクリア"},
+      {"from": "kessen", "to": "normal", "label": "AT非当選"},
+      {"from": "rush", "to": "harakiri", "label": "G数消化"},
+      {"from": "harakiri", "to": "rush", "label": "ブラックアウトで継続"},
+      {"from": "harakiri", "to": "normal", "label": "非継続"},
+      {"from": "rush", "to": "super", "label": "3回継続で昇格"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "4", "5", "6"],
     "note": "設定3は非搭載（設定1・2・4・5・6）。CZ確率は全設定共通、初当りの設定差はごく小さく、判別は終了画面などの示唆が中心。",

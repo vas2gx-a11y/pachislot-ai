@@ -118,6 +118,7 @@ def detail(machine_id):
         payout=_payout_range(m),
         judge_spec=judge_spec,
         judge_skipped=judge_skipped,
+        flow=machine_info.flow_layout(m.get("game_flow")),
         **HELPERS,
     )
 

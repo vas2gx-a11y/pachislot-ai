@@ -49,6 +49,22 @@
       "ptown"
     ]
   },
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "GOGO!ランプは第3停止後の後告知のみ（告知音なし）"},
+      {"id": "big", "label": "BIG", "kind": "bonus", "tag": "ボーナス"},
+      {"id": "reg", "label": "REG", "kind": "bonus", "tag": "ボーナス"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "big", "label": "1/259.0〜1/234.9"},
+      {"from": "normal", "to": "reg", "label": "1/354.2〜1/234.9"},
+      {"from": "big", "to": "normal", "label": "終了"},
+      {"from": "reg", "to": "normal", "label": "終了"}
+    ],
+    "notes": ["矢印の確率は設定1〜設定6"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": [
       "1",

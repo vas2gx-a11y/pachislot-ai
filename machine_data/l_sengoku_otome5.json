@@ -29,6 +29,34 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "周期（50G、以降100Gごと）・巫女ポイント"},
+      {"id": "otome", "label": "乙女アタック", "kind": "cz", "note": "20G（2G×10戦）・AT期待度 約52%"},
+      {"id": "at", "label": "強カワRUSH", "kind": "at", "note": "初期45G+α・純増 約2.7枚/G（G数上乗せ型）"},
+      {"id": "honnoji", "label": "本能寺の変", "kind": "cz", "tag": "AT中CZ", "note": "4G+α・勝利期待度 50%（設定1）"},
+      {"id": "shutsujin", "label": "出陣BONUS", "kind": "bonus", "tag": "上乗せ特化", "note": "20G・G数上乗せ特化"},
+      {"id": "kessen", "label": "決戦ノ刻", "kind": "other", "tag": "バトル"},
+      {"id": "kensei", "label": "剣聖CHANCE", "kind": "cz", "tag": "上位CZ", "note": "10G+α・成功期待度 51%〜70%（設定1）"},
+      {"id": "shin", "label": "真強カワRUSH", "kind": "at", "tag": "上位AT", "note": "初期100G・純増 約4.8枚/G"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "at", "label": "周期到達"},
+      {"from": "normal", "to": "otome", "label": "巫女ポイント0"},
+      {"from": "otome", "to": "at", "label": "勝利"},
+      {"from": "otome", "to": "normal", "label": "敗北"},
+      {"from": "at", "to": "honnoji", "label": "レア小役・規定G数"},
+      {"from": "at", "to": "normal", "label": "残り0G（引き戻しゾーン後）"},
+      {"from": "honnoji", "to": "shutsujin", "label": "勝利"},
+      {"from": "honnoji", "to": "at", "label": "敗北"},
+      {"from": "honnoji", "to": "kessen", "label": "一部"},
+      {"from": "shutsujin", "to": "at"},
+      {"from": "kessen", "to": "kensei", "label": "勝利"},
+      {"from": "kensei", "to": "shin", "label": "成功"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

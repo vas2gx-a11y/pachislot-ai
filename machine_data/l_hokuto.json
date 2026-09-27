@@ -26,6 +26,22 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "レア役で内部状態（地獄→通常→天国）を上げる"},
+      {"id": "zencho", "label": "本前兆", "kind": "other", "tag": "前兆", "note": "32G以内にBB告知"},
+      {"id": "bb", "label": "バトルボーナス", "kind": "at", "tag": "BB", "note": "小役パート30G+α＋バトルパート8or9G・純増 約4.1枚/G"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "zencho", "label": "レア役など"},
+      {"from": "zencho", "to": "bb"},
+      {"from": "bb", "to": "bb", "label": "勝利でセット継続"},
+      {"from": "bb", "to": "normal", "label": "敗北"}
+    ],
+    "notes": ["有利区間リセット時のBBは継続率84%以上", "無想転生バトルは平均94%ループ（平均16.6連）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "4", "5", "6"],
     "note": "設定3は非搭載（設定1・2・4・5・6）。設定Lは下パネルが常に明滅する。",

@@ -26,6 +26,42 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "レア小役・規定G数（液晶G数）で抽選"},
+      {"id": "remi", "label": "レミニセンス", "kind": "cz", "note": "8G・成功期待度 約50%"},
+      {"id": "rize", "label": "大喰いの利世", "kind": "cz", "tag": "上位CZ", "note": "8G・成功期待度 約75%"},
+      {"id": "ep", "label": "EP BONUS", "kind": "bonus", "note": "100枚・ATの差枚数を上乗せ"},
+      {"id": "at", "label": "東京喰種咬", "kind": "at", "note": "初期 差枚 約150枚・純増 約4.0枚/G"},
+      {"id": "battle", "label": "喰種対決", "kind": "other", "tag": "バトル", "note": "実質 約1/49・30G/60G/95Gの規定G数でも発生"},
+      {"id": "mukade", "label": "百足覚醒 / 隻眼の梟", "kind": "special", "tag": "上乗せ特化", "note": "上乗せ期待 約300枚 / 約500枚"},
+      {"id": "bites", "label": "(超)BITES", "kind": "special", "tag": "報酬獲得ゾーン", "note": "50〜3000枚"},
+      {"id": "arima", "label": "有馬貴将ジャッジメント", "kind": "cz", "tag": "上位CZ", "note": "5G・成功期待度 約61%"},
+      {"id": "shinigami", "label": "CCGの死神", "kind": "special"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "remi"},
+      {"from": "normal", "to": "rize"},
+      {"from": "normal", "to": "ep", "label": "白7揃い"},
+      {"from": "remi", "to": "at", "label": "成功"},
+      {"from": "remi", "to": "normal", "label": "失敗"},
+      {"from": "rize", "to": "at", "label": "成功"},
+      {"from": "rize", "to": "normal", "label": "失敗"},
+      {"from": "ep", "to": "at"},
+      {"from": "at", "to": "battle", "label": "レア小役・規定G数"},
+      {"from": "at", "to": "mukade", "label": "喰図柄 1/2048"},
+      {"from": "battle", "to": "bites", "label": "勝利"},
+      {"from": "battle", "to": "arima", "label": "有馬に勝利"},
+      {"from": "mukade", "to": "at"},
+      {"from": "bites", "to": "at"},
+      {"from": "arima", "to": "shinigami", "label": "成功"},
+      {"from": "arima", "to": "normal", "label": "失敗でAT終了"},
+      {"from": "shinigami", "to": "at"}
+    ],
+    "notes": ["有馬貴将は喰種対決の10戦目までに必ず出現する"],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

@@ -46,6 +46,22 @@
       "ptown"
     ]
   },
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "チェリー成立時はボーナス同時抽選。GOGO!ランプ点灯でボーナス濃厚"},
+      {"id": "big", "label": "BIG", "kind": "bonus", "tag": "ボーナス", "note": "平均獲得 約252枚"},
+      {"id": "reg", "label": "REG", "kind": "bonus", "tag": "ボーナス", "note": "平均獲得 約96枚"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "big", "label": "1/273.1〜1/255.0"},
+      {"from": "normal", "to": "reg", "label": "1/439.8〜1/255.0"},
+      {"from": "big", "to": "normal", "label": "終了"},
+      {"from": "reg", "to": "normal", "label": "終了"}
+    ],
+    "notes": ["矢印の確率は設定1〜設定6"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": [
       "1",

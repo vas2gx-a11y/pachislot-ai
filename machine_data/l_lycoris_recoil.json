@@ -27,6 +27,36 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "変換・規定G数・スタンプ12個でCZ"},
+      {"id": "op", "label": "オポジットバトル", "kind": "cz", "note": "8G・成功期待度 約53%"},
+      {"id": "first", "label": "ファーストリコリス", "kind": "cz", "note": "8G・成功期待度 約83%"},
+      {"id": "rush", "label": "リコリスラッシュ", "kind": "at", "tag": "ボーナス高確率", "note": "初回20G+α、以降 50G+α＋ST10G+α"},
+      {"id": "bonus", "label": "リコリスBONUS ほか", "kind": "bonus", "note": "100枚〜・純増 約8.4枚/G"},
+      {"id": "recoil", "label": "リコイル オブ リコリス", "kind": "cz", "tag": "上位CZ", "note": "10G・成功期待度 約70%"},
+      {"id": "w", "label": "リコリスラッシュW", "kind": "at", "tag": "上位RUSH", "note": "ボーナスはW揃い以上"},
+      {"id": "legend", "label": "レジェンダリーリコリス", "kind": "special", "note": "7G+α・平均上乗せ 約1000枚"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "op"},
+      {"from": "normal", "to": "first", "label": "CZ当選の一部"},
+      {"from": "op", "to": "rush", "label": "成功"},
+      {"from": "op", "to": "normal", "label": "失敗"},
+      {"from": "first", "to": "rush", "label": "成功"},
+      {"from": "first", "to": "normal", "label": "失敗"},
+      {"from": "rush", "to": "bonus", "label": "ボーナス当選"},
+      {"from": "rush", "to": "normal", "label": "非当選"},
+      {"from": "bonus", "to": "rush"},
+      {"from": "bonus", "to": "recoil", "label": "ポイント1000pt"},
+      {"from": "recoil", "to": "w", "label": "成功"},
+      {"from": "w", "to": "legend", "label": "突入時の一部"},
+      {"from": "legend", "to": "w"},
+      {"from": "w", "to": "bonus", "label": "ボーナス当選"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6の主要数値は公表済み。一部の要素（RUSH直撃・ファーストリコリス）は設定1と6のみ公表。",

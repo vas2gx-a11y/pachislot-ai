@@ -28,6 +28,41 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "毎G 思春期ポイントが貯まる"},
+      {"id": "aohal", "label": "アオハルCHANCE", "kind": "other", "tag": "報酬告知ゾーン", "note": "CZ 1.3%・BONUS 0.1%など"},
+      {"id": "cz", "label": "エピソードチャンス", "kind": "cz", "note": "16G+α・成功期待度 62.5%（設定2）"},
+      {"id": "freeze", "label": "ロングフリーズ", "kind": "other", "tag": "プレミア", "note": "1/203360.2"},
+      {"id": "seishun", "label": "青春BONUS", "kind": "bonus", "note": "ベルナビ5or25回・純増 約8.0枚/G"},
+      {"id": "st", "label": "青ブタJUDGE", "kind": "at", "tag": "ST（完走型）", "note": "最低4セット+α・継続率 約60%（設定2）"},
+      {"id": "burst", "label": "(超)青春DREAM BURST", "kind": "bonus", "note": "ヒロイン乗せで枚数が決まる"},
+      {"id": "yume", "label": "夢現JUDGEMENT", "kind": "cz", "tag": "上位CZ", "note": "16G+α・成功期待度 約53%（設定2）"},
+      {"id": "epb", "label": "エピソードBONUS", "kind": "bonus", "note": "300枚"},
+      {"id": "upper", "label": "青春ブタ野郎は∞の夢を見る", "kind": "at", "tag": "上位ST", "note": "継続率 約80%・期待枚数 約3,100枚（設定2）"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "aohal", "label": "レア小役の一部など"},
+      {"from": "normal", "to": "cz", "label": "規定pt到達"},
+      {"from": "normal", "to": "freeze"},
+      {"from": "aohal", "to": "cz", "label": "CZ当選"},
+      {"from": "aohal", "to": "normal", "label": "報酬獲得"},
+      {"from": "cz", "to": "seishun", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "seishun", "to": "st"},
+      {"from": "st", "to": "burst", "label": "成功でストック"},
+      {"from": "st", "to": "normal", "label": "ストック無しで終了"},
+      {"from": "st", "to": "yume", "label": "牧之原翔子 成功など"},
+      {"from": "burst", "to": "st"},
+      {"from": "yume", "to": "epb", "label": "成功"},
+      {"from": "freeze", "to": "epb"},
+      {"from": "epb", "to": "upper"},
+      {"from": "upper", "to": "burst", "label": "成功（白7）"}
+    ],
+    "notes": ["夢現JUDGEMENTにはドリームコレクション21セット到達からも突入する"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1の数値は調査中。設定1は下パネルが消灯するため、パネルが点灯していれば設定1は否定される。",

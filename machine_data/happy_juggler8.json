@@ -47,6 +47,22 @@
       "ptown"
     ]
   },
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "完全告知。GOGO!ランプ点灯でボーナス確定"},
+      {"id": "big", "label": "BIG", "kind": "bonus", "tag": "ボーナス", "note": "平均獲得 約240枚"},
+      {"id": "reg", "label": "REG", "kind": "bonus", "tag": "ボーナス", "note": "平均獲得 約96枚"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "big", "label": "1/273.1〜1/226.0"},
+      {"from": "normal", "to": "reg", "label": "1/397.2〜1/256.0"},
+      {"from": "big", "to": "normal", "label": "終了"},
+      {"from": "reg", "to": "normal", "label": "終了"}
+    ],
+    "notes": ["矢印の確率は設定1〜設定6"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": [
       "1",

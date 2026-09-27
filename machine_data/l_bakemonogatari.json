@@ -28,6 +28,29 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "レア役・規定G数（100G/200G/300G）"},
+      {"id": "cz", "label": "解呪ノ儀", "kind": "cz", "note": "15G・平均成功期待度 約43%"},
+      {"id": "kaiko", "label": "怪逅ノ儀", "kind": "cz", "tag": "上位CZ", "note": "10G+α・成功期待度 約50%", "row": 1},
+      {"id": "at", "label": "倖時間", "kind": "at", "note": "初期150枚・純増 約2.7枚/G（差枚数管理型）"},
+      {"id": "super", "label": "超倖時間", "kind": "at", "tag": "上位AT", "note": "純増 約5.0枚/G"},
+      {"id": "baibai", "label": "倍倍CHANCE", "kind": "special", "note": "配当×倍率で差枚数を上乗せ"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz"},
+      {"from": "cz", "to": "at", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗（解呪連モードで引き戻しに期待）"},
+      {"from": "kaiko", "to": "super", "label": "成功"},
+      {"from": "kaiko", "to": "at", "label": "失敗"},
+      {"from": "at", "to": "baibai", "label": "レア役・怪異図柄"},
+      {"from": "super", "to": "baibai", "label": "必ず当選"},
+      {"from": "baibai", "to": "at"}
+    ],
+    "notes": ["怪逅ノ儀の突入契機はこのJSONに未記載（情報確認中）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

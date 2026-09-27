@@ -27,6 +27,30 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "規定G数到達で前兆「作戦区域」"},
+      {"id": "cz", "label": "アラガミ防衛戦 / 殲滅モード", "kind": "cz", "note": "成功期待度の異なる2種類"},
+      {"id": "story", "label": "ストーリーパート", "kind": "at", "tag": "AT アラガミバースト", "note": "純増 約9.0枚/G・初回100枚"},
+      {"id": "st", "label": "アラガミ交戦", "kind": "at", "tag": "ST", "note": "25G+α・勝利期待度 平均76%"},
+      {"id": "upper", "label": "漆黒の捕喰者", "kind": "at", "tag": "上位ST", "note": "勝利期待度 約84%", "row": 3},
+      {"id": "reward", "label": "神を喰らえ / 神機覚醒", "kind": "special", "tag": "報酬パート", "note": "200枚以上 / 8G+α・毎G30枚以上"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "レア小役など"},
+      {"from": "normal", "to": "story", "label": "規定G数"},
+      {"from": "cz", "to": "story", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "story", "to": "st"},
+      {"from": "st", "to": "reward", "label": "勝利"},
+      {"from": "st", "to": "normal", "label": "敗北"},
+      {"from": "upper", "to": "reward", "label": "勝利"},
+      {"from": "reward", "to": "story"}
+    ],
+    "notes": ["エンディング後など有利区間リセット時は漆黒の捕喰者以上へ"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

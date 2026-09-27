@@ -27,6 +27,38 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "レア小役・規定G数（100G・300G）、リプレイ50回ごと"},
+      {"id": "noir", "label": "ノワールルーム", "kind": "cz", "tag": "BB高確率", "note": "平均 約16G・ボーナス期待度 約40%"},
+      {"id": "howard", "label": "ハワードゲーム", "kind": "cz", "note": "10G+α・成功期待度 約50%"},
+      {"id": "big", "label": "BIG BONUS", "kind": "bonus", "note": "31G・AT期待度 約50%"},
+      {"id": "at", "label": "RIO RUSH", "kind": "at", "note": "初期50G・純増 約2.5枚/G（G数上乗せ型）"},
+      {"id": "casino", "label": "カジノバトル", "kind": "other", "tag": "バトル", "note": "4G"},
+      {"id": "rio", "label": "リオチャンス", "kind": "special", "note": "小役2連でカードの報酬"},
+      {"id": "crisis", "label": "ノワールクライシス", "kind": "cz", "tag": "上位CZ", "note": "12G+α・約50%", "row": 4},
+      {"id": "ex", "label": "RIO RUSH EX", "kind": "at", "tag": "上位AT", "note": "初期50G・純増 約4.5枚/G"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "noir", "label": "レア小役・規定G数"},
+      {"from": "normal", "to": "howard", "label": "リプレイ50回ごと"},
+      {"from": "noir", "to": "big", "label": "ボーナス当選"},
+      {"from": "noir", "to": "normal", "label": "失敗"},
+      {"from": "howard", "to": "at", "label": "成功"},
+      {"from": "howard", "to": "normal", "label": "失敗"},
+      {"from": "big", "to": "at", "label": "AT当選"},
+      {"from": "big", "to": "normal", "label": "AT非当選"},
+      {"from": "at", "to": "casino", "label": "レア小役・規定G数"},
+      {"from": "casino", "to": "rio", "label": "勝利"},
+      {"from": "casino", "to": "at", "label": "敗北"},
+      {"from": "rio", "to": "at"},
+      {"from": "crisis", "to": "ex", "label": "黄7orリバースセブン揃い"},
+      {"from": "ex", "to": "crisis", "label": "終了後は必ず"}
+    ],
+    "notes": ["ATからノワールクライシスへの突入契機はこのJSONに未記載（情報確認中）"],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

@@ -27,6 +27,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "ハートメーター→変換高確・小役変換、百の位が奇数のG数"},
+      {"id": "cz", "label": "レンカノCHALLENGE", "kind": "cz", "note": "15G+α・成功期待度 約56%"},
+      {"id": "dt", "label": "妄想DTデートチャレンジ", "kind": "cz", "tag": "上位CZ", "note": "10G・成功期待度 約75%"},
+      {"id": "bonus", "label": "かのかりBONUS", "kind": "bonus", "note": "30G・純増 約5.0枚/G"},
+      {"id": "dream", "label": "(S級)ななかりDREAM", "kind": "bonus", "tag": "上乗せボーナス", "note": "平均上乗せ 78G（S級 279G）"},
+      {"id": "ichi", "label": "1GレンCHANCE / 1G恋", "kind": "other", "tag": "1G連抽選", "note": "1セット2G・1G連期待度 約40%"},
+      {"id": "modoshi", "label": "引き戻しゾーン", "kind": "other", "tag": "引き戻し", "note": "66G・期待度 24.7%"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "小役変換・規定G数"},
+      {"from": "normal", "to": "dt", "label": "CZ当選の一部"},
+      {"from": "cz", "to": "bonus", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "dt", "to": "bonus", "label": "成功"},
+      {"from": "dt", "to": "dream", "label": "レア小役から成功"},
+      {"from": "dream", "to": "bonus", "label": "消化後"},
+      {"from": "bonus", "to": "ichi", "label": "ストックを消化"},
+      {"from": "ichi", "to": "bonus", "label": "成功"},
+      {"from": "ichi", "to": "modoshi", "label": "終了"},
+      {"from": "modoshi", "to": "bonus", "label": "引き戻し"},
+      {"from": "modoshi", "to": "normal", "label": "非当選"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている（CZ・初当りは整数での公表）。",

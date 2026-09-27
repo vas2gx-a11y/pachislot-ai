@@ -21,6 +21,7 @@
 - `machine_info.py` / `machine_data/*.json` — 機種情報（解析まとめ）。**機種データの置き場所はここだけ**。
   `/info` の表示、設定判別（`to_client_spec`）、AIの設定推測・Q&A・期待値概算（`to_rule`）、実戦チャットが
   すべてこのJSONから都度組み立てる。画面からの編集手段は持たない。書き方は `machine_data/README.md`。
+  ゲームフロー図（`game_flow`）は箱と矢印だけをJSONに書き、並べ方は `machine_info.flow_layout` がサーバーで決めてSVGで描く。
 - `store_info.py` / `store_data/*.json` — 店舗情報（住所・台数・特定日などの基本情報）。JSONが正で、`/store_info` はそれを描く。
   営業データ（日別・台別）はシートのままで、`sheet_store_name` で紐づけて同じページに並べる。書き方は `store_data/README.md`。
   店舗の登録はチャットで依頼される運用：Webで調べて根拠つきの収集結果JSON（`data/store_collected/`）を書き、

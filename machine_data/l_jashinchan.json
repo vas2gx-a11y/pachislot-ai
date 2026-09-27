@@ -26,6 +26,35 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "小役でラインポイント・規定G数でボーナス"},
+      {"id": "cz", "label": "ちゃんすだヨ!全員集合!", "kind": "cz", "note": "前半15G＋後半（小役成立まで）"},
+      {"id": "bonus", "label": "小悪魔 / BIG / EPISODE BONUS", "kind": "bonus", "note": "20G / 30G / 35G・純増 約5.0枚/G"},
+      {"id": "yurine", "label": "3戦突破ゆりねバトル", "kind": "cz", "note": "1セット10G・3戦突破でAT濃厚"},
+      {"id": "at", "label": "人生シアター", "kind": "at", "note": "初期50G・純増 約2.5枚/G（G数上乗せ型）"},
+      {"id": "upper", "label": "極上人生シアター", "kind": "at", "tag": "上位AT", "note": "初期50G・純増 約5.0枚/G"},
+      {"id": "tokka", "label": "邪神ちゃんす / ゆりねバトル", "kind": "special", "note": "G数上乗せ"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "規定ラインpt到達"},
+      {"from": "normal", "to": "bonus", "label": "規定G数"},
+      {"from": "cz", "to": "bonus", "label": "ボーナス当選"},
+      {"from": "cz", "to": "normal", "label": "非当選"},
+      {"from": "bonus", "to": "yurine", "label": "小悪魔BONUS中"},
+      {"from": "bonus", "to": "at", "label": "AT当選"},
+      {"from": "bonus", "to": "upper", "label": "EPISODE全員集合"},
+      {"from": "bonus", "to": "normal", "label": "AT非当選"},
+      {"from": "yurine", "to": "at", "label": "3戦突破"},
+      {"from": "yurine", "to": "normal", "label": "敗北"},
+      {"from": "at", "to": "tokka", "label": "BIG中など"},
+      {"from": "tokka", "to": "at"},
+      {"from": "at", "to": "bonus", "label": "規定G数でボーナス抽選"},
+      {"from": "at", "to": "normal", "label": "終了"}
+    ],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

@@ -28,6 +28,31 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "規定G数（88G/250G/450G/650G/850G）・レア小役・十字目変換"},
+      {"id": "sp", "label": "SPECIALエピソードBONUS", "kind": "bonus", "note": "約200枚"},
+      {"id": "reg", "label": "REGULAR BONUS", "kind": "bonus", "note": "ベルナビ10回"},
+      {"id": "wana", "label": "伝導者の罠", "kind": "cz", "tag": "ボーナス高確", "note": "30G+α・エピソードBONUS高確率"},
+      {"id": "gekito", "label": "炎炎激闘チャンス", "kind": "at", "tag": "ボーナス高確", "note": "15G+α・ボーナス期待度 約57%"},
+      {"id": "epb", "label": "エピソードBONUS", "kind": "bonus", "note": "ベルナビ10回・激闘チャンスの複数ストック濃厚"},
+      {"id": "taisen", "label": "炎炎大戦ラッシュ", "kind": "at", "tag": "上位", "note": "15G+α・純増 約5.8枚/G", "row": 3}
+    ],
+    "edges": [
+      {"from": "normal", "to": "sp"},
+      {"from": "normal", "to": "reg"},
+      {"from": "sp", "to": "gekito"},
+      {"from": "reg", "to": "wana"},
+      {"from": "wana", "to": "epb", "label": "当選"},
+      {"from": "wana", "to": "normal", "label": "非当選"},
+      {"from": "gekito", "to": "epb", "label": "伝導者決戦に勝利"},
+      {"from": "gekito", "to": "normal", "label": "終了（通常時経由で再突入あり）"},
+      {"from": "epb", "to": "gekito", "label": "ストック消化"}
+    ],
+    "notes": ["伝導者の罠を5回スルーすると次回はSPECIALエピソードBONUS", "炎炎大戦ラッシュの突入契機はこのJSONに未記載（情報確認中）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている（初当りは整数での公表）。",

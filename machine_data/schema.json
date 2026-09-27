@@ -78,6 +78,39 @@
       }
     },
 
+    "game_flow": {
+      "type": "object", "required": ["nodes", "edges"],
+      "description": "ゲームフロー図（通常時→CZ・ボーナス→AT…）。箱と矢印だけを書き、座標は書かない（/info/<id> で自動で並べて描く）",
+      "properties": {
+        "nodes": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "required": ["id", "label", "kind"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string", "description": "箱の名前（例: レミニセンス）" },
+              "kind": { "enum": ["normal", "cz", "bonus", "at", "special", "other"], "description": "箱の色。normal=通常時 / cz / bonus / at（ST・上位ATも） / special=特化ゾーン / other=前兆・バトルなど" },
+              "tag": { "type": "string", "description": "箱の上の帯の文言（既定は kind の名前）。例: 上位CZ・上位AT・ST" },
+              "note": { "type": "string", "description": "箱の中の短い説明（継続G数・期待度など）" },
+              "row": { "type": "integer", "minimum": 0, "description": "この段より上には置かない（突入契機が不明で矢印の入らない箱の位置合わせ用）" }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["from", "to"],
+            "properties": {
+              "from": { "type": "string" }, "to": { "type": "string" },
+              "label": { "type": "string", "description": "移る条件（成功・失敗・確率など）。短く" }
+            }
+          }
+        },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "source_ids": { "$ref": "#/$defs/source_ids" }
+      }
+    },
+
     "features": {
       "type": "object", "description": "CZ / ボーナス / AT・ST",
       "properties": {

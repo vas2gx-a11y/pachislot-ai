@@ -29,6 +29,36 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "規定G数（液晶G数）・強チェリー"},
+      {"id": "charge", "label": "シューティングチャージ", "kind": "other", "tag": "G数加算", "note": "弱レア役の一部"},
+      {"id": "cz", "label": "スコードロンバトル", "kind": "cz", "note": "14G・勝利期待度 約55%"},
+      {"id": "kouya", "label": "曠野の決闘", "kind": "bonus", "tag": "エピソードボーナス", "note": "40G・AT＋勝利濃厚スナイパーチャンス"},
+      {"id": "at", "label": "Bullet of Bullets", "kind": "at", "note": "初期 差枚150枚+α・純増 約3.6枚/G"},
+      {"id": "sniper", "label": "スナイパーチャンス", "kind": "other", "tag": "バトル", "note": "5G・勝利期待度 約50%"},
+      {"id": "tokka", "label": "NIGHT BATTLE ほか", "kind": "special", "note": "平均 約250〜850枚"},
+      {"id": "deathgun", "label": "デス・ガンバトル", "kind": "cz", "tag": "上位CZ", "note": "5G・勝利期待度 約50%"},
+      {"id": "fulldive", "label": "FULL DIVE", "kind": "at", "tag": "上位AT", "note": "純増 約7.2枚/G"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "charge", "label": "弱レア役"},
+      {"from": "charge", "to": "normal", "label": "液晶G数加算"},
+      {"from": "normal", "to": "cz", "label": "規定G数・強チェリー"},
+      {"from": "cz", "to": "at", "label": "勝利"},
+      {"from": "cz", "to": "kouya", "label": "失敗時のフリーズ"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "kouya", "to": "at"},
+      {"from": "at", "to": "sniper", "label": "レア小役など"},
+      {"from": "sniper", "to": "tokka", "label": "勝利"},
+      {"from": "sniper", "to": "deathgun", "label": "デス・ガンに勝利"},
+      {"from": "tokka", "to": "at"},
+      {"from": "deathgun", "to": "fulldive", "label": "勝利"},
+      {"from": "fulldive", "to": "deathgun", "label": "終了後は必ず"}
+    ],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6の主要数値は公表済み。CZ・AT確率は設定4より設定5の方が重く、設定順に並んでいない（設定5は上位AT突入のしやすさで出玉を作る模様）。",

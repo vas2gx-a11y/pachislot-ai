@@ -10,7 +10,7 @@
 {% set settings = m.settings.list %}
 {% set est = m.setting_estimation or {} %}
 {% set toc = [
-    ('basic', '基本情報'), ('spec', '設定別スペック'), ('features', 'AT・CZ・ボーナス'),
+    ('basic', '基本情報'), ('flow', 'ゲームフロー'), ('spec', '設定別スペック'), ('features', 'AT・CZ・ボーナス'),
     ('ceiling', '天井'), ('zones', 'ゾーン'), ('quit', 'やめどき'), ('sns', 'Xの狙い目・やめどき'), ('reset', '朝一・リセット'),
     ('favorable', '有利区間'), ('koyaku', '小役確率'), ('setting-diff', '設定差'),
     ('hints', '設定示唆'), ('effects', '演出'), ('estimation', '設定判別ポイント'),
@@ -133,6 +133,18 @@
     .lv-top { background: var(--accent); color: #fff; }
     .lv-unofficial { background: #fef3c7; color: #92400e; }
 
+    /* ゲームフロー図。狭い画面では横スクロール(縮めると文字が読めなくなるため) */
+    .flow-scroll { overflow-x: auto; margin: 0 -.25rem; padding: 0 .25rem; }
+    .flow { display: block; margin: 0 auto; font-family: inherit; }
+    .flow text { text-anchor: middle; }
+    .flow-tag { fill: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; }
+    .flow-label { fill: #18181b; font-weight: 700; }
+    .flow-note { fill: #52525b; }
+    .flow-return { fill: #71717a; }
+    .flow-edge { fill: none; stroke: #a1a1aa; stroke-width: 1.6; }
+    .flow-edge-pill { fill: #fff; stroke: #d4d4d8; }
+    .flow-edge-label { fill: #3f3f46; font-weight: 600; }
+
     .toc a { display: block; padding: .3rem .75rem; border-left: 2px solid #e4e4e7; color: #71717a; font-size: .8125rem; }
     .toc a:hover { color: #18181b; }
     .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
@@ -222,6 +234,39 @@
         {% endif %}
         {% if m.settings.note %}<p class="panel text-xs text-gray-600 mt-3">{{ m.settings.note }}</p>{% endif %}
         {{ cite(((m.basic.source_ids or []) + (m.settings.source_ids or [])) | unique | list) }}
+    {% endcall %}
+
+    {# 座標は machine_info.flow_layout で計算済み。ここは描くだけ #}
+    {% call section('flow', 'ゲームフロー') %}
+        {% if flow %}
+        <div class="flow-scroll">
+        <svg class="flow" width="{{ flow.width }}" height="{{ flow.height }}" viewBox="0 0 {{ flow.width }} {{ flow.height }}" role="img" aria-label="{{ m.name }}のゲームフロー">
+            <defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#71717a"/></marker></defs>
+            {% for e in flow.edges %}<path d="{{ e.d }}" class="flow-edge" marker-end="url(#flow-arrow)"/>{% endfor %}
+            {% for b in flow.boxes %}
+            <g class="flow-node">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="6" fill="#fff" stroke="{{ b.color }}" stroke-width="1.5"/>
+                <path d="M{{ b.x }},{{ b.y + flow.band_h }} v-{{ flow.band_h - 6 }} a6,6 0 0 1 6,-6 h{{ b.w - 12 }} a6,6 0 0 1 6,6 v{{ flow.band_h - 6 }} z" fill="{{ b.color }}"/>
+                <text x="{{ b.x + b.w / 2 }}" y="{{ b.y + 13 }}" class="flow-tag">{{ b.tag }}</text>
+                {% for line in b.label %}<text x="{{ b.x + b.w / 2 }}" y="{{ b.label_y[loop.index0] }}" class="flow-label" font-size="{{ flow.label_size }}">{{ line }}</text>{% endfor %}
+                {% for line in b.note %}<text x="{{ b.x + b.w / 2 }}" y="{{ b.note_y[loop.index0] }}" class="flow-note" font-size="{{ flow.note_size }}">{{ line }}</text>{% endfor %}
+                {% if b.returns %}
+                <line x1="{{ b.x + 6 }}" x2="{{ b.x + b.w - 6 }}" y1="{{ b.returns_line_y }}" y2="{{ b.returns_line_y }}" stroke="#d4d4d8" stroke-dasharray="3 3"/>
+                {% for line in b.returns %}<text x="{{ b.x + b.w / 2 }}" y="{{ b.returns_y[loop.index0] }}" class="flow-return" font-size="{{ flow.note_size }}">{{ line }}</text>{% endfor %}
+                {% endif %}
+            </g>
+            {% endfor %}
+            {# ラベルは箱や線の上に重ねて読めるよう最後に描く #}
+            {% for e in flow.edges if e.label %}
+            <rect x="{{ e.lx - e.lw / 2 }}" y="{{ e.ly - 8 }}" width="{{ e.lw }}" height="16" rx="8" class="flow-edge-pill"/>
+            <text x="{{ e.lx }}" y="{{ e.ly + 3.8 }}" class="flow-edge-label" font-size="{{ flow.edge_label_size }}">{{ e.label }}</text>
+            {% endfor %}
+        </svg>
+        </div>
+        {% if m.game_flow.notes %}<ul class="info-list text-sm mt-3">{% for n in m.game_flow.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        {{ cite(m.game_flow.source_ids) }}
+        <p class="hint">「↩」は元の状態に戻る流れです。詳しい条件は下の「AT・CZ・ボーナス」を見てください。</p>
+        {% else %}{{ unknown({'status': '情報確認中'}) }}{% endif %}
     {% endcall %}
 
     {% call section('spec', '設定別スペック（機械割・初当り）') %}

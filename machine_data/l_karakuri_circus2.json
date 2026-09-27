@@ -27,6 +27,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "規定G数（液晶G数）到達で抽選"},
+      {"id": "cz", "label": "機械仕掛けの女神", "kind": "cz", "note": "10G+α・成功期待度 約55%"},
+      {"id": "makuai", "label": "幕間チャンス / 劇場ジャッジ", "kind": "cz", "note": "約17%or約41% / 約47%"},
+      {"id": "at", "label": "からくりサーカス", "kind": "at", "note": "初期 差枚150枚・純増 約2.8枚/G"},
+      {"id": "gekijo", "label": "激情ジャッジ", "kind": "cz", "tag": "AT中CZ", "note": "4G・成功期待度 約50%"},
+      {"id": "show", "label": "ショータイム ほか", "kind": "special", "note": "踊れ!オリンピア 約200枚 / 極限舞踏 約800枚以上"},
+      {"id": "unmei", "label": "運命の一劇", "kind": "cz", "tag": "上位CZ"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz", "label": "規定G数"},
+      {"from": "normal", "to": "makuai"},
+      {"from": "cz", "to": "at", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "makuai", "to": "at", "label": "成功"},
+      {"from": "makuai", "to": "normal", "label": "失敗"},
+      {"from": "at", "to": "gekijo"},
+      {"from": "gekijo", "to": "at", "label": "成功で3桁上乗せ"},
+      {"from": "gekijo", "to": "unmei", "label": "同一ATで3回成功"},
+      {"from": "at", "to": "show"},
+      {"from": "show", "to": "at"}
+    ],
+    "notes": ["劇場ジャッジ成功時は3桁上乗せ＋激情ジャッジ1回成功扱いでAT"],
+    "source_ids": ["pworld"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている（CZ・ATは整数での公表）。",

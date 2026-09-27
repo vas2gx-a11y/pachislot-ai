@@ -29,6 +29,38 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "チャンス目でどきどきポイント・規定G数"},
+      {"id": "balloon", "label": "きゅんきゅんバルーン", "kind": "cz", "note": "左チャンス目・期待度 約33%"},
+      {"id": "sweet", "label": "ときめきスイート", "kind": "cz", "note": "中チャンス目・期待度 約40%"},
+      {"id": "pucchun", "label": "ぷっちゅんちゃれんじ", "kind": "cz", "note": "右チャンス目・期待度 約70%"},
+      {"id": "memorial", "label": "メモリアルボーナス", "kind": "bonus", "note": "約100枚・ST突入率100%"},
+      {"id": "st", "label": "楽園ハーレム計画", "kind": "at", "tag": "ST", "note": "10G+α・継続期待度 約52%"},
+      {"id": "trouble", "label": "とらぶるBONUS", "kind": "bonus", "note": "平均 約375枚（ハーレム中 約650枚）"},
+      {"id": "harem", "label": "ハーレムモード", "kind": "at", "tag": "上位ST", "note": "10G+α・継続期待度 約80%"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "balloon"},
+      {"from": "normal", "to": "sweet"},
+      {"from": "normal", "to": "pucchun"},
+      {"from": "normal", "to": "memorial", "label": "規定G数"},
+      {"from": "balloon", "to": "memorial", "label": "成功"},
+      {"from": "balloon", "to": "normal", "label": "失敗"},
+      {"from": "sweet", "to": "memorial", "label": "成功"},
+      {"from": "sweet", "to": "normal", "label": "失敗"},
+      {"from": "pucchun", "to": "memorial", "label": "成功"},
+      {"from": "pucchun", "to": "normal", "label": "失敗"},
+      {"from": "memorial", "to": "st"},
+      {"from": "st", "to": "trouble", "label": "ボーナス当選"},
+      {"from": "st", "to": "normal", "label": "非継続"},
+      {"from": "trouble", "to": "st"},
+      {"from": "st", "to": "harem", "label": "ヒロイン攻略"},
+      {"from": "harem", "to": "trouble", "label": "ボーナス当選"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["2", "3", "4", "5", "6"],
     "note": "設定1は非搭載（設定2〜6の実質5段階）。設定L（ロング稼働用）の数値は調査中。",

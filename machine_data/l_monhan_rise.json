@@ -27,6 +27,27 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "ベル・レア役でカムラポイント・規定pt（100〜600pt）でクエスト"},
+      {"id": "daruma", "label": "アイルーだるま落とし", "kind": "cz", "note": "5G・リプレイ規定回数（40〜200回）で当選"},
+      {"id": "hyakuryu", "label": "百竜夜行", "kind": "cz", "tag": "上位CZ", "note": "12G", "row": 1},
+      {"id": "hunt", "label": "狩猟ボーナス", "kind": "at", "tag": "AT", "note": "保障G数内に討伐で継続・平均討伐期待度 約52%"},
+      {"id": "dairen", "label": "大連続ボーナス", "kind": "bonus", "note": "討伐数だけ剥ぎ取りチャンスをストック"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "daruma", "label": "リプレイ規定回数"},
+      {"from": "normal", "to": "hunt", "label": "クエスト"},
+      {"from": "daruma", "to": "hunt", "label": "成功"},
+      {"from": "daruma", "to": "normal", "label": "失敗"},
+      {"from": "hyakuryu", "to": "dairen", "label": "成功"},
+      {"from": "hunt", "to": "hunt", "label": "討伐で次セット"},
+      {"from": "hunt", "to": "normal", "label": "討伐失敗"}
+    ],
+    "notes": ["百竜夜行の突入契機はこのJSONに未記載（情報確認中）"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

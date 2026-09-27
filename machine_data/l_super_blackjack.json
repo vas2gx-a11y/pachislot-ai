@@ -28,6 +28,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "レア小役・小役連・100Gごとの抽選"},
+      {"id": "koukaku", "label": "ボーナス高確率", "kind": "cz", "tag": "ボーナス高確", "note": "平均 約34G・期待度 50.0%〜57.2%"},
+      {"id": "big", "label": "BIG BONUS", "kind": "bonus", "note": "赤7 100枚 / 青7 300枚"},
+      {"id": "reg", "label": "REGULAR BONUS", "kind": "bonus", "note": "60枚"},
+      {"id": "rckoukaku", "label": "リオチャンス高確率", "kind": "other", "tag": "RC高確", "note": "高確A（不定）・高確B（30G+α）"},
+      {"id": "rc", "label": "リオチャンス", "kind": "cz", "tag": "ボーナス超準備", "note": "昇格パート6G+α＋ジャッジパート"},
+      {"id": "rcbonus", "label": "リオチャンス経由のボーナス", "kind": "bonus", "note": "REG 60枚〜スーパーBIG 400枚"},
+      {"id": "stock", "label": "(スーパー)ストックタイム", "kind": "special", "tag": "ストック特化", "note": "平均ストック 約2個 / 約5個"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "koukaku"},
+      {"from": "koukaku", "to": "big", "label": "BIG"},
+      {"from": "koukaku", "to": "reg", "label": "REG"},
+      {"from": "koukaku", "to": "normal", "label": "転落（ピンチ目経由）"},
+      {"from": "big", "to": "rckoukaku"},
+      {"from": "reg", "to": "normal", "label": "終了（G数は引き継ぎ）"},
+      {"from": "rckoukaku", "to": "rc"},
+      {"from": "rc", "to": "rcbonus"},
+      {"from": "rcbonus", "to": "stock", "label": "消化中に抽選"},
+      {"from": "rcbonus", "to": "rckoukaku", "label": "終了後"},
+      {"from": "stock", "to": "rc", "label": "ストック消化"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている。",

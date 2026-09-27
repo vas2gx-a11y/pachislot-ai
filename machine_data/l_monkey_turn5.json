@@ -26,6 +26,30 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "毎G 激走ポイント・規定pt（ゾロ目）で周期"},
+      {"id": "yushutsu", "label": "優出モード", "kind": "other", "tag": "前兆（周期抽選）", "note": "AT当選率 1周期 約40% / 2周期 約64%"},
+      {"id": "chobatsu", "label": "超抜チャレンジ", "kind": "cz", "note": "成功期待度 約50%"},
+      {"id": "at", "label": "SGラッシュ", "kind": "at", "note": "1セット40G+α・純増 約2.5枚/G"},
+      {"id": "aoshima", "label": "青島SG", "kind": "at", "tag": "上位AT", "note": "1セット31G+α・継続率 約83%", "row": 2},
+      {"id": "race", "label": "SGレース", "kind": "other", "tag": "継続バトル"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "yushutsu", "label": "周期到達"},
+      {"from": "normal", "to": "chobatsu", "label": "レア小役"},
+      {"from": "yushutsu", "to": "at", "label": "当選"},
+      {"from": "yushutsu", "to": "normal", "label": "非当選"},
+      {"from": "chobatsu", "to": "at", "label": "成功"},
+      {"from": "chobatsu", "to": "normal", "label": "失敗"},
+      {"from": "at", "to": "race", "label": "セット終盤"},
+      {"from": "race", "to": "at", "label": "勝利で継続"},
+      {"from": "race", "to": "normal", "label": "敗北"}
+    ],
+    "notes": ["青島SGの突入契機はこのJSONに未記載（情報確認中）。激走ポイントメーターが紫なら青島SGに期待"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "4", "5", "6"],
     "note": "設定3は非搭載（設定1・2・4・5・6）。設定L（ロング稼働用）の数値は調査中。",

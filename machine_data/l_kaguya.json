@@ -29,6 +29,27 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "チャンス目の規定回数・強チャンス目・規定G数（130G/300G/600G）"},
+      {"id": "cz", "label": "告らせたいチャレンジ", "kind": "cz", "note": "15G+α・成功期待度 約58%"},
+      {"id": "bonus", "label": "SUPER BIG / BIG / REG", "kind": "bonus", "note": "純増 約9.0枚/G・1G連ストックを抽選"},
+      {"id": "modoshi", "label": "引き戻しチャンス", "kind": "other", "tag": "引き戻し", "note": "約100G・期待度 約25%以上"},
+      {"id": "extra", "label": "EXTRA BONUS", "kind": "bonus", "tag": "上位ボーナス", "note": "50Gor100G×80%ループ・平均 約3450枚"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "cz"},
+      {"from": "cz", "to": "bonus", "label": "成功"},
+      {"from": "cz", "to": "normal", "label": "失敗"},
+      {"from": "bonus", "to": "bonus", "label": "1G連"},
+      {"from": "bonus", "to": "modoshi", "label": "1G連非当選"},
+      {"from": "bonus", "to": "extra", "label": "BIG当選時の一部"},
+      {"from": "modoshi", "to": "bonus", "label": "引き戻し（BIG以上）"},
+      {"from": "modoshi", "to": "normal", "label": "非当選"}
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6すべて数値が公表されている（初当りは整数での公表）。",

@@ -29,6 +29,33 @@
     "source_ids": ["pworld", "ptown"]
   },
 
+  "game_flow": {
+    "nodes": [
+      {"id": "normal", "label": "通常時", "kind": "normal", "note": "成立役・小役履歴・天井でGG抽選"},
+      {"id": "gaia", "label": "ガイアステージ", "kind": "cz", "tag": "GG超高確率", "note": "9G+α"},
+      {"id": "zzone", "label": "Z-ZONE / Z-GAME", "kind": "special", "note": "黄7の5連でZ-GAME（GGストック）"},
+      {"id": "gg", "label": "GOD GAME", "kind": "at", "tag": "AT（GG）", "note": "1セット50G・純増 約7.0枚/G"},
+      {"id": "gzone", "label": "G-ZONE", "kind": "other", "tag": "継続抽選", "note": "最大5G"},
+      {"id": "sgg", "label": "SUPER GOD GAME", "kind": "at", "tag": "上位AT", "note": "1セット10〜100G・継続率75%以上"},
+      {"id": "pgg", "label": "PREMIUM GOD GAME", "kind": "at", "tag": "プレミアム", "note": "期待枚数 3000枚以上"}
+    ],
+    "edges": [
+      {"from": "normal", "to": "gaia", "label": "ガイアベル規定回数"},
+      {"from": "normal", "to": "gg", "label": "中段黄7など"},
+      {"from": "normal", "to": "sgg", "label": "赤7揃い 1/6900"},
+      {"from": "normal", "to": "pgg", "label": "GOD揃い 1/16384"},
+      {"from": "gaia", "to": "gg", "label": "奇数図柄揃いなど"},
+      {"from": "gaia", "to": "zzone", "label": "0揃い"},
+      {"from": "gaia", "to": "normal", "label": "非当選"},
+      {"from": "zzone", "to": "gg"},
+      {"from": "gg", "to": "gzone", "label": "セット終了"},
+      {"from": "gzone", "to": "gg", "label": "奇数図柄orV揃い"},
+      {"from": "gzone", "to": "normal", "label": "非継続"}
+    ],
+    "notes": ["GG当選時はループストック（1%/25%/50%/80%）を獲得し、漏れるまでGGをストック"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
   "settings": {
     "list": ["1", "2", "3", "4", "5", "6"],
     "note": "設定1〜6の初当り・機械割は公表済み（初当りは整数での公表）。初当りは偶数設定が軽く（設定2・4・6）、奇数設定はZ-ZONE昇格で出玉を作る（特に設定5）配列。",
