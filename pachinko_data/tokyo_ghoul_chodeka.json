@@ -1,0 +1,52 @@
+{
+  "name": "e 東京喰種 超デカ超一撃ver.",
+  "maker": "ビスティ",
+  "spec_type": "スマパチ",
+  "hit_prob": 999,
+  "rush_hit_prob": 7.7,
+  "rush_entry_rate": 50,
+  "rush_continue_rate": 50,
+  "border_equiv": 30.1,
+  "border_28": 31.8,
+  "border_33": 34.3,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "手役物落下（チャンス示唆カスタム オススメ）",
+      "rate": 25,
+      "note": "落下時の信頼度"
+    },
+    {
+      "name": "手役物落下（チャンス示唆カスタム EX）",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "赤保留",
+      "rate": 88,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "虹保留",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "金木保留 鎖が切れる",
+      "rate": 100,
+      "note": "大当り濃厚（切れないと約5%）"
+    }
+  ],
+  "note": "型式名 e東京喰種MW。大当り確率は図柄揃い約1/999。チャージ（約1/538.8）と合わせた大当り確率は約1/349.9。大きいヘソで消化。\n図柄揃い後約50%でRUSH（＝ラッキートリガー）。RUSHはST5回転・継続率約50%で、RUSH中確率は実質約1/7.7。RUSH中大当りはオール3000個+α。\nボーダーの他の交換率: 30玉=32.8回、40玉=37.5回。\n導入 2026-06-08。",
+  "source": "https://p-town.dmm.com/machines/5024 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

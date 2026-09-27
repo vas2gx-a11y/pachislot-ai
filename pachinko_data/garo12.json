@@ -1,0 +1,47 @@
+{
+  "name": "e牙狼12黄金騎士極限",
+  "maker": "サンセイR&D",
+  "spec_type": "スマパチ",
+  "hit_prob": 349.99,
+  "rush_hit_prob": null,
+  "rush_entry_rate": 50,
+  "rush_continue_rate": 76,
+  "border_equiv": 17.2,
+  "border_28": 18.1,
+  "border_33": 19.6,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "牙狼剣保留",
+      "rate": 40,
+      "note": ""
+    },
+    {
+      "name": "牙狼斬馬剣保留",
+      "rate": 81,
+      "note": ""
+    },
+    {
+      "name": "GARO保留・赤",
+      "rate": 81,
+      "note": ""
+    },
+    {
+      "name": "GARO保留・虹",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "サンセイフラッシュ",
+      "rate": 100,
+      "note": "大当り＋極限7500バトル濃厚"
+    }
+  ],
+  "note": "型式名 e牙狼12XX-MJ。通常時の大当り確率1/349.99、液晶図柄揃いは1/437.49（ガロチャージ1/1749.97）。\nRUSH突入率の欄は液晶図柄揃い時の極限7500バトル突入率50%。極限7500バトルでさらに50%でラッキートリガー発動（継続率約76%）。\n右打ち中は実質1/1で、大当りの振り分けで継続か終了かが決まるので、RUSH中確率は空欄。出玉は1500個と7500個のみ。\n初当り1回あたりの期待出玉 5,114玉。ボーダーの他の交換率: 30玉=18.7回、40玉=21.4回。\n導入 2025-08-04。",
+  "source": "https://p-town.dmm.com/machines/4846 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

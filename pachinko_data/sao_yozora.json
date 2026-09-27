@@ -1,0 +1,47 @@
+{
+  "name": "e ソードアート・オンライン アリシゼーション 夜空",
+  "maker": "京楽",
+  "spec_type": "スマパチ",
+  "hit_prob": 199.9,
+  "rush_hit_prob": 51.6,
+  "rush_entry_rate": 50,
+  "rush_continue_rate": 65,
+  "border_equiv": 20.0,
+  "border_28": 21.0,
+  "border_33": 22.5,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "氷の結晶保留",
+      "rate": 7.5,
+      "note": ""
+    },
+    {
+      "name": "氷の青薔薇保留・蕾",
+      "rate": 39.7,
+      "note": ""
+    },
+    {
+      "name": "氷の青薔薇保留・開花",
+      "rate": 66.4,
+      "note": ""
+    },
+    {
+      "name": "ボタン保留",
+      "rate": 42.7,
+      "note": ""
+    },
+    {
+      "name": "二刀流保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 eソードアート・オンライン アリシゼーションYKJ11。通常時はFAIR START（約1/3で入る回転体、5玉に1玉が向かう）とPLUS STARTで入賞。\n大当り後50%でST（53回転・継続率約65%）。ST中大当りの約22%で上位ST（70回転・継続率約75%）。LTはBONUS型で出玉1500〜9000個+α。\nボーダーの他の交換率: 30玉=21.6回、40玉=24.4回。\n導入 2026-08-03。",
+  "source": "https://p-town.dmm.com/machines/5034 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

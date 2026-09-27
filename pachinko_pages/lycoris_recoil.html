@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PHはねもの ハネ釈迦</title>
+<title>eリコリス・リコイル</title>
 <style>
 /*
   店舗ページ(単体HTML)の共通CSS。tools/store_build.py が各HTMLの <style> に埋め込む。
@@ -170,13 +170,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <header class="hero">
     <div class="wrap">
         <p class="crumb"><a href="index.html">パチンコ機種データ</a></p>
-        <h1>PHはねもの ハネ釈迦</h1>
-        <p class="hero-addr">マルホン ・ その他</p>
+        <h1>eリコリス・リコイル</h1>
+        <p class="hero-addr">ニューギン ・ スマパチ</p>
         <div class="hero-stats">
-            <div class="hero-stat"><span>大当り確率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>RUSH突入率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>RUSH継続率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>ボーダー（等価）</span><strong><span class="muted">未登録</span></strong></div>
+            <div class="hero-stat"><span>大当り確率</span><strong>1/259.7</strong></div>
+            <div class="hero-stat"><span>RUSH突入率</span><strong>50%</strong></div>
+            <div class="hero-stat"><span>RUSH継続率</span><strong>75%</strong></div>
+            <div class="hero-stat"><span>ボーダー（等価）</span><strong>17.2回</strong></div>
         </div>
     </div>
 </header>
@@ -190,25 +190,79 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 
     <section class="card" id="calc">
         <h2>回転率計算</h2>
-        <p class="muted">この機種はボーダーが未登録なので、回転率との比較はできません。</p>
+        <div class="calc-grid">
+            <div><label for="c-invest">投資（千円）</label><input id="c-invest" type="number" inputmode="decimal" step="any" min="0" value="0"></div>
+            <div><label for="c-exchange">交換率</label>
+                <select id="c-exchange">
+                    <option value="250">等価（25玉）</option>
+                    <option value="280">28玉</option>
+                    <option value="300">30玉</option>
+                    <option value="330">33玉</option>
+                </select>
+            </div>
+            <div><label for="c-start">打ち始め回転数</label><input id="c-start" type="number" inputmode="numeric" min="0" value="0"></div>
+            <div><label for="c-current">現在回転数</label><input id="c-current" type="number" inputmode="numeric" min="0" value="0"></div>
+        </div>
+        <div class="calc-result" id="c-result">
+            <div><div class="muted">千円あたり</div><div class="big" id="c-rate">—</div></div>
+            <div style="text-align:right"><div class="muted">ボーダー <span id="c-border">—</span></div><div class="diff" id="c-diff">—</div></div>
+        </div>
+        <p class="hint">
+            30玉などの登録していない交換率は、登録済みのボーダーを直線で結んだ概算です。
+            大当りで回転数が0に戻るたびに区切って積み上げたいときは、アプリの回転率計算を使ってください。
+        </p>
+        <script>
+        (function () {
+            var POINTS = [{"balls": 250, "value": 17.2}, {"balls": 280, "value": 18.1}, {"balls": 330, "value": 19.4}];
+            // アプリの回転率計算(templates/pachinko_calc.html)と同じ換算。単体で開けるよう、ここにも持つ
+            function borderAt(balls) {
+                if (POINTS.length === 1) return POINTS[0].value;
+                var i = 0;
+                while (i < POINTS.length - 2 && balls > POINTS[i + 1].balls) i++;
+                var a = POINTS[i], b = POINTS[i + 1];
+                return a.value + (b.value - a.value) * (balls - a.balls) / (b.balls - a.balls);
+            }
+            function n(id) { var v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+            function render() {
+                var invest = n('c-invest'), spins = Math.max(0, n('c-current') - n('c-start'));
+                var border = borderAt(n('c-exchange'));
+                var box = document.getElementById('c-result');
+                document.getElementById('c-border').textContent = border.toFixed(1) + '回';
+                box.classList.remove('is-plus', 'is-minus');
+                if (invest <= 0) {
+                    document.getElementById('c-rate').textContent = '—';
+                    document.getElementById('c-diff').textContent = '—';
+                    return;
+                }
+                var rate = spins / invest, diff = rate - border;
+                document.getElementById('c-rate').textContent = rate.toFixed(1);
+                document.getElementById('c-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
+                box.classList.add(diff >= 0 ? 'is-plus' : 'is-minus');
+            }
+            ['c-invest', 'c-start', 'c-current', 'c-exchange'].forEach(function (id) {
+                document.getElementById(id).addEventListener('input', render);
+            });
+            render();
+        })();
+        </script>
     </section>
 
     <section class="card" id="spec">
         <h2>スペック</h2>
         <table class="kv"><tbody>
-            <tr><th>大当り確率</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>RUSH中確率</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>RUSH突入率</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>RUSH継続率</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>大当り確率</th><td>1/259.7</td></tr>
+            <tr><th>RUSH中確率</th><td>1/97.1</td></tr>
+            <tr><th>RUSH突入率</th><td>50%</td></tr>
+            <tr><th>RUSH継続率</th><td>75%</td></tr>
         </tbody></table>
     </section>
 
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
-            <tr><th>等価（25玉）</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>28玉交換</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>33玉交換</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>等価（25玉）</th><td>17.2回</td></tr>
+            <tr><th>28玉交換</th><td>18.1回</td></tr>
+            <tr><th>33玉交換</th><td>19.4回</td></tr>
         </tbody></table>
     </section>
 
@@ -224,22 +278,68 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 
     <section class="card" id="technique">
         <h2>止め打ち・ワンツー打法</h2>
-        <p class="pre">前半の2回のロング開放後は長めに羽根が閉じているので、止め打ちでムダ玉を減らせる。</p>
+        <p class="muted">未登録</p>
     </section>
 
     <section class="card" id="effects">
         <h2>演出の期待度</h2>
-        <p class="muted">未登録</p>
+        <table class="kv"><tbody>
+            <tr>
+                <th>先バレ 千束（キャラ告知）</th>
+                <td class="rate">40%</td>
+            </tr>
+            <tr>
+                <th>先バレ たきな</th>
+                <td class="rate">25%</td>
+            </tr>
+            <tr>
+                <th>先バレ ミズキ</th>
+                <td class="rate">15%</td>
+            </tr>
+            <tr>
+                <th>先バレ クルミ</th>
+                <td class="rate">99%</td>
+            </tr>
+            <tr>
+                <th>先バレ ロボ太</th>
+                <td class="rate">15%</td>
+            </tr>
+            <tr>
+                <th>先バレ 真島</th>
+                <td class="rate">40%<span class="rate-note">隠しカスタム</span></td>
+            </tr>
+            <tr>
+                <th>先バレ 千束＆たきな</th>
+                <td class="rate">100%<span class="rate-note">大当り濃厚・隠しカスタム</span></td>
+            </tr>
+            <tr>
+                <th>緑保留</th>
+                <td class="rate">20.7%</td>
+            </tr>
+            <tr>
+                <th>赤保留</th>
+                <td class="rate">85.9%</td>
+            </tr>
+            <tr>
+                <th>金保留</th>
+                <td class="rate">99%</td>
+            </tr>
+            <tr>
+                <th>ギンちゃん保留（虹）</th>
+                <td class="rate">100%<span class="rate-note">RUSH突入大当り濃厚</span></td>
+            </tr>
+        </tbody></table>
     </section>
 
     <section class="card" id="note">
         <h2>メモ・出典</h2>
-        <p class="pre">型式名 PHはねものシャカRUSH2。羽根モノ。羽根に拾われた玉は2ルートに分岐し、役物突破＝V入賞で大当り。大当りのメインは自力継続型。
-天上天下ボーナスはパンクなしで10R分（1271個）獲得。1チャッカー入賞時は0.8%でロング開放（1.3秒）。
-ボーダーは公表なし。
-導入 2026-09-07。</p>
+        <p class="pre">型式名 eリコリス・リコイルM3。初当り後50%でRUSH（＝ラッキートリガー）。ST132回転・継続率約75%で内部モードが2つ。
+モードAの大当りは750個、モードBは3000個or6000個+α（3000個×50%ループ付き）。
+先バレの真島と千束＆たきなは、カスタム画面で十字ボタンの真ん中を10秒長押しすると開放される。
+ボーダーの他の交換率: 30玉=18.6回、40玉=21.1回。
+導入 2026-04-06。</p>
         <p class="hint">出典:
-<a href="https://p-town.dmm.com/machines/5070" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5070</a> (2026-09-27確認)        </p>
+<a href="https://p-town.dmm.com/machines/4982" target="_blank" rel="noopener">https://p-town.dmm.com/machines/4982</a> (2026-09-27確認)        </p>
     </section>
 
     <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>

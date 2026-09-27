@@ -1,0 +1,62 @@
+{
+  "name": "e女神のカフェテラス",
+  "maker": "JFJ",
+  "spec_type": "スマパチ",
+  "hit_prob": 399,
+  "rush_hit_prob": 73,
+  "rush_entry_rate": 40,
+  "rush_continue_rate": 75,
+  "border_equiv": 27.4,
+  "border_28": 28.9,
+  "border_33": 31.2,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "先女神モード キスフラッシュ",
+      "rate": 50,
+      "note": "吐息エアーあおり成功で超激アツ"
+    },
+    {
+      "name": "先女神モード ツンデレフラッシュ",
+      "rate": 50,
+      "note": ""
+    },
+    {
+      "name": "先女神モード 小悪魔フラッシュ",
+      "rate": 50,
+      "note": ""
+    },
+    {
+      "name": "先女神モード 必殺技フラッシュ",
+      "rate": 30,
+      "note": "ボタン出現時"
+    },
+    {
+      "name": "緑保留（先読み中）",
+      "rate": 23.4,
+      "note": ""
+    },
+    {
+      "name": "ピンク保留（先読み中）",
+      "rate": 64.2,
+      "note": ""
+    },
+    {
+      "name": "赤保留（先読み中）",
+      "rate": 81.9,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 e女神のカフェテラスJLZ。大きいヘソで消化するSTタイプ。右打ち突入＝ラッキートリガー発動。\nRUSH中確率の欄は電チューのロング開放確率1/73。\n先女神モードの誘惑フラッシュ（紅葉）は超激アツ、にゃんにゃんフラッシュ（白菊）は超激アツ＆LT発動濃厚。\nボーダーの他の交換率: 30玉=29.8回、40玉=34.1回。\n導入 2025-08-18。",
+  "source": "https://p-town.dmm.com/machines/4848 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

@@ -1,0 +1,52 @@
+{
+  "name": "eひきこまり吸血姫の悶々",
+  "maker": "藤商事",
+  "spec_type": "スマパチ",
+  "hit_prob": 348,
+  "rush_hit_prob": 99,
+  "rush_entry_rate": 51,
+  "rush_continue_rate": 77,
+  "border_equiv": 16.8,
+  "border_28": 17.6,
+  "border_33": 18.8,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "緑保留（最終）",
+      "rate": 40.0,
+      "note": ""
+    },
+    {
+      "name": "ピンク保留（最終）",
+      "rate": 60.3,
+      "note": ""
+    },
+    {
+      "name": "赤保留",
+      "rate": 100,
+      "note": "大当り濃厚（金・虹も同じ）"
+    },
+    {
+      "name": "魔法石保留",
+      "rate": 66.9,
+      "note": ""
+    },
+    {
+      "name": "手紙保留",
+      "rate": 73.9,
+      "note": ""
+    },
+    {
+      "name": "烈核解放ギミック予告 赤",
+      "rate": 80.0,
+      "note": "ピンクは47.4%"
+    }
+  ],
+  "note": "型式名 eひきこまり吸血姫の悶々FHV。通常時はCZ（10回転・成功率約33%）で大当りを狙う。CZ確率は1/129（c時短と大当りからの合算）。\nRUSH突入率の欄はCZ成功時の約51%。RUSH（＝LT）はST144回転・継続率約77%。RUSH中確率の欄は電チューのロング開放確率1/99。\nコンプリート機能搭載。ボーダーの他の交換率: 30玉=18.1回、40玉=20.3回。\n導入 2026-05-11。",
+  "source": "https://p-town.dmm.com/machines/5006 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

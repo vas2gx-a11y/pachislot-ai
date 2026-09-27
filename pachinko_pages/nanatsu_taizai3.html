@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PHはねもの ハネ釈迦</title>
+<title>e 七つの大罪3</title>
 <style>
 /*
   店舗ページ(単体HTML)の共通CSS。tools/store_build.py が各HTMLの <style> に埋め込む。
@@ -170,13 +170,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <header class="hero">
     <div class="wrap">
         <p class="crumb"><a href="index.html">パチンコ機種データ</a></p>
-        <h1>PHはねもの ハネ釈迦</h1>
-        <p class="hero-addr">マルホン ・ その他</p>
+        <h1>e 七つの大罪3</h1>
+        <p class="hero-addr">サミー ・ スマパチ</p>
         <div class="hero-stats">
-            <div class="hero-stat"><span>大当り確率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>RUSH突入率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>RUSH継続率</span><strong><span class="muted">未登録</span></strong></div>
-            <div class="hero-stat"><span>ボーダー（等価）</span><strong><span class="muted">未登録</span></strong></div>
+            <div class="hero-stat"><span>大当り確率</span><strong>1/319.6</strong></div>
+            <div class="hero-stat"><span>RUSH突入率</span><strong>40%</strong></div>
+            <div class="hero-stat"><span>RUSH継続率</span><strong>75%</strong></div>
+            <div class="hero-stat"><span>ボーダー（等価）</span><strong>16.8回</strong></div>
         </div>
     </div>
 </header>
@@ -190,25 +190,79 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 
     <section class="card" id="calc">
         <h2>回転率計算</h2>
-        <p class="muted">この機種はボーダーが未登録なので、回転率との比較はできません。</p>
+        <div class="calc-grid">
+            <div><label for="c-invest">投資（千円）</label><input id="c-invest" type="number" inputmode="decimal" step="any" min="0" value="0"></div>
+            <div><label for="c-exchange">交換率</label>
+                <select id="c-exchange">
+                    <option value="250">等価（25玉）</option>
+                    <option value="280">28玉</option>
+                    <option value="300">30玉</option>
+                    <option value="330">33玉</option>
+                </select>
+            </div>
+            <div><label for="c-start">打ち始め回転数</label><input id="c-start" type="number" inputmode="numeric" min="0" value="0"></div>
+            <div><label for="c-current">現在回転数</label><input id="c-current" type="number" inputmode="numeric" min="0" value="0"></div>
+        </div>
+        <div class="calc-result" id="c-result">
+            <div><div class="muted">千円あたり</div><div class="big" id="c-rate">—</div></div>
+            <div style="text-align:right"><div class="muted">ボーダー <span id="c-border">—</span></div><div class="diff" id="c-diff">—</div></div>
+        </div>
+        <p class="hint">
+            30玉などの登録していない交換率は、登録済みのボーダーを直線で結んだ概算です。
+            大当りで回転数が0に戻るたびに区切って積み上げたいときは、アプリの回転率計算を使ってください。
+        </p>
+        <script>
+        (function () {
+            var POINTS = [{"balls": 250, "value": 16.8}, {"balls": 280, "value": 17.7}, {"balls": 330, "value": 19.1}];
+            // アプリの回転率計算(templates/pachinko_calc.html)と同じ換算。単体で開けるよう、ここにも持つ
+            function borderAt(balls) {
+                if (POINTS.length === 1) return POINTS[0].value;
+                var i = 0;
+                while (i < POINTS.length - 2 && balls > POINTS[i + 1].balls) i++;
+                var a = POINTS[i], b = POINTS[i + 1];
+                return a.value + (b.value - a.value) * (balls - a.balls) / (b.balls - a.balls);
+            }
+            function n(id) { var v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+            function render() {
+                var invest = n('c-invest'), spins = Math.max(0, n('c-current') - n('c-start'));
+                var border = borderAt(n('c-exchange'));
+                var box = document.getElementById('c-result');
+                document.getElementById('c-border').textContent = border.toFixed(1) + '回';
+                box.classList.remove('is-plus', 'is-minus');
+                if (invest <= 0) {
+                    document.getElementById('c-rate').textContent = '—';
+                    document.getElementById('c-diff').textContent = '—';
+                    return;
+                }
+                var rate = spins / invest, diff = rate - border;
+                document.getElementById('c-rate').textContent = rate.toFixed(1);
+                document.getElementById('c-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
+                box.classList.add(diff >= 0 ? 'is-plus' : 'is-minus');
+            }
+            ['c-invest', 'c-start', 'c-current', 'c-exchange'].forEach(function (id) {
+                document.getElementById(id).addEventListener('input', render);
+            });
+            render();
+        })();
+        </script>
     </section>
 
     <section class="card" id="spec">
         <h2>スペック</h2>
         <table class="kv"><tbody>
-            <tr><th>大当り確率</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>大当り確率</th><td>1/319.6</td></tr>
             <tr><th>RUSH中確率</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>RUSH突入率</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>RUSH継続率</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>RUSH突入率</th><td>40%</td></tr>
+            <tr><th>RUSH継続率</th><td>75%</td></tr>
         </tbody></table>
     </section>
 
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
-            <tr><th>等価（25玉）</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>28玉交換</th><td><span class="muted">未登録</span></td></tr>
-            <tr><th>33玉交換</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>等価（25玉）</th><td>16.8回</td></tr>
+            <tr><th>28玉交換</th><td>17.7回</td></tr>
+            <tr><th>33玉交換</th><td>19.1回</td></tr>
         </tbody></table>
     </section>
 
@@ -224,22 +278,51 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 
     <section class="card" id="technique">
         <h2>止め打ち・ワンツー打法</h2>
-        <p class="pre">前半の2回のロング開放後は長めに羽根が閉じているので、止め打ちでムダ玉を減らせる。</p>
+        <p class="muted">未登録</p>
     </section>
 
     <section class="card" id="effects">
         <h2>演出の期待度</h2>
-        <p class="muted">未登録</p>
+        <table class="kv"><tbody>
+            <tr>
+                <th>入賞時フラッシュ エリザベス（カスタム）</th>
+                <td class="rate">27%<span class="rate-note">先バレ。出現率1/93</span></td>
+            </tr>
+            <tr>
+                <th>入賞時フラッシュ エスカノール</th>
+                <td class="rate">42%<span class="rate-note">出現率1/150</span></td>
+            </tr>
+            <tr>
+                <th>入賞時フラッシュ メリオダス</th>
+                <td class="rate">77.3%<span class="rate-note">出現率1/752</span></td>
+            </tr>
+            <tr>
+                <th>入賞時フラッシュ パトホーク</th>
+                <td class="rate">100%<span class="rate-note">大当り濃厚。出現率1/361</span></td>
+            </tr>
+            <tr>
+                <th>保留変化 セリフに赤文字あり</th>
+                <td class="rate">93.5%<span class="rate-note">黒文字のみは30.7%</span></td>
+            </tr>
+            <tr>
+                <th>赤保留（最終）</th>
+                <td class="rate">92.5%</td>
+            </tr>
+            <tr>
+                <th>金保留（最終）</th>
+                <td class="rate">100%<span class="rate-note">大当り濃厚</span></td>
+            </tr>
+        </tbody></table>
     </section>
 
     <section class="card" id="note">
         <h2>メモ・出典</h2>
-        <p class="pre">型式名 PHはねものシャカRUSH2。羽根モノ。羽根に拾われた玉は2ルートに分岐し、役物突破＝V入賞で大当り。大当りのメインは自力継続型。
-天上天下ボーナスはパンクなしで10R分（1271個）獲得。1チャッカー入賞時は0.8%でロング開放（1.3秒）。
-ボーダーは公表なし。
-導入 2026-09-07。</p>
+        <p class="pre">型式名 e七つの大罪3GFEA。初当りは必ず時短100回転（チャレンジ中の実質1/196.2）に入り、突破率約40%でRUSH。RUSH突入率の欄はこの突破率。
+RUSHは大当りの振り分けで継続か終了かが決まる（実質1/1）ので、RUSH中確率は空欄。継続率約75%。
+ボーダーの他の交換率: 30玉=18.3回、40玉=20.8回。
+導入 2026-08-03。</p>
         <p class="hint">出典:
-<a href="https://p-town.dmm.com/machines/5070" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5070</a> (2026-09-27確認)        </p>
+<a href="https://p-town.dmm.com/machines/5056" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5056</a> (2026-09-27確認)        </p>
     </section>
 
     <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
