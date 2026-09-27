@@ -1,0 +1,27 @@
+{
+  "name": "",
+  "maker": "",
+  "spec_type": "ミドル / ライトミドル / 甘デジ / ライト / スマパチ / その他 のどれか",
+  "hit_prob": null,
+  "rush_hit_prob": null,
+  "rush_entry_rate": null,
+  "rush_continue_rate": null,
+  "border_equiv": null,
+  "border_28": null,
+  "border_33": null,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "演出名",
+      "rate": null,
+      "note": ""
+    }
+  ],
+  "note": "",
+  "source": "URL (YYYY-MM-DD確認)",
+  "updated_at": "YYYY-MM-DD"
+}

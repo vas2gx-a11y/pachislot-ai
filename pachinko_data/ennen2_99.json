@@ -1,0 +1,57 @@
+{
+  "name": "eフィーバー炎炎ノ消防隊2 99ver.",
+  "maker": "SANKYO",
+  "spec_type": "甘デジ",
+  "hit_prob": 99.9,
+  "rush_hit_prob": 23.8,
+  "rush_entry_rate": 60,
+  "rush_continue_rate": 77,
+  "border_equiv": 17.2,
+  "border_28": 18.0,
+  "border_33": 19.2,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "先青線フラッシュ（通常時カスタム50%）",
+      "rate": 50.1,
+      "note": "先バレ"
+    },
+    {
+      "name": "先青線フラッシュ（通常時カスタム99%）",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "レバブル（レバブルアップON）",
+      "rate": 98.5,
+      "note": ""
+    },
+    {
+      "name": "緑保留",
+      "rate": 34.9,
+      "note": ""
+    },
+    {
+      "name": "赤シンラ保留",
+      "rate": 80.2,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 90,
+      "note": "90%over"
+    },
+    {
+      "name": "夢夢保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 eAフィーバー炎炎ノ消防隊2Y。初当り後は必ず右打ち（チャレンジ約49%・RUSH約50%・LT約1%）。チャレンジ突破率約19%。\nRUSH突入率60%は直行＋チャレンジ突破・LT含むトータル。RUSHはST30回転＋保留4個で継続率約77%。LT（ST64回転）は継続率約95%。\nボーダーの他の交換率: 30玉=18.5回、40玉=20.7回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5067 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

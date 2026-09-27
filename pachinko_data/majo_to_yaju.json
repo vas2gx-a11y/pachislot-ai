@@ -1,0 +1,52 @@
+{
+  "name": "e魔女と野獣",
+  "maker": "藤商事",
+  "spec_type": "スマパチ",
+  "hit_prob": 399,
+  "rush_hit_prob": 95,
+  "rush_entry_rate": 51,
+  "rush_continue_rate": 55,
+  "border_equiv": 27.9,
+  "border_28": 29.4,
+  "border_33": 31.8,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "赤保留",
+      "rate": 80.0,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "虹保留",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "棺・野獣保留 演出成功",
+      "rate": 90.0,
+      "note": ""
+    },
+    {
+      "name": "超復讐ZONE",
+      "rate": 95.0,
+      "note": ""
+    },
+    {
+      "name": "野獣覚醒リーチ",
+      "rate": 90.0,
+      "note": ""
+    }
+  ],
+  "note": "型式名 e魔女と野獣FKZ。1/399は通常時図柄揃いと魔女決戦BONUSの合算（大当り確率1/349・チャージ1/2799）。大きいヘソ。\n図柄揃い時の約51%でRUSH（＝ラッキートリガー）。RUSHはST75回転・継続率約55%。運命分岐成功で出玉3000個以上＋上乗せループ。\nボーダーの他の交換率: 30玉=30.4回、40玉=34.7回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5077 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

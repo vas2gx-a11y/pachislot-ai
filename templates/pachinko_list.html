@@ -25,10 +25,19 @@
 
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ url_for('pachinko.calc') }}" class="btn btn-primary btn-sm gap-1">{{ icon('calculator') }} 回転率計算</a>
-        {% if current_user_is_admin %}
-        <a href="{{ url_for('pachinko.new') }}" class="btn btn-ghost btn-sm gap-1">{{ icon('plus') }} 機種を登録</a>
-        {% endif %}
     </div>
+
+    <p class="hint mt-0">
+        機種ごとのボーダー・遊タイム・止め打ち・演出の期待度を出典付きでまとめています。
+        新台は <code>pachinko_data/</code> にJSONを置くと、ここに追加されます。
+    </p>
+
+    {% if errors %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+        <strong>読み込めなかったファイルがあります</strong>
+        <ul class="list-disc pl-5 mt-1">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
 
     {% if machines %}
     <div class="card card-body">
@@ -58,7 +67,7 @@
     </div>
     <p class="hint hidden" id="pachinko-no-hit">条件に合う機種がありません。</p>
     {% else %}
-    {{ empty_state("pachinko", "まだ機種データがありません。" ~ ("上の「機種を登録」から追加してください。" if current_user_is_admin else "管理者の登録を待ってください。")) }}
+    {{ empty_state("pachinko", "まだ機種データがありません。pachinko_data/ に機種のJSONを置くとここに表示されます（書き方は pachinko_data/README.md）。") }}
     {% endif %}
 
 </div>

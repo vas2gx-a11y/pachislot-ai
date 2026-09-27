@@ -25,10 +25,10 @@
   営業データ（日別・台別）はシートのままで、`sheet_store_name` で紐づけて同じページに並べる。書き方は `store_data/README.md`。
   店舗の登録はチャットで依頼される運用：Webで調べて根拠つきの収集結果JSON（`data/store_collected/`）を書き、
   `tools/store_collect.py apply` で反映、`tools/store_build.py` で単体HTML（`store_pages/`、生成物）を作る。
-- パチンコの機種データ（`/pachinko`）— スロットの `machine_data/` とは別枠。ボーダー・遊タイム・止め打ちなど
-  ホールで見返すメモを新台のたびに画面から足したいので、置き場所はシート（`pachinko_machines`）。書き込みは管理者だけ。
+- `pachinko_info.py` / `pachinko_data/*.json` — パチンコの機種データ（ボーダー・遊タイム・止め打ち・演出の期待度）。
+  スロットの `machine_data/` とは項目が違うので別枠。スロットと同じくJSONが正で、pushすれば `/pachinko` に出る
+  （画面からの編集手段は持たない）。書き方は `pachinko_data/README.md`。
   回転率計算（`/pachinko/calc`）は判別と同じくブラウザ側だけで計算し、入力は localStorage に残す。
-  チャットで登録を頼まれたら、調べた結果を `data/pachinko_collected/*.json` に書き、`tools/pachinko_apply.py` でシートに反映する（同じ機種名は上書き）。
   `tools/pachinko_build.py` で機種ごとの単体HTML（`pachinko_pages/`、生成物。回転率計算つき）を作る。
 - `tools/` — アナスロ(ana-slo.com)からホールデータを取り込むCLI（使い方は `tools/README.md`）と、
   店舗情報をWebから集める `store_collect.py`。
@@ -69,7 +69,7 @@
 | データ | 誰のものか |
 |---|---|
 | records / chat_logs / unit_notes | 登録した本人だけ。各行の `user_id` 列で分ける（空の行は複数人対応前のもので、管理者の持ち物） |
-| ホールデータ（日別・台別・年間・旧イベント日）、機種・店舗JSON、パチンコ機種データ | 全員で共有。取り込み・店舗管理・パチンコ機種の登録は管理者だけ |
+| ホールデータ（日別・台別・年間・旧イベント日）、機種・店舗JSON（パチンコ含む） | 全員で共有。取り込み・店舗管理は管理者だけ |
 
 - 分離は `load_records()` などの読み込み関数の中でやっている（`_own_rows`）。呼び出し側で絞らなくていい。
   **全員分の行が欲しい処理（店舗名の変更など）はシートを直接読む**。

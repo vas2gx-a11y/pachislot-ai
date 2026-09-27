@@ -1,0 +1,82 @@
+{
+  "name": "e 東京喰種",
+  "maker": "ビスティ",
+  "spec_type": "スマパチ",
+  "hit_prob": 399,
+  "rush_hit_prob": 95.3,
+  "rush_entry_rate": 51,
+  "rush_continue_rate": 75,
+  "border_equiv": 16.7,
+  "border_28": 17.5,
+  "border_33": 18.8,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "先役物落下（カスタム40%）",
+      "rate": 40,
+      "note": ""
+    },
+    {
+      "name": "先役物落下（カスタム90%）",
+      "rate": 90,
+      "note": ""
+    },
+    {
+      "name": "先役物落下（カスタムEX）",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "先読み予告（カスタム熱）",
+      "rate": 93,
+      "note": "カスタム チャンス=約48%・オススメ=約2%"
+    },
+    {
+      "name": "レバブル 白（カスタムOFF）",
+      "rate": 75,
+      "note": "カスタムON時は約90%"
+    },
+    {
+      "name": "レバブル 赤",
+      "rate": 95,
+      "note": ""
+    },
+    {
+      "name": "赤保留",
+      "rate": 80,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 90,
+      "note": ""
+    },
+    {
+      "name": "虹保留",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "金木保留 鎖が切れる",
+      "rate": 100,
+      "note": "大当り濃厚（鎖が切れないと約12%）"
+    },
+    {
+      "name": "喰MAXハンド落下（変動中）",
+      "rate": 73,
+      "note": "落下音がデフォルト以外なら大当り濃厚"
+    },
+    {
+      "name": "隠れVランプ発光",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 e東京喰種W。ラッキートリガー搭載のST機。RUSH＝ST130回転。\n通常時は図柄揃い約1/399・チャージ約1/399.9（合算約1/199.9）。チャージは2R後に通常へ、昇格でRUSH突入。\nRUSH中の大当りは出玉オール3000個以上。初当り1回あたりの期待出玉 2,998玉。\n導入 2025-04-21。ボーダーの他の交換率: 30玉=18.1回、40玉=20.4回。",
+  "source": "https://p-town.dmm.com/machines/4782 (2026-09-25確認)",
+  "updated_at": "2026-09-25"
+}

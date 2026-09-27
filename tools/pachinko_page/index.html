@@ -32,7 +32,7 @@
         <ul class="store-list">
     {% endif %}
             <li>
-                <a href="{{ m.page_id }}.html">{{ m.name }}</a>
+                <a href="{{ m.machine_id }}.html">{{ m.name }}</a>
                 <span class="store-sub">
                     {{ m.maker or 'メーカー未登録' }}
                     {% if m.hit_prob %} ・ 1/{{ fmt(m.hit_prob) }}{% endif %}

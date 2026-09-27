@@ -28,9 +28,6 @@
         <span class="text-xs text-gray-500">{{ machine.maker or "メーカー未登録" }} ・ 更新 {{ machine.updated_at }}</span>
         <div class="ml-auto flex flex-wrap gap-2">
             <a href="{{ url_for('pachinko.calc', machine_id=machine.machine_id) }}" class="btn btn-primary btn-sm gap-1">{{ icon('calculator') }} この機種で回転率計算</a>
-            {% if current_user_is_admin %}
-            <a href="{{ url_for('pachinko.edit', machine_id=machine.machine_id) }}" class="btn btn-ghost btn-sm gap-1">{{ icon('pencil') }} 編集</a>
-            {% endif %}
         </div>
     </div>
 

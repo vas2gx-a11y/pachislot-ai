@@ -1,0 +1,21 @@
+{
+  "name": "PHはねもの ハネ釈迦",
+  "maker": "マルホン",
+  "spec_type": "その他",
+  "hit_prob": null,
+  "rush_hit_prob": null,
+  "rush_entry_rate": null,
+  "rush_continue_rate": null,
+  "border_equiv": null,
+  "border_28": null,
+  "border_33": null,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "前半の2回のロング開放後は長めに羽根が閉じているので、止め打ちでムダ玉を減らせる。",
+  "effects": [],
+  "note": "型式名 PHはねものシャカRUSH2。羽根モノ。羽根に拾われた玉は2ルートに分岐し、役物突破＝V入賞で大当り。大当りのメインは自力継続型。\n天上天下ボーナスはパンクなしで10R分（1271個）獲得。1チャッカー入賞時は0.8%でロング開放（1.3秒）。\nボーダーは公表なし。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5070 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

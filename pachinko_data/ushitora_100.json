@@ -1,0 +1,57 @@
+{
+  "name": "Pうしおととら〜神のせSPEC〜100ver.",
+  "maker": "D-light",
+  "spec_type": "甘デジ",
+  "hit_prob": 100,
+  "rush_hit_prob": 100,
+  "rush_entry_rate": 68,
+  "rush_continue_rate": 51,
+  "border_equiv": 16.6,
+  "border_28": 17.4,
+  "border_33": 18.5,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "熱バレ（カスタム 出現頻度低）",
+      "rate": 45.0,
+      "note": "先バレ"
+    },
+    {
+      "name": "熱バレ（カスタム 出現頻度中）",
+      "rate": 72.0,
+      "note": ""
+    },
+    {
+      "name": "熱バレ（カスタム 出現頻度高）",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "紫保留",
+      "rate": 62.1,
+      "note": ""
+    },
+    {
+      "name": "赤保留",
+      "rate": 91.2,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 98.2,
+      "note": ""
+    },
+    {
+      "name": "虹保留（ダイナマイト）",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    }
+  ],
+  "note": "型式名 Pうしおととら〜月と太陽〜FH-RS。初当りの68%でRUSH。RUSHはST70回転・継続率約51%、RUSH中の大当り出玉は1000個以上。\nボーダーの他の交換率: 30玉=17.9回、40玉=20.0回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5074 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

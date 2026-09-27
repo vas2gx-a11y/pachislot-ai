@@ -1,0 +1,52 @@
+{
+  "name": "eタクトオーパス デスティニー",
+  "maker": "ニューギン",
+  "spec_type": "スマパチ",
+  "hit_prob": 348.59,
+  "rush_hit_prob": 99.9,
+  "rush_entry_rate": 50,
+  "rush_continue_rate": 77,
+  "border_equiv": 41.4,
+  "border_28": 43.7,
+  "border_33": 47.2,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "薔薇告知 白バラ（通常時カスタム）",
+      "rate": 20.0,
+      "note": "先バレ"
+    },
+    {
+      "name": "薔薇告知 赤バラ（通常時カスタム）",
+      "rate": 50.0,
+      "note": ""
+    },
+    {
+      "name": "薔薇告知 金バラ／金バラEX",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "先薔薇告知 赤バラ（RUSH中）",
+      "rate": 100,
+      "note": "大当り濃厚"
+    },
+    {
+      "name": "保留変化予告",
+      "rate": 31.8,
+      "note": "トータル"
+    },
+    {
+      "name": "画面フィルター先読み予告",
+      "rate": 96.2,
+      "note": ""
+    }
+  ],
+  "note": "型式名 etakt op. DestinyH6。大当り確率1/348.59に対し、通常時の図柄揃いは1/1394.38（チャージ約1/464.79）。大きいヘソで、右打ちで演出スキップ可。\n図柄揃い後50%でRUSH（＝ラッキートリガー）。RUSHはST144回転・継続率約77%、大当り出玉1500〜7500個。\nボーダーの他の交換率: 30玉=45.1回、40玉=51.6回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5080 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

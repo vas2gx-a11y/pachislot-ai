@@ -1,0 +1,52 @@
+{
+  "name": "e シン・ウルトラマン 79ver.",
+  "maker": "OK!!",
+  "spec_type": "甘デジ",
+  "hit_prob": 79.9,
+  "rush_hit_prob": 1.3,
+  "rush_entry_rate": 33,
+  "rush_continue_rate": 80,
+  "border_equiv": 18.1,
+  "border_28": 18.9,
+  "border_33": 20.1,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "βカプセル先告知（先告知モード）",
+      "rate": 49.1,
+      "note": "先バレ"
+    },
+    {
+      "name": "先読み予告（先読みチャンスモード）",
+      "rate": 80.0,
+      "note": ""
+    },
+    {
+      "name": "未来予知 紫",
+      "rate": 28.2,
+      "note": ""
+    },
+    {
+      "name": "未来予知 赤",
+      "rate": 94.8,
+      "note": ""
+    },
+    {
+      "name": "金系（会話予告・SU系）",
+      "rate": 95.0,
+      "note": ""
+    },
+    {
+      "name": "ゼブラ柄系",
+      "rate": 98.1,
+      "note": ""
+    }
+  ],
+  "note": "型式名 eシン・ウルトラマン79ver.K3。初当り後は必ずウルトラバトルモード（1/3.1・突破率約33%）。突破でゼットンATTACK（1/1.3・継続率80%）。\nRUSH突入率の欄はウルトラバトルモード突破率、RUSH中確率の欄はゼットンATTACK中の確率。連チャンゾーンはすべて1回転決着。\n通常時はゲート通過（P-スキップ）で変動・演出カット可。\nボーダーの他の交換率: 30玉=19.4回、40玉=21.6回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5076 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

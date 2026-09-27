@@ -1,0 +1,32 @@
+{
+  "name": "PA大海物語Withアグネス・ラム Premium Edition",
+  "maker": "三洋",
+  "spec_type": "甘デジ",
+  "hit_prob": 99.9,
+  "rush_hit_prob": 19.5,
+  "rush_entry_rate": 100,
+  "rush_continue_rate": 40.9,
+  "border_equiv": 18.6,
+  "border_28": 19.5,
+  "border_33": 20.7,
+  "yutime_games": 239,
+  "yutime_spins": 10000,
+  "yutime_note": "低確率239回転消化（時短含む）で遊タイム発動。電サポ10000回転（実質次回大当りまで）。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "魚群（My海カスタム 75%）",
+      "rate": 75,
+      "note": "カスタムで魚群期待度を選べる"
+    },
+    {
+      "name": "魚群（My海カスタム 100%）",
+      "rate": 100,
+      "note": ""
+    }
+  ],
+  "note": "型式名 PA大海物語アグネスプレミアRBA。通常時は8個保留。大当り後は必ずST10回転（継続率40.9%）、ST後は時短15or40or90回転。\nRUSH中確率の欄は高確率時の1/19.5。初当り1回あたりの期待出玉 1,226玉。\nボーダーの他の交換率: 30玉=20.0回、40玉=22.3回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5058 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

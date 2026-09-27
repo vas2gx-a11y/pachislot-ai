@@ -1,0 +1,62 @@
+{
+  "name": "e アサルトリリィ",
+  "maker": "ビスティ",
+  "spec_type": "スマパチ",
+  "hit_prob": 164.4,
+  "rush_hit_prob": 65.5,
+  "rush_entry_rate": 25.3,
+  "rush_continue_rate": 80,
+  "border_equiv": 17.5,
+  "border_28": 18.3,
+  "border_33": 19.6,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "先百合（カスタム10%）",
+      "rate": 10,
+      "note": "先バレ"
+    },
+    {
+      "name": "先百合（カスタム50%）",
+      "rate": 50,
+      "note": ""
+    },
+    {
+      "name": "先百合（カスタム80%）",
+      "rate": 80,
+      "note": ""
+    },
+    {
+      "name": "先百合（カスタムEX）",
+      "rate": 100,
+      "note": "RUSH突入大当り濃厚"
+    },
+    {
+      "name": "先読み予告（カスタム熱）",
+      "rate": 82,
+      "note": "チャンス=約65%"
+    },
+    {
+      "name": "レバブル 白（カスタムOFF）",
+      "rate": 90,
+      "note": ""
+    },
+    {
+      "name": "赤保留",
+      "rate": 75,
+      "note": ""
+    },
+    {
+      "name": "金保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 eアサルトリリィZ。RUSH中確率の欄は右打ち中のリーチ確率1/65.5（スキル神宿未発動時）。リーチ成立で閃撃ジャッジ（成功期待度約83%）。\n図柄揃い後約25.3%でRUSH（＝LT）。RUSHはST100回転・継続率約80%（リセット含む）。\nボーダーの他の交換率: 30玉=18.9回、40玉=21.2回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5075 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}

@@ -1,0 +1,57 @@
+{
+  "name": "e 甲鉄城のカバネリ2 輪廻の果報119ver.",
+  "maker": "サミー",
+  "spec_type": "甘デジ",
+  "hit_prob": 119.8,
+  "rush_hit_prob": 89.7,
+  "rush_entry_rate": 25.5,
+  "rush_continue_rate": 78,
+  "border_equiv": 17.3,
+  "border_28": 18.1,
+  "border_33": 19.3,
+  "yutime_games": null,
+  "yutime_spins": null,
+  "yutime_note": "遊タイム非搭載。",
+  "morning_lamp_note": "",
+  "technique_note": "",
+  "effects": [
+    {
+      "name": "無名フラッシュ（左打ち遊技カスタム）",
+      "rate": 56.2,
+      "note": "先バレ。出現率1/95.8"
+    },
+    {
+      "name": "イキナリフラッシュ（左打ち遊技カスタム）",
+      "rate": 60.5,
+      "note": "出現率1/82.7"
+    },
+    {
+      "name": "枷紐保留（遊技カスタム）",
+      "rate": 45.3,
+      "note": "出現率1/67.7"
+    },
+    {
+      "name": "緑保留（カスタムなし）",
+      "rate": 24.4,
+      "note": ""
+    },
+    {
+      "name": "赤保留（カスタムなし）",
+      "rate": 82.0,
+      "note": ""
+    },
+    {
+      "name": "金保留（カスタムなし）",
+      "rate": 94.8,
+      "note": ""
+    },
+    {
+      "name": "虹保留",
+      "rate": 100,
+      "note": "大当り濃厚"
+    }
+  ],
+  "note": "型式名 e甲鉄城のカバネリ2SCEA。右打ち中の1/89.7は実質確率。ST134回転で継続率約78%。\nST中の大当りはオール1500個以上。BONUS消化中の「輪廻の果報」発生で1500個×約70%ループ（獲得期待出玉 約6400個）。\nボーダーの他の交換率: 30玉=18.6回、40玉=20.8回。\n導入 2026-09-07。",
+  "source": "https://p-town.dmm.com/machines/5043 (2026-09-27確認)",
+  "updated_at": "2026-09-27"
+}
