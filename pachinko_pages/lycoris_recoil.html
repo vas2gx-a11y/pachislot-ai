@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,8 +189,8 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
-    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#sns">Xの情報</a><a href="#note">メモ・出典</a>
 </div></nav>
 
 <main class="wrap stack">
@@ -256,6 +263,68 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
             <tr><th>RUSH継続率</th><td>75%</td></tr>
         </tbody></table>
     </section>
+
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">ヘソ
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="ヘソの振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 0.10%, #d93a2b 0.10% 45.00%, #8e3fb8 45.00% 50.00%, #2f5fd0 50.00% 80.00%, #2f5fd0 80.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>0.1%</th>
+                    <td>10R ・ <strong>約1500個</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>44.9%</th>
+                    <td>4R ・ <strong>約600個</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>5%</th>
+                    <td>3R ・ <strong>約310個</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>30%</th>
+                    <td>4R ・ <strong>約600個</strong>
+<span class="rate-note">→ 時短なし</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>20%</th>
+                    <td>3R ・ <strong>約310個</strong>
+<span class="rate-note">→ 時短なし</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー（モードA）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チュー（モードA）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>100%</th>
+                    <td>5R ・ <strong>約750個</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー（モードB）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チュー（モードB）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 50.00%, #d93a2b 50.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>50%</th>
+                    <td>5R×4回 ・ <strong>約3000個</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>50%</th>
+                    <td>5R×8回+α ・ <strong>約6000個+α</strong>
+<span class="rate-note">→ ST132回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
 
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
@@ -331,6 +400,19 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="sns">
+        <h2>Xの情報（非公式）</h2>
+        <p class="hint" style="margin:0 0 8px">Xの投稿を要約したものです。個人の実戦値・考察を含むので、解析値とは分けて参考程度に見てください。</p>
+        <div class="dated">
+            <span class="chip">狙い目</span>
+            <p>RUSH開始時のモード示唆は、通常のボタンではなく赤ボタンを押すと白・赤・虹しか出なくなり、実戦上は白＝モードA、赤＝モードB、虹＝1/15の上乗せ潜伏で崩れていないという報告（完全告知の可能性）。</p>
+<p class="dated-date"><a href="https://x.com/demonbane244/status/2049460852626227660" target="_blank" rel="noopener">@demonbane244</a>（2026-04-29）</p>        </div>
+        <div class="dated">
+            <span class="chip">その他</span>
+            <p>RUSH中のモードは初回が約70%でモードA・約30%でモードB。モードAからモードBへの移行率は50%。モードBがループする可能性はあるが数値は非公表。</p>
+<p class="dated-date"><a href="https://x.com/pachicom777/status/2039191020169048564" target="_blank" rel="noopener">@pachicom777</a>（2026-04-01）</p>        </div>
+    </section>
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 eリコリス・リコイルM3。初当り後50%でRUSH（＝ラッキートリガー）。ST132回転・継続率約75%で内部モードが2つ。
@@ -342,7 +424,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <a href="https://p-town.dmm.com/machines/4982" target="_blank" rel="noopener">https://p-town.dmm.com/machines/4982</a> (2026-09-27確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

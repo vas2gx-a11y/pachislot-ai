@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,8 +189,8 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
-    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#sns">Xの情報</a><a href="#note">メモ・出典</a>
 </div></nav>
 
 <main class="wrap stack">
@@ -257,6 +264,114 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">通常時
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="通常時の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 1.50%, #d93a2b 1.50% 50.00%, #2f5fd0 50.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>1.5%</th>
+                    <td><strong>約3000〜9000個+α</strong>
+<span class="rate-note">→ ST70回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>48.5%</th>
+                    <td><strong>約300個</strong>
+<span class="rate-note">→ ST53回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>50%</th>
+                    <td><strong>約300個</strong>
+<span class="rate-note">→ 時短なし</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">右打ち中（SWORD RUSH・ST53）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="右打ち中（SWORD RUSH・ST53）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 11.00%, #d93a2b 11.00% 22.00%, #8e3fb8 22.00% 55.00%, #3f9a4a 55.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>11%</th>
+                    <td><strong>約3000〜9000個+α</strong>
+<span class="rate-note">→ ST70回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>11%</th>
+                    <td>決意の刃・成功 ・ <strong>約1500個</strong>
+<span class="rate-note">→ ST70回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>33%</th>
+                    <td>決意の刃・失敗 ・ <strong>約1500個</strong>
+<span class="rate-note">→ ST53回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #3f9a4a"></span>45%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ ST53回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">右打ち中（War of Underworld・ST70）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="右打ち中（War of Underworld・ST70）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 40.00%, #d93a2b 40.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>40%</th>
+                    <td>SWORD DRIVE ・ <strong>約1500〜7500個+α</strong>
+<span class="rate-note">→ ST70回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>60%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ ST70回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">SWORD DRIVEの出玉
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="SWORD DRIVEの出玉の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 8.20%, #d93a2b 8.20% 36.30%, #8e3fb8 36.30% 72.40%, #3f9a4a 72.40% 93.10%, #e05cb0 93.10% 97.50%, #e2b21f 97.50% 99.00%, #1a9c93 99.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>8.2%</th>
+                    <td><strong>約1500個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>28.1%</th>
+                    <td><strong>約3000個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>36.1%</th>
+                    <td><strong>約4500個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #3f9a4a"></span>20.7%</th>
+                    <td><strong>約6000個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e05cb0"></span>4.4%</th>
+                    <td><strong>約7500個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e2b21f"></span>1.5%</th>
+                    <td>DRIVE to BONUS<strong></strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #1a9c93"></span>1%</th>
+                    <td>DRIVE in DRIVE<strong></strong>
+<span class="rate-note">BONUSは出玉1500個</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
+
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
@@ -307,6 +422,15 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="sns">
+        <h2>Xの情報（非公式）</h2>
+        <p class="hint" style="margin:0 0 8px">Xの投稿を要約したものです。個人の実戦値・考察を含むので、解析値とは分けて参考程度に見てください。</p>
+        <div class="dated">
+            <span class="chip">止め打ち・技術介入</span>
+            <p>フェアスタートの回転体を狙う「SAOアリス打法」（回転体が6時の位置で5発打つ）を試した人によると、千円あたり22〜23回転ほどという話。返信では、ホールに止められる・プラススタート側が減るので結局同じ、など否定的な意見も多い。</p>
+<p class="dated-date"><a href="https://x.com/parlourful/status/2085111643051286748" target="_blank" rel="noopener">@parlourful</a>（2026-08-06）</p>        </div>
+    </section>
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 eソードアート・オンライン アリシゼーションYKJ11。通常時はFAIR START（約1/3で入る回転体、5玉に1玉が向かう）とPLUS STARTで入賞。
@@ -317,7 +441,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <a href="https://p-town.dmm.com/machines/5034" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5034</a> (2026-09-27確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

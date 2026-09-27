@@ -51,6 +51,81 @@
       "note": "大当り濃厚"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "通常時",
+      "rate": 100,
+      "rounds": "",
+      "payout": "約450個",
+      "next": "SEVEN RUSHチャレンジ",
+      "note": "チャレンジ突破時は出玉なし"
+    },
+    {
+      "state": "右打ち中（SEVEN RUSH）",
+      "rate": 72.8,
+      "rounds": "PERFECT BONUS",
+      "payout": "",
+      "next": "SEVEN RUSH"
+    },
+    {
+      "state": "右打ち中（SEVEN RUSH）",
+      "rate": 2.2,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "SEVEN RUSH"
+    },
+    {
+      "state": "右打ち中（SEVEN RUSH）",
+      "rate": 25,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "通常時"
+    },
+    {
+      "state": "PERFECT BONUSの出玉",
+      "rate": 55.5,
+      "rounds": "",
+      "payout": "約2700個",
+      "next": ""
+    },
+    {
+      "state": "PERFECT BONUSの出玉",
+      "rate": 33.1,
+      "rounds": "",
+      "payout": "約3900個",
+      "next": ""
+    },
+    {
+      "state": "PERFECT BONUSの出玉",
+      "rate": 9.8,
+      "rounds": "",
+      "payout": "約5100個",
+      "next": ""
+    },
+    {
+      "state": "PERFECT BONUSの出玉",
+      "rate": 1.5,
+      "rounds": "",
+      "payout": "約6300個",
+      "next": ""
+    },
+    {
+      "state": "PERFECT BONUSの出玉",
+      "rate": 0.1,
+      "rounds": "",
+      "payout": "約7500個",
+      "next": ""
+    }
+  ],
+  "sns_tips": [
+    {
+      "kind": "note",
+      "text": "ボタン告知カスタムの「寒バレ」は、報知が出ると「ハズレ濃厚」という逆の告知。",
+      "url": "https://x.com/pachicom777/status/2082662856471027794",
+      "account": "@pachicom777",
+      "date": "2026-07-30"
+    }
+  ],
   "note": "型式名 e七つの大罪3GFEA。初当りは必ず時短100回転（チャレンジ中の実質1/196.2）に入り、突破率約40%でRUSH。RUSH突入率の欄はこの突破率。\nRUSHは大当りの振り分けで継続か終了かが決まる（実質1/1）ので、RUSH中確率は空欄。継続率約75%。\nボーダーの他の交換率: 30玉=18.3回、40玉=20.8回。\n導入 2026-08-03。",
   "source": "https://p-town.dmm.com/machines/5056 (2026-09-27確認)",
   "updated_at": "2026-09-27"

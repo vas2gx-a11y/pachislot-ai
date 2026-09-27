@@ -41,6 +41,130 @@
       "note": "大当り濃厚"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "通常時",
+      "rate": 1.5,
+      "rounds": "",
+      "payout": "約3000〜9000個+α",
+      "next": "ST70回転"
+    },
+    {
+      "state": "通常時",
+      "rate": 48.5,
+      "rounds": "",
+      "payout": "約300個",
+      "next": "ST53回転"
+    },
+    {
+      "state": "通常時",
+      "rate": 50.0,
+      "rounds": "",
+      "payout": "約300個",
+      "next": "時短なし"
+    },
+    {
+      "state": "右打ち中（SWORD RUSH・ST53）",
+      "rate": 11,
+      "rounds": "",
+      "payout": "約3000〜9000個+α",
+      "next": "ST70回転"
+    },
+    {
+      "state": "右打ち中（SWORD RUSH・ST53）",
+      "rate": 11,
+      "rounds": "決意の刃・成功",
+      "payout": "約1500個",
+      "next": "ST70回転"
+    },
+    {
+      "state": "右打ち中（SWORD RUSH・ST53）",
+      "rate": 33,
+      "rounds": "決意の刃・失敗",
+      "payout": "約1500個",
+      "next": "ST53回転"
+    },
+    {
+      "state": "右打ち中（SWORD RUSH・ST53）",
+      "rate": 45,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "ST53回転"
+    },
+    {
+      "state": "右打ち中（War of Underworld・ST70）",
+      "rate": 40,
+      "rounds": "SWORD DRIVE",
+      "payout": "約1500〜7500個+α",
+      "next": "ST70回転"
+    },
+    {
+      "state": "右打ち中（War of Underworld・ST70）",
+      "rate": 60,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "ST70回転"
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 8.2,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 28.1,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 36.1,
+      "rounds": "",
+      "payout": "約4500個",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 20.7,
+      "rounds": "",
+      "payout": "約6000個",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 4.4,
+      "rounds": "",
+      "payout": "約7500個",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 1.5,
+      "rounds": "DRIVE to BONUS",
+      "payout": "",
+      "next": ""
+    },
+    {
+      "state": "SWORD DRIVEの出玉",
+      "rate": 1.0,
+      "rounds": "DRIVE in DRIVE",
+      "payout": "",
+      "next": "",
+      "note": "BONUSは出玉1500個"
+    }
+  ],
+  "sns_tips": [
+    {
+      "kind": "technique",
+      "text": "フェアスタートの回転体を狙う「SAOアリス打法」（回転体が6時の位置で5発打つ）を試した人によると、千円あたり22〜23回転ほどという話。返信では、ホールに止められる・プラススタート側が減るので結局同じ、など否定的な意見も多い。",
+      "url": "https://x.com/parlourful/status/2085111643051286748",
+      "account": "@parlourful",
+      "date": "2026-08-06"
+    }
+  ],
   "note": "型式名 eソードアート・オンライン アリシゼーションYKJ11。通常時はFAIR START（約1/3で入る回転体、5玉に1玉が向かう）とPLUS STARTで入賞。\n大当り後50%でST（53回転・継続率約65%）。ST中大当りの約22%で上位ST（70回転・継続率約75%）。LTはBONUS型で出玉1500〜9000個+α。\nボーダーの他の交換率: 30玉=21.6回、40玉=24.4回。\n導入 2026-08-03。",
   "source": "https://p-town.dmm.com/machines/5034 (2026-09-27確認)",
   "updated_at": "2026-09-27"

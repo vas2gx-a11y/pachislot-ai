@@ -51,6 +51,65 @@
       "note": "RUSH突入大当り濃厚"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "通常時",
+      "rate": 68,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "ST70回転"
+    },
+    {
+      "state": "通常時",
+      "rate": 32,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "時短なし"
+    },
+    {
+      "state": "右打ち中",
+      "rate": 50,
+      "rounds": "10R",
+      "payout": "約1000個",
+      "next": "ST70回転"
+    },
+    {
+      "state": "右打ち中",
+      "rate": 50,
+      "rounds": "10R×2回以上",
+      "payout": "約2000個以上",
+      "next": "ST70回転",
+      "note": "二体で最強BONUS"
+    },
+    {
+      "state": "二体で最強BONUSの出玉",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約2000個",
+      "next": ""
+    },
+    {
+      "state": "二体で最強BONUSの出玉",
+      "rate": 25,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": ""
+    },
+    {
+      "state": "二体で最強BONUSの出玉",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "約4000個",
+      "next": ""
+    },
+    {
+      "state": "二体で最強BONUSの出玉",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "約5000個+α",
+      "next": ""
+    }
+  ],
   "note": "型式名 Pうしおととら〜月と太陽〜FH-RS。初当りの68%でRUSH。RUSHはST70回転・継続率約51%、RUSH中の大当り出玉は1000個以上。\nボーダーの他の交換率: 30玉=17.9回、40玉=20.0回。\n導入 2026-09-07。",
   "source": "https://p-town.dmm.com/machines/5074 (2026-09-27確認)",
   "updated_at": "2026-09-27"

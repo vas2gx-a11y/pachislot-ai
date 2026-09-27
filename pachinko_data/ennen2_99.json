@@ -51,6 +51,65 @@
       "note": "大当り濃厚"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "通常時",
+      "rate": 1,
+      "rounds": "9R",
+      "payout": "約900個",
+      "next": "ST64回転"
+    },
+    {
+      "state": "通常時",
+      "rate": 50,
+      "rounds": "4R",
+      "payout": "約400個",
+      "next": "ST30回転"
+    },
+    {
+      "state": "通常時",
+      "rate": 49,
+      "rounds": "4R",
+      "payout": "約400個",
+      "next": "ST1回転"
+    },
+    {
+      "state": "右打ち中（チャレンジ・炎上RUSH）",
+      "rate": 1,
+      "rounds": "9R",
+      "payout": "約900個",
+      "next": "ST64回転"
+    },
+    {
+      "state": "右打ち中（チャレンジ・炎上RUSH）",
+      "rate": 19,
+      "rounds": "9R",
+      "payout": "約900個",
+      "next": "ST30回転"
+    },
+    {
+      "state": "右打ち中（チャレンジ・炎上RUSH）",
+      "rate": 80,
+      "rounds": "4R",
+      "payout": "約400個",
+      "next": "ST30回転"
+    },
+    {
+      "state": "右打ち中（アドラバースト）",
+      "rate": 20,
+      "rounds": "9R",
+      "payout": "約900個",
+      "next": "ST64回転"
+    },
+    {
+      "state": "右打ち中（アドラバースト）",
+      "rate": 80,
+      "rounds": "4R",
+      "payout": "約400個",
+      "next": "ST64回転",
+      "note": "残り保留での大当り割合は炎上RUSHと同様"
+    }
+  ],
   "note": "型式名 eAフィーバー炎炎ノ消防隊2Y。初当り後は必ず右打ち（チャレンジ約49%・RUSH約50%・LT約1%）。チャレンジ突破率約19%。\nRUSH突入率60%は直行＋チャレンジ突破・LT含むトータル。RUSHはST30回転＋保留4個で継続率約77%。LT（ST64回転）は継続率約95%。\nボーダーの他の交換率: 30玉=18.5回、40玉=20.7回。\n導入 2026-09-07。",
   "source": "https://p-town.dmm.com/machines/5067 (2026-09-27確認)",
   "updated_at": "2026-09-27"

@@ -35,8 +35,8 @@
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
-    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a>{% if m.sns_tips %}<a href="#sns">Xの情報</a>{% endif %}<a href="#note">メモ・出典</a>
 </div></nav>
 
 <main class="wrap stack">
@@ -115,6 +115,30 @@
         </tbody></table>
     </section>
 
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        {% for g in m.hit_distribution %}
+        <p class="panel-title" style="margin-top:{{ '0' if loop.first else '16px' }}">{{ g.state }}
+            {% if (g.total - 100) | abs > 0.05 %}<span class="chip">合計 {{ fmt(g.total) }}%</span>{% endif %}</p>
+        <div class="dist">
+            {% if g.pie %}<div class="pie" role="img" aria-label="{{ g.state }}の振り分けの円グラフ" style="background: {{ g.pie }}"></div>{% endif %}
+            <table class="kv"><tbody>
+                {% for r in g.rows %}
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: {{ r.color }}"></span>{% if r.rate is not none %}{{ fmt(r.rate) }}%{% else %}—{% endif %}</th>
+                    <td>{{ r.rounds }}{% if r.rounds and r.payout %} ・ {% endif %}<strong>{{ r.payout }}</strong>
+                        {% if r.next %}<span class="rate-note">→ {{ r.next }}</span>{% endif %}
+                        {% if r.note %}<span class="rate-note">{{ r.note }}</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody></table>
+        </div>
+        {% else %}
+        <p class="muted">未登録</p>
+        {% endfor %}
+        {% if m.hit_distribution %}<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>{% endif %}
+    </section>
+
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
@@ -155,6 +179,20 @@
         <p class="muted">未登録</p>
         {% endif %}
     </section>
+
+    {% if m.sns_tips %}
+    <section class="card" id="sns">
+        <h2>Xの情報（非公式）</h2>
+        <p class="hint" style="margin:0 0 8px">Xの投稿を要約したものです。個人の実戦値・考察を含むので、解析値とは分けて参考程度に見てください。</p>
+        {% for t in m.sns_tips %}
+        <div class="dated">
+            <span class="chip">{{ t.label }}</span>
+            <p>{{ t.text }}</p>
+            {% if t.url %}<p class="dated-date"><a href="{{ t.url }}" target="_blank" rel="noopener">{{ t.account or t.url }}</a>{% if t.date %}（{{ t.date }}）{% endif %}</p>{% endif %}
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
 
     <section class="card" id="note">
         <h2>メモ・出典</h2>

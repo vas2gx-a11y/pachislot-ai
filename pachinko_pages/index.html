@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -170,7 +177,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <header class="hero">
     <div class="wrap">
         <h1>パチンコ機種データ</h1>
-        <p class="hero-meta">21 機種 ・ ページ生成 2026-09-27 13:04</p>
+        <p class="hero-meta">21 機種 ・ ページ生成 2026-09-27 13:20</p>
     </div>
 </header>
 

@@ -69,8 +69,95 @@ def _normalize(raw, machine_id):
         for e in raw.get("effects") or []
         if isinstance(e, dict) and str(e.get("name") or "").strip()
     ]
+    machine["hit_distribution"] = _distribution_groups(raw.get("hit_distribution"))
+    machine["sns_tips"] = _sns_tips(raw.get("sns_tips"))
     machine["updated_at"] = str(raw.get("updated_at") or "").strip()
     return machine
+
+
+# Xの投稿から拾った情報の種類。スロット(machine_data の sns_tips)の3種類に、
+# パチンコで解析サイトに載りにくい「朝一ランプ・セグ」と「止め打ち・技術介入」を足している
+SNS_KINDS = {
+    "aim": "狙い目",
+    "quit": "やめどき",
+    "lamp": "朝一・ランプ・セグ",
+    "technique": "止め打ち・技術介入",
+    "note": "その他",
+}
+
+
+def _sns_tips(rows):
+    """
+    Xの投稿の要約。解析サイトの値とは混ぜず、画面では「非公式」として別枠に出す
+    (個人の実戦値や考察が、解析値と同じ重みで読まれないように)。種類の並びは SNS_KINDS の順。
+    """
+    order = list(SNS_KINDS)
+    tips = [
+        {"kind": r.get("kind") if r.get("kind") in SNS_KINDS else "note",
+         "text": str(r.get("text") or "").strip(),
+         "url": str(r.get("url") or "").strip(),
+         "account": str(r.get("account") or "").strip(),
+         "date": str(r.get("date") or "").strip()}
+        for r in rows or [] if isinstance(r, dict) and str(r.get("text") or "").strip()
+    ]
+    for t in tips:
+        t["label"] = SNS_KINDS[t["kind"]]
+    return sorted(tips, key=lambda t: order.index(t["kind"]))
+
+
+# 円グラフの色。DMMぱちタウンの振り分け図と同じく、そこで終わる振り分け(時短なし・通常へ戻る)は青、
+# 続く振り分けは暖色系にして、「当たっても終わる割合」がひと目で分かるようにする
+PIE_END_COLOR = "#2f5fd0"
+PIE_COLORS = ["#e8962e", "#d93a2b", "#8e3fb8", "#3f9a4a", "#e05cb0", "#e2b21f", "#1a9c93", "#8a5a33"]
+_END_WORDS = ("時短なし", "通常時", "通常へ")
+
+
+def _with_pie(group):
+    """状態ごとの円グラフ(CSS の conic-gradient)と、各行の凡例の色を付ける。"""
+    total = group["total"] or 0
+    start, stops, color_index = 0.0, [], 0
+    for r in group["rows"]:
+        if any(w in r["next"] for w in _END_WORDS):
+            r["color"] = PIE_END_COLOR
+        else:
+            r["color"] = PIE_COLORS[color_index % len(PIE_COLORS)]
+            color_index += 1
+        # 合計が100でない(読み取りミスの疑いがある)状態でも円が欠けないよう、合計に対する割合で描く
+        end = start + (r["rate"] or 0) / total * 100 if total else start
+        stops.append(f"{r['color']} {start:.2f}% {end:.2f}%")
+        start = end
+    group["pie"] = f"conic-gradient({', '.join(stops)})" if stops and total else ""
+    return group
+
+
+def _distribution_groups(rows):
+    """
+    大当り振り分けを状態(ヘソ・電チューなど)ごとに束ねる。
+
+    JSONは1行1振り分けの平らな並びで書く(AIに書かせやすく、差分も読みやすいため)が、
+    画面では状態ごとの表にしたいので、書かれた順を保ったままここで束ねる。
+    合計が100%にならない状態は読み取りミスの可能性が高いので、total を持たせて画面で気づけるようにする。
+    """
+    groups = []
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        state = str(r.get("state") or "").strip() or "—"
+        if not groups or groups[-1]["state"] != state:
+            groups.append({"state": state, "rows": [], "total": 0.0})
+        rate = _to_float_or_none(r.get("rate"))
+        groups[-1]["rows"].append({
+            "rate": rate,
+            "rounds": str(r.get("rounds") or "").strip(),
+            "payout": str(r.get("payout") or "").strip(),
+            "next": str(r.get("next") or "").strip(),
+            "note": str(r.get("note") or "").strip(),
+        })
+        groups[-1]["total"] += rate or 0
+    for g in groups:
+        g["total"] = round(g["total"], 2)
+        _with_pie(g)
+    return groups
 
 
 def load(machine_id):

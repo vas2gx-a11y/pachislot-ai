@@ -56,6 +56,73 @@
       "note": "90%over"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "ヘソ（図柄揃い）",
+      "rate": 51.6,
+      "rounds": "10R",
+      "payout": "約1500個",
+      "next": "RUSH CLIMAX"
+    },
+    {
+      "state": "ヘソ（図柄揃い）",
+      "rate": 48.3,
+      "rounds": "10R",
+      "payout": "約1500個",
+      "next": "時短なし"
+    },
+    {
+      "state": "ヘソ（図柄揃い）",
+      "rate": 0.1,
+      "rounds": "2R（チャージ昇格）",
+      "payout": "約300個",
+      "next": "RUSH"
+    },
+    {
+      "state": "電チュー（FULLBURST RUSH・ST130）",
+      "rate": 50.5,
+      "rounds": "10R",
+      "payout": "約1500個",
+      "next": "RUSH"
+    },
+    {
+      "state": "電チュー（FULLBURST RUSH・ST130）",
+      "rate": 47.0,
+      "rounds": "10R×2回",
+      "payout": "約3000個",
+      "next": "RUSH CLIMAX"
+    },
+    {
+      "state": "電チュー（FULLBURST RUSH・ST130）",
+      "rate": 2.5,
+      "rounds": "10R×3回",
+      "payout": "約4500個",
+      "next": "RUSH CLIMAX"
+    },
+    {
+      "state": "電チュー（FULLBURST RUSH CLIMAX・ST130）",
+      "rate": 50.5,
+      "rounds": "10R×3回",
+      "payout": "約4500個",
+      "next": "RUSH CLIMAX"
+    },
+    {
+      "state": "電チュー（FULLBURST RUSH CLIMAX・ST130）",
+      "rate": 49.5,
+      "rounds": "10R×2回",
+      "payout": "約3000個",
+      "next": "RUSH"
+    }
+  ],
+  "sns_tips": [
+    {
+      "kind": "note",
+      "text": "実戦者のおすすめ通常時カスタムは「入賞時フラッシュ（白）＋隠しランプ」。",
+      "url": "https://x.com/kurobara_taku/status/2086055143716606196",
+      "account": "@kurobara_taku",
+      "date": "2026-08-08"
+    }
+  ],
   "note": "型式名 eフィーバー機動戦士ガンダムSEED2bF。図柄揃い後約51.7%でRUSH（＝ラッキートリガー）。RUSHはST130回転・継続率約75%で内部状態が2つ。\n上位RUSHの大当りは出玉3000個or4500個。\nボーダーの他の交換率: 30玉=18.1回、40玉=20.7回。\n導入 2026-08-03。",
   "source": "https://p-town.dmm.com/machines/5045 (2026-09-27確認)",
   "updated_at": "2026-09-27"

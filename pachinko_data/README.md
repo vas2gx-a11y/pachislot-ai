@@ -25,6 +25,8 @@
 | `yutime_games` / `yutime_spins` / `yutime_note` | 遊タイムの発動回転数・時短回数・メモ |
 | `morning_lamp_note` / `technique_note` | 朝一ランプ・リセット判別、止め打ち・ワンツー打法 |
 | `effects` | 演出の期待度。`[{"name": "先バレ", "rate": 80, "note": "補足"}]`（`rate` は%、大当り濃厚は100） |
+| `hit_distribution` | 大当り振り分け。1行1振り分けで `{"state": "ヘソ", "rate": 50, "rounds": "10R", "payout": "約1500個", "next": "ST130回転", "note": "補足"}`。同じ `state` の行は続けて書く（画面で状態ごとの表に束ねる）。状態ごとの `rate` の合計は100になるはず（ならないと画面に黄色で出る） |
+| `sns_tips` | Xの投稿の要約（非公式）。`[{"kind": "lamp", "text": "要約", "url": "投稿のURL", "account": "@アカウント", "date": "YYYY-MM-DD"}]`。`kind` は `aim`（狙い目）/ `quit`（やめどき）/ `lamp`（朝一・ランプ・セグ）/ `technique`（止め打ち・技術介入）/ `note`（その他）。`text` は要約で、転載はしない |
 | `note` / `source` / `updated_at` | メモ・出典（URLと確認日）・データの更新日 |
 
 ## 書き方のルール

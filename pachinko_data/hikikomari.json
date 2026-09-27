@@ -46,6 +46,71 @@
       "note": "ピンクは47.4%"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "CZ成功時",
+      "rate": 7.3,
+      "rounds": "",
+      "payout": "約1800個",
+      "next": "ST144回転"
+    },
+    {
+      "state": "CZ成功時",
+      "rate": 43.7,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "ST144回転"
+    },
+    {
+      "state": "CZ成功時",
+      "rate": 49.0,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "通常時"
+    },
+    {
+      "state": "電チュー（超孤紅の恤RUSH・ST144）",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "ST144回転"
+    },
+    {
+      "state": "電チュー（超孤紅の恤RUSH・ST144）",
+      "rate": 50,
+      "rounds": "孤紅の恤BONUS",
+      "payout": "",
+      "next": "ST144回転"
+    },
+    {
+      "state": "孤紅の恤BONUSの出玉",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": ""
+    },
+    {
+      "state": "孤紅の恤BONUSの出玉",
+      "rate": 37.5,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": ""
+    },
+    {
+      "state": "孤紅の恤BONUSの出玉",
+      "rate": 37.5,
+      "rounds": "",
+      "payout": "約4500個",
+      "next": ""
+    },
+    {
+      "state": "孤紅の恤BONUSの出玉",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "約6000個+1G連",
+      "next": ""
+    }
+  ],
   "note": "型式名 eひきこまり吸血姫の悶々FHV。通常時はCZ（10回転・成功率約33%）で大当りを狙う。CZ確率は1/129（c時短と大当りからの合算）。\nRUSH突入率の欄はCZ成功時の約51%。RUSH（＝LT）はST144回転・継続率約77%。RUSH中確率の欄は電チューのロング開放確率1/99。\nコンプリート機能搭載。ボーダーの他の交換率: 30玉=18.1回、40玉=20.3回。\n導入 2026-05-11。",
   "source": "https://p-town.dmm.com/machines/5006 (2026-09-27確認)",
   "updated_at": "2026-09-27"

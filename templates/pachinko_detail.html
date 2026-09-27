@@ -40,6 +40,48 @@
     </dl>
     {% endcall %}
 
+    {% call card("coin", "大当り振り分け（何%で何個）") %}
+    {% if machine.hit_distribution %}
+    <div class="flex flex-col gap-4">
+        {% for g in machine.hit_distribution %}
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm font-bold text-gray-900">{{ g.state }}</span>
+                {# 合計が100%でない状態は、画像からの読み取りミスの可能性がある #}
+                {% if (g.total - 100) | abs > 0.05 %}<span class="chip bg-amber-100 text-amber-800">合計 {{ '%g' % g.total }}%</span>{% endif %}
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                {% if g.pie %}
+                <div class="w-28 h-28 rounded-full shrink-0 self-center border border-gray-200" role="img"
+                     aria-label="{{ g.state }}の振り分けの円グラフ" style="background: {{ g.pie }}"></div>
+                {% endif %}
+                <table class="w-full text-sm border-collapse">
+                    <tbody class="divide-y divide-gray-100">
+                        {% for r in g.rows %}
+                        <tr>
+                            <td class="py-1.5 pr-2 w-4"><span class="inline-block w-3 h-3 rounded-sm align-middle" style="background: {{ r.color }}"></span></td>
+                            <td class="py-1.5 pr-3 w-14 font-mono tabular-nums font-bold text-right whitespace-nowrap">
+                                {% if r.rate is not none %}{{ '%g' % r.rate }}%{% else %}—{% endif %}
+                            </td>
+                            <td class="py-1.5 pr-3 break-words">
+                                {{ r.rounds }}{% if r.rounds and r.payout %} ・ {% endif %}<span class="font-bold">{{ r.payout }}</span>
+                                {% if r.note %}<div class="text-xs text-gray-500">{{ r.note }}</div>{% endif %}
+                            </td>
+                            <td class="py-1.5 text-xs text-gray-500 text-right break-words">{{ r.next }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>
+    {% else %}
+    <p class="text-sm text-gray-300">未登録</p>
+    {% endif %}
+    {% endcall %}
+
     {% call card("target", "ボーダー（千円あたりの回転数）") %}
     <dl class="grid grid-cols-3 gap-3 text-sm">
         <div><dt class="label">等価（250玉）</dt><dd class="font-mono tabular-nums font-bold text-lg">{{ num(machine.border_equiv, '回') }}</dd></div>
@@ -82,6 +124,21 @@
     <p class="text-sm text-gray-300">未登録</p>
     {% endif %}
     {% endcall %}
+
+    {% if machine.sns_tips %}
+    {% call card("chat", "Xの情報（非公式）", None, "bg-gray-100",
+         "Xの投稿を要約したものです。個人の実戦値・考察を含むので、上の解析値とは分けて参考程度に見てください。") %}
+    <ul class="flex flex-col divide-y divide-gray-100">
+        {% for t in machine.sns_tips %}
+        <li class="py-2.5 first:pt-0 last:pb-0">
+            <span class="chip">{{ t.label }}</span>
+            <p class="text-sm text-gray-800 mt-1 break-words">{{ t.text }}</p>
+            {% if t.url %}<a href="{{ t.url }}" target="_blank" rel="noopener" class="text-xs text-blue-600 underline break-all">{{ t.account or t.url }}{% if t.date %}（{{ t.date }}）{% endif %}</a>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endcall %}
+    {% endif %}
 
     {% if machine.note or machine.source %}
     {% call card("memo", "メモ・出典") %}

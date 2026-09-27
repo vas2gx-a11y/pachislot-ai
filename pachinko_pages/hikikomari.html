@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,7 +189,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
     <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
 </div></nav>
 
@@ -257,6 +264,73 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">CZ成功時
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="CZ成功時の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 7.30%, #d93a2b 7.30% 51.00%, #2f5fd0 51.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>7.3%</th>
+                    <td><strong>約1800個</strong>
+<span class="rate-note">→ ST144回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>43.7%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ ST144回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>49%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ 通常時</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー（超孤紅の恤RUSH・ST144）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チュー（超孤紅の恤RUSH・ST144）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 50.00%, #d93a2b 50.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>50%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ ST144回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>50%</th>
+                    <td>孤紅の恤BONUS<strong></strong>
+<span class="rate-note">→ ST144回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">孤紅の恤BONUSの出玉
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="孤紅の恤BONUSの出玉の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 12.50%, #d93a2b 12.50% 50.00%, #8e3fb8 50.00% 87.50%, #3f9a4a 87.50% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>12.5%</th>
+                    <td><strong>約1500個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>37.5%</th>
+                    <td><strong>約3000個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>37.5%</th>
+                    <td><strong>約4500個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #3f9a4a"></span>12.5%</th>
+                    <td><strong>約6000個+1G連</strong>
+</td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
+
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
@@ -311,6 +385,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 eひきこまり吸血姫の悶々FHV。通常時はCZ（10回転・成功率約33%）で大当りを狙う。CZ確率は1/129（c時短と大当りからの合算）。
@@ -321,7 +396,7 @@ RUSH突入率の欄はCZ成功時の約51%。RUSH（＝LT）はST144回転・継
 <a href="https://p-town.dmm.com/machines/5006" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5006</a> (2026-09-27確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,7 +189,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
     <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
 </div></nav>
 
@@ -256,6 +263,47 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
             <tr><th>RUSH継続率</th><td>80%</td></tr>
         </tbody></table>
     </section>
+
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">ヘソ
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="ヘソの振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 0.50%, #d93a2b 0.50% 50.50%, #8e3fb8 50.50% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>0.5%</th>
+                    <td>10R ・ <strong>約1500個</strong>
+<span class="rate-note">→ ST157回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>50%</th>
+                    <td>2R ・ <strong>約300個</strong>
+<span class="rate-note">→ ST157回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>49.5%</th>
+                    <td>2R ・ <strong>約300個</strong>
+<span class="rate-note">→ 時短100回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チューの振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 99.50%, #d93a2b 99.50% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>99.5%</th>
+                    <td>8R×2回 ・ <strong>約2400個</strong>
+<span class="rate-note">→ ST157回転</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>0.5%</th>
+                    <td>8R×4回 ・ <strong>約4800個</strong>
+<span class="rate-note">→ ST157回転</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
 
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
@@ -331,6 +379,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 e新世紀エヴァンゲリオン17 はじまりの記憶R（エヴァ17）。ラッキートリガー搭載のST機。
@@ -341,7 +390,7 @@ RUSH突入率61.4%は図柄揃い・チャージ昇格・時短引き戻しの�
 <a href="https://p-town.dmm.com/machines/4894" target="_blank" rel="noopener">https://p-town.dmm.com/machines/4894</a> (2026-09-25確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

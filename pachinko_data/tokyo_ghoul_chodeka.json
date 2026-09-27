@@ -46,6 +46,60 @@
       "note": "大当り濃厚（切れないと約5%）"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "ヘソ（図柄揃い時）",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約7500個",
+      "next": "ST5回転"
+    },
+    {
+      "state": "ヘソ（図柄揃い時）",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": "時短なし"
+    },
+    {
+      "state": "電チュー（RUSH中大当り時）",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": "ST5回転"
+    },
+    {
+      "state": "電チュー（RUSH中大当り時）",
+      "rate": 25,
+      "rounds": "",
+      "payout": "約6000個",
+      "next": "ST5回転"
+    },
+    {
+      "state": "電チュー（RUSH中大当り時）",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "約9000個",
+      "next": "ST5回転"
+    },
+    {
+      "state": "電チュー（RUSH中大当り時）",
+      "rate": 12.5,
+      "rounds": "",
+      "payout": "XXXX個+α",
+      "next": "ST5回転",
+      "note": "出玉は画像でも伏せ字（XXXX）"
+    }
+  ],
+  "sns_tips": [
+    {
+      "kind": "note",
+      "text": "「約230回転周期でSPリーチに行く」説の実戦報告。周期どおりのSPは外れ、周期外のSPは弱めでも当たったという。返信にも225〜245回転あたりという同意があるが、サンプルが少なく未検証。",
+      "url": "https://x.com/pachinkassachio/status/2066045730226401732",
+      "account": "@pachinkassachio",
+      "date": "2026-06-14"
+    }
+  ],
   "note": "型式名 e東京喰種MW。大当り確率は図柄揃い約1/999。チャージ（約1/538.8）と合わせた大当り確率は約1/349.9。大きいヘソで消化。\n図柄揃い後約50%でRUSH（＝ラッキートリガー）。RUSHはST5回転・継続率約50%で、RUSH中確率は実質約1/7.7。RUSH中大当りはオール3000個+α。\nボーダーの他の交換率: 30玉=32.8回、40玉=37.5回。\n導入 2026-06-08。",
   "source": "https://p-town.dmm.com/machines/5024 (2026-09-27確認)",
   "updated_at": "2026-09-27"

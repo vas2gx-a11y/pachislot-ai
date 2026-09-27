@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,8 +189,8 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
-    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#sns">Xの情報</a><a href="#note">メモ・出典</a>
 </div></nav>
 
 <main class="wrap stack">
@@ -257,6 +264,73 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">通常時
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="通常時の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>100%</th>
+                    <td><strong>約450個</strong>
+<span class="rate-note">→ SEVEN RUSHチャレンジ</span><span class="rate-note">チャレンジ突破時は出玉なし</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">右打ち中（SEVEN RUSH）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="右打ち中（SEVEN RUSH）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 72.80%, #d93a2b 72.80% 75.00%, #2f5fd0 75.00% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>72.8%</th>
+                    <td>PERFECT BONUS<strong></strong>
+<span class="rate-note">→ SEVEN RUSH</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>2.2%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ SEVEN RUSH</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>25%</th>
+                    <td><strong>約1500個</strong>
+<span class="rate-note">→ 通常時</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">PERFECT BONUSの出玉
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="PERFECT BONUSの出玉の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 55.50%, #d93a2b 55.50% 88.60%, #8e3fb8 88.60% 98.40%, #3f9a4a 98.40% 99.90%, #e05cb0 99.90% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>55.5%</th>
+                    <td><strong>約2700個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>33.1%</th>
+                    <td><strong>約3900個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>9.8%</th>
+                    <td><strong>約5100個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #3f9a4a"></span>1.5%</th>
+                    <td><strong>約6300個</strong>
+</td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e05cb0"></span>0.1%</th>
+                    <td><strong>約7500個</strong>
+</td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
+
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
@@ -315,6 +389,15 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="sns">
+        <h2>Xの情報（非公式）</h2>
+        <p class="hint" style="margin:0 0 8px">Xの投稿を要約したものです。個人の実戦値・考察を含むので、解析値とは分けて参考程度に見てください。</p>
+        <div class="dated">
+            <span class="chip">その他</span>
+            <p>ボタン告知カスタムの「寒バレ」は、報知が出ると「ハズレ濃厚」という逆の告知。</p>
+<p class="dated-date"><a href="https://x.com/pachicom777/status/2082662856471027794" target="_blank" rel="noopener">@pachicom777</a>（2026-07-30）</p>        </div>
+    </section>
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 e七つの大罪3GFEA。初当りは必ず時短100回転（チャレンジ中の実質1/196.2）に入り、突破率約40%でRUSH。RUSH突入率の欄はこの突破率。
@@ -325,7 +408,7 @@ RUSHは大当りの振り分けで継続か終了かが決まる（実質1/1）�
 <a href="https://p-town.dmm.com/machines/5056" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5056</a> (2026-09-27確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

@@ -46,6 +46,73 @@
       "note": ""
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "通常時（図柄揃い・魔女決戦）",
+      "rate": 1,
+      "rounds": "",
+      "payout": "約400個＋運命分岐",
+      "next": "ST75回転"
+    },
+    {
+      "state": "通常時（図柄揃い・魔女決戦）",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約400個",
+      "next": "ST75回転"
+    },
+    {
+      "state": "通常時（図柄揃い・魔女決戦）",
+      "rate": 49,
+      "rounds": "",
+      "payout": "約400個",
+      "next": "時短なし"
+    },
+    {
+      "state": "右打ち中（復讐RUSH初回）",
+      "rate": 100,
+      "rounds": "運命分岐",
+      "payout": "",
+      "next": "ST75回転"
+    },
+    {
+      "state": "右打ち中（復讐RUSH 2連目以降）",
+      "rate": 52,
+      "rounds": "運命分岐",
+      "payout": "",
+      "next": "ST75回転"
+    },
+    {
+      "state": "右打ち中（復讐RUSH 2連目以降）",
+      "rate": 48,
+      "rounds": "",
+      "payout": "約1500個",
+      "next": "ST75回転"
+    },
+    {
+      "state": "運命分岐の出玉",
+      "rate": 50,
+      "rounds": "",
+      "payout": "約3000個",
+      "next": ""
+    },
+    {
+      "state": "運命分岐の出玉",
+      "rate": 29,
+      "rounds": "",
+      "payout": "約6000個＋BEAST ATTACK",
+      "next": "",
+      "note": "BEAST ATTACKは出玉3000個×約65%ループ"
+    },
+    {
+      "state": "運命分岐の出玉",
+      "rate": 21,
+      "rounds": "",
+      "payout": "約9000個＋超BEAST ATTACK",
+      "next": "",
+      "note": "超BEAST ATTACKは出玉6000個×約30%ループ。約6000個・約9000個は通常時からの直行時を除く"
+    }
+  ],
   "note": "型式名 e魔女と野獣FKZ。1/399は通常時図柄揃いと魔女決戦BONUSの合算（大当り確率1/349・チャージ1/2799）。大きいヘソ。\n図柄揃い時の約51%でRUSH（＝ラッキートリガー）。RUSHはST75回転・継続率約55%。運命分岐成功で出玉3000個以上＋上乗せループ。\nボーダーの他の交換率: 30玉=30.4回、40玉=34.7回。\n導入 2026-09-07。",
   "source": "https://p-town.dmm.com/machines/5077 (2026-09-27確認)",
   "updated_at": "2026-09-27"

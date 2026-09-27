@@ -162,6 +162,13 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 .calc-result.is-minus { border-color: var(--minus); }
 .calc-result.is-minus .diff { color: var(--minus); }
 
+/* ---- 大当り振り分けの円グラフ(色と角度は pachinko_info.py が作る) ---- */
+.dist { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.dist .kv { flex: 1; width: 100%; }
+.pie { width: 112px; height: 112px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+@media (min-width: 640px) { .dist { flex-direction: row; } }
+
 
 </style>
 </head>
@@ -182,8 +189,8 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 </header>
 
 <nav class="toc"><div class="wrap toc-inner">
-    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
-    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#dist">大当り振り分け</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#sns">Xの情報</a><a href="#note">メモ・出典</a>
 </div></nav>
 
 <main class="wrap stack">
@@ -257,6 +264,68 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="dist">
+        <h2>大当り振り分け（何%で何個）</h2>
+        <p class="panel-title" style="margin-top:0">ヘソ（図柄揃い）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="ヘソ（図柄揃い）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 51.60%, #2f5fd0 51.60% 99.90%, #d93a2b 99.90% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>51.6%</th>
+                    <td>10R ・ <strong>約1500個</strong>
+<span class="rate-note">→ RUSH CLIMAX</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #2f5fd0"></span>48.3%</th>
+                    <td>10R ・ <strong>約1500個</strong>
+<span class="rate-note">→ 時短なし</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>0.1%</th>
+                    <td>2R（チャージ昇格） ・ <strong>約300個</strong>
+<span class="rate-note">→ RUSH</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー（FULLBURST RUSH・ST130）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チュー（FULLBURST RUSH・ST130）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 50.50%, #d93a2b 50.50% 97.50%, #8e3fb8 97.50% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>50.5%</th>
+                    <td>10R ・ <strong>約1500個</strong>
+<span class="rate-note">→ RUSH</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>47%</th>
+                    <td>10R×2回 ・ <strong>約3000個</strong>
+<span class="rate-note">→ RUSH CLIMAX</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #8e3fb8"></span>2.5%</th>
+                    <td>10R×3回 ・ <strong>約4500個</strong>
+<span class="rate-note">→ RUSH CLIMAX</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+        <p class="panel-title" style="margin-top:16px">電チュー（FULLBURST RUSH CLIMAX・ST130）
+</p>
+        <div class="dist">
+<div class="pie" role="img" aria-label="電チュー（FULLBURST RUSH CLIMAX・ST130）の振り分けの円グラフ" style="background: conic-gradient(#e8962e 0.00% 50.50%, #d93a2b 50.50% 100.00%)"></div>            <table class="kv"><tbody>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #e8962e"></span>50.5%</th>
+                    <td>10R×3回 ・ <strong>約4500個</strong>
+<span class="rate-note">→ RUSH CLIMAX</span></td>
+                </tr>
+                <tr>
+                    <th class="rate" style="width:5.5em"><span class="swatch" style="background: #d93a2b"></span>49.5%</th>
+                    <td>10R×2回 ・ <strong>約3000個</strong>
+<span class="rate-note">→ RUSH</span></td>
+                </tr>
+            </tbody></table>
+        </div>
+<p class="hint">出玉は払い出し。青はそこでRUSHが終わる振り分け（時短なし・通常へ戻る）。出典ページの「大当り詳細」（画像）から読み取った値を円グラフにしています。</p>    </section>
+
     <section class="card" id="border">
         <h2>ボーダー（千円あたりの回転数）</h2>
         <table class="kv"><tbody>
@@ -319,6 +388,15 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
         </tbody></table>
     </section>
 
+    <section class="card" id="sns">
+        <h2>Xの情報（非公式）</h2>
+        <p class="hint" style="margin:0 0 8px">Xの投稿を要約したものです。個人の実戦値・考察を含むので、解析値とは分けて参考程度に見てください。</p>
+        <div class="dated">
+            <span class="chip">その他</span>
+            <p>実戦者のおすすめ通常時カスタムは「入賞時フラッシュ（白）＋隠しランプ」。</p>
+<p class="dated-date"><a href="https://x.com/kurobara_taku/status/2086055143716606196" target="_blank" rel="noopener">@kurobara_taku</a>（2026-08-08）</p>        </div>
+    </section>
+
     <section class="card" id="note">
         <h2>メモ・出典</h2>
         <p class="pre">型式名 eフィーバー機動戦士ガンダムSEED2bF。図柄揃い後約51.7%でRUSH（＝ラッキートリガー）。RUSHはST130回転・継続率約75%で内部状態が2つ。
@@ -329,7 +407,7 @@ code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 
 <a href="https://p-town.dmm.com/machines/5045" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5045</a> (2026-09-27確認)        </p>
     </section>
 
-    <p class="footer">ページ生成 2026-09-27 13:04。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+    <p class="footer">ページ生成 2026-09-27 13:20。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
 </main>
 
 </body>

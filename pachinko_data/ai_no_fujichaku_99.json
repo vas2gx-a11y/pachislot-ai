@@ -56,6 +56,53 @@
       "note": "RUSH突入大当り濃厚"
     }
   ],
+  "hit_distribution": [
+    {
+      "state": "ヘソ",
+      "rate": 51,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "ST60回転",
+      "note": "ST非突入が2連続していた場合はST60回転が100%"
+    },
+    {
+      "state": "ヘソ",
+      "rate": 49,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "時短なし"
+    },
+    {
+      "state": "電チュー（愛の降臨RUSH・ST60）",
+      "rate": 50,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "ST60回転"
+    },
+    {
+      "state": "電チュー（愛の降臨RUSH・ST60）",
+      "rate": 50,
+      "rounds": "10R",
+      "payout": "約1000個",
+      "next": "ST60or130回転",
+      "note": "10R大当りを3回獲得したときのみST130回転"
+    },
+    {
+      "state": "電チュー（愛の燦然RUSH・ST130）",
+      "rate": 50,
+      "rounds": "3R",
+      "payout": "約300個",
+      "next": "ST130回転",
+      "note": "残り保留での大当り時はST60回転"
+    },
+    {
+      "state": "電チュー（愛の燦然RUSH・ST130）",
+      "rate": 50,
+      "rounds": "10R",
+      "payout": "約1000個",
+      "next": "ST130回転"
+    }
+  ],
   "note": "型式名 PA愛の不時着SB。RUSH＝ST60回転で継続率約70%。RUSH中に10R大当りを3回獲得するとLT（ST130回転・継続率約92%）。\n通常時の大当りでRUSH非突入が2連続すると、次回の大当りで必ずRUSH突入。\nボーダーはRUSH非突入の初当り0回の値。非突入1回なら等価16.2/28玉17.0/33玉18.2回、2回なら等価11.6/28玉12.1/33玉12.9回。\n導入 2026-09-07。",
   "source": "https://p-town.dmm.com/machines/5050 (2026-09-27確認)",
   "updated_at": "2026-09-27"
