@@ -3,12 +3,16 @@
   "id": "l_magia_record",
   "name": "スマスロ マギアレコード 魔法少女まどか☆マギカ外伝",
   "aliases": ["マギアレコード", "マギレコ", "スマスロ マギレコ", "マギレコ まどマギ"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#d0447a" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ マギアレコード 魔法少女まどか☆マギカ外伝」", "url": "https://www.p-world.co.jp/machine/database/10211", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ マギアレコード 魔法少女まどか☆マギカ外伝」", "url": "https://p-town.dmm.com/machines/4745", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ マギアレコード 魔法少女まどか☆マギカ外伝」", "url": "https://p-town.dmm.com/machines/4745", "checked_at": "2026-09-25" },
+    { "id": "x_1909495215574155538", "name": "X @velmot_slot（べるもっと【元専業】）", "url": "https://x.com/velmot_slot/status/1909495215574155538", "checked_at": "2026-09-27" },
+    { "id": "x_1909623421782360524", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1909623421782360524", "checked_at": "2026-09-27" },
+    { "id": "x_1912786859534741808", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1912786859534741808", "checked_at": "2026-09-27" },
+    { "id": "x_1911657502569320473", "name": "X @slotdiary7（スロ手帳）", "url": "https://x.com/slotdiary7/status/1911657502569320473", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -113,6 +117,27 @@
   "favorable_zone": {
     "items": ["エンディング到達で有利区間ツラヌキ → エンブリオ・イブ覚醒へ（差枚数上限到達後やストーリーコンプリート後）"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙い：通常580pt〜、設定変更後360pt〜（スルーを重ねるほど甘い）。ゾーン狙いは180〜200pt・380〜400ptで前兆が終わるまで。差枚2000枚以上や穢れ示唆大以上も狙い目。",
+        "source_ids": ["x_1909495215574155538"]
+      },
+      {
+        "kind": "aim",
+        "text": "ボーナスからAT非当選が5回続いた（5スルー）台はAT当選まで打つ。",
+        "source_ids": ["x_1909623421782360524"]
+      },
+      {
+        "kind": "quit",
+        "text": "AT後の引き戻しは弱いので、BIG・AT後は前兆を確認して1Gヤメでよい。",
+        "source_ids": ["x_1912786859534741808", "x_1911657502569320473"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

@@ -3,12 +3,14 @@
   "id": "l_sengoku_otome5",
   "name": "L戦国乙女5 業火を穿つ宿焔の双刃",
   "aliases": ["スマスロ 戦国乙女5", "乙女5"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#d2402a" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「L戦国乙女5 業火を穿つ宿焔の双刃」", "url": "https://www.p-world.co.jp/machine/database/10473", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L戦国乙女5 業火を穿つ宿焔の双刃」", "url": "https://p-town.dmm.com/machines/5009", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L戦国乙女5 業火を穿つ宿焔の双刃」", "url": "https://p-town.dmm.com/machines/5009", "checked_at": "2026-09-24" },
+    { "id": "x_2064622106906914878", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2064622106906914878", "checked_at": "2026-09-27" },
+    { "id": "x_2063889312681472378", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2063889312681472378", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -198,6 +200,22 @@
   "favorable_zone": {
     "items": ["エンディング到達後に有利区間ツラヌキ → 上位CZ「剣聖CHANCE」へ（失敗しても通常ATへ）"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "quit",
+        "text": "AT終了後は即ヤメせず終了画面を見る。マサムネ＆ヒデヨシはテーブル通常B以上示唆。",
+        "source_ids": ["x_2064622106906914878"]
+      },
+      {
+        "kind": "quit",
+        "text": "AT終了画面：モトナリ・ドウセツ・ソウリンはテーブルB以上＋1周期目100G以内示唆。イエヤス・シンゲン・カンスケ・ヨシモトはテーブルB以上示唆（テーブルAなら設定4以上）。",
+        "source_ids": ["x_2063889312681472378"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

@@ -3,12 +3,13 @@
   "id": "l_sao2",
   "name": "スロット ソードアート・オンラインⅡ",
   "aliases": ["スマスロ SAO2", "SAO2"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#3a7bd5" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スロット ソードアート・オンラインII」", "url": "https://www.p-world.co.jp/machine/database/10483", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スロット ソードアート・オンラインⅡ」", "url": "https://p-town.dmm.com/machines/5025", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スロット ソードアート・オンラインⅡ」", "url": "https://p-town.dmm.com/machines/5025", "checked_at": "2026-09-24" },
+    { "id": "x_2065351518312931760", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2065351518312931760", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -177,6 +178,17 @@
   "favorable_zone": {
     "items": [],
     "source_ids": []
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "quit",
+        "text": "AT終了後は赤アイキャッチを確認。出たら次回CZ「スコードロンバトル」まで残り液晶100G以下濃厚なのでヤメない。",
+        "source_ids": ["x_2065351518312931760"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

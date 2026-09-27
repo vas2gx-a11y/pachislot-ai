@@ -3,12 +3,13 @@
   "id": "l_valvrave2",
   "name": "Lパチスロ 革命機ヴァルヴレイヴ2",
   "aliases": ["ヴァルヴレイヴ2", "ヴヴヴ2", "スマスロ ヴヴヴ2", "ヴァルヴレイヴ", "ヴヴヴ"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#c4122f" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://www.p-world.co.jp/machine/database/10352", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://p-town.dmm.com/machines/4885", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://p-town.dmm.com/machines/4885", "checked_at": "2026-09-25" },
+    { "id": "x_1991435914665713714", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/1991435914665713714", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -110,6 +111,17 @@
   },
 
   "favorable_zone": { "items": [], "source_ids": [] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "前回CZが150〜250Gで失敗した台は優遇区間の可能性があり、3周期まで回す。",
+        "source_ids": ["x_1991435914665713714"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

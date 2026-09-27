@@ -3,12 +3,14 @@
   "id": "l_hokuto_tensei2",
   "name": "スマスロ 北斗の拳 転生の章2",
   "aliases": ["北斗転生2", "転生の章2", "転生2", "北斗の拳 転生の章2"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#6b1d1d" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 北斗の拳 転生の章2」", "url": "https://www.p-world.co.jp/machine/database/10370", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 北斗の拳 転生の章2」", "url": "https://p-town.dmm.com/machines/4909", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 北斗の拳 転生の章2」", "url": "https://p-town.dmm.com/machines/4909", "checked_at": "2026-09-25" },
+    { "id": "x_2007645857919971599", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2007645857919971599", "checked_at": "2026-09-27" },
+    { "id": "x_2030453667925721294", "name": "X @EVdeUtsu（期待値で打つ人）", "url": "https://x.com/EVdeUtsu/status/2030453667925721294", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -116,6 +118,22 @@
   },
 
   "favorable_zone": { "items": [], "source_ids": [] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙いは950あべし〜、天国狙いは100あべし〜。上位ATへのCZ「天撃」失敗後も狙い目。",
+        "source_ids": ["x_2007645857919971599"]
+      },
+      {
+        "kind": "note",
+        "text": "モードC狙いでは、1〜64・129〜192あべしで上から落ちるシャッター煽りが出たらモードB以上濃厚（レア役時は除く）。",
+        "source_ids": ["x_2030453667925721294"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

@@ -8,7 +8,9 @@
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 化物語」", "url": "https://www.p-world.co.jp/machine/database/10358", "checked_at": "2026-09-27" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 化物語」", "url": "https://p-town.dmm.com/machines/4898", "checked_at": "2026-09-27" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 化物語」", "url": "https://p-town.dmm.com/machines/4898", "checked_at": "2026-09-27" },
+    { "id": "x_1999050032084095224", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/1999050032084095224", "checked_at": "2026-09-27" },
+    { "id": "x_2000194214324474310", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/2000194214324474310", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -109,6 +111,22 @@
   },
 
   "reset": { "items": ["天井が600Gに短縮"], "source_ids": ["pworld", "ptown"] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "AT間天井狙いはリセット後230G〜、据え置き670G〜。差枚+1700枚〜は有利区間の切れ目が近く期待値が上がる。",
+        "source_ids": ["x_1999050032084095224"]
+      },
+      {
+        "kind": "aim",
+        "text": "AT後は前回獲得枚数で狙い目を変える：800枚以下590G〜／801〜999枚630G〜／1000枚以上670G〜。設定変更後は180G〜。前回800枚以下は優遇状態へ移行するとの考察。",
+        "source_ids": ["x_2000194214324474310"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

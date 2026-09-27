@@ -3,12 +3,13 @@
   "id": "l_million_god_kiseki",
   "name": "スマスロ ミリオンゴッド-神々の軌跡-",
   "aliases": ["スマスロ ミリゴ", "神々の軌跡"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#b8860b" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ ミリオンゴッド‐神々の軌跡‐」", "url": "https://www.p-world.co.jp/machine/database/10424", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ミリオンゴッド-神々の軌跡-」", "url": "https://p-town.dmm.com/machines/4961", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ミリオンゴッド-神々の軌跡-」", "url": "https://p-town.dmm.com/machines/4961", "checked_at": "2026-09-24" },
+    { "id": "x_2046061161574170809", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2046061161574170809", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -141,6 +142,17 @@
   "favorable_zone": {
     "items": [],
     "source_ids": []
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙いは通常800G〜、リセット550G〜。",
+        "source_ids": ["x_2046061161574170809"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

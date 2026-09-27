@@ -3,12 +3,14 @@
   "id": "l_god_eater_resurrection",
   "name": "スマスロ ゴッドイーター リザレクション",
   "aliases": ["ゴッドイーター リザレクション", "ゴッドイーターR", "ゴッドイーター", "GER"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#b22222" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ ゴッドイーター リザレクション」", "url": "https://www.p-world.co.jp/machine/database/10086", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ゴッドイーター リザレクション」", "url": "https://p-town.dmm.com/machines/4602", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ゴッドイーター リザレクション」", "url": "https://p-town.dmm.com/machines/4602", "checked_at": "2026-09-25" },
+    { "id": "x_2037822769178820849", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2037822769178820849", "checked_at": "2026-09-27" },
+    { "id": "x_1815707251220574507", "name": "X @haienakun_（【パチスロ】ハイエナくん）", "url": "https://x.com/haienakun_/status/1815707251220574507", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -103,6 +105,22 @@
   "reset": { "items": ["天井が600G+αに短縮（有利区間リセット後も含む）"], "source_ids": ["ptown"] },
 
   "favorable_zone": { "items": ["エンディング到達後に有利区間ツラヌキ → 漆黒の捕喰者 or 神堕"], "source_ids": ["ptown"] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙いは通常480G〜、リセット・駆け抜け後200G〜。",
+        "source_ids": ["x_2037822769178820849"]
+      },
+      {
+        "kind": "note",
+        "text": "天井1000G→600Gに短縮される条件：リセット時・前回単発後・前回上位ST後。",
+        "source_ids": ["x_1815707251220574507"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

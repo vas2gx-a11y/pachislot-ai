@@ -3,12 +3,13 @@
   "id": "l_hokuto",
   "name": "スマスロ北斗の拳",
   "aliases": ["スマスロ北斗", "北斗の拳", "スマ北斗", "北斗"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#1f3b73" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ北斗の拳」", "url": "https://www.p-world.co.jp/machine/database/9786", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ北斗の拳」", "url": "https://p-town.dmm.com/machines/4301", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ北斗の拳」", "url": "https://p-town.dmm.com/machines/4301", "checked_at": "2026-09-25" },
+    { "id": "x_1850856207768338721", "name": "X @SLOT91727192（ヲ猿@SLOT）", "url": "https://x.com/SLOT91727192/status/1850856207768338721", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -113,6 +114,17 @@
   "favorable_zone": {
     "items": ["有利区間はBB中に切れる可能性があり、どこでリセットされたかは外見では判別できない（ラオウ昇天時でもリセットされていないことがある）。リセット時は継続率84%以上"],
     "source_ids": ["pworld"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "note",
+        "text": "優遇区間のAT後に即ヤメされた台を拾う狙い方の実戦値（182件）が公開されている。裁量が絡むので参考程度。",
+        "source_ids": ["x_1850856207768338721"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

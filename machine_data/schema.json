@@ -108,6 +108,24 @@
     "quit_timing": { "$ref": "#/$defs/list_section" },
     "reset": { "$ref": "#/$defs/list_section" },
     "favorable_zone": { "$ref": "#/$defs/list_section" },
+    "sns_tips": {
+      "type": "object",
+      "description": "X(旧Twitter)の投稿から拾った狙い目・やめどき。個人の実戦値・考察なので解析値とは分けて持ち、非公式として表示する",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object", "required": ["kind", "text", "source_ids"],
+            "properties": {
+              "kind": { "enum": ["aim", "quit", "note"], "description": "aim=狙い目 / quit=やめどき / note=その他の立ち回り" },
+              "text": { "type": "string", "description": "投稿の要約（転載せず自分の言葉でまとめる）" },
+              "source_ids": { "$ref": "#/$defs/source_ids" }
+            }
+          }
+        },
+        "note": { "type": "string" }
+      }
+    },
 
     "setting_estimation": {
       "type": "object",

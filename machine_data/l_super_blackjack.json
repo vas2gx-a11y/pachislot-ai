@@ -3,12 +3,14 @@
   "id": "l_super_blackjack",
   "name": "スマスロスーパーブラックジャック",
   "aliases": ["スマスロ SBJ", "ブラックジャック"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#b3262e" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロスーパーブラックジャック」", "url": "https://www.p-world.co.jp/machine/database/10174", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーブラックジャック」(2026/09/14更新)", "url": "https://p-town.dmm.com/machines/4712", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーブラックジャック」(2026/09/14更新)", "url": "https://p-town.dmm.com/machines/4712", "checked_at": "2026-09-24" },
+    { "id": "x_1886638766842110319", "name": "X @dejikame_blog（でじかめ）", "url": "https://x.com/dejikame_blog/status/1886638766842110319", "checked_at": "2026-09-27" },
+    { "id": "x_1907637896028500459", "name": "X @chonbo7771（ちょんぼ@ちょんぼりすた管理人）", "url": "https://x.com/chonbo7771/status/1907637896028500459", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -190,6 +192,22 @@
   "favorable_zone": {
     "items": ["エンディング終了後に有利区間ツラヌキ → ジョーカーモードへ。見た目上の判別はエンディング後のみ可能"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ゲーム数天井よりスイカ天井（ストックタイム直撃）を狙う。",
+        "source_ids": ["x_1886638766842110319"]
+      },
+      {
+        "kind": "note",
+        "text": "設定変更後の台をツモる手順：サブ液晶タッチ→スロプラNEXTの途中経過→スイカ確率→終了画面とトランプの高設定示唆の合算（ハワードは数値がぶれるので除く）。",
+        "source_ids": ["x_1907637896028500459"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

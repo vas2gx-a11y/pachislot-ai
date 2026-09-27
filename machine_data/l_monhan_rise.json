@@ -3,12 +3,13 @@
   "id": "l_monhan_rise",
   "name": "スマスロ モンスターハンターライズ",
   "aliases": ["モンスターハンターライズ", "モンハンライズ", "モンハン", "スマスロ モンハンライズ", "Lモンスターハンターライズ"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#b5452b" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ モンスターハンターライズ」", "url": "https://www.p-world.co.jp/machine/database/10138", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ モンスターハンターライズ」", "url": "https://p-town.dmm.com/machines/4676", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ モンスターハンターライズ」", "url": "https://p-town.dmm.com/machines/4676", "checked_at": "2026-09-25" },
+    { "id": "x_1859932072527409260", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1859932072527409260", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -123,6 +124,17 @@
   "favorable_zone": {
     "items": ["ツラヌキ: モンスター10頭以上討伐時の一部 / 15頭以上討伐時 / 有利区間差枚数+2100枚到達で、エンディング後に百竜ノ淵源チャレンジへ"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ゲーム数天井狙い：下位AT後660G〜。前回上位AT後・上位CZ後は0G〜（上位後は液晶右下に『天』が出るので分かる）。",
+        "source_ids": ["x_1859932072527409260"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

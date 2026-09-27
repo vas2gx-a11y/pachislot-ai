@@ -3,12 +3,14 @@
   "id": "l_enen2",
   "name": "Lパチスロ 炎炎ノ消防隊2",
   "aliases": ["炎炎ノ消防隊2", "炎炎2", "スマスロ 炎炎ノ消防隊2", "炎炎ノ消防隊", "炎炎"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#e2571e" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 炎炎ノ消防隊2」", "url": "https://www.p-world.co.jp/machine/database/10415", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 炎炎ノ消防隊2」", "url": "https://p-town.dmm.com/machines/4926", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 炎炎ノ消防隊2」", "url": "https://p-town.dmm.com/machines/4926", "checked_at": "2026-09-25" },
+    { "id": "x_2024837188815626433", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2024837188815626433", "checked_at": "2026-09-27" },
+    { "id": "x_2021052525122814411", "name": "X @dejikame_blog（でじかめ）", "url": "https://x.com/dejikame_blog/status/2021052525122814411", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -123,6 +125,22 @@
   "favorable_zone": {
     "items": ["エンディング発生時や炎炎ループ中の一部で有利区間リセット → 炎炎激闘の複数ストックや炎炎大戦（高設定ほど炎炎大戦・紅J大戦に期待）"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ボーナス間天井（850G+α、リセット時650G+α）狙い：通常600G〜、リセット時350G〜。朝イチから狙いやすい。",
+        "source_ids": ["x_2024837188815626433"]
+      },
+      {
+        "kind": "quit",
+        "text": "やめどきは状態確認後。ゲーム数天井だけでは厳しめで、狙うならスルー天井や炎炎ループ間天井（AT間）が本命との見方。",
+        "source_ids": ["x_2021052525122814411"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

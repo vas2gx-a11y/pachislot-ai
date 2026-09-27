@@ -3,12 +3,13 @@
   "id": "l_monkey_turn5",
   "name": "スマスロモンキーターンV",
   "aliases": ["モンキーターン5", "モンキーターンⅤ", "モンキー5", "モンキーターン", "モンキー"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#1a5fb4" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロモンキーターンV」", "url": "https://www.p-world.co.jp/machine/database/9923", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロモンキーターンV」", "url": "https://p-town.dmm.com/machines/4450", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロモンキーターンV」", "url": "https://p-town.dmm.com/machines/4450", "checked_at": "2026-09-25" },
+    { "id": "x_1970026311730205101", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/1970026311730205101", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -117,6 +118,27 @@
   },
 
   "favorable_zone": { "items": [], "source_ids": [] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "リセット狙いは1周期まで必ず回す。AT後1G目にレア役を引いた台はAT当選まで。",
+        "source_ids": ["x_1970026311730205101"]
+      },
+      {
+        "kind": "quit",
+        "text": "リセット台でB示唆なし・ライバル示唆なし・160G以下ならヤメ。AT後ロゴがキラキラVなら天国抜けまで、差枚0〜−500枚でロゴ無しなら1周期まで。",
+        "source_ids": ["x_1970026311730205101"]
+      },
+      {
+        "kind": "aim",
+        "text": "天国狙い：前回A＋差枚0〜−500枚の台は天国抜けまで。",
+        "source_ids": ["x_1970026311730205101"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

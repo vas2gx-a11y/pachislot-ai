@@ -3,12 +3,14 @@
   "id": "l_kaguya",
   "name": "パチスロ かぐや様は告らせたい",
   "aliases": ["かぐや様は告らせたい", "かぐや様", "かぐや", "スマスロ かぐや様", "Lかぐや様は告らせたい"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#c8325a" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「パチスロ かぐや様は告らせたい」", "url": "https://www.p-world.co.jp/machine/database/10091", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「パチスロ かぐや様は告らせたい」", "url": "https://p-town.dmm.com/machines/4618", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「パチスロ かぐや様は告らせたい」", "url": "https://p-town.dmm.com/machines/4618", "checked_at": "2026-09-25" },
+    { "id": "x_1832694522570043605", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1832694522570043605", "checked_at": "2026-09-27" },
+    { "id": "x_1832980295903219893", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1832980295903219893", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -102,6 +104,22 @@
   },
 
   "reset": { "items": ["天井が800G+αに短縮", "CZスルー回数天井が最大4回に短縮される模様", "電断時は初回ボーナスまでゲーム数表示の色が変化しない（設定変更の有無を問わない）"], "source_ids": ["pworld", "ptown"] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ゲーム数天井狙い：BIG後600G〜、REG後400G〜（REG3連なら350G〜、REG4連以上はBIG当選まで）。リセット狙いは400G〜。",
+        "source_ids": ["x_1832694522570043605"]
+      },
+      {
+        "kind": "quit",
+        "text": "ボーナス5連以上の後は引き戻し区間の期待値が高い（+6,670円）との試算。即ヤメしない。",
+        "source_ids": ["x_1832980295903219893"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [

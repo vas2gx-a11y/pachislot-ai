@@ -3,12 +3,13 @@
   "id": "l_tokyo_ghoul",
   "name": "L 東京喰種",
   "aliases": ["スマスロ東京喰種", "東京グール", "TG"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#b3122e" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「L 東京喰種」", "url": "https://www.p-world.co.jp/machine/database/10207", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L 東京喰種」", "url": "https://p-town.dmm.com/machines/4742", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L 東京喰種」", "url": "https://p-town.dmm.com/machines/4742", "checked_at": "2026-09-25" },
+    { "id": "x_1887537929851191466", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1887537929851191466", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -175,6 +176,22 @@
   "favorable_zone": {
     "items": [],
     "source_ids": []
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "AT後のCZ間天井狙い（液晶G数）：0スルー370G〜／1スルー以降260G〜、CZ当選まで。AT間天井はCZ間0Gで700G〜AT当選まで。設定変更後は30G〜CZ当選まで。",
+        "source_ids": ["x_1887537929851191466"]
+      },
+      {
+        "kind": "aim",
+        "text": "ゾーン狙い：1スルー以降は液晶70〜130G。",
+        "source_ids": ["x_1887537929851191466"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

@@ -11,7 +11,7 @@
 {% set est = m.setting_estimation or {} %}
 {% set toc = [
     ('basic', '基本情報'), ('spec', '設定別スペック'), ('features', 'AT・CZ・ボーナス'),
-    ('ceiling', '天井'), ('zones', 'ゾーン'), ('quit', 'やめどき'), ('reset', '朝一・リセット'),
+    ('ceiling', '天井'), ('zones', 'ゾーン'), ('quit', 'やめどき'), ('sns', 'Xの狙い目・やめどき'), ('reset', '朝一・リセット'),
     ('favorable', '有利区間'), ('koyaku', '小役確率'), ('setting-diff', '設定差'),
     ('hints', '設定示唆'), ('effects', '演出'), ('estimation', '設定判別ポイント'),
     ('practical', '実戦で重要なポイント'), ('cautions', '注意事項'), ('sources', '出典・更新日'),
@@ -268,6 +268,26 @@
     {% endcall %}
 
     {% call section('quit', 'やめどき') %}{{ items_list(m.quit_timing) }}{% endcall %}
+    {# Xの投稿は個人の実戦値・考察。解析値と混ざって読まれないよう、別セクションで非公式と明示する #}
+    {% call section('sns', 'Xの狙い目・やめどき') %}
+        {% set tips = m.sns_tips['items'] if m.sns_tips else [] %}
+        {% if tips %}
+        <p class="text-xs text-gray-500 mb-2"><span class="badge-lv lv-unofficial">非公式</span> Xの投稿の要約です。個人の実戦値・考察なので、上の解析値と食い違うときは解析値を優先してください。</p>
+        {% for kind, label in [('aim', '狙い目'), ('quit', 'やめどき'), ('note', 'その他')] %}
+        {% set group = tips | selectattr('kind', 'equalto', kind) | list %}
+        {% if group %}
+        <h3 class="font-bold text-sm text-gray-900 mb-1 mt-3">{{ label }}</h3>
+        {% for t in group %}
+        <div class="border-t border-dashed border-gray-200 py-2">
+            <p class="text-sm text-gray-700">{{ t.text }}</p>
+            {{ cite(t.source_ids) }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+        {% if m.sns_tips.note %}<p class="hint mt-2">{{ m.sns_tips.note }}</p>{% endif %}
+        {% else %}<p>{{ unknown({'status': '情報確認中'}) }}</p>{% endif %}
+    {% endcall %}
     {% call section('reset', '朝一・リセット') %}{{ items_list(m.reset) }}{% endcall %}
     {% call section('favorable', '有利区間') %}{{ items_list(m.favorable_zone) }}{% endcall %}
 

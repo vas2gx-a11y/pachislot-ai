@@ -3,12 +3,13 @@
   "id": "l_kabaneri_unato",
   "name": "スマスロ 甲鉄城のカバネリ 海門決戦",
   "aliases": ["カバネリ海門決戦", "カバネリ2", "海門決戦", "うなと", "カバネリ"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#8c1c13" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 甲鉄城のカバネリ 海門(うなと)決戦」", "url": "https://www.p-world.co.jp/machine/database/10399", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 甲鉄城のカバネリ 海門（うなと）決戦」", "url": "https://p-town.dmm.com/machines/4930", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 甲鉄城のカバネリ 海門（うなと）決戦」", "url": "https://p-town.dmm.com/machines/4930", "checked_at": "2026-09-25" },
+    { "id": "x_2044665051978817792", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2044665051978817792", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -141,6 +142,17 @@
   },
 
   "favorable_zone": { "items": [], "source_ids": [] },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ST駆け抜け後は120G〜（天井596G＋初当りが軽い）。3スルー以上は470G〜、2スルー以下は570G〜。",
+        "source_ids": ["x_2044665051978817792"]
+      }
+    ],
+    "note": ""
+  },
 
   "setting_estimation": {
     "probabilities": [
