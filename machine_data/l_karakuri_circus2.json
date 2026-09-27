@@ -3,12 +3,13 @@
   "id": "l_karakuri_circus2",
   "name": "Lパチスロ からくりサーカス2",
   "aliases": ["からくりサーカス2", "からくり2", "スマスロ からくりサーカス2", "からくりサーカス", "からくり"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#8b2d2d" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ からくりサーカス2」", "url": "https://www.p-world.co.jp/machine/database/10485", "checked_at": "2026-09-25" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ からくりサーカス2」", "url": "https://p-town.dmm.com/machines/5019", "checked_at": "2026-09-25" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ からくりサーカス2」", "url": "https://p-town.dmm.com/machines/5019", "checked_at": "2026-09-25" },
+    { "id": "x_2074086762197209120", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2074086762197209120", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -116,6 +117,22 @@
   "favorable_zone": {
     "items": ["規定枚数獲得でエンディングへ移行し、有利区間ツラヌキ → 運命の一劇に当選"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "CZ間（液晶1200Pt or 実G890G+α）は750Pt〜／680G〜。リセット後はCZ間Pt最大500Ptなので150Pt〜。AT間天井（2500G+α）は1750G〜。CZスルー天井は3スルー500Pt〜。",
+        "source_ids": ["x_2074086762197209120"]
+      },
+      {
+        "kind": "quit",
+        "text": "上位AT後は128G+αまで引き戻し抽選があるので即ヤメしない。",
+        "source_ids": ["x_2074086762197209120"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

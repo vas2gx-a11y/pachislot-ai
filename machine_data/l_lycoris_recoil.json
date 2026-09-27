@@ -3,12 +3,13 @@
   "id": "l_lycoris_recoil",
   "name": "スマスロ リコリス・リコイル",
   "aliases": ["Lリコリコ", "リコリコ"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#c8293c" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ リコリス・リコイル」", "url": "https://www.p-world.co.jp/machine/database/10503", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ リコリス・リコイル」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5033", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ リコリス・リコイル」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5033", "checked_at": "2026-09-24" },
+    { "id": "x_2096911483003400290", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2096911483003400290", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -201,6 +202,22 @@
       "リセット後は上位RUSHorレジェンダリーリコリスへ。②と④のみ確実に判別可能（②は成功後にRUSH準備画面へ移行すればリセット濃厚）"
     ],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井（850G）狙いは400G〜が本命（機械割106.1%、300G〜でも100.3%）。上位ラッシュ終了後は0G〜（105.1%）、上位CZ失敗後は0G〜250G天井（103.9%）。",
+        "source_ids": ["x_2096911483003400290"]
+      },
+      {
+        "kind": "aim",
+        "text": "ゾーン狙いは50〜100Gが強い（機械割105.7%）。150〜250Gは101.0%と薄い。",
+        "source_ids": ["x_2096911483003400290"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

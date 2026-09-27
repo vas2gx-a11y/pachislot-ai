@@ -3,12 +3,13 @@
   "id": "l_jashinchan",
   "name": "L邪神ちゃんドロップキック",
   "aliases": ["スマスロ 邪神ちゃん", "じゃしんちゃん"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#8b3fd1" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「L邪神ちゃんドロップキック」(2026/09/24更新)", "url": "https://www.p-world.co.jp/machine/database/10498", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L邪神ちゃんドロップキック」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5020", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L邪神ちゃんドロップキック」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5020", "checked_at": "2026-09-24" },
+    { "id": "x_2088495692230828117", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2088495692230828117", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -202,6 +203,22 @@
   "favorable_zone": {
     "items": [],
     "source_ids": []
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙い：設定変更後230G〜、それ以外は天井まで残り360G〜（天井を短縮するアイテムがあるので残りG数で見る）。ボーナススルー天井（10スルー）は7スルーから。",
+        "source_ids": ["x_2088495692230828117"]
+      },
+      {
+        "kind": "quit",
+        "text": "怒りポイント（50ptで全ボーナスがエピソード以上）の蓄積は液晶中央のミニキャラのオーラで示唆。オーラ強なら解放までフォロー。ステチェンワイプのコロッケ・ラーメンもフォロー。",
+        "source_ids": ["x_2088495692230828117"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

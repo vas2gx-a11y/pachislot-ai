@@ -3,12 +3,13 @@
   "id": "l_kanokari",
   "name": "Lパチスロ 彼女、お借りします",
   "aliases": ["スマスロ かのかり", "かのかり"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#e0548a" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 彼女、お借りします」", "url": "https://www.p-world.co.jp/machine/database/10543", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 彼女、お借りします」", "url": "https://p-town.dmm.com/machines/5065", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 彼女、お借りします」", "url": "https://p-town.dmm.com/machines/5065", "checked_at": "2026-09-24" },
+    { "id": "x_2100470198868549965", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2100470198868549965", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -194,6 +195,27 @@
   "favorable_zone": {
     "items": ["エンディング到達後（規定差枚数で突入）に有利区間ツラヌキ → DREAM TIME＋ユメカノモードの権利獲得"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "天井狙い：設定変更後240G〜、REG後300G〜、BIG後710G〜。",
+        "source_ids": ["x_2100470198868549965"]
+      },
+      {
+        "kind": "quit",
+        "text": "ボーナス後は66Gまで引き戻しゾーン。筐体上部ランプの紫点灯が消えるまで回してヤメ（REG連続やアイキャッチ次第で追う例外あり）。",
+        "source_ids": ["x_2100470198868549965"]
+      },
+      {
+        "kind": "note",
+        "text": "通常ステージは部屋→大学→街の順に移る。この順番が崩れたり、セリフ演出と成立役が矛盾したりすると次回「かのかりBONUS」以上の期待度アップ。",
+        "source_ids": ["x_2100470198868549965"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

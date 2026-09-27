@@ -3,12 +3,14 @@
   "id": "l_super_rio_ace2",
   "name": "スマスロスーパーリオエース2",
   "aliases": ["リオエース2", "スーリオ2"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#c4264f" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロスーパーリオエース2」", "url": "https://www.p-world.co.jp/machine/database/10449", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーリオエース2」", "url": "https://p-town.dmm.com/machines/4984", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーリオエース2」", "url": "https://p-town.dmm.com/machines/4984", "checked_at": "2026-09-24" },
+    { "id": "x_2071955952790917127", "name": "X @pachisuro_com（パチスロ情報局）", "url": "https://x.com/pachisuro_com/status/2071955952790917127", "checked_at": "2026-09-27" },
+    { "id": "x_2103032401429746085", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/2103032401429746085", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -174,6 +176,27 @@
   "favorable_zone": {
     "items": [],
     "source_ids": []
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "朝イチ変更濃厚なら0G〜、設定変更後の天井狙いは250G〜、通常時450G〜。スルー狙いは変更後3スルー〜／通常5スルー〜。100G・300G付近はノワールルーム狙い。",
+        "source_ids": ["x_2071955952790917127"]
+      },
+      {
+        "kind": "quit",
+        "text": "AT後は50G+αまで確認してヤメ。",
+        "source_ids": ["x_2071955952790917127"]
+      },
+      {
+        "kind": "note",
+        "text": "通常ステージ中のセリフ「たくさんいたずらしてきたよ！」「よ～しよし！いい子いい子♪」は次回ノワールルーム成功濃厚。ノワールルーム中に出たものは当てにならないとの報告あり。",
+        "source_ids": ["x_2103032401429746085"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

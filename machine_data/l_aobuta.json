@@ -3,12 +3,14 @@
   "id": "l_aobuta",
   "name": "L青春ブタ野郎はバニーガール先輩の夢を見ない",
   "aliases": ["スマスロ 青ブタ", "あおぶた"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#4f6bd8" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「L青春ブタ野郎はバニーガール先輩の夢を見ない」", "url": "https://www.p-world.co.jp/machine/database/10527", "checked_at": "2026-09-24" },
-    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L青春ブタ野郎はバニーガール先輩の夢を見ない」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5064", "checked_at": "2026-09-24" }
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L青春ブタ野郎はバニーガール先輩の夢を見ない」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5064", "checked_at": "2026-09-24" },
+    { "id": "x_2103249146174148985", "name": "X @slot_736999（ドキドキ期待値『ハナちゃん』@スロット）", "url": "https://x.com/slot_736999/status/2103249146174148985", "checked_at": "2026-09-27" },
+    { "id": "x_2101467457013903404", "name": "X @slot_736999（ドキドキ期待値『ハナちゃん』@スロット）", "url": "https://x.com/slot_736999/status/2101467457013903404", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -197,6 +199,27 @@
   "favorable_zone": {
     "items": ["エンディング移行などで有利区間ツラヌキ。実戦上、エンディング後は上位STへ突入"],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ボーナス間天井（899G+α、設定変更後・ST駆け抜け後は699G+α）狙い：通常450G〜、設定変更後・ST駆け抜け後350G〜。",
+        "source_ids": ["x_2103249146174148985", "x_2101467457013903404"]
+      },
+      {
+        "kind": "aim",
+        "text": "思春期ポイントは次の人に引き継がれる。ST駆け抜け後で思春期ポイント200以上なら0G〜、CZ5スルー＋思春期ポイント200以上ならボーナス当選まで。",
+        "source_ids": ["x_2101467457013903404"]
+      },
+      {
+        "kind": "quit",
+        "text": "CZ失敗後・ST終了後は恩恵ptを確認し、60pt以上なら100pt到達まで様子見。CZ6連続失敗後は7回目のCZ成功濃厚なのでヤメない。",
+        "source_ids": ["x_2103249146174148985"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {

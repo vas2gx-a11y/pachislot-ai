@@ -3,13 +3,15 @@
   "id": "l_toloveru_darkness",
   "name": "L ToLOVEるダークネス",
   "aliases": ["スマスロ ToLOVEるダークネス", "スマスロ とらぶるダークネス"],
-  "updated_at": "2026-09-24",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#e0457b" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「L ToLOVEるダークネス」", "url": "https://www.p-world.co.jp/machine/database/10038", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L ToLOVEるダークネス」", "url": "https://p-town.dmm.com/machines/4571", "checked_at": "2026-09-24" },
-    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「スマスロトラブルダークネスの設定差はこれを見ればOK！」(2025/02/28更新)", "url": "https://p-town.dmm.com/specials/3573", "checked_at": "2026-09-24" }
+    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「スマスロトラブルダークネスの設定差はこれを見ればOK！」(2025/02/28更新)", "url": "https://p-town.dmm.com/specials/3573", "checked_at": "2026-09-24" },
+    { "id": "x_1798295200085032976", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1798295200085032976", "checked_at": "2026-09-27" },
+    { "id": "x_1800016049586532604", "name": "X @slopachi_quests（すろぱちくえすと）", "url": "https://x.com/slopachi_quests/status/1800016049586532604", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -209,6 +211,22 @@
       "エンディング到達後は有利区間がリセットされ「もぐもぐたい焼きタイム」へ突入"
     ],
     "source_ids": ["ptown"]
+  },
+
+  "sns_tips": {
+    "items": [
+      {
+        "kind": "aim",
+        "text": "ゲーム数天井狙いは450G〜、リセット狙いは100G〜。ゾーン狙いは180〜250G+α（90〜120G+αは優先度低め）。",
+        "source_ids": ["x_1798295200085032976"]
+      },
+      {
+        "kind": "aim",
+        "text": "単発後は優遇されていて、通常より浅く狙える。",
+        "source_ids": ["x_1800016049586532604"]
+      }
+    ],
+    "note": ""
   },
 
   "setting_estimation": {
