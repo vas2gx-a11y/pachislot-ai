@@ -1,0 +1,340 @@
+{
+  "$schema": "./schema.json",
+  "id": "city_minamiurawa",
+  "name": "ザシティベルシティ南浦和店",
+  "region": "埼玉県",
+  "sheet_store_name": "ザシティベルシティ南浦和店",
+  "updated_at": "2026-09-27",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち ザシティベルシティ南浦和店",
+      "url": "https://minpachi.com/city-urawa/",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-27"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "さいたま市南区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "埼玉県さいたま市南区南浦和2-39-3",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00〜22:40",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "配布方法: 抽選",
+        "配布時間: 9:45"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 182,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 428,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円",
+        "スロット 21.73円 / 5.43円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 27玉",
+        "21.73円スロット 5.0枚",
+        "5.43円スロット 20枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "パチンコ館カウンター前入口から出てすぐ左の小屋（小屋の真裏にもう1箇所）",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": "南浦和駅東口徒歩1分",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/cityminamiurawa2/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@citymachi"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2006年12月26日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "8のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": "12月26日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "さいたま市南区",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "埼玉県さいたま市南区南浦和2-39-3",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:40",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "配布方法: 抽選",
+        "配布時間: 9:45"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 182,
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 428,
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円",
+        "スロット 21.73円 / 5.43円"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 27玉",
+        "21.73円スロット 5.0枚",
+        "5.43円スロット 20枚"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "パチンコ館カウンター前入口から出てすぐ左の小屋（小屋の真裏にもう1箇所）",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "南浦和駅東口徒歩1分",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/cityminamiurawa2/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@citymachi"
+        }
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2006年12月26日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "8のつく日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "12月26日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}

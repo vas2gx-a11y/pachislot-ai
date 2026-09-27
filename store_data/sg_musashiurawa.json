@@ -1,0 +1,333 @@
+{
+  "$schema": "./schema.json",
+  "id": "sg_musashiurawa",
+  "name": "SLOTスマートガーデン武蔵浦和331",
+  "region": "埼玉県",
+  "sheet_store_name": "SLOTスマートガーデン武蔵浦和331",
+  "updated_at": "2026-09-27",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち SLOTスマートガーデン武蔵浦和331",
+      "url": "https://minpachi.com/sg-musashiurawa/",
+      "reliability": "ポータル",
+      "checked_at": "2026-09-27"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "さいたま市南区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "埼玉県さいたま市南区白幡5-1-28 グリーンハイツ金幸1階",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00〜22:40",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "配布方法: モバイル抽選（入場くんオンライン）",
+        "配布時間: 9:30",
+        "09:30～抽選締切 09:45～抽選結果発表 09:50～整列 10:00～入場"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "slot_units": {
+      "value": 331,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "スロット 21.73円 / 5.43円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "21.73円スロット 5.0枚",
+        "5.43円スロット 20枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": [
+        "21.73円スロット 460枚",
+        "5.43円スロット 556枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "prize_exchange": {
+      "value": "景品カウンター横トイレ側入口を出て右に約30m進んだ先の壁面",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "X",
+          "url": "https://x.com/Smart_G_Musaura"
+        },
+        {
+          "label": "Instagram",
+          "url": "https://www.instagram.com/sgmusashiurawa/"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2024年8月8日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "2のつく日、8のつく日、21日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": "8月8日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "さいたま市南区",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "埼玉県さいたま市南区白幡5-1-28 グリーンハイツ金幸1階",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:40",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "配布方法: モバイル抽選（入場くんオンライン）",
+        "配布時間: 9:30",
+        "09:30～抽選締切 09:45～抽選結果発表 09:50～整列 10:00～入場"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 331,
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "スロット 21.73円 / 5.43円"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "21.73円スロット 5.0枚",
+        "5.43円スロット 20枚"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "21.73円スロット 460枚",
+        "5.43円スロット 556枚"
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "景品カウンター横トイレ側入口を出て右に約30m進んだ先の壁面",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "X",
+          "url": "https://x.com/Smart_G_Musaura"
+        },
+        {
+          "label": "Instagram",
+          "url": "https://www.instagram.com/sgmusashiurawa/"
+        }
+      ],
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2024年8月8日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "2のつく日、8のつく日、21日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "8月8日",
+      "changed_at": "2026-09-27",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}
