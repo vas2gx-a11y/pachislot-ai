@@ -1,0 +1,210 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_bakemonogatari",
+  "name": "スマスロ 化物語",
+  "aliases": ["化物語", "スマスロ化物語", "L化物語", "Lスマスロ化物語", "バケモノガタリ"],
+  "updated_at": "2026-09-27",
+  "theme": { "accent": "#8e2b3c" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 化物語」", "url": "https://www.p-world.co.jp/machine/database/10358", "checked_at": "2026-09-27" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 化物語」", "url": "https://p-town.dmm.com/machines/4898", "checked_at": "2026-09-27" }
+  ],
+
+  "basic": {
+    "maker": "サミー",
+    "release_date": "2025-12-08",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（差枚数管理型）",
+    "model_name": "L スマスロ化物語 KH",
+    "certification_no": "530641",
+    "games_per_50_coins": { "value": 31.1, "unit": "G", "note": "約31.1G（設定1〜6）" },
+    "net_gain_per_game": { "value": 2.7, "unit": "枚", "note": "倖時間 約2.7枚/G、超倖時間 約5.0枚/G" },
+    "features": ["初代「パチスロ化物語」の差枚数管理型AT「倖時間」を再現", "上乗せ特化ゾーン「倍倍CHANCE」（超・鬼・極）", "上位CZ「怪逅ノ儀」→ 上位AT「超倖時間」"],
+    "summary": "通常時はレア役や規定ゲーム数（100G・200G・300G）からCZ「解呪ノ儀」（15G・平均成功期待度約43%）を目指す。AT「倖時間」は初期150枚・純増約2.7枚の差枚数管理型で、レア役や怪異図柄停止から「倍倍CHANCE」で差枚数を上乗せ。上位CZ「怪逅ノ儀」（10G+α・成功期待度約50%）成功で上位AT「超倖時間」（純増約5.0枚）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "settings": {
+    "list": ["1", "2", "3", "4", "5", "6"],
+    "note": "設定1〜6すべて数値が公表されている。",
+    "source_ids": ["pworld"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "1": 97.9, "2": 98.9, "3": 100.9, "4": 105.0, "5": 107.8, "6": 112.1 }, "highlight": true },
+      { "key": "first_hit", "label": "AT初当り", "format": "fraction", "values": { "1": 265.1, "2": 260.7, "3": 252.1, "4": 238.8, "5": 230.8, "6": 219.6 }, "highlight": true },
+      { "key": "suika", "label": "スイカ", "format": "fraction", "values": { "1": 87.4, "2": 85.8, "3": 84.9, "4": 79.7, "5": 74.8, "6": 69.9 }, "highlight": true },
+      { "key": "bonus", "label": "ボーナス", "format": "fraction", "values": { "1": 2735.7, "2": 2605.3, "3": 2396.6, "4": 2381.5, "5": 2177.3, "6": 1938.8 }, "note": "ロングフリーズ・後日談ボーナスを除く" }
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 7.6 },
+      { "key": "w_cherry", "label": "弱チェリー", "format": "fraction", "value": 131.1 },
+      { "key": "s_cherry", "label": "強チェリー", "format": "fraction", "value": 256.0 },
+      { "key": "chance", "label": "チャンス目", "format": "fraction", "value": 96.4 },
+      { "key": "s_bell_a", "label": "強ベルA", "format": "fraction", "value": 1489.5 },
+      { "key": "s_bell_b", "label": "強ベルB", "format": "fraction", "value": 8192.0 },
+      { "key": "s_chance", "label": "強チャンス目", "format": "fraction", "value": 16384.0 },
+      { "key": "chu_cherry", "label": "中段チェリー", "format": "fraction", "value": 191049.8 }
+    ],
+    "note": "スイカ以外は全設定共通。スイカは設定差あり（上の表）。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "解呪ノ儀",
+        "facts": [{ "label": "継続", "value": "15G" }, { "label": "平均成功期待度", "value": "約43%" }],
+        "description": "レア役や怪異図柄停止でAT抽選。ラスト3Gでヒロインごとのジャッジ演出に発展して当否を告知。CZ失敗後などは「解呪連モード」でCZの引き戻しに期待。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "怪逅ノ儀",
+        "facts": [{ "label": "継続", "value": "10G+α" }, { "label": "成功期待度", "value": "約50%" }],
+        "description": "上位CZ。成功で超倖時間突入濃厚、失敗しても倖時間へ。",
+        "source_ids": ["pworld"]
+      }
+    ],
+    "bonus": [],
+    "at": [
+      {
+        "name": "倖時間（ハッピータイム）",
+        "facts": [{ "label": "初期枚数", "value": "150枚" }, { "label": "純増", "value": "約2.7枚/G" }],
+        "description": "差枚数管理型。レア役や怪異図柄停止で倍倍CHANCEやボーナスを抽選。規定払い出し到達で「倖連結」が発動し、狙えカットイン＋怪異図柄が必ず1個以上停止。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "倍倍CHANCE",
+        "facts": [{ "label": "継続", "value": "不定" }],
+        "description": "最終的な配当×倍率で差枚数を上乗せする特化ゾーン。超・鬼（保留が超優遇）・極（全保留がEXor超EX）や、1G連で倍率or配当を上乗せする（超）EXTRA SERVICEもある。",
+        "source_ids": ["pworld"]
+      },
+      {
+        "name": "超倖時間",
+        "facts": [{ "label": "初期枚数", "value": "150枚+α" }, { "label": "純増", "value": "約5.0枚/G" }],
+        "description": "上位AT。倍倍CHANCEの当選率と性能がアップし、（超）EXTRA SERVICE付きの超or鬼or極倍倍CHANCEに必ず当選。",
+        "source_ids": ["pworld"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 1000, "text": "1000G" },
+    "games_after_reset": { "value": 600, "text": "設定変更後 600G" },
+    "benefit": "AT＋倍倍CHANCEに当選",
+    "notes": ["DMMぱちタウンでは「（超）夢の時間ヲ終わラセルな」終了後から1000Gとしている"],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "zones": {
+    "items": [{ "games": "100G", "note": "CZ抽選（約20%・全設定共通）" }, { "games": "200G", "note": "CZ抽選（設定1 約10% 〜 設定6 約20%）" }, { "games": "300G", "note": "CZ抽選（設定1でも約40%）" }],
+    "notes": ["ゲーム数到達から前兆開始。200G台後半の台は狙い目"],
+    "source_ids": ["ptown"]
+  },
+
+  "reset": { "items": ["天井が600Gに短縮"], "source_ids": ["pworld", "ptown"] },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit", "label": "AT初当り確率",
+        "observe": "通常時ゲーム数に対するAT初当り回数",
+        "denom_base": "normal",
+        "values": { "1": 265.1, "2": 260.7, "3": 252.1, "4": 238.8, "5": 230.8, "6": 219.6 },
+        "source_ids": ["pworld"]
+      },
+      {
+        "key": "suika", "label": "スイカ確率",
+        "observe": "総ゲーム数に対するスイカの回数（全状態でカウントできる。マイスロでも数えられる）",
+        "denom_base": "total",
+        "values": { "1": 87.4, "2": 85.8, "3": 84.9, "4": 79.7, "5": 74.8, "6": 69.9 },
+        "source_ids": ["pworld", "ptown"]
+      },
+      {
+        "key": "bonus", "label": "ボーナス確率",
+        "observe": "ボーナス回数（ロングフリーズ・後日談ボーナスを除く）",
+        "judge": false,
+        "values": { "1": 2735.7, "2": 2605.3, "3": 2396.6, "4": 2381.5, "5": 2177.3, "6": 1938.8 },
+        "weight_note": "分母が通常時か総ゲーム数かが公表されていないので判別には入れない", "source_ids": ["ptown"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "cz_200g", "label": "200G到達時のCZ当選",
+        "observe": "200G到達時のゲーム数契機のCZ当選の有無",
+        "judge": false,
+        "outcomes": [
+          { "key": "hit", "label": "当選", "values": { "1": 10.0, "2": 10.0, "3": 10.4, "4": 15.0, "5": 17.5, "6": 20.0 } },
+          { "key": "miss", "label": "非当選", "values": { "1": 90.0, "2": 90.0, "3": 89.6, "4": 85.0, "5": 82.5, "6": 80.0 }, "note": "100%から当選率を引いた値" }
+        ],
+        "weight_note": "レア役契機のCZと前兆が重なると区別できないので判別には入れない",
+        "source_ids": ["ptown"]
+      },
+      {
+        "key": "cz_300g", "label": "300G到達時のCZ当選",
+        "observe": "300G到達時のゲーム数契機のCZ当選の有無",
+        "judge": false,
+        "outcomes": [
+          { "key": "hit", "label": "当選", "values": { "1": 40.0, "2": 40.0, "3": 40.4, "4": 45.0, "5": 47.5, "6": 50.0 } },
+          { "key": "miss", "label": "非当選", "values": { "1": 60.0, "2": 60.0, "3": 59.6, "4": 55.0, "5": 52.5, "6": 50.0 }, "note": "100%から当選率を引いた値" }
+        ],
+        "weight_note": "レア役契機のCZと前兆が重なると区別できないので判別には入れない",
+        "source_ids": ["ptown"]
+      }
+    ],
+    "hints": [
+      { "category": "獲得枚数表示", "pattern": "174枚突破", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "543枚突破", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "331枚突破", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "ボーナス確定画面", "pattern": "ヒロイン1枚絵", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ボーナス確定画面", "pattern": "忍 → 赤7ボーナス", "meaning": "設定5以上濃厚（忍は本来青7示唆）", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "ひたぎ", "meaning": "高設定示唆（強）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "真宵", "meaning": "偶数設定示唆（弱）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "駿河", "meaning": "奇数かつ高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "撫子", "meaning": "高設定示唆（弱）", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "翼", "meaning": "偶数設定示唆（強）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "忍", "meaning": "偶数設定濃厚（設定2・4・6）", "min_setting": null, "exact_setting": null, "denied_settings": [1, 3, 5], "level": "confirm" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "忍野（メメ）", "meaning": "設定3・5・6濃厚", "min_setting": null, "exact_setting": null, "denied_settings": [1, 2, 4], "level": "confirm" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "初代パネル：阿良々木・忍・忍野", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "初代パネル：ヒロイン", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "AT終了画面（PUSHで1枚絵）", "pattern": "I LOVE YOU", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+
+      { "category": "サミートロフィー（AT・エンディング終了画面）", "pattern": "銅", "meaning": "設定2以上濃厚", "min_setting": 2, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT・エンディング終了画面）", "pattern": "銀", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT・エンディング終了画面）", "pattern": "金", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT・エンディング終了画面）", "pattern": "キリン柄", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "サミートロフィー（AT・エンディング終了画面）", "pattern": "虹", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["pworld", "ptown"],
+    "hints_note": "AT終了画面のキャラ名はP-WORLDがひらがな（こよみ・まよい・するが・なでこ・つばさ・しのぶ・メメ）、DMMぱちタウンが漢字（阿良々木・真宵・駿河・撫子・翼・忍・忍野）で表記。忍はP-WORLDでは「設定2or4or6濃厚」、DMMぱちタウンでは「偶数設定濃厚」（同じ意味）。サミートロフィーの出現率は消化ゲーム数帯で変わり、5001〜8000Gは高設定示唆系が出やすい。",
+    "observations": [
+      { "label": "弱チェリーのAT直撃当選率", "detail": "0.4% / 0.8% / 1.3% / 2.1% / 2.9% / 3.8%（設定1〜6）。当選時は倍倍CHANCEも濃厚。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "レア役からのCZ当選率", "detail": "通常中のスイカ 2.5%〜5.0%、強チェリー・チャンス目 30.0%〜34.2%、高確中のスイカ 30.0%〜34.2%（設定1〜6）。内部状態が見えないので直接は使えない。", "official": true, "source_ids": ["pworld", "ptown"] }
+    ],
+    "pending": []
+  },
+
+  "practical_points": {
+    "items": [
+      "スイカ確率（1/87.4 → 1/69.9）が軸。全状態で数えられる",
+      "AT初当り（1/265.1 → 1/219.6）",
+      "AT終了画面のPUSH（忍=偶数濃厚 / 忍野=3・5・6 / 初代パネル=4以上・5以上 / I LOVE YOU=6）",
+      "サミートロフィー（銅=2以上 / 銀=3以上 / 金=4以上 / キリン=5以上 / 虹=6）",
+      "ボーナス確定画面が忍なのに赤7なら設定5以上"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "cautions": {
+    "items": ["ボーナス確率は分母の取り方が不明なので判別に入れていない", "200G・300GのCZ当選率はレア役契機と区別しづらいので判別に入れていない"],
+    "source_ids": ["ptown"]
+  }
+}
