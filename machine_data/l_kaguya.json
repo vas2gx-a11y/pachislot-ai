@@ -10,7 +10,9 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「パチスロ かぐや様は告らせたい」", "url": "https://www.p-world.co.jp/machine/database/10091", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「パチスロ かぐや様は告らせたい」", "url": "https://p-town.dmm.com/machines/4618", "checked_at": "2026-09-25" },
     { "id": "x_1832694522570043605", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1832694522570043605", "checked_at": "2026-09-27" },
-    { "id": "x_1832980295903219893", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1832980295903219893", "checked_at": "2026-09-27" }
+    { "id": "x_1832980295903219893", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1832980295903219893", "checked_at": "2026-09-27" },
+    { "id": "x_1833841167848653305", "name": "X @321_sky（jin）", "url": "https://x.com/321_sky/status/1833841167848653305", "checked_at": "2026-09-27" },
+    { "id": "x_1870517236886286522", "name": "X @kaerima10（ファイブ先生）", "url": "https://x.com/kaerima10/status/1870517236886286522", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -189,7 +191,8 @@
     "hints_note": "ボーナス終了画面の白銀＆かぐやは、P-WORLDでは基本的な画面の1つとして扱い、DMMぱちタウンでは「1G連or引き戻し濃厚、否定すれば設定4以上濃厚」としている。後から結果が分かって初めて意味が決まるので、判別には取り込まない。ベツィーはP-WORLDでは「モードB以上濃厚」、DMMぱちタウンでは「通常A否定」（同じ意味）。",
     "observations": [
       { "label": "初当り時のBIG比率・SUPER BIG / EXTRA BONUS出現率・特化ゾーン当選率・ロングフリーズ発生率", "detail": "高設定ほど優遇（数値は未公表）。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "ボーナス終了画面の出現率", "detail": "枠あり画面は全状況を考慮した約1〜3%の出現率のみ公表。設定変更直後は設定示唆画面が出やすい。", "official": true, "source_ids": ["pworld", "ptown"] }
+      { "label": "ボーナス終了画面の出現率", "detail": "枠あり画面は全状況を考慮した約1〜3%の出現率のみ公表。設定変更直後は設定示唆画面が出やすい。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "設定6の打感（X）", "detail": "推定・確定6の打感として、天井やハマりは普通にあり有利切断後も特に優遇を感じないが、初当りはBIG寄り（6:4程度）で赤7が多めという声が複数ある。CZ突破率の差は感じにくく、引き戻しが少し優遇されていそうとの見立ても。", "official": false, "source_ids": ["x_1833841167848653305", "x_1870517236886286522"] }
     ],
     "pending": []
   },

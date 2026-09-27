@@ -3,13 +3,15 @@
   "id": "my_juggler5",
   "name": "マイジャグラーV",
   "aliases": ["マイジャグラーⅤ", "マイジャグ5", "マイジャグ", "マイジャグラー5", "SマイジャグラーV"],
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-09-27",
   "theme": { "accent": "#e8a317" },
 
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「マイジャグラーV」", "url": "https://www.p-world.co.jp/machine/database/9514", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「マイジャグラーⅤ」(2026/09/16更新)", "url": "https://p-town.dmm.com/machines/4029", "checked_at": "2026-09-25" },
-    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「マイジャグ5の設定差は【これを見ればOK！】」(2024/07/01更新)", "url": "https://p-town.dmm.com/specials/2538", "checked_at": "2026-09-25" }
+    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「マイジャグ5の設定差は【これを見ればOK！】」(2024/07/01更新)", "url": "https://p-town.dmm.com/specials/2538", "checked_at": "2026-09-25" },
+    { "id": "x_2103354123319939097", "name": "X @osakaslot_next（スロットNEXT@大阪｜ジャグラー狙い目）", "url": "https://x.com/osakaslot_next/status/2103354123319939097", "checked_at": "2026-09-27" },
+    { "id": "x_2101939386858496099", "name": "X @hTuG84ctSI43634（ジャグリーマンのGOGO日誌）", "url": "https://x.com/hTuG84ctSI43634/status/2101939386858496099", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -171,6 +173,12 @@
         "detail": "設定差があると推測されているが、設定別の値は未公表。設定6の実戦値は1/33.6（20000G）。",
         "official": false,
         "source_ids": ["ptown", "ptown_sp"]
+      },
+      {
+        "label": "設定6でも負ける確率（X・シミュレーション）",
+        "detail": "マイジャグラーVのシミュレーション値による目安で、設定6でも1,000Gで約28%、3,000Gで約14%、5,000Gで約7%、8,000Gで約3%は負ける。9,000G回しても+3,000枚以上は約52%、+1,000枚以下が約11%、マイナスが約4%という試算もある。短いG数で低設定と決めつけない。",
+        "official": false,
+        "source_ids": ["x_2103354123319939097", "x_2101939386858496099"]
       }
     ],
     "pending": [

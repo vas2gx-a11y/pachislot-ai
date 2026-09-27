@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ モンスターハンターライズ」", "url": "https://www.p-world.co.jp/machine/database/10138", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ モンスターハンターライズ」", "url": "https://p-town.dmm.com/machines/4676", "checked_at": "2026-09-25" },
-    { "id": "x_1859932072527409260", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1859932072527409260", "checked_at": "2026-09-27" }
+    { "id": "x_1859932072527409260", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1859932072527409260", "checked_at": "2026-09-27" },
+    { "id": "x_1925759951449870641", "name": "X @slotiger1211（スロタイガー）", "url": "https://x.com/slotiger1211/status/1925759951449870641", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -214,7 +215,8 @@
       { "label": "ボーナス直撃当選率（非前兆中のレア役）", "detail": "弱レア役 0.03%〜0.20% / 強レア役 1.56%〜6.25%（設定1〜6）。", "official": true, "source_ids": ["pworld", "ptown"] },
       { "label": "3枚ベルでの高確移行率", "detail": "6.25%〜9.38%（設定1〜6）。内部状態なので直接は見えない。", "official": true, "source_ids": ["pworld", "ptown"] },
       { "label": "クエストテーブル・ポイントモード移行率", "detail": "高設定ほど天国・モードC/Dへ移行しやすい。何回目のクエストでATに当選したか、どのポイントでクエストに入ったかでテーブル・モードを推測できる。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "ロングフリーズ確率", "detail": "約1/986413〜約1/492965（設定1〜6）。有利区間の差枚数が+400枚以下のときのみ抽選。", "official": true, "source_ids": ["pworld", "ptown"] }
+      { "label": "ロングフリーズ確率", "detail": "約1/986413〜約1/492965（設定1〜6）。有利区間の差枚数が+400枚以下のときのみ抽選。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "百竜ノ淵源チャレンジ成功率（X）", "detail": "設定5・6濃厚台の集計で百竜ノ淵源チャレンジの成功率は77.7%。有利区間切断時の出玉性能は設定6＞＞設定5＞設定1〜4と予想されている。", "official": false, "source_ids": ["x_1925759951449870641"] }
     ],
     "pending": []
   },

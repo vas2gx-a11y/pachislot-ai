@@ -10,7 +10,8 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロスーパーブラックジャック」", "url": "https://www.p-world.co.jp/machine/database/10174", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロスーパーブラックジャック」(2026/09/14更新)", "url": "https://p-town.dmm.com/machines/4712", "checked_at": "2026-09-24" },
     { "id": "x_1886638766842110319", "name": "X @dejikame_blog（でじかめ）", "url": "https://x.com/dejikame_blog/status/1886638766842110319", "checked_at": "2026-09-27" },
-    { "id": "x_1907637896028500459", "name": "X @chonbo7771（ちょんぼ@ちょんぼりすた管理人）", "url": "https://x.com/chonbo7771/status/1907637896028500459", "checked_at": "2026-09-27" }
+    { "id": "x_1907637896028500459", "name": "X @chonbo7771（ちょんぼ@ちょんぼりすた管理人）", "url": "https://x.com/chonbo7771/status/1907637896028500459", "checked_at": "2026-09-27" },
+    { "id": "x_2041459016472424672", "name": "X @naadekoodayoo（さとしお）", "url": "https://x.com/naadekoodayoo/status/2041459016472424672", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -330,7 +331,9 @@
     ],
     "hints_source_ids": ["pworld", "ptown"],
     "hints_note": "ダイスチェックのゾロ目は「スイカ天井までの残り回数」か「設定」の示唆。残り回数が否定されたときだけ設定示唆になるため、判別スペックには取り込まない（該当したら判別画面の汎用の確定演出から選ぶ）。",
-    "observations": [],
+    "observations": [
+      { "label": "設定6の追い方（X）", "detail": "単体での判別は難しく、スイカ確率・カード振分（デフォルト・偶数・高設定が1:1:1程度）・カードや終了画面のリオ・リナ出現を見ながら確定示唆を待つ打ち方になる。全台系狙い向きで単品狙いは勧めないとの見立て。", "official": false, "source_ids": ["x_2041459016472424672"] }
+    ],
     "pending": []
   },
 

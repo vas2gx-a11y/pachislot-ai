@@ -11,7 +11,8 @@
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L ToLOVEるダークネス」", "url": "https://p-town.dmm.com/machines/4571", "checked_at": "2026-09-24" },
     { "id": "ptown_sp", "name": "DMMぱちタウン 特集「スマスロトラブルダークネスの設定差はこれを見ればOK！」(2025/02/28更新)", "url": "https://p-town.dmm.com/specials/3573", "checked_at": "2026-09-24" },
     { "id": "x_1798295200085032976", "name": "X @kitaichi_papa（必勝期待値クマぱぱ）", "url": "https://x.com/kitaichi_papa/status/1798295200085032976", "checked_at": "2026-09-27" },
-    { "id": "x_1800016049586532604", "name": "X @slopachi_quests（すろぱちくえすと）", "url": "https://x.com/slopachi_quests/status/1800016049586532604", "checked_at": "2026-09-27" }
+    { "id": "x_1800016049586532604", "name": "X @slopachi_quests（すろぱちくえすと）", "url": "https://x.com/slopachi_quests/status/1800016049586532604", "checked_at": "2026-09-27" },
+    { "id": "x_1846867365449158767", "name": "X @shizuoka_slot6（茶々@静岡回胴遊技機）", "url": "https://x.com/shizuoka_slot6/status/1846867365449158767", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -279,6 +280,12 @@
         "detail": "実戦値では高設定のほうがCZ出現率が高かったとの記述あり。公式な設定差の数値は未公表。",
         "official": false,
         "source_ids": ["ptown_sp"]
+      },
+      {
+        "label": "設定5・6確定台のベル契機ボーナス（X）",
+        "detail": "5・6確定台（1日分）で、ベルからのボーナス当選が11/33（33.3%。公表値は15.9%）と高く、ボーナス3連からのハーレム当選はほぼない代わりに自力当選が強めという報告。1台分のデータ。",
+        "official": false,
+        "source_ids": ["x_1846867365449158767"]
       }
     ],
     "pending": [

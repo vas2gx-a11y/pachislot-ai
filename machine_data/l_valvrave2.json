@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://www.p-world.co.jp/machine/database/10352", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 革命機ヴァルヴレイヴ2」", "url": "https://p-town.dmm.com/machines/4885", "checked_at": "2026-09-25" },
-    { "id": "x_1991435914665713714", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/1991435914665713714", "checked_at": "2026-09-27" }
+    { "id": "x_1991435914665713714", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/1991435914665713714", "checked_at": "2026-09-27" },
+    { "id": "x_2103935558116671688", "name": "X @dgurcf（パチスロ大学4年生）", "url": "https://x.com/dgurcf/status/2103935558116671688", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -198,7 +199,8 @@
     "observations": [
       { "label": "ハラキリDRIVEの発生頻度", "detail": "設定1は15〜20連に1回、設定4は6〜8連に1回とされる（設定2・5・6は未記載）。", "official": true, "source_ids": ["pworld"] },
       { "label": "初当りの革命BONUS＋AT直撃比率", "detail": "設定1 約55%、設定6 約60%（設定2〜5は調査中）。", "official": true, "source_ids": ["ptown"] },
-      { "label": "特定設定以上示唆の出現期待値", "detail": "設定2以上なら5000Gで5割以上の確率で特定設定濃厚の示唆が出る（店長カスタム非使用時）。", "official": true, "source_ids": ["ptown"] }
+      { "label": "特定設定以上示唆の出現期待値", "detail": "設定2以上なら5000Gで5割以上の確率で特定設定濃厚の示唆が出る（店長カスタム非使用時）。", "official": true, "source_ids": ["ptown"] },
+      { "label": "設定6の区間ごとの伸び方（X）", "detail": "全6データ371台（321万G）の分析で、区間の影響が非常に大きい。差枚がプラスで伸び悩んでいる台とマイナスで伸び悩んでいる台では、次に大きく伸びる率が約2倍違うとの結果（どちらが高いかは投稿本文に明記なし）。", "official": false, "source_ids": ["x_2103935558116671688"] }
     ],
     "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
   },

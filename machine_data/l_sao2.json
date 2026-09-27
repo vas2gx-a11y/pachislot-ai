@@ -10,7 +10,9 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「スロット ソードアート・オンラインII」", "url": "https://www.p-world.co.jp/machine/database/10483", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スロット ソードアート・オンラインⅡ」", "url": "https://p-town.dmm.com/machines/5025", "checked_at": "2026-09-24" },
     { "id": "x_2065351518312931760", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2065351518312931760", "checked_at": "2026-09-27" },
-    { "id": "x_2073438498200424697", "name": "X @hitagigamble（シオン＠期待値研究所）", "url": "https://x.com/hitagigamble/status/2073438498200424697", "checked_at": "2026-09-27" }
+    { "id": "x_2073438498200424697", "name": "X @hitagigamble（シオン＠期待値研究所）", "url": "https://x.com/hitagigamble/status/2073438498200424697", "checked_at": "2026-09-27" },
+    { "id": "x_2091114339852050765", "name": "X @beasttencho777（ニケ@スロット攻略店長）", "url": "https://x.com/beasttencho777/status/2091114339852050765", "checked_at": "2026-09-27" },
+    { "id": "x_2069435258878222360", "name": "X @slotNeraime（みーくん@スロット専業）", "url": "https://x.com/slotNeraime/status/2069435258878222360", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -313,6 +315,12 @@
         "detail": "設定1で約20%。「高設定なら…!?」とされ、数値は未公表。",
         "official": true,
         "source_ids": ["pworld"]
+      },
+      {
+        "label": "設定6の実戦値と注意点（X）",
+        "detail": "全6とされる12台の集計：平均差枚+5,742枚・勝率75.0%（9/12）・1万枚超えが3台（最高+17,000枚、最低−3,200枚）。一方で設定6でもデス・ガン0回、強い終了画面がほぼ出ない、500G・800G到達も普通にあり、共通ベルだけでは判別できないという指摘もある。",
+        "official": false,
+        "source_ids": ["x_2091114339852050765", "x_2069435258878222360"]
       }
     ],
     "pending": [

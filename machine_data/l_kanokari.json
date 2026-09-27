@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 彼女、お借りします」", "url": "https://www.p-world.co.jp/machine/database/10543", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 彼女、お借りします」", "url": "https://p-town.dmm.com/machines/5065", "checked_at": "2026-09-24" },
-    { "id": "x_2100470198868549965", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2100470198868549965", "checked_at": "2026-09-27" }
+    { "id": "x_2100470198868549965", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2100470198868549965", "checked_at": "2026-09-27" },
+    { "id": "x_2103792376728944739", "name": "X @naadekoodayoo（さとしお）", "url": "https://x.com/naadekoodayoo/status/2103792376728944739", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -265,7 +266,9 @@
     ],
     "hints_source_ids": ["pworld", "ptown"],
     "hints_note": "1GレンCHANCEのシナリオは、引き戻しゾーンで引き戻した場合に再セット（初回扱い）になる。REG中の水着は「高設定濃厚」とだけ記載され下限の設定が不明なため、判別スペックには取り込まない。",
-    "observations": [],
+    "observations": [
+      { "label": "設定6濃厚台の実戦値（X）", "detail": "全台設定6濃厚とされる4台の集計：平均8,933G・平均差枚+3,658枚・出率113.7%・勝率75.0%（3/4台）。サンプルは少ない。", "official": false, "source_ids": ["x_2103792376728944739"] }
+    ],
     "pending": [
       { "label": "エンディング中のボイス", "status": "調査中", "note": "レア役成立時のPUSHで設定示唆ボイスが発生するが、内容は調査中。" },
       { "label": "REG中キャラ紹介の水着・肺魚パターン", "status": "調査中", "note": "全15パターンのうち一部のみ公表。" }
