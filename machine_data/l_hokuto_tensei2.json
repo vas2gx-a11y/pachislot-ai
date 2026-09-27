@@ -10,7 +10,8 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 北斗の拳 転生の章2」", "url": "https://www.p-world.co.jp/machine/database/10370", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 北斗の拳 転生の章2」", "url": "https://p-town.dmm.com/machines/4909", "checked_at": "2026-09-25" },
     { "id": "x_2007645857919971599", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2007645857919971599", "checked_at": "2026-09-27" },
-    { "id": "x_2030453667925721294", "name": "X @EVdeUtsu（期待値で打つ人）", "url": "https://x.com/EVdeUtsu/status/2030453667925721294", "checked_at": "2026-09-27" }
+    { "id": "x_2030453667925721294", "name": "X @EVdeUtsu（期待値で打つ人）", "url": "https://x.com/EVdeUtsu/status/2030453667925721294", "checked_at": "2026-09-27" },
+    { "id": "x_2010819109861351595", "name": "X @smiledokidoki87（ともや）", "url": "https://x.com/smiledokidoki87/status/2010819109861351595", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -197,7 +198,8 @@
     "hints_source_ids": ["pworld", "ptown"],
     "hints_note": "両サイドランプは滞在モードを示唆し、後からモードと矛盾したと分かったときだけ設定示唆になるため判別スペックには取り込まない。トロフィーは設定5・6を8000G回しても20%前後しか出ない。",
     "observations": [
-      { "label": "内部状態移行", "detail": "伝承モード終了時や低確中のレア役で、高設定ほど通常・高確へ移行しやすい（伝承モード終了時の低確: 設定1 71.9% / 設定6 39.1%）。状態は見えないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] }
+      { "label": "内部状態移行", "detail": "伝承モード終了時や低確中のレア役で、高設定ほど通常・高確へ移行しやすい（伝承モード終了時の低確: 設定1 71.9% / 設定6 39.1%）。状態は見えないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "設定6の当選あべし（X）", "detail": "設定6はほぼ896あべしを超えずに当たる。超えたら黄色信号（終日で1000あべし超えが2回あった台もある）。896あべし付近までは連れていかれることが多い。", "official": false, "source_ids": ["x_2010819109861351595"] }
     ],
     "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
   },

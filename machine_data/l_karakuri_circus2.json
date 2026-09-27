@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ からくりサーカス2」", "url": "https://www.p-world.co.jp/machine/database/10485", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ からくりサーカス2」", "url": "https://p-town.dmm.com/machines/5019", "checked_at": "2026-09-25" },
-    { "id": "x_2074086762197209120", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2074086762197209120", "checked_at": "2026-09-27" }
+    { "id": "x_2074086762197209120", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/2074086762197209120", "checked_at": "2026-09-27" },
+    { "id": "x_2075190410331488723", "name": "X @slotiger1211（スロタイガー）", "url": "https://x.com/slotiger1211/status/2075190410331488723", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -224,7 +225,9 @@
     ],
     "hints_source_ids": ["pworld", "ptown"],
     "hints_note": "激情ジャッジのシナリオ番号はP-WORLDとDMMぱちタウンで振り方が逆になっているため、1人目のキャラで区別している（1人目のキャラと選択率は両出典で一致）。踊れ!オリンピアの「+77」は設定示唆ではなくトータル300枚上乗せ濃厚。",
-    "observations": [],
+    "observations": [
+      { "label": "設定5・6濃厚台のCZ・AT直撃（X）", "detail": "約25万Gの集計で、CZ（女神）確率は設定5・6濃厚 1/387.8、推定低設定 1/375.3とほぼ差がない。一方でAT直撃は1/1087・1/1923と差が大きく、CZよりモードC・D移行（AT直撃）を重視するのがよいとの見立て。", "official": false, "source_ids": ["x_2075190410331488723"] }
+    ],
     "pending": []
   },
 

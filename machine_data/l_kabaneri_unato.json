@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 甲鉄城のカバネリ 海門(うなと)決戦」", "url": "https://www.p-world.co.jp/machine/database/10399", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 甲鉄城のカバネリ 海門（うなと）決戦」", "url": "https://p-town.dmm.com/machines/4930", "checked_at": "2026-09-25" },
-    { "id": "x_2044665051978817792", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2044665051978817792", "checked_at": "2026-09-27" }
+    { "id": "x_2044665051978817792", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2044665051978817792", "checked_at": "2026-09-27" },
+    { "id": "x_2088056731566035179", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2088056731566035179", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -254,7 +255,8 @@
     "hints_note": "ST終了画面の設定6濃厚画面はP-WORLDでは「無名&菖蒲」、DMMぱちタウンでは「水着」と表記。美馬・設定6画面・トロフィーは当日の消化G数で出現率が変わる（5001〜8000Gで上がる）。",
     "observations": [
       { "label": "景之STループ", "detail": "高設定ほど景之STのループ（景之ST後の次回STも景之ST）に当選しやすい（数値は未公表）。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "CZ当選率", "detail": "高設定ほど高いとされる（数値は未公表）。", "official": true, "source_ids": ["ptown"] }
+      { "label": "CZ当選率", "detail": "高設定ほど高いとされる（数値は未公表）。", "official": true, "source_ids": ["ptown"] },
+      { "label": "周期別の当選・発光率（X）", "detail": "3周期目の当選率は設定1 約18%・設定6 約37%、4周期目は約33〜34%・約47%で、3〜4周期での当選が多い台は高設定寄り。単色発光率は上で約1/7・下で約1/15（実戦値）で上下を見分ける。", "official": false, "source_ids": ["x_2088056731566035179"] }
     ],
     "pending": [{ "label": "有利区間・ツラヌキ条件", "status": "情報確認中", "note": "今回確認した出典に記載なし。" }]
   },

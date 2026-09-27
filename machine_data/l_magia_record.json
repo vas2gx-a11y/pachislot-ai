@@ -12,7 +12,8 @@
     { "id": "x_1909495215574155538", "name": "X @velmot_slot（べるもっと【元専業】）", "url": "https://x.com/velmot_slot/status/1909495215574155538", "checked_at": "2026-09-27" },
     { "id": "x_1909623421782360524", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1909623421782360524", "checked_at": "2026-09-27" },
     { "id": "x_1912786859534741808", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/1912786859534741808", "checked_at": "2026-09-27" },
-    { "id": "x_1911657502569320473", "name": "X @slotdiary7（スロ手帳）", "url": "https://x.com/slotdiary7/status/1911657502569320473", "checked_at": "2026-09-27" }
+    { "id": "x_1911657502569320473", "name": "X @slotdiary7（スロ手帳）", "url": "https://x.com/slotdiary7/status/1911657502569320473", "checked_at": "2026-09-27" },
+    { "id": "x_1929549733070028822", "name": "X @_kubonnu_（クボンヌ）", "url": "https://x.com/_kubonnu_/status/1929549733070028822", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -229,7 +230,8 @@
     "hints_note": "ストーリー話数順はP-WORLDのパターン⑬〜⑱（5話から始まる順番）を話数で表記した。ユニバプレートはDMMぱちタウンの実戦上の示唆。",
     "observations": [
       { "label": "魔法少女モード移行率", "detail": "高設定ほどいろは以外のモードへ移行しやすい（有利区間移行時・AT終了時のいろは: 設定1 75.0% / 設定6 50.0%）。モードは見た目で確定できないため判別には使わない。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "みたまボーナス「発展」選択時のAT当選率", "detail": "ランク2: 設定1 0.8% → 設定6 7.8%、ランク3: 5.1% → 12.5%。ランクの判別方法が明確でないため判別には使わない。", "official": true, "source_ids": ["pworld"] }
+      { "label": "みたまボーナス「発展」選択時のAT当選率", "detail": "ランク2: 設定1 0.8% → 設定6 7.8%、ランク3: 5.1% → 12.5%。ランクの判別方法が明確でないため判別には使わない。", "official": true, "source_ids": ["pworld"] },
+      { "label": "設定6の打感（X）", "detail": "設定6はボーナス初当りの軽さだけで早めに気付けるタイプで、演出頼みではない。ただしボーナス中の引きが弱いとAT間でハマり、6でも一時的に大きく凹むことは珍しくない。", "official": false, "source_ids": ["x_1929549733070028822"] }
     ],
     "pending": []
   },

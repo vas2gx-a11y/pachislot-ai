@@ -10,7 +10,8 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「Lパチスロ 炎炎ノ消防隊2」", "url": "https://www.p-world.co.jp/machine/database/10415", "checked_at": "2026-09-25" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「Lパチスロ 炎炎ノ消防隊2」", "url": "https://p-town.dmm.com/machines/4926", "checked_at": "2026-09-25" },
     { "id": "x_2024837188815626433", "name": "X @yagami8192（ハイエナ専業@夜神月）", "url": "https://x.com/yagami8192/status/2024837188815626433", "checked_at": "2026-09-27" },
-    { "id": "x_2021052525122814411", "name": "X @dejikame_blog（でじかめ）", "url": "https://x.com/dejikame_blog/status/2021052525122814411", "checked_at": "2026-09-27" }
+    { "id": "x_2021052525122814411", "name": "X @dejikame_blog（でじかめ）", "url": "https://x.com/dejikame_blog/status/2021052525122814411", "checked_at": "2026-09-27" },
+    { "id": "x_2034605172891263212", "name": "X @washo613（わしょう@ぱっすろたいむ）", "url": "https://x.com/washo613/status/2034605172891263212", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -223,7 +224,8 @@
     "hints_note": "REG中のキャラ紹介の法則はDMMぱちタウンの整理（P-WORLDのシナリオ表とも一致）。伝導者④のラストのキャラはP-WORLDでは森羅（シンラ）、DMMぱちタウンではショウとしており食い違う（どちらも設定5以上濃厚）。ボーナス終了画面は店長カスタムで表示タイミングを変えられる（1000G区切り）。",
     "observations": [
       { "label": "伝導者の罠の十字目変換", "detail": "リプレイ小V時の十字目変換発生率は設定1 約42% / 高設定 約50%、変換時のボーナス期待度は約30% / 約40%。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "炎炎ループ確率・炎炎大戦当選率", "detail": "高設定ほど高い（数値は未公表）。", "official": true, "source_ids": ["ptown"] }
+      { "label": "炎炎ループ確率・炎炎大戦当選率", "detail": "高設定ほど高い（数値は未公表）。", "official": true, "source_ids": ["ptown"] },
+      { "label": "設定6の実戦成績（X）", "detail": "設定6の11台で勝率45.5%（5/11）・出率105.5%・万枚突破率9.1%。設定6でも冷遇から抜けられず負けることが多いという声が多い。", "official": false, "source_ids": ["x_2034605172891263212"] }
     ],
     "pending": []
   },

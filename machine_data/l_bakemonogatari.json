@@ -10,7 +10,8 @@
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ 化物語」", "url": "https://www.p-world.co.jp/machine/database/10358", "checked_at": "2026-09-27" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ 化物語」", "url": "https://p-town.dmm.com/machines/4898", "checked_at": "2026-09-27" },
     { "id": "x_1999050032084095224", "name": "X @kamitan8192（神たん@パチスロ松下村塾）", "url": "https://x.com/kamitan8192/status/1999050032084095224", "checked_at": "2026-09-27" },
-    { "id": "x_2000194214324474310", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/2000194214324474310", "checked_at": "2026-09-27" }
+    { "id": "x_2000194214324474310", "name": "X @katigumisishou（ポラーマン＠スロプロ）", "url": "https://x.com/katigumisishou/status/2000194214324474310", "checked_at": "2026-09-27" },
+    { "id": "x_2001878542792200312", "name": "X @maga_mobile2000（パチマガスロマガMobile【公式】）", "url": "https://x.com/maga_mobile2000/status/2001878542792200312", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -205,7 +206,8 @@
     "hints_note": "AT終了画面のキャラ名はP-WORLDがひらがな（こよみ・まよい・するが・なでこ・つばさ・しのぶ・メメ）、DMMぱちタウンが漢字（阿良々木・真宵・駿河・撫子・翼・忍・忍野）で表記。忍はP-WORLDでは「設定2or4or6濃厚」、DMMぱちタウンでは「偶数設定濃厚」（同じ意味）。サミートロフィーの出現率は消化ゲーム数帯で変わり、5001〜8000Gは高設定示唆系が出やすい。",
     "observations": [
       { "label": "弱チェリーのAT直撃当選率", "detail": "0.4% / 0.8% / 1.3% / 2.1% / 2.9% / 3.8%（設定1〜6）。当選時は倍倍CHANCEも濃厚。", "official": true, "source_ids": ["pworld", "ptown"] },
-      { "label": "レア役からのCZ当選率", "detail": "通常中のスイカ 2.5%〜5.0%、強チェリー・チャンス目 30.0%〜34.2%、高確中のスイカ 30.0%〜34.2%（設定1〜6）。内部状態が見えないので直接は使えない。", "official": true, "source_ids": ["pworld", "ptown"] }
+      { "label": "レア役からのCZ当選率", "detail": "通常中のスイカ 2.5%〜5.0%、強チェリー・チャンス目 30.0%〜34.2%、高確中のスイカ 30.0%〜34.2%（設定1〜6）。内部状態が見えないので直接は使えない。", "official": true, "source_ids": ["pworld", "ptown"] },
+      { "label": "設定6のスイカ確率・AT終了画面（X）", "detail": "パチマガスロマガの調査速報で、設定6のスイカは約1/70、AT終了画面は約40%でデフォルト以外が出るとの見立て（いずれも疑問形の速報値）。", "official": false, "source_ids": ["x_2001878542792200312"] }
     ],
     "pending": []
   },

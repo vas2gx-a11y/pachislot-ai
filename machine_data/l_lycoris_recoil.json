@@ -9,7 +9,8 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ リコリス・リコイル」", "url": "https://www.p-world.co.jp/machine/database/10503", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ リコリス・リコイル」(2026/09/24更新)", "url": "https://p-town.dmm.com/machines/5033", "checked_at": "2026-09-24" },
-    { "id": "x_2096911483003400290", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2096911483003400290", "checked_at": "2026-09-27" }
+    { "id": "x_2096911483003400290", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2096911483003400290", "checked_at": "2026-09-27" },
+    { "id": "x_2103715052180439108", "name": "X @yossy_pachislot（よっしー）", "url": "https://x.com/yossy_pachislot/status/2103715052180439108", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -314,7 +315,8 @@
         "detail": "高設定ほど優遇。直撃・850G天井以外のRUSH突入時に、すべての才能レベルが2かつG数HOLDなら獲得していた目安。",
         "official": true,
         "source_ids": ["pworld", "ptown"]
-      }
+      },
+      { "label": "設定6で優遇されていそうな点（X・未解析）", "detail": "未解析の予想として：100GゾーンのCZ当選（天井短縮時以外）、弱レア役変換からのCZ当選（実戦上40%程度）、ボーナス中の7を狙えからの200pt獲得、終了画面はデフォルト50%以下が目安。本人も「話半分で」としている。", "official": false, "source_ids": ["x_2103715052180439108"] }
     ],
     "pending": [
       { "label": "RUSH直撃・ファーストリコリスの設定2〜5", "status": "調査中", "note": "設定1と6のみ公表。" },

@@ -9,7 +9,10 @@
   "sources": [
     { "id": "pworld", "name": "P-WORLD 機種データベース「スマスロ ミリオンゴッド‐神々の軌跡‐」", "url": "https://www.p-world.co.jp/machine/database/10424", "checked_at": "2026-09-24" },
     { "id": "ptown", "name": "DMMぱちタウン 機種ページ「スマスロ ミリオンゴッド-神々の軌跡-」", "url": "https://p-town.dmm.com/machines/4961", "checked_at": "2026-09-24" },
-    { "id": "x_2046061161574170809", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2046061161574170809", "checked_at": "2026-09-27" }
+    { "id": "x_2046061161574170809", "name": "X @god_072（スロット優良情報を拡散する『まいちゃん』）", "url": "https://x.com/god_072/status/2046061161574170809", "checked_at": "2026-09-27" },
+    { "id": "x_2074352624405733503", "name": "X @haienatuushin（ハイエナ通信）", "url": "https://x.com/haienatuushin/status/2074352624405733503", "checked_at": "2026-09-27" },
+    { "id": "x_2086079956149486024", "name": "X @gori_slot_（ゴリスロ）", "url": "https://x.com/gori_slot_/status/2086079956149486024", "checked_at": "2026-09-27" },
+    { "id": "x_2065353116552183922", "name": "X @maga_mobile2000（パチマガスロマガMobile【公式】）", "url": "https://x.com/maga_mobile2000/status/2065353116552183922", "checked_at": "2026-09-27" }
   ],
 
   "basic": {
@@ -211,7 +214,8 @@
         "detail": "ハズレ・上段青7などでもGGを抽選し、設定6が最も高い（0.04%）。値が小さく、表モードも見えないため判別には使わない。",
         "official": true,
         "source_ids": ["pworld"]
-      }
+      },
+      { "label": "押し順黄7・15枚役（X）", "detail": "15枚役（押し順ナビあり）のカウントが設定6判別の軸とされる。設定6を1万G回した例では押し順黄7が1/100より軽く、低設定と比べて別格だったとの報告。", "official": false, "source_ids": ["x_2074352624405733503", "x_2086079956149486024", "x_2065353116552183922"] }
     ],
     "pending": [
       { "label": "青7連続時のGG当選率（設定3〜6）", "status": "調査中", "note": "設定1・2のみ公表。" },
