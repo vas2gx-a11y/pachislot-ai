@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, collapsible_card, empty_state, back_link %}
+
+{% block title %}パチンコ期待値・振り返り{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('ai') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">パチンコ期待値・振り返り</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .input-big { font-size: 1.125rem; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+    .ev-plus { color: #15803d; }
+    .ev-minus { color: #b91c1c; }
+    .feedback { white-space: pre-wrap; line-height: 1.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    {# 回転率計算の入力(この端末に残っているもの)をそのまま使う。ここでは回転数や投資を入れ直させない #}
+    <div id="ev-empty" class="hidden">
+        {{ empty_state('calculator', '回転率計算にまだ入力がありません。打ち始めたら回転率計算で投資と回転数を入れると、ここに期待値が出ます。') }}
+    </div>
+
+    <section id="ev-card" class="card card-body hidden">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <div class="min-w-0">
+                <div class="text-xs text-gray-500">回転率計算の入力から</div>
+                <div class="font-display font-bold text-gray-900 truncate" id="ev-machine">—</div>
+                <div class="text-xs text-gray-500 font-mono tabular-nums" id="ev-condition">—</div>
+            </div>
+            <a href="{{ url_for('pachinko.calc') }}" class="btn btn-ghost btn-sm gap-1">{{ icon('calculator') }} 回転率計算へ</a>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+            <div>
+                <div class="text-xs text-gray-500">回転率 / ボーダー</div>
+                <div class="font-mono tabular-nums font-bold text-lg" id="ev-rate">—</div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-500">1回転あたりの期待値</div>
+                <div class="font-mono tabular-nums font-bold text-lg" id="ev-per-spin">—</div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-500">ここまでの仕事量</div>
+                <div class="font-mono tabular-nums font-bold text-lg" id="ev-work">—</div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-500">時給（この回転率が続いたら）</div>
+                <div class="font-mono tabular-nums font-bold text-lg" id="ev-hourly">—</div>
+            </div>
+        </div>
+
+        {# 「あと何時間打つか」で今日の見込みが変わるので、残り時間は手で入れる #}
+        <div class="rounded-lg bg-gray-50 p-3 mt-4">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <div class="text-xs text-gray-500">残り時間を打った場合の期待値</div>
+                    <div class="font-mono tabular-nums font-extrabold text-3xl" id="ev-remaining">—</div>
+                    <div class="text-xs text-gray-500 font-mono tabular-nums">今日の合計見込み <strong id="ev-total">—</strong></div>
+                </div>
+                <p class="text-sm font-bold" id="ev-verdict"></p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mt-3">
+                <div>
+                    <label class="label" for="ev-hours">残り時間（時間）</label>
+                    <input type="number" inputmode="decimal" step="0.5" min="0" id="ev-hours" class="input input-big">
+                </div>
+                <div>
+                    <label class="label" for="ev-sph">1時間の通常回転</label>
+                    <input type="number" inputmode="numeric" step="10" min="1" id="ev-sph" class="input input-big">
+                </div>
+                <div>
+                    <label class="label" for="ev-cash">現金の割合（%）</label>
+                    <input type="number" inputmode="numeric" step="10" min="0" max="100" id="ev-cash" class="input input-big">
+                </div>
+            </div>
+            <p class="hint">
+                期待値 ＝ 1000 ÷ ボーダー − 1000 ÷ 回転率（持ち玉で打つぶんは 貸玉 ÷ 交換玉数 を掛けたコスト）。
+                非等価の店では持ち玉で打つほど有利になるので、現金の割合を下げると期待値が上がります。
+                1時間の通常回転は大当り中を除いた目安（ミドルでおよそ200回転）です。
+            </p>
+        </div>
+    </section>
+
+    {% call card("ai", "稼働を保存してAIに振り返ってもらう", None, "bg-blue-50",
+         "回転率計算の区間（大当り・台移動で区切った単位）と交換率を保存し、過去の稼働と比べてAIが改善点を出します。勝ち負けではなく期待値で評価します。") %}
+    <div class="grid gap-3 md:grid-cols-3">
+        <div class="md:col-span-1">
+            <label class="label" for="rv-store">店舗</label>
+            <input type="text" id="rv-store" class="input" list="rv-store-list" placeholder="例 楽園池袋">
+            <datalist id="rv-store-list">
+                {% for name in store_names %}<option value="{{ name }}">{% endfor %}
+            </datalist>
+        </div>
+        <div>
+            <label class="label" for="rv-result">収支（円・任意）</label>
+            <input type="number" inputmode="numeric" step="1000" id="rv-result" class="input" placeholder="例 -12000">
+        </div>
+        <div>
+            <label class="label" for="rv-note">メモ（任意）</label>
+            <input type="text" id="rv-note" class="input" maxlength="500" placeholder="例 13時から回らなくなった">
+        </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mt-4">
+        <button type="button" class="btn btn-primary gap-1" id="rv-submit">{{ icon('save') }} 保存してAIに振り返ってもらう</button>
+        <span class="text-xs text-gray-500" id="rv-status"></span>
+    </div>
+    <p class="hint">同じ稼働（回転率計算をリセットするまで）は何度保存しても1件として上書きされます。</p>
+    <div id="rv-feedback" class="hidden mt-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm text-gray-800 feedback"></div>
+    {% endcall %}
+
+    {% if store_summary %}
+    {% call card("store", "店舗別の集計", None, "bg-gray-100",
+         "保存した稼働を店舗ごとにまとめています。交換率の良い順。同じ回転率でも交換率が悪い店ほどボーダーが上がり、期待値は下がります。") %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs md:text-sm font-mono tabular-nums">
+            <thead class="text-gray-500">
+                <tr class="text-left">
+                    <th class="py-1 pr-2 font-sans">店舗</th>
+                    <th class="py-1 pr-2 text-right font-sans">回数</th>
+                    <th class="py-1 pr-2 font-sans">交換率</th>
+                    <th class="py-1 pr-2 text-right font-sans">回転率−ボーダー</th>
+                    <th class="py-1 pr-2 text-right font-sans">仕事量</th>
+                    <th class="py-1 text-right font-sans">収支</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for r in store_summary %}
+                <tr>
+                    <td class="py-1.5 pr-2 font-sans">{{ r.store_name }}</td>
+                    <td class="py-1.5 pr-2 text-right">{{ r.count }}</td>
+                    <td class="py-1.5 pr-2 font-sans whitespace-nowrap">{{ r.exchange_label }}</td>
+                    <td class="py-1.5 pr-2 text-right {% if r.avg_border_diff is not none %}{{ 'ev-plus' if r.avg_border_diff >= 0 else 'ev-minus' }}{% endif %}">
+                        {{ '—' if r.avg_border_diff is none else '%+.1f' | format(r.avg_border_diff) }}</td>
+                    <td class="py-1.5 pr-2 text-right {{ 'ev-plus' if r.work_yen >= 0 else 'ev-minus' }}">{{ '{:+,}'.format(r.work_yen) }}円</td>
+                    <td class="py-1.5 text-right">{{ '—' if r.result_yen is none else '{:+,}円'.format(r.result_yen) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endcall %}
+    {% endif %}
+
+    {% if sessions %}
+    {% call collapsible_card("memo", "これまでの稼働と振り返り（新しい順）", True) %}
+    <ul class="divide-y divide-gray-100">
+        {% for s in sessions %}
+        <li class="py-3">
+            <details>
+                <summary class="cursor-pointer list-none">
+                    <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span class="text-sm font-bold text-gray-900">{{ s.date[:16] }} {{ s.store_name or '店舗未入力' }}</span>
+                        <span class="text-xs font-mono tabular-nums {{ 'ev-plus' if (s.work_yen or 0) >= 0 else 'ev-minus' }}">
+                            仕事量 {{ '{:+,.0f}'.format(s.work_yen or 0) }}円</span>
+                    </div>
+                    <div class="text-xs text-gray-500 font-mono tabular-nums">
+                        {{ s.machine_name }} ・ {{ '%.1f' | format(s.rate or 0) }}回/千円（ボーダー{{ '%.1f' | format(s.border or 0) }}）
+                        ・ ボーダー未満 {{ '%.0f' | format((s.below_border_ratio or 0) * 100) }}%
+                        {% if s.result_yen is not none %} ・ 収支 {{ '{:+,.0f}'.format(s.result_yen) }}円{% endif %}
+                    </div>
+                </summary>
+                {% if s.ai_feedback %}
+                <div class="mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-800 feedback" data-markdown>{{ s.ai_feedback }}</div>
+                {% else %}
+                <p class="hint">AIの振り返りはありません（保存時にAIが応答しませんでした）。</p>
+                {% endif %}
+                {% if s.note %}<p class="hint">メモ: {{ s.note }}</p>{% endif %}
+            </details>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endcall %}
+    {% endif %}
+
+    {{ back_link(url_for('pachinko.calc'), "回転率計算に戻る") }}
+</div>
+</main>
+
+<script src="{{ url_for('static', filename='js/pachinko_ev.js') }}"></script>
+<script>
+(function () {
+    const MACHINES = {{ machines | tojson }};
+    const BORDER_POINTS = {{ border_points | tojson }};
+    // 回転率計算(pachinko_calc.html)が書いている入力。こちらからは読むだけで書き換えない
+    const CALC_KEY = 'pachinko_calc_v1';
+    // この画面だけで使う入力(残り時間など)。回転率計算とは分けて持つ
+    const REVIEW_KEY = 'pachinko_review_v1';
+    const API_URL = {{ url_for('pachinko.review_api') | tojson }};
+    const EV = window.PachinkoEV;
+    const num = EV.num;
+    const $ = function (id) { return document.getElementById(id); };
+
+    function readJson(key) {
+        try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+    }
+    const calc = readJson(CALC_KEY);
+    const prefs = Object.assign({ hours: 3, spinsPerHour: 200, cashRatio: 100, storeName: '' }, readJson(REVIEW_KEY) || {});
+    function savePrefs() {
+        try { localStorage.setItem(REVIEW_KEY, JSON.stringify(prefs)); } catch (e) { /* 保存できなくても計算は続ける */ }
+    }
+
+    function yen(value, digits) {
+        if (value === null || !isFinite(value)) return '—';
+        const text = digits ? value.toFixed(digits) : Math.round(value).toLocaleString();
+        return (value >= 0 ? '+' : '') + text + '円';
+    }
+    function tone(el, value) {
+        el.classList.remove('ev-plus', 'ev-minus');
+        if (value !== null && isFinite(value)) el.classList.add(value >= 0 ? 'ev-plus' : 'ev-minus');
+    }
+    function exchangeLabel(balls) {
+        if (!balls) return '交換率不明';
+        const name = Math.abs(balls - EV.DEFAULT_LEND) < 0.01 ? '等価' : (balls / 10) + '玉交換';
+        return name + '（1玉' + (1000 / balls).toFixed(2) + '円）';
+    }
+
+    /*
+     * 回転率計算の状態から、保存済みの区間 + いま打っている区間を並べる。
+     * いま打っている区間は「今」で終わったものとして扱う(保存を押した時点までの稼働)。
+     */
+    function currentSegments() {
+        const lend = num(calc.lend) || EV.DEFAULT_LEND;
+        const segments = (Array.isArray(calc.segments) ? calc.segments : []).map(function (s) {
+            return { spins: num(s.spins), investK: num(s.investK), startedAt: s.startedAt || null, endedAt: s.endedAt || null };
+        });
+        const spins = Math.max(0, num(calc.current) - num(calc.start));
+        const investK = calc.unit === 'ball' ? num(calc.invest) / lend : num(calc.invest);
+        if (spins || investK) {
+            segments.push({
+                spins: spins, investK: investK,
+                startedAt: calc.segmentStartedAt || null,
+                endedAt: calc.segmentStartedAt ? new Date().toISOString() : null,
+            });
+        }
+        return segments;
+    }
+
+    function currentBorder(machine) {
+        if (calc.borderManual !== '' && num(calc.borderManual) > 0) return num(calc.borderManual);
+        return machine ? EV.borderAt(machine, num(calc.exchangeBalls) || EV.DEFAULT_LEND, BORDER_POINTS) : null;
+    }
+
+    // 同じ稼働(回転率計算をリセットするまで)は同じIDにして、保存し直しても行が増えないようにする。
+    // 最初の区間の打ち始め時刻から作るので、別の端末や別のタブから保存しても同じ稼働なら同じIDになる
+    function sessionId(segments) {
+        const first = segments.find(function (s) { return s.startedAt; });
+        if (first) return 'pc-' + first.startedAt.replace(/[^0-9]/g, '').slice(0, 17);
+        if (!prefs.fallbackId) { prefs.fallbackId = 'pc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); savePrefs(); }
+        return prefs.fallbackId;
+    }
+
+    function render() {
+        const segments = calc ? currentSegments() : [];
+        const hasData = segments.some(function (s) { return s.spins || s.investK; });
+        $('ev-empty').classList.toggle('hidden', hasData);
+        $('ev-card').classList.toggle('hidden', !hasData);
+        if (!hasData) return;
+
+        const machine = MACHINES.find(function (m) { return m.machine_id === calc.machineId; }) || null;
+        const border = currentBorder(machine);
+        const exchangeBalls = num(calc.exchangeBalls) || EV.DEFAULT_LEND;
+        const summary = EV.segmentSummary(segments, border);
+        const ev = EV.evPerSpin(summary.rate, border, exchangeBalls, num(calc.lend), num(prefs.cashRatio) / 100);
+
+        $('ev-machine').textContent = machine ? machine.name : '機種未選択（ボーダー手入力）';
+        $('ev-condition').textContent = exchangeLabel(exchangeBalls) + ' ・ ' + summary.spins.toLocaleString() + '回転 ・ 投資'
+            + Math.round(summary.investK * 1000).toLocaleString() + '円'
+            + (summary.minutes >= 1 ? ' ・ ' + Math.round(summary.minutes) + '分' : '');
+        $('ev-rate').textContent = (summary.rate === null ? '—' : summary.rate.toFixed(1))
+            + ' / ' + (border ? border.toFixed(1) : '—');
+        tone($('ev-rate'), summary.rate !== null && border ? summary.rate - border : null);
+
+        const sph = num(prefs.spinsPerHour);
+        const work = ev === null ? null : ev * summary.spins;
+        const hourly = ev === null ? null : ev * sph;
+        const remaining = ev === null ? null : ev * sph * num(prefs.hours);
+        $('ev-per-spin').textContent = yen(ev, 2);
+        $('ev-work').textContent = yen(work);
+        $('ev-hourly').textContent = yen(hourly);
+        $('ev-remaining').textContent = yen(remaining);
+        $('ev-total').textContent = work === null ? '—' : yen(work + remaining);
+        [['ev-per-spin', ev], ['ev-work', work], ['ev-hourly', hourly], ['ev-remaining', remaining]].forEach(function (p) {
+            tone($(p[0]), p[1]);
+        });
+
+        let verdict = '';
+        if (!border) verdict = 'ボーダーが分からないため期待値を出せません。回転率計算で機種を選ぶか、ボーダーを手入力してください。';
+        else if (ev >= 0) verdict = 'ボーダー超え。この回転率が続くなら打つほど得です。';
+        else verdict = 'ボーダー未満。続けるほど期待値は減ります。台移動かヤメを検討してください。';
+        $('ev-verdict').textContent = verdict;
+        tone($('ev-verdict'), border ? ev : null);
+    }
+
+    function syncInputs() {
+        $('ev-hours').value = prefs.hours;
+        $('ev-sph').value = prefs.spinsPerHour;
+        $('ev-cash').value = prefs.cashRatio;
+        $('rv-store').value = prefs.storeName || '';
+    }
+
+    [['ev-hours', 'hours'], ['ev-sph', 'spinsPerHour'], ['ev-cash', 'cashRatio']].forEach(function (p) {
+        $(p[0]).addEventListener('input', function () {
+            prefs[p[1]] = p[1] === 'cashRatio' ? Math.min(100, Math.max(0, num(this.value))) : num(this.value);
+            savePrefs(); render();
+        });
+    });
+    $('rv-store').addEventListener('input', function () { prefs.storeName = this.value; savePrefs(); });
+
+    // AIの返答は見出しと太字だけのMarkdownなので、エスケープしたうえで太字だけ効かせる
+    function renderMarkdown(el, text) {
+        const escaped = text.replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+        el.innerHTML = escaped.replace(/^#+\s*/gm, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+    document.querySelectorAll('[data-markdown]').forEach(function (el) { renderMarkdown(el, el.textContent); });
+
+    $('rv-submit').addEventListener('click', async function () {
+        if (!calc) { $('rv-status').textContent = '回転率計算にまだ入力がありません。'; return; }
+        const segments = currentSegments();
+        const button = this;
+        button.disabled = true;
+        $('rv-status').textContent = 'AIが振り返っています…（10〜20秒）';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: sessionId(segments),
+                    machine_id: calc.machineId || '',
+                    exchange_balls: num(calc.exchangeBalls) || EV.DEFAULT_LEND,
+                    lend: num(calc.lend) || EV.DEFAULT_LEND,
+                    border_manual: calc.borderManual || '',
+                    cash_ratio: prefs.cashRatio,
+                    segments: segments,
+                    store_name: $('rv-store').value,
+                    result_yen: $('rv-result').value,
+                    note: $('rv-note').value,
+                }),
+            });
+            const data = await res.json();
+            if (data.error) {
+                $('rv-status').textContent = data.error;
+                return;
+            }
+            $('rv-status').textContent = data.ai_error
+                ? '稼働は保存しましたが、AIの振り返りに失敗しました: ' + data.ai_error
+                : '保存しました。ページを開き直すと店舗別の集計に反映されます。';
+            if (data.feedback) {
+                $('rv-feedback').classList.remove('hidden');
+                renderMarkdown($('rv-feedback'), data.feedback);
+            }
+        } catch (e) {
+            $('rv-status').textContent = '通信に失敗しました。電波の良い場所でもう一度押してください。';
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    syncInputs();
+    render();
+})();
+</script>
+{% endblock %}

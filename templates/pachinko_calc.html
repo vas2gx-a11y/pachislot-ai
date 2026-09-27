@@ -44,6 +44,12 @@
             <span>総回転 <strong id="r-spins">0</strong>回</span>
             <span>投資 <strong id="r-invest">0</strong>円</span>
         </div>
+        {# 回転率がボーダーを上回っていても「いくら得なのか」が分からないと続行の判断がしにくいので、円で出す #}
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs mt-2 pt-2 border-t border-black/10 font-mono tabular-nums">
+            <span>期待値 <strong id="r-ev">—</strong>円/回転</span>
+            <span>ここまでの仕事量 <strong id="r-work">—</strong>円</span>
+            <a href="{{ url_for('pachinko.review') }}" class="underline font-sans">{{ icon('ai') }} 期待値の詳細・AIの振り返り</a>
+        </div>
     </section>
 
     {# 打ちながら何度も触るのは投資と回転数なので、結果のすぐ下に置く(機種・交換率は最初に1回決めるだけ) #}
@@ -132,18 +138,23 @@
 </div>
 </main>
 
+<script src="{{ url_for('static', filename='js/pachinko_ev.js') }}"></script>
 <script>
 (function () {
     // サーバーが正の機種データ。ブラウザ側にコピーは持たず、描画のたびに埋め込む
     const MACHINES = {{ machines | tojson }};
     const BORDER_POINTS = {{ border_points | tojson }};
     const PRESELECT_ID = {{ preselect_id | tojson }};
+    // AI分析のパチンコ期待値・振り返り(/pachinko/review)も同じキーを読むので、名前を変えるときは両方直す
     const STORAGE_KEY = 'pachinko_calc_v1';
+    const EV = window.PachinkoEV;
 
     const $ = function (id) { return document.getElementById(id); };
     const DEFAULT_STATE = {
         machineId: '', exchangeBalls: 250, borderManual: '', lend: 250,
         unit: 'k', invest: 0, start: 0, current: 0, segments: [],
+        // 区間ごとの打ち始め時刻。振り返りで「ボーダーに届いていない時間」を出すために持つ
+        segmentStartedAt: null,
     };
     let state = load();
     state.segments = Array.isArray(state.segments) ? state.segments.slice() : [];
@@ -164,30 +175,18 @@
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* 保存できなくても計算は続ける */ }
     }
 
-    function num(value) {
-        const n = parseFloat(value);
-        return isFinite(n) ? n : 0;
-    }
+    const num = EV.num;
 
     // 投資を千円単位にそろえる(玉数で入れた区間と千円で入れた区間を足せるように)
     function toThousand(invest, unit) {
         return unit === 'ball' ? invest / (num(state.lend) || 250) : invest;
     }
 
-    /*
-     * 交換率(1,000円分を何玉で交換するか)でのボーダーを、登録済みの点を直線で結んで概算する。
-     * 範囲の外は端の2点の傾きで伸ばす。実際は厳密な直線ではないが、店ごとの細かい差を見るには足りる。
-     */
-    function borderAt(machine, balls) {
-        const points = BORDER_POINTS
-            .map(function (p) { return [p.balls, machine[p.key]]; })
-            .filter(function (p) { return p[1]; });
-        if (!points.length) return null;
-        if (points.length === 1) return points[0][1];
-        let i = 0;
-        while (i < points.length - 2 && balls > points[i + 1][0]) i++;
-        const a = points[i], b = points[i + 1];
-        return a[1] + (b[1] - a[1]) * (balls - a[0]) / (b[0] - a[0]);
+    function borderAt(machine, balls) { return EV.borderAt(machine, balls, BORDER_POINTS); }
+
+    // 最初に投資か回転数を入れた時点を、その区間の打ち始めとみなす(台に座ってから入れるまでの時間は数えない)
+    function markStarted() {
+        if (!state.segmentStartedAt) state.segmentStartedAt = new Date().toISOString();
     }
 
     function currentBorder() {
@@ -231,6 +230,11 @@
             $('r-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
             result.classList.add(diff >= 0 ? 'diff-plus' : 'diff-minus');
         }
+        // 回転率計算の画面は投資をすべて現金として扱う(持ち玉の割合は振り返りの画面で入れる)
+        const ev = rate === null || border.value === null ? null
+            : EV.evPerSpin(rate, border.value, state.exchangeBalls, num(state.lend), 1);
+        $('r-ev').textContent = ev === null ? '—' : (ev >= 0 ? '+' : '') + ev.toFixed(2);
+        $('r-work').textContent = ev === null ? '—' : (ev >= 0 ? '+' : '') + Math.round(ev * t.spins).toLocaleString();
 
         $('c-segments').classList.toggle('hidden', !state.segments.length);
         $('c-segment-rows').innerHTML = '';
@@ -269,9 +273,9 @@
     $('c-machine').addEventListener('change', function () { state.machineId = this.value; render(); });
     $('c-border-manual').addEventListener('input', function () { state.borderManual = this.value; render(); });
     $('c-lend').addEventListener('input', function () { state.lend = num(this.value) || 250; syncInputs(); render(); });
-    $('c-invest').addEventListener('input', function () { state.invest = num(this.value); render(); });
+    $('c-invest').addEventListener('input', function () { markStarted(); state.invest = num(this.value); render(); });
     $('c-start').addEventListener('input', function () { state.start = num(this.value); render(); });
-    $('c-current').addEventListener('input', function () { state.current = num(this.value); render(); });
+    $('c-current').addEventListener('input', function () { markStarted(); state.current = num(this.value); render(); });
     $('c-exchange').addEventListener('click', function (e) {
         const chip = e.target.closest('[data-balls]');
         if (!chip) return;
@@ -297,6 +301,7 @@
         syncInputs(); render();
     });
     $('c-invest-plus').addEventListener('click', function () {
+        markStarted();
         state.invest = +(num(state.invest) + step()).toFixed(2); syncInputs(); render();
     });
     $('c-invest-minus').addEventListener('click', function () {
@@ -306,8 +311,13 @@
         const spins = Math.max(0, num(state.current) - num(state.start));
         const investK = toThousand(num(state.invest), state.unit);
         if (!spins && !investK) return;
-        state.segments.push({ spins: spins, investK: investK });
+        state.segments.push({
+            spins: spins, investK: investK,
+            startedAt: state.segmentStartedAt, endedAt: new Date().toISOString(),
+        });
         state.invest = 0; state.start = 0; state.current = 0;
+        // 大当り中は投資も通常回転も無いので、次の区間は次に入力した時点から数える
+        state.segmentStartedAt = null;
         syncInputs(); render();
     });
     $('c-reset').addEventListener('click', function () {
