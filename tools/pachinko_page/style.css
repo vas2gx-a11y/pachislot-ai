@@ -1,0 +1,25 @@
+/*
+  パチンコ機種ページ(単体HTML)で足すCSS。土台は tools/store_page/style.css で、
+  tools/pachinko_build.py が両方をつないで各HTMLの <style> に埋め込む。
+*/
+.pre { white-space: pre-line; word-break: break-all; }
+.rate { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rate-note { display: block; font-size: .75rem; color: var(--sub); font-weight: 400; }
+
+/* ---- 回転率計算 ---- */
+.calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.calc-grid label { display: block; font-size: .75rem; color: var(--sub); margin-bottom: 2px; }
+.calc-grid input, .calc-grid select {
+  width: 100%; font-size: 1.1rem; font-weight: 700; padding: 6px 8px; text-align: right;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.calc-grid select { text-align: left; font-size: .95rem; }
+.calc-result { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.calc-result .big { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.calc-result .diff { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.calc-result.is-plus { border-color: var(--plus); }
+.calc-result.is-plus .diff { color: var(--plus); }
+.calc-result.is-minus { border-color: var(--minus); }
+.calc-result.is-minus .diff { color: var(--minus); }

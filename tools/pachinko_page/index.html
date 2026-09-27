@@ -1,0 +1,48 @@
+{# パチンコ機種の一覧(単体HTML)。tools/pachinko_build.py が全機種から生成する #}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パチンコ機種データ</title>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <h1>パチンコ機種データ</h1>
+        <p class="hero-meta">{{ machines | length }} 機種 ・ ページ生成 {{ generated_at }}</p>
+    </div>
+</header>
+
+<main class="wrap stack">
+    {% if not machines %}<p class="muted">機種がまだありません。</p>{% endif %}
+    {# groupby だとタイプ名の文字順に並び替わるので、ビルド側で決めたタイプの順を保つよう手で束ねる #}
+    {% set ns = namespace(current=None) %}
+    {% for m in machines %}
+    {% set t = m.spec_type or 'その他' %}
+    {% if t != ns.current %}
+    {% if ns.current is not none %}</ul></section>{% endif %}
+    {% set ns.current = t %}
+    <section class="card">
+        <h2>{{ t }}</h2>
+        <ul class="store-list">
+    {% endif %}
+            <li>
+                <a href="{{ m.page_id }}.html">{{ m.name }}</a>
+                <span class="store-sub">
+                    {{ m.maker or 'メーカー未登録' }}
+                    {% if m.hit_prob %} ・ 1/{{ fmt(m.hit_prob) }}{% endif %}
+                    {% if m.rush_continue_rate %} ・ 継続{{ fmt(m.rush_continue_rate) }}%{% endif %}
+                    {% if m.border_equiv %} ・ 等価ボーダー{{ fmt(m.border_equiv) }}回{% endif %}
+                </span>
+            </li>
+    {% if loop.last %}</ul></section>{% endif %}
+    {% endfor %}
+</main>
+
+</body>
+</html>

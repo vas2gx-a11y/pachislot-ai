@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e アサルトリリィ</title>
+<style>
+/*
+  店舗ページ(単体HTML)の共通CSS。tools/store_build.py が各HTMLの <style> に埋め込む。
+  Flask版と見た目を揃えつつ、Tailwindに頼らずこのファイルだけで完結させている
+  (書き出したHTMLを1ファイルだけ開いても崩れないように)。
+*/
+:root {
+  --accent: #0f766e;
+  --bg: #f4f4f5;
+  --card: #fff;
+  --text: #18181b;
+  --sub: #71717a;
+  --line: #e4e4e7;
+  --link: #2563eb;
+  --plus: #059669;
+  --minus: #e11d48;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b; --card: #18181b; --text: #f4f4f5; --sub: #a1a1aa;
+    --line: #27272a; --link: #60a5fa; --plus: #34d399; --minus: #fb7185;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--link); }
+p { margin: 0; }
+code { font-size: .85em; background: var(--bg); padding: 0 .3em; border-radius: 4px; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.stack { display: grid; gap: 16px; padding-top: 16px; padding-bottom: 24px; }
+
+/* ---- 店舗概要 ---- */
+.hero { background: #18181b; color: #fff; border-bottom: 4px solid var(--accent); padding: 20px 0; }
+.hero a { color: #fff; }
+.hero h1 { font-size: 1.6rem; margin: 4px 0 0; line-height: 1.3; }
+.crumb, .hero-meta { font-size: .75rem; opacity: .6; }
+.hero-meta { margin-top: 12px; }
+.hero-addr { font-size: .875rem; opacity: .75; margin-top: 4px; }
+.hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+.hero-stat { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 8px 12px; }
+.hero-stat span { display: block; font-size: .7rem; opacity: .6; }
+.hero-stat strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.hero-stat strong.small { font-size: .85rem; }
+.hero-stat em { font-style: normal; opacity: .5; }
+
+/* ---- 目次(スマホは横スクロール、PCは折り返し) ---- */
+.toc { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.toc-inner { display: flex; gap: 6px; overflow-x: auto; padding-top: 8px; padding-bottom: 8px; scrollbar-width: none; }
+.toc-inner::-webkit-scrollbar { display: none; }
+.toc a { flex-shrink: 0; font-size: .75rem; padding: 2px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--card); color: var(--sub); text-decoration: none; }
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- セクション ---- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; scroll-margin-top: 52px; min-width: 0; }
+.card h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin: 0 0 12px; }
+.card h2::before { content: ""; width: 4px; height: 1.1em; border-radius: 2px; background: var(--accent); }
+
+.kv { width: 100%; border-collapse: collapse; }
+.kv th, .kv td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: .875rem; }
+.kv tr:last-child th, .kv tr:last-child td { border-bottom: 0; }
+.kv th { width: 34%; color: var(--sub); font-weight: 600; }
+.kv td { word-break: break-all; }
+
+.info-list { padding-left: 1.2em; margin: 0; font-size: .875rem; }
+.info-list li { margin: 4px 0; }
+.info-list li::marker { color: var(--accent); }
+
+.dated { border-top: 1px dashed var(--line); padding: 8px 0; font-size: .875rem; }
+.dated:first-child { border-top: 0; padding-top: 0; }
+.dated-date { font-size: .75rem; color: var(--sub); }
+.dated-title { font-weight: 700; }
+.dated-detail { color: var(--sub); margin-top: 2px; }
+.before { color: var(--sub); text-decoration: line-through; word-break: break-all; }
+.after { word-break: break-all; }
+
+.scroll-x { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.num { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .8125rem; }
+.num th, .num td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.num th:first-child, .num td:first-child { text-align: left; }
+.num thead th { color: var(--sub); font-weight: 600; font-size: .75rem; }
+.num td.wrap-cell { white-space: normal; text-align: left; min-width: 10em; }
+.plus { color: var(--plus); }
+.minus { color: var(--minus); }
+
+/* 確認状態。「不明」を目立たせすぎると空欄の多い店舗が読みにくいので、灰色に留める */
+.st-line { margin-top: 4px; }
+.st { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.st-ok { background: #ccfbf1; color: #115e59; }
+.st-check { background: #fef3c7; color: #92400e; }
+.st-none { background: var(--bg); color: var(--sub); }
+.cite { font-size: .7rem; text-decoration: none; }
+
+.muted { color: var(--sub); font-size: .875rem; }
+.hint { color: var(--sub); font-size: .75rem; margin-top: 8px; }
+.chip { display: inline-block; font-size: .7rem; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--sub); }
+.link-chip { display: inline-block; margin-right: 12px; }
+.panel { background: var(--bg); border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .875rem; }
+/* 周年日は店の一番大きい特定日なので、他の特定日と見分けやすいよう赤にする */
+.anniv { color: var(--minus); font-weight: 700; }
+.panel-title { font-size: .75rem; color: var(--sub); margin-bottom: 4px; }
+.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 8px; padding: 12px 16px; font-size: .875rem; }
+.warn ul { margin: 4px 0 0; padding-left: 1.2em; }
+
+.sources { padding-left: 1.4em; margin: 0; font-size: .875rem; }
+.sources li { margin: 6px 0; scroll-margin-top: 60px; }
+.src-date { display: block; font-size: .75rem; color: var(--sub); }
+.src-date .url { word-break: break-all; }
+
+.store-list { list-style: none; margin: 0; padding: 0; }
+.store-list li { padding: 8px 0; border-top: 1px solid var(--line); }
+.store-list li:first-child { border-top: 0; padding-top: 0; }
+.store-list a { font-weight: 700; }
+.store-sub { display: block; font-size: .75rem; color: var(--sub); }
+
+.footer { font-size: .75rem; color: var(--sub); padding-bottom: 32px; }
+
+@media (min-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .hero-stats { grid-template-columns: repeat(4, 1fr); }
+  .toc-inner { flex-wrap: wrap; }
+  .card { padding: 20px; }
+}
+
+/*
+  パチンコ機種ページ(単体HTML)で足すCSS。土台は tools/store_page/style.css で、
+  tools/pachinko_build.py が両方をつないで各HTMLの <style> に埋め込む。
+*/
+.pre { white-space: pre-line; word-break: break-all; }
+.rate { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rate-note { display: block; font-size: .75rem; color: var(--sub); font-weight: 400; }
+
+/* ---- 回転率計算 ---- */
+.calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.calc-grid label { display: block; font-size: .75rem; color: var(--sub); margin-bottom: 2px; }
+.calc-grid input, .calc-grid select {
+  width: 100%; font-size: 1.1rem; font-weight: 700; padding: 6px 8px; text-align: right;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.calc-grid select { text-align: left; font-size: .95rem; }
+.calc-result { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.calc-result .big { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.calc-result .diff { font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.calc-result.is-plus { border-color: var(--plus); }
+.calc-result.is-plus .diff { color: var(--plus); }
+.calc-result.is-minus { border-color: var(--minus); }
+.calc-result.is-minus .diff { color: var(--minus); }
+
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="wrap">
+        <p class="crumb"><a href="index.html">パチンコ機種データ</a></p>
+        <h1>e アサルトリリィ</h1>
+        <p class="hero-addr">ビスティ ・ スマパチ</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><span>大当り確率</span><strong>1/164.4</strong></div>
+            <div class="hero-stat"><span>RUSH突入率</span><strong>25.3%</strong></div>
+            <div class="hero-stat"><span>RUSH継続率</span><strong>80%</strong></div>
+            <div class="hero-stat"><span>ボーダー（等価）</span><strong>17.5回</strong></div>
+        </div>
+    </div>
+</header>
+
+<nav class="toc"><div class="wrap toc-inner">
+    <a href="#calc">回転率計算</a><a href="#spec">スペック</a><a href="#border">ボーダー</a>
+    <a href="#yutime">遊タイム・朝一</a><a href="#technique">止め打ち</a><a href="#effects">演出の期待度</a><a href="#note">メモ・出典</a>
+</div></nav>
+
+<main class="wrap stack">
+
+    <section class="card" id="calc">
+        <h2>回転率計算</h2>
+        <div class="calc-grid">
+            <div><label for="c-invest">投資（千円）</label><input id="c-invest" type="number" inputmode="decimal" step="any" min="0" value="0"></div>
+            <div><label for="c-exchange">交換率</label>
+                <select id="c-exchange">
+                    <option value="250">等価（25玉）</option>
+                    <option value="280">28玉</option>
+                    <option value="300">30玉</option>
+                    <option value="330">33玉</option>
+                </select>
+            </div>
+            <div><label for="c-start">打ち始め回転数</label><input id="c-start" type="number" inputmode="numeric" min="0" value="0"></div>
+            <div><label for="c-current">現在回転数</label><input id="c-current" type="number" inputmode="numeric" min="0" value="0"></div>
+        </div>
+        <div class="calc-result" id="c-result">
+            <div><div class="muted">千円あたり</div><div class="big" id="c-rate">—</div></div>
+            <div style="text-align:right"><div class="muted">ボーダー <span id="c-border">—</span></div><div class="diff" id="c-diff">—</div></div>
+        </div>
+        <p class="hint">
+            30玉などの登録していない交換率は、登録済みのボーダーを直線で結んだ概算です。
+            大当りで回転数が0に戻るたびに区切って積み上げたいときは、アプリの回転率計算を使ってください。
+        </p>
+        <script>
+        (function () {
+            var POINTS = [{"balls": 250, "value": 17.5}, {"balls": 280, "value": 18.3}, {"balls": 330, "value": 19.6}];
+            // アプリの回転率計算(templates/pachinko_calc.html)と同じ換算。単体で開けるよう、ここにも持つ
+            function borderAt(balls) {
+                if (POINTS.length === 1) return POINTS[0].value;
+                var i = 0;
+                while (i < POINTS.length - 2 && balls > POINTS[i + 1].balls) i++;
+                var a = POINTS[i], b = POINTS[i + 1];
+                return a.value + (b.value - a.value) * (balls - a.balls) / (b.balls - a.balls);
+            }
+            function n(id) { var v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+            function render() {
+                var invest = n('c-invest'), spins = Math.max(0, n('c-current') - n('c-start'));
+                var border = borderAt(n('c-exchange'));
+                var box = document.getElementById('c-result');
+                document.getElementById('c-border').textContent = border.toFixed(1) + '回';
+                box.classList.remove('is-plus', 'is-minus');
+                if (invest <= 0) {
+                    document.getElementById('c-rate').textContent = '—';
+                    document.getElementById('c-diff').textContent = '—';
+                    return;
+                }
+                var rate = spins / invest, diff = rate - border;
+                document.getElementById('c-rate').textContent = rate.toFixed(1);
+                document.getElementById('c-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
+                box.classList.add(diff >= 0 ? 'is-plus' : 'is-minus');
+            }
+            ['c-invest', 'c-start', 'c-current', 'c-exchange'].forEach(function (id) {
+                document.getElementById(id).addEventListener('input', render);
+            });
+            render();
+        })();
+        </script>
+    </section>
+
+    <section class="card" id="spec">
+        <h2>スペック</h2>
+        <table class="kv"><tbody>
+            <tr><th>大当り確率</th><td>1/164.4</td></tr>
+            <tr><th>RUSH中確率</th><td>1/65.5</td></tr>
+            <tr><th>RUSH突入率</th><td>25.3%</td></tr>
+            <tr><th>RUSH継続率</th><td>80%</td></tr>
+        </tbody></table>
+    </section>
+
+    <section class="card" id="border">
+        <h2>ボーダー（千円あたりの回転数）</h2>
+        <table class="kv"><tbody>
+            <tr><th>等価（25玉）</th><td>17.5回</td></tr>
+            <tr><th>28玉交換</th><td>18.3回</td></tr>
+            <tr><th>33玉交換</th><td>19.6回</td></tr>
+        </tbody></table>
+    </section>
+
+    <section class="card" id="yutime">
+        <h2>遊タイム・朝一</h2>
+        <table class="kv"><tbody>
+            <tr><th>遊タイム発動</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>遊タイム中の時短</th><td><span class="muted">未登録</span></td></tr>
+            <tr><th>遊タイムのメモ</th><td><p class="pre">遊タイム非搭載。</p></td></tr>
+            <tr><th>朝一ランプ・リセット判別</th><td><p class="muted">未登録</p></td></tr>
+        </tbody></table>
+    </section>
+
+    <section class="card" id="technique">
+        <h2>止め打ち・ワンツー打法</h2>
+        <p class="muted">未登録</p>
+    </section>
+
+    <section class="card" id="effects">
+        <h2>演出の期待度</h2>
+        <table class="kv"><tbody>
+            <tr>
+                <th>先百合（カスタム10%）</th>
+                <td class="rate">10%<span class="rate-note">先バレ</span></td>
+            </tr>
+            <tr>
+                <th>先百合（カスタム50%）</th>
+                <td class="rate">50%</td>
+            </tr>
+            <tr>
+                <th>先百合（カスタム80%）</th>
+                <td class="rate">80%</td>
+            </tr>
+            <tr>
+                <th>先百合（カスタムEX）</th>
+                <td class="rate">100%<span class="rate-note">RUSH突入大当り濃厚</span></td>
+            </tr>
+            <tr>
+                <th>先読み予告（カスタム熱）</th>
+                <td class="rate">82%<span class="rate-note">チャンス=約65%</span></td>
+            </tr>
+            <tr>
+                <th>レバブル 白（カスタムOFF）</th>
+                <td class="rate">90%</td>
+            </tr>
+            <tr>
+                <th>赤保留</th>
+                <td class="rate">75%</td>
+            </tr>
+            <tr>
+                <th>金保留</th>
+                <td class="rate">100%<span class="rate-note">大当り濃厚</span></td>
+            </tr>
+        </tbody></table>
+    </section>
+
+    <section class="card" id="note">
+        <h2>メモ・出典</h2>
+        <p class="pre">型式名 eアサルトリリィZ。RUSH中確率の欄は右打ち中のリーチ確率1/65.5（スキル神宿未発動時）。リーチ成立で閃撃ジャッジ（成功期待度約83%）。
+図柄揃い後約25.3%でRUSH（＝LT）。RUSHはST100回転・継続率約80%（リセット含む）。
+ボーダーの他の交換率: 30玉=18.9回、40玉=21.2回。
+導入 2026-09-07。</p>
+        <p class="hint">出典:
+<a href="https://p-town.dmm.com/machines/5075" target="_blank" rel="noopener">https://p-town.dmm.com/machines/5075</a> (2026-09-27確認)        </p>
+    </section>
+
+    <p class="footer">ページ生成 2026-09-27 12:42。このHTMLは機種データから自動で作り直すので、手で直しても次の生成で消えます。</p>
+</main>
+
+</body>
+</html>
