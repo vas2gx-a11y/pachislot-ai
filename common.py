@@ -5118,7 +5118,7 @@ def save_live_chat_result(machine, data):
 # ユーザーも他のデータと同じくシート(users)に置く。人数は数十人程度の想定なので
 # DBを別に立てるほどではなく、置き場所を増やさないほうが管理が楽なため。
 #
-# 分けるのは打った人の持ち物(records / chat_logs / unit_notes)だけ。各行の user_id で持ち主を決め、
+# 分けるのは打った人の持ち物(records / chat_logs / unit_notes / pachinko_photos)だけ。各行の user_id で持ち主を決め、
 # load_records() などが読んだ時点でログイン中のユーザーの行に絞る。呼び出し側は今までどおり
 # load_records() を呼ぶだけで、分離を意識しなくていい(絞り忘れで他人の記録が見える事故を防ぐため)。
 # ホールデータ(日別・台別・年間・旧イベント日)は店の公開情報なので全員で共有し、
@@ -5496,3 +5496,270 @@ def build_api_usage_report(month=None):
         "price_output": price_out,
         "usd_jpy": USD_JPY_RATE,
     }
+
+
+# ---------------------------------------------------------------------------
+# パチンコの釘写真帳(写真と回転率の蓄積)
+# ---------------------------------------------------------------------------
+# 釘の良し悪しをAIに自動判定させると、撮る角度のズレや台ごとのクセで誤った値が出やすい。
+# そこで「同じ機種の基準(ノーマル)写真」と「打った台の写真+実際の回転率」を貯めて、
+# 人が見比べて判断する材料にする。貯まるほど「この開き具合ならボーダーを超える」が自分の基準になる。
+#
+# 写真も記録と同じく打った人の持ち物なので、各行の user_id で分ける。
+# Renderのディスクは揮発性でファイルに置けないため、画像はシートのセルに base64 で入れている。
+# セルは1つ5万文字までなので、画像はブラウザ側で縮めてから送り、PHOTO_IMAGE_COLUMNS 個のセルに分けて書く。
+#   pachinko_photos       … 1枚1行のメタデータ。一覧用の小さなサムネイルもここに入れる
+#                           (一覧を開くたびに画像を1枚ずつ読みに行くと、Sheets APIの上限にすぐ届くため)
+#   pachinko_photo_images … 1枚1行の画像本体。詳細・見比べ画面で開くときだけ、その1行を読む
+PACHINKO_PHOTOS_SHEET_NAME = os.environ.get("PACHINKO_PHOTOS_SHEET_NAME", "pachinko_photos")
+PACHINKO_PHOTOS_HEADERS = [
+    "photo_id", "user_id", "created_at", "date", "machine_id", "machine_name", "kind", "part",
+    "store_name", "machine_number", "spins_per_k", "border", "spins", "invest_yen", "note", "thumb",
+]
+PACHINKO_PHOTO_IMAGES_SHEET_NAME = os.environ.get("PACHINKO_PHOTO_IMAGES_SHEET_NAME", "pachinko_photo_images")
+PHOTO_IMAGE_COLUMNS = 3
+PHOTO_CELL_CHARS = 45000  # セルの上限(5万文字)に余裕を持たせる
+PACHINKO_PHOTO_IMAGES_HEADERS = ["photo_id", "user_id"] + [f"data_{i}" for i in range(1, PHOTO_IMAGE_COLUMNS + 1)]
+PHOTO_MAX_BYTES = PHOTO_CELL_CHARS * PHOTO_IMAGE_COLUMNS * 3 // 4
+PHOTO_THUMB_MAX_CHARS = PHOTO_CELL_CHARS
+
+# 基準写真は「新台時やプロがノーマルと判定した状態」、実戦写真は「打った台+そのときの回転率」
+PHOTO_KINDS = {"normal": "基準（ノーマル）", "play": "実戦"}
+# 釘を見る場所。同じ場所どうしで見比べないと意味がないので、見比べの相手もこれで絞る
+PHOTO_PARTS = ["ヘソ", "寄り", "風車", "道釘", "ジャンプ釘", "スルー", "アタッカー周り", "盤面全体", "その他"]
+
+# 画像本体は開くたびにシートへ読みに行くと遅いので、直近に開いたぶんだけメモリに持つ。
+# Renderの無料プランはメモリが少ないので、枚数で上限を切る(1枚あたり最大100KB程度)
+_PHOTO_IMAGE_CACHE_LIMIT = 60
+_photo_image_cache = {}
+
+
+def get_pachinko_photos_worksheet():
+    return _get_worksheet(PACHINKO_PHOTOS_SHEET_NAME, PACHINKO_PHOTOS_HEADERS, rows=500,
+                          label="pachinko_photosシート")
+
+
+def get_pachinko_photo_images_worksheet():
+    return _get_worksheet(PACHINKO_PHOTO_IMAGES_SHEET_NAME, PACHINKO_PHOTO_IMAGES_HEADERS, rows=500,
+                          label="pachinko_photo_imagesシート")
+
+
+def _to_float_or_none(value):
+    try:
+        return float(str(value).replace(",", "").strip())
+    except (ValueError, TypeError):
+        return None
+
+
+def _decode_jpeg_data_url(value, max_bytes):
+    """
+    ブラウザで縮めた画像(data:image/jpeg;base64,...)を検証して base64 部分を返す。不正なら None。
+    送ってきた文字列をそのままセルに書くので、JPEGとして読めることまで確かめてから通す。
+    """
+    text = str(value or "").strip()
+    prefix = "data:image/jpeg;base64,"
+    if text.startswith(prefix):
+        text = text[len(prefix):]
+    try:
+        raw = base64.b64decode(text, validate=True)
+    except (ValueError, TypeError):
+        return None
+    if not raw.startswith(b"\xff\xd8") or len(raw) > max_bytes:
+        return None
+    return text
+
+
+def _normalize_photo(row):
+    photo = {h: str(row.get(h, "")).strip() for h in PACHINKO_PHOTOS_HEADERS}
+    photo["user_id"] = _row_owner(row)
+    for key in ("spins_per_k", "border", "spins", "invest_yen"):
+        photo[key] = _to_float_or_none(photo[key])
+    if photo["kind"] not in PHOTO_KINDS:
+        photo["kind"] = "play"
+    photo["kind_label"] = PHOTO_KINDS[photo["kind"]]
+    # ボーダーとの差は、写真を撮ったときの交換率のボーダーで見る(店ごとに交換率が違うため)
+    photo["diff"] = (photo["spins_per_k"] - photo["border"]
+                     if photo["spins_per_k"] is not None and photo["border"] is not None else None)
+    return photo
+
+
+def load_pachinko_photos():
+    """ログイン中のユーザーの写真(メタデータ)を、撮った日の新しい順で返す。"""
+    cached = _cache_get("pachinko_photos")
+    if cached is None:
+        try:
+            # 台番号「0012」やサムネイルの文字列が数値に変換されないよう、すべて文字列のまま読む
+            rows = get_pachinko_photos_worksheet().get_all_records(numericise_ignore=["all"])
+        except Exception as e:
+            logger.error(f"釘写真の読み込みエラー: {e}")
+            return []
+        cached = [_normalize_photo(r) for r in rows if str(r.get("photo_id", "")).strip()]
+        cached.sort(key=lambda p: (p["date"], p["created_at"]), reverse=True)
+        _cache_set("pachinko_photos", cached)
+    return _own_rows(cached)
+
+
+def find_pachinko_photo(photo_id):
+    """自分の写真だけを返す(他人の photo_id をURLに入れても見えないように)。"""
+    photo_id = str(photo_id or "").strip()
+    return next((p for p in load_pachinko_photos() if p["photo_id"] == photo_id), None) if photo_id else None
+
+
+def _photo_machine_key(photo):
+    # 機種データに無い機種(機種名だけ入れた写真)も、名前が同じなら同じ機種として束ねる
+    return photo["machine_id"] or photo["machine_name"]
+
+
+def build_photo_album(machine_id=""):
+    """
+    写真帳の一覧。機種ごとに「基準写真」と「実戦写真(回転率の高い順)」に分けて返す。
+
+    実戦写真を回転率順に並べるのは、上から見ていけば「回る台の見た目」と「回らない台の見た目」の
+    境目がそのまま見えるようにするため(日付順だと見比べる相手を探す手間がかかる)。
+    """
+    photos = load_pachinko_photos()
+    if machine_id:
+        photos = [p for p in photos if p["machine_id"] == machine_id]
+    groups = {}
+    for p in photos:
+        group = groups.setdefault(_photo_machine_key(p), {"machine_id": p["machine_id"], "machine_name": p["machine_name"] or "機種未設定",
+                                                         "normal": [], "play": [], "latest": ""})
+        group[p["kind"]].append(p)
+        group["latest"] = max(group["latest"], p["date"])
+    for group in groups.values():
+        rated = [p for p in group["play"] if p["spins_per_k"] is not None]
+        group["play"].sort(key=lambda p: (p["spins_per_k"] is None, -(p["spins_per_k"] or 0)))
+        group["avg_rate"] = sum(p["spins_per_k"] for p in rated) / len(rated) if rated else None
+        with_diff = [p for p in rated if p["diff"] is not None]
+        group["over_border"] = sum(1 for p in with_diff if p["diff"] >= 0)
+        group["with_border"] = len(with_diff)
+    return sorted(groups.values(), key=lambda group: group["latest"], reverse=True)
+
+
+def compare_candidates(photo):
+    """
+    見比べの相手の候補。同じ機種の写真を、同じ場所→基準写真→新しい順に並べる。
+    先頭(既定の相手)が「同じ場所の基準写真」になるので、開いてすぐノーマルとの差が見られる。
+    """
+    others = [p for p in load_pachinko_photos()
+              if p["photo_id"] != photo["photo_id"] and _photo_machine_key(p) == _photo_machine_key(photo)]
+    # load_pachinko_photos() は新しい順なので、安定ソートで同じ条件の中は新しい順のまま残る
+    return sorted(others, key=lambda p: (p["part"] != photo["part"], p["kind"] != "normal"))
+
+
+def save_pachinko_photo(form, image_data=None, thumb_data=None):
+    """
+    写真を保存する。photo_id があればメタデータだけを上書き(回転率やメモの直し)、無ければ新規。
+    戻り値: (photo_id または None, エラー文言)。
+    """
+    photo_id = str(form.get("photo_id") or "").strip()
+    existing = find_pachinko_photo(photo_id) if photo_id else None
+    if photo_id and not existing:
+        return None, "写真が見つかりません。"
+
+    thumb = existing["thumb"] if existing else _decode_jpeg_data_url(thumb_data, PHOTO_THUMB_MAX_CHARS * 3 // 4)
+    image = None
+    if not existing:
+        image = _decode_jpeg_data_url(image_data, PHOTO_MAX_BYTES)
+        if not image or not thumb:
+            return None, "写真を読み込めませんでした。もう一度選び直してください（大きすぎる場合も失敗します）。"
+
+    machine_id = str(form.get("machine_id") or "").strip()
+    machine_name = str(form.get("machine_name") or "").strip()
+    if not machine_id and not machine_name:
+        return None, "機種を選んでください。"
+
+    spins = _to_float_or_none(form.get("spins"))
+    invest = _to_float_or_none(form.get("invest_yen"))
+    rate = _to_float_or_none(form.get("spins_per_k"))
+    border = _to_float_or_none(form.get("border"))
+    # 回転率を直接入れずに回転数と投資だけ入れた場合は、ここで割っておく(一覧で並べ替えられるように)
+    if rate is None and spins and invest:
+        rate = round(spins / (invest / 1000), 1)
+
+    kind = form.get("kind") if form.get("kind") in PHOTO_KINDS else "play"
+    part = form.get("part") if form.get("part") in PHOTO_PARTS else PHOTO_PARTS[0]
+    photo = {
+        "photo_id": photo_id or secrets.token_hex(8),
+        "user_id": current_user_id() or OWNER_USER_ID,
+        "created_at": existing["created_at"] if existing else datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "date": str(form.get("date") or "").strip() or datetime.now().strftime("%Y-%m-%d"),
+        "machine_id": machine_id,
+        "machine_name": machine_name,
+        "kind": kind,
+        "part": part,
+        "store_name": str(form.get("store_name") or "").strip(),
+        "machine_number": str(form.get("machine_number") or "").strip(),
+        "spins_per_k": "" if rate is None else rate,
+        "border": "" if border is None else border,
+        "spins": "" if spins is None else spins,
+        "invest_yen": "" if invest is None else invest,
+        "note": str(form.get("note") or "").strip(),
+        "thumb": thumb,
+    }
+    try:
+        if image:
+            # 画像を先に書く。メタデータだけ残って画像が無い写真ができると、一覧から開けない行になるため
+            chunks = [image[i:i + PHOTO_CELL_CHARS] for i in range(0, len(image), PHOTO_CELL_CHARS)]
+            chunks += [""] * (PHOTO_IMAGE_COLUMNS - len(chunks))
+            get_pachinko_photo_images_worksheet().append_row([photo["photo_id"], photo["user_id"]] + chunks)
+        _upsert_row_by_session(get_pachinko_photos_worksheet(), photo["photo_id"],
+                               [photo[h] for h in PACHINKO_PHOTOS_HEADERS], PACHINKO_PHOTOS_HEADERS)
+    except Exception as e:
+        logger.error(f"釘写真の保存エラー: {e}")
+        return None, "写真を保存できませんでした。時間をおいてもう一度お試しください。"
+    _cache_invalidate("pachinko_photos")
+    return photo["photo_id"], None
+
+
+def _find_row_number(ws, photo_id, user_id):
+    """1列目が photo_id で、持ち主も一致する行の番号(無ければ None)。"""
+    ids = ws.col_values(1)
+    owners = ws.col_values(2)
+    for i, v in enumerate(ids[1:], start=2):
+        owner = (owners[i - 1] if i - 1 < len(owners) else "").strip() or OWNER_USER_ID
+        if v == photo_id and owner == user_id:
+            return i
+    return None
+
+
+def load_pachinko_photo_image(photo_id):
+    """写真の画像本体(JPEGのバイト列)。自分の写真でなければ None。"""
+    photo = find_pachinko_photo(photo_id)
+    if not photo:
+        return None
+    cached = _photo_image_cache.get(photo["photo_id"])
+    if cached is not None:
+        return cached
+    try:
+        ws = get_pachinko_photo_images_worksheet()
+        row_number = _find_row_number(ws, photo["photo_id"], photo["user_id"])
+        if not row_number:
+            return None
+        values = ws.row_values(row_number)
+        data = base64.b64decode("".join(values[2:2 + PHOTO_IMAGE_COLUMNS]))
+    except Exception as e:
+        logger.error(f"釘写真の画像の読み込みエラー: {e}")
+        return None
+    if len(_photo_image_cache) >= _PHOTO_IMAGE_CACHE_LIMIT:
+        _photo_image_cache.pop(next(iter(_photo_image_cache)))
+    _photo_image_cache[photo["photo_id"]] = data
+    return data
+
+
+def delete_pachinko_photo(photo_id):
+    """写真を消す(メタデータと画像の両方)。戻り値: 成功したかどうか。"""
+    photo = find_pachinko_photo(photo_id)
+    if not photo:
+        return False
+    try:
+        for ws in (get_pachinko_photos_worksheet(), get_pachinko_photo_images_worksheet()):
+            row_number = _find_row_number(ws, photo["photo_id"], photo["user_id"])
+            if row_number:
+                ws.delete_rows(row_number)
+    except Exception as e:
+        logger.error(f"釘写真の削除エラー: {e}")
+        return False
+    _photo_image_cache.pop(photo["photo_id"], None)
+    _cache_invalidate("pachinko_photos")
+    return True

@@ -28,6 +28,8 @@
         <span class="text-xs text-gray-500">{{ machine.maker or "メーカー未登録" }} ・ 更新 {{ machine.updated_at }}</span>
         <div class="ml-auto flex flex-wrap gap-2">
             <a href="{{ url_for('pachinko.calc', machine_id=machine.machine_id) }}" class="btn btn-primary btn-sm gap-1">{{ icon('calculator') }} この機種で回転率計算</a>
+            <a href="{{ url_for('pachinko.photos', machine_id=machine.machine_id) if photo_count else url_for('pachinko.photo_new', machine_id=machine.machine_id, kind='normal') }}"
+               class="btn btn-ghost btn-sm gap-1">{{ icon('camera') }} {{ "釘写真 %d枚" % photo_count if photo_count else "基準の釘写真を記録" }}</a>
         </div>
     </div>
 

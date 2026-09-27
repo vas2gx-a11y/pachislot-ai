@@ -150,7 +150,7 @@ NAV = [
         "key": "pachinko",
         "label": "パチンコ",
         "icon": "pachinko",
-        "description": "パチンコの機種データ（ボーダー・遊タイム・止め打ちなど）と、実戦用の回転率計算です。",
+        "description": "パチンコの機種データ（ボーダー・遊タイム・止め打ちなど）と、実戦用の回転率計算・釘写真帳です。",
         "items": [
             {
                 "endpoint": "pachinko.index",
@@ -165,6 +165,14 @@ NAV = [
                 "label": "回転率計算",
                 "icon": "calculator",
                 "description": "投資と回転数から千円あたりの回転率を出し、機種のボーダーと比べます。",
+            },
+            {
+                "endpoint": "pachinko.photos",
+                "label": "釘写真帳",
+                "icon": "camera",
+                "description": "基準（ノーマル）の写真と、打った台の写真＋回転率を貯めて見比べ、回る台の見た目を自分の基準にします。",
+                # /pachinko の前方一致より長く一致させて、写真のページではこちらを選択中にする
+                "match": "/pachinko/photos",
             },
         ],
     },

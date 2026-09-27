@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, empty_state %}
+
+{% block title %}釘写真帳{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('camera') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">釘写真帳</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .thumb { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; background: #f4f4f5; border-radius: 0.375rem; }
+    .rate-plus { color: #15803d; }
+    .rate-minus { color: #b91c1c; }
+</style>
+{% endblock %}
+
+{% macro photo_tile(p) %}
+<a href="{{ url_for('pachinko.photo_detail', photo_id=p.photo_id) }}" class="block">
+    <img src="data:image/jpeg;base64,{{ p.thumb }}" alt="{{ p.part }}の写真" class="thumb" loading="lazy">
+    <div class="mt-1 text-xs text-gray-500 truncate">{{ p.date }} ・ {{ p.part }}</div>
+    {% if p.kind == 'play' %}
+    <div class="font-mono tabular-nums text-sm font-bold">
+        {% if p.spins_per_k is not none %}{{ '%.1f' % p.spins_per_k }}回/k{% else %}<span class="text-gray-300">回転率なし</span>{% endif %}
+        {% if p.diff is not none %}<span class="text-xs {{ 'rate-plus' if p.diff >= 0 else 'rate-minus' }}">({{ '%+.1f' % p.diff }})</span>{% endif %}
+    </div>
+    <div class="text-xs text-gray-500 truncate">{{ p.store_name }}{% if p.machine_number %} {{ p.machine_number }}番{% endif %}</div>
+    {% endif %}
+</a>
+{% endmacro %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ url_for('pachinko.photo_new', machine_id=machine_id) }}" class="btn btn-primary btn-sm gap-1">{{ icon('camera') }} 写真を記録</a>
+        {% if machine_options %}
+        <form method="GET" class="ml-auto">
+            <select name="machine_id" class="input input-sm" onchange="this.form.submit()">
+                <option value="">すべての機種</option>
+                {% for m in machine_options %}
+                <option value="{{ m.machine_id }}" {% if m.machine_id == machine_id %}selected{% endif %}>{{ m.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+    </div>
+
+    <p class="hint mt-0">
+        ①まず機種ごとに「基準（ノーマル）」の写真を残し、②打った台を同じアングルで撮って、③そのときの回転率と一緒に記録します。
+        実戦写真は回転率の高い順に並ぶので、上から見ていけば「この開き具合ならボーダーを超える」という自分の基準が見えてきます。
+    </p>
+
+    {% for g in groups %}
+    {% call card("pachinko", g.machine_name,
+                 badge=("基準 %d枚 ・ 実戦 %d枚" % (g.normal|length, g.play|length))) %}
+    {% if g.avg_rate is not none %}
+    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 font-mono tabular-nums mb-3">
+        <span>平均回転率 <strong>{{ '%.1f' % g.avg_rate }}</strong>回/k</span>
+        {% if g.with_border %}<span>ボーダー超え <strong>{{ g.over_border }}</strong> / {{ g.with_border }}台</span>{% endif %}
+        {% if g.machine_id %}<a href="{{ url_for('pachinko.detail', machine_id=g.machine_id) }}" class="underline">機種データ</a>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="label">基準（ノーマル）</div>
+    {% if g.normal %}
+    <div class="grid grid-cols-3 md:grid-cols-5 gap-3">
+        {% for p in g.normal %}{{ photo_tile(p) }}{% endfor %}
+    </div>
+    {% else %}
+    <p class="hint mt-0">
+        まだありません。新台導入時や、ノーマルと判定されている状態の写真を
+        <a href="{{ url_for('pachinko.photo_new', machine_id=g.machine_id, kind='normal') }}" class="underline">基準として記録</a>
+        しておくと、実戦写真と見比べられます。
+    </p>
+    {% endif %}
+
+    <div class="label mt-4">実戦（回転率の高い順）</div>
+    {% if g.play %}
+    <div class="grid grid-cols-3 md:grid-cols-5 gap-3">
+        {% for p in g.play %}{{ photo_tile(p) }}{% endfor %}
+    </div>
+    {% else %}
+    <p class="hint mt-0">まだありません。</p>
+    {% endif %}
+    {% endcall %}
+    {% else %}
+    {{ empty_state('camera', '写真はまだありません。「写真を記録」から、まず気になる機種の基準（ノーマル）写真を残しましょう。') }}
+    {% endfor %}
+
+</div>
+</main>
+{% endblock %}

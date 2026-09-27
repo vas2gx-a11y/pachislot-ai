@@ -44,6 +44,8 @@
             <span>総回転 <strong id="r-spins">0</strong>回</span>
             <span>投資 <strong id="r-invest">0</strong>円</span>
         </div>
+        {# 回転率(結果)と台の見た目をセットで残すための入口。数字はリンクに載せてフォームに入れておく #}
+        <a href="{{ url_for('pachinko.photo_new') }}" id="r-photo" class="btn btn-ghost btn-sm gap-1 mt-3 bg-white">{{ icon('camera') }} この回転率で台の写真を記録</a>
     </section>
 
     {# 打ちながら何度も触るのは投資と回転数なので、結果のすぐ下に置く(機種・交換率は最初に1回決めるだけ) #}
@@ -139,6 +141,7 @@
     const BORDER_POINTS = {{ border_points | tojson }};
     const PRESELECT_ID = {{ preselect_id | tojson }};
     const STORAGE_KEY = 'pachinko_calc_v1';
+    const PHOTO_NEW_URL = {{ url_for('pachinko.photo_new') | tojson }};
 
     const $ = function (id) { return document.getElementById(id); };
     const DEFAULT_STATE = {
@@ -231,6 +234,14 @@
             $('r-diff').textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '回転/k';
             result.classList.add(diff >= 0 ? 'diff-plus' : 'diff-minus');
         }
+
+        const params = new URLSearchParams({ kind: 'play' });
+        if (state.machineId) params.set('machine_id', state.machineId);
+        if (rate !== null) params.set('rate', rate.toFixed(1));
+        if (border.value !== null) params.set('border', border.value.toFixed(1));
+        if (t.spins) params.set('spins', t.spins);
+        if (t.investK) params.set('invest', Math.round(t.investK * 1000));
+        $('r-photo').href = PHOTO_NEW_URL + '?' + params.toString();
 
         $('c-segments').classList.toggle('hidden', !state.segments.length);
         $('c-segment-rows').innerHTML = '';

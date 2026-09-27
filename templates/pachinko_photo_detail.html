@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, back_link %}
+
+{% block title %}{{ photo.machine_name }} {{ photo.part }}{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('camera') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ photo.machine_name }} ・ {{ photo.part }}</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .photo { width: 100%; object-fit: contain; background: #f4f4f5; border-radius: 0.375rem; }
+    .overlay-box { position: relative; }
+    .overlay-box img + img { position: absolute; inset: 0; height: 100%; }
+    .chip-toggle { cursor: pointer; border: 1px solid #e4e4e7; user-select: none; }
+    .chip-toggle:hover { background: #e4e4e7; }
+    .chip-toggle.selected { background: #18181b; color: #ffffff; border-color: #18181b; }
+    .rate-plus { color: #15803d; }
+    .rate-minus { color: #b91c1c; }
+</style>
+{% endblock %}
+
+{% macro summary(p) %}
+<div class="text-xs text-gray-600">
+    <span class="chip">{{ p.kind_label }}</span>
+    {{ p.date }}{% if p.store_name %} ・ {{ p.store_name }}{% endif %}{% if p.machine_number %} {{ p.machine_number }}番{% endif %}
+</div>
+{% if p.kind == 'play' %}
+<div class="font-mono tabular-nums text-sm mt-1">
+    {% if p.spins_per_k is not none %}<strong class="text-lg">{{ '%.1f' % p.spins_per_k }}</strong>回/k{% else %}<span class="text-gray-300">回転率なし</span>{% endif %}
+    {% if p.border is not none %}<span class="text-gray-500">（ボーダー {{ '%g' % p.border }}）</span>{% endif %}
+    {% if p.diff is not none %}<strong class="{{ 'rate-plus' if p.diff >= 0 else 'rate-minus' }}">{{ '%+.1f' % p.diff }}</strong>{% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<div class="stack">
+
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ url_for('pachinko.photo_edit', photo_id=photo.photo_id) }}" class="btn btn-ghost btn-sm gap-1">{{ icon('pencil') }} 記録を直す</a>
+        <a href="{{ url_for('pachinko.photo_new', machine_id=photo.machine_id) }}" class="btn btn-ghost btn-sm gap-1">{{ icon('camera') }} 同じ機種で撮る</a>
+        <form method="POST" action="{{ url_for('pachinko.photo_delete', photo_id=photo.photo_id) }}" class="ml-auto"
+              onsubmit="return confirm('この写真を削除します。よろしいですか?');">
+            <button type="submit" class="btn btn-ghost btn-sm gap-1 text-red-600">{{ icon('trash') }} 削除</button>
+        </form>
+    </div>
+
+    {% if partner %}
+    {% call card("image", "見比べ") %}
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+        <form method="GET" class="flex-1 min-w-0">
+            <select name="with" class="input input-sm w-full" onchange="this.form.submit()">
+                {% for p in candidates %}
+                <option value="{{ p.photo_id }}" {% if p.photo_id == partner.photo_id %}selected{% endif %}>
+                    {{ p.kind_label }} ・ {{ p.part }} ・ {{ p.date }}{% if p.spins_per_k is not none %} ・ {{ '%.1f' % p.spins_per_k }}回/k{% endif %}{% if p.store_name %} ・ {{ p.store_name }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+        <div class="flex gap-1.5" id="compare-mode">
+            <span class="chip chip-toggle selected" data-mode="side">横に並べる</span>
+            <span class="chip chip-toggle" data-mode="overlay">重ねる</span>
+        </div>
+    </div>
+    {% if partner.part != photo.part %}
+    <p class="hint mt-0 mb-3 text-amber-700">撮った場所が違う写真です（{{ photo.part }} と {{ partner.part }}）。同じ場所の写真を撮ると見比べやすくなります。</p>
+    {% endif %}
+
+    <div id="compare-side" class="grid grid-cols-2 gap-3">
+        <div>
+            <div class="label">この写真</div>
+            <img src="{{ url_for('pachinko.photo_image', photo_id=photo.photo_id) }}" alt="この写真" class="photo">
+            <div class="mt-2">{{ summary(photo) }}</div>
+        </div>
+        <div>
+            <div class="label">比べる写真</div>
+            <a href="{{ url_for('pachinko.photo_detail', photo_id=partner.photo_id) }}">
+                <img src="{{ url_for('pachinko.photo_image', photo_id=partner.photo_id) }}" alt="比べる写真" class="photo">
+            </a>
+            <div class="mt-2">{{ summary(partner) }}</div>
+        </div>
+    </div>
+
+    {# 同じアングルで撮った2枚を重ね、透明度を動かして釘の位置のズレを見る(横並びでは気づきにくい1ミリの差を見るため) #}
+    <div id="compare-overlay" class="hidden">
+        <div class="overlay-box">
+            <img src="{{ url_for('pachinko.photo_image', photo_id=partner.photo_id) }}" alt="比べる写真" class="photo">
+            <img src="{{ url_for('pachinko.photo_image', photo_id=photo.photo_id) }}" alt="この写真" class="photo" id="overlay-top" style="opacity: 0.5">
+        </div>
+        <div class="flex items-center gap-2 mt-3 text-xs text-gray-600">
+            <span class="shrink-0">比べる写真</span>
+            <input type="range" min="0" max="100" value="50" id="overlay-opacity" class="flex-1">
+            <span class="shrink-0">この写真</span>
+        </div>
+        <p class="hint">撮った角度が違うと釘がずれて見えます。角度がそろった写真どうしで見てください。</p>
+    </div>
+    {% endcall %}
+    {% else %}
+    {% call card("image", "写真") %}
+    <img src="{{ url_for('pachinko.photo_image', photo_id=photo.photo_id) }}" alt="この写真" class="photo">
+    <div class="mt-2">{{ summary(photo) }}</div>
+    <p class="hint">
+        同じ機種の写真がまだこれだけです。{% if photo.kind == 'play' %}基準（ノーマル）の写真を{% else %}実戦の写真を{% endif %}
+        記録すると、ここで見比べられます。
+    </p>
+    {% endcall %}
+    {% endif %}
+
+    {% if photo.note %}
+    {% call card("memo", "メモ") %}
+    <p class="text-sm text-gray-800 whitespace-pre-line break-words">{{ photo.note }}</p>
+    {% endcall %}
+    {% endif %}
+
+    {{ back_link(url_for('pachinko.photos', machine_id=photo.machine_id), "釘写真帳に戻る") }}
+</div>
+</main>
+
+{% if partner %}
+<script>
+(function () {
+    const modes = document.getElementById('compare-mode');
+    modes.addEventListener('click', function (e) {
+        const chip = e.target.closest('[data-mode]');
+        if (!chip) return;
+        modes.querySelectorAll('[data-mode]').forEach(function (c) { c.classList.toggle('selected', c === chip); });
+        document.getElementById('compare-side').classList.toggle('hidden', chip.dataset.mode !== 'side');
+        document.getElementById('compare-overlay').classList.toggle('hidden', chip.dataset.mode !== 'overlay');
+    });
+    document.getElementById('overlay-opacity').addEventListener('input', function () {
+        document.getElementById('overlay-top').style.opacity = this.value / 100;
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

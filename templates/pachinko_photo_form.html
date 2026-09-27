@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% from "_macros.html" import card, back_link %}
+
+{% set editing = photo is not none %}
+{% set v = photo if editing else prefill %}
+
+{% block title %}{{ "写真の記録を直す" if editing else "釘写真を記録" }}{% endblock %}
+
+{% block header %}
+<div class="flex items-center gap-2 min-w-0">
+    <span class="text-xl md:text-2xl shrink-0">{{ icon('camera') }}</span>
+    <h1 class="font-display font-extrabold text-base md:text-xl text-gray-900 tracking-tight truncate">{{ "写真の記録を直す" if editing else "釘写真を記録" }}</h1>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .chip-toggle { cursor: pointer; border: 1px solid #e4e4e7; user-select: none; }
+    .chip-toggle:hover { background: #e4e4e7; }
+    .chip-toggle.selected { background: #18181b; color: #ffffff; border-color: #18181b; }
+    .preview { max-height: 60vh; object-fit: contain; width: 100%; background: #f4f4f5; border-radius: 0.375rem; }
+</style>
+{% endblock %}
+
+{% macro num_value(value) -%}
+{%- if value is number -%}{{ '%g' % value }}{%- elif value -%}{{ value }}{%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+<main class="page-container py-4 md:py-6">
+<form method="POST" id="photo-form" class="stack"
+      action="{{ url_for('pachinko.photo_edit', photo_id=photo.photo_id) if editing else url_for('pachinko.photo_new') }}">
+
+    {% if editing %}
+    {% call card("image", "写真") %}
+    <img src="{{ url_for('pachinko.photo_image', photo_id=photo.photo_id) }}" alt="" class="preview">
+    <p class="hint">写真は差し替えられません。別の写真にするときは新しく記録してください。</p>
+    {% endcall %}
+    {% else %}
+    {% call card("camera", "写真") %}
+    <input type="file" accept="image/*" id="photo-file" class="input">
+    <p class="hint">
+        毎回同じ場所・同じアングル（例: ヘソを正面から、ガラスに寄って）で撮ると見比べやすくなります。
+        写真は送る前にこの端末で縮めます（見比べに足りる大きさに）。
+    </p>
+    <img id="photo-preview" alt="" class="preview hidden mt-3">
+    <p id="photo-status" class="hint"></p>
+    <input type="hidden" name="image_data" id="image-data">
+    <input type="hidden" name="thumb_data" id="thumb-data">
+    {% endcall %}
+    {% endif %}
+
+    {% call card("pachinko", "何の写真か") %}
+    <div class="grid gap-3 md:grid-cols-2">
+        <div>
+            <label class="label" for="f-machine">機種</label>
+            <select name="machine_id" id="f-machine" class="input">
+                <option value="">機種データに無い機種（下に名前を入力）</option>
+                {% for m in machines %}
+                <option value="{{ m.machine_id }}" {% if m.machine_id == v.machine_id %}selected{% endif %}>{{ m.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="machine_name" id="f-machine-name" class="input mt-2" placeholder="機種名"
+                   value="{{ photo.machine_name if editing else '' }}">
+        </div>
+        <div>
+            <span class="label">種類</span>
+            <div class="flex flex-wrap gap-1.5" id="f-kind">
+                {% for key, label in kinds.items() %}
+                <label class="chip chip-toggle {% if (v.kind or 'play') == key %}selected{% endif %}">
+                    <input type="radio" name="kind" value="{{ key }}" class="sr-only" {% if (v.kind or 'play') == key %}checked{% endif %}>{{ label }}
+                </label>
+                {% endfor %}
+            </div>
+            <p class="hint">基準は「新台時やノーマルと判定されている状態」。見比べの物差しにします。</p>
+        </div>
+        <div>
+            <label class="label" for="f-part">撮った場所</label>
+            <select name="part" id="f-part" class="input">
+                {% for p in parts %}
+                <option value="{{ p }}" {% if p == v.part %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="label" for="f-date">日付</label>
+            <input type="date" name="date" id="f-date" class="input" value="{{ v.date }}">
+        </div>
+        <div>
+            <label class="label" for="f-store">店舗</label>
+            <input type="text" name="store_name" id="f-store" class="input" list="store-names" value="{{ v.store_name or '' }}">
+            <datalist id="store-names">{% for s in store_names %}<option value="{{ s }}">{% endfor %}</datalist>
+        </div>
+        <div>
+            <label class="label" for="f-number">台番号</label>
+            <input type="text" name="machine_number" id="f-number" class="input" inputmode="numeric" value="{{ v.machine_number or '' }}">
+        </div>
+    </div>
+    {% endcall %}
+
+    {% call card("calculator", "回転率（結果）", description="実戦写真はこれがあってはじめて「この見た目で何回転したか」の記録になります。基準写真なら空欄で構いません。") %}
+    <div class="grid gap-3 grid-cols-2 md:grid-cols-4">
+        <div>
+            <label class="label" for="f-rate">千円あたり回転数</label>
+            <input type="number" inputmode="decimal" step="any" min="0" name="spins_per_k" id="f-rate" class="input" value="{{ num_value(v.spins_per_k) }}">
+        </div>
+        <div>
+            <label class="label" for="f-border">ボーダー</label>
+            <input type="number" inputmode="decimal" step="any" min="0" name="border" id="f-border" class="input" value="{{ num_value(v.border) }}">
+            <div class="flex flex-wrap gap-1 mt-1" id="f-border-chips"></div>
+        </div>
+        <div>
+            <label class="label" for="f-spins">総回転数</label>
+            <input type="number" inputmode="numeric" step="1" min="0" name="spins" id="f-spins" class="input" value="{{ num_value(v.spins) }}">
+        </div>
+        <div>
+            <label class="label" for="f-invest">投資（円）</label>
+            <input type="number" inputmode="numeric" step="500" min="0" name="invest_yen" id="f-invest" class="input" value="{{ num_value(v.invest_yen) }}">
+        </div>
+    </div>
+    <p class="hint">回転率が空欄なら、総回転数と投資から計算します。ボーダーはその店の交換率のものを入れてください（機種を選ぶと候補が出ます）。</p>
+    <div class="mt-3">
+        <label class="label" for="f-note">メモ</label>
+        <textarea name="note" id="f-note" rows="3" class="input" placeholder="例: ヘソが先週より狭い。風車の上が右に曲がっている">{{ v.note or '' }}</textarea>
+    </div>
+    {% endcall %}
+
+    <div class="flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-primary gap-1" id="f-submit">{{ icon('save') }} {{ "直した内容を保存" if editing else "記録する" }}</button>
+    </div>
+
+    {{ back_link(url_for('pachinko.photo_detail', photo_id=photo.photo_id) if editing else url_for('pachinko.photos'),
+                 "写真に戻る" if editing else "釘写真帳に戻る") }}
+</form>
+</main>
+
+<script>
+(function () {
+    const MACHINES = {{ machines | tojson }};
+    const BORDER_POINTS = {{ border_points | tojson }};
+    const EDITING = {{ editing | tojson }};
+    // セルに入る大きさ(サーバーの PHOTO_IMAGE_COLUMNS × PHOTO_CELL_CHARS)に収める
+    const MAX_IMAGE_CHARS = {{ max_image_chars | tojson }};
+    const MAX_THUMB_CHARS = {{ max_thumb_chars | tojson }};
+    const $ = function (id) { return document.getElementById(id); };
+
+    // 種類のチップ(ラジオボタンを隠して、押した見た目だけ出す)
+    $('f-kind').addEventListener('change', function () {
+        this.querySelectorAll('label').forEach(function (label) {
+            label.classList.toggle('selected', label.querySelector('input').checked);
+        });
+    });
+
+    // 機種を選ぶと、その機種の交換率ごとのボーダーを候補として出す(押すと欄に入る)
+    const BORDER_LABELS = { 250: '等価', 280: '28玉', 330: '33玉' };
+    function renderBorderChips() {
+        const machine = MACHINES.find(function (m) { return m.machine_id === $('f-machine').value; });
+        $('f-machine-name').classList.toggle('hidden', !!$('f-machine').value);
+        const box = $('f-border-chips');
+        box.innerHTML = '';
+        if (!machine) return;
+        BORDER_POINTS.forEach(function (p) {
+            if (!machine[p.key]) return;
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'chip chip-toggle text-xs';
+            chip.textContent = BORDER_LABELS[p.balls] + ' ' + machine[p.key];
+            chip.addEventListener('click', function () { $('f-border').value = machine[p.key]; });
+            box.appendChild(chip);
+        });
+    }
+    $('f-machine').addEventListener('change', renderBorderChips);
+    renderBorderChips();
+
+    if (EDITING) return;
+
+    /*
+     * 画像を縮めて JPEG の data URL にする。スマホの写真(数MB)をそのまま送るとシートのセルに入らないので、
+     * 長辺を maxSide に縮め、それでも maxChars を超えるなら画質→大きさの順に下げていく。
+     * 釘の見比べは細部が大事なので、まず画質を落とし、大きさはなるべく残す。
+     */
+    function encode(img, maxSide, maxChars) {
+        let side = maxSide;
+        for (let attempt = 0; attempt < 8; attempt++) {
+            const scale = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.naturalWidth * scale);
+            canvas.height = Math.round(img.naturalHeight * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            for (let q = 0.85; q >= 0.5; q -= 0.1) {
+                const url = canvas.toDataURL('image/jpeg', q);
+                if (url.length - 'data:image/jpeg;base64,'.length <= maxChars) return url;
+            }
+            side = Math.round(side * 0.8);
+        }
+        return null;
+    }
+
+    let ready = false;
+    $('photo-file').addEventListener('change', function () {
+        const file = this.files[0];
+        ready = false;
+        if (!file) return;
+        $('photo-status').textContent = '写真を縮めています…';
+        const img = new Image();
+        img.onload = function () {
+            const main = encode(img, 1400, MAX_IMAGE_CHARS);
+            const thumb = encode(img, 360, MAX_THUMB_CHARS);
+            URL.revokeObjectURL(img.src);
+            if (!main || !thumb) {
+                $('photo-status').textContent = 'この写真は縮められませんでした。別の写真を選んでください。';
+                return;
+            }
+            $('image-data').value = main;
+            $('thumb-data').value = thumb;
+            $('photo-preview').src = main;
+            $('photo-preview').classList.remove('hidden');
+            $('photo-status').textContent = '送る大きさ: 約' + Math.round(main.length * 0.75 / 1024) + 'KB';
+            ready = true;
+        };
+        img.onerror = function () {
+            $('photo-status').textContent = '画像として読み込めませんでした。JPEG・PNGなどの写真を選んでください。';
+        };
+        img.src = URL.createObjectURL(file);
+    });
+
+    $('photo-form').addEventListener('submit', function (e) {
+        if (!ready) {
+            e.preventDefault();
+            alert('写真を選んでください。');
+            return;
+        }
+        if (!$('f-machine').value && !$('f-machine-name').value.trim()) {
+            e.preventDefault();
+            alert('機種を選ぶか、機種名を入力してください。');
+            return;
+        }
+        $('f-submit').disabled = true;
+    });
+})();
+</script>
+{% endblock %}
