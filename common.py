@@ -4765,7 +4765,59 @@ def _format_unit_notes(notes):
     return "\n".join(f"- {n.get('date', '')} {n.get('machine_name', '')}: {n.get('note', '')}" for n in notes)
 
 
-def _live_chat_system_prompt(machine, judge_note, unit_notes=None):
+def find_store_info(store_name):
+    """
+    実戦チャットで入力された店舗名から店舗情報JSONを探す。無ければ None。
+    入力は手打ちなので、シート側の店舗名・JSONの店舗名のどちらでも、空白の有無が違っても当たるようにする。
+    """
+    def _key(text):
+        return re.sub(r"\s+", "", str(text or ""))
+
+    wanted = _key(store_name)
+    if not wanted:
+        return None
+    for sheet_name, store in store_info_by_sheet_name().items():
+        if wanted in (_key(sheet_name), _key(store.get("name"))):
+            return store
+    return None
+
+
+def live_chat_store_context(store_name, when=None):
+    """
+    実戦チャットに渡す店舗情報。換金率・貸単価・今日が旧イベント日かどうかなど、
+    打ちながら聞かれそうなことを、店舗情報JSONから確認状態つきで渡す。
+    店舗が分からなければ空文字(プロンプト側で「店舗情報なし」と伝える)。
+    """
+    store = find_store_info(store_name)
+    if store is None:
+        return ""
+
+    source_names = {src.get("id"): src.get("name") for src in store.get("sources", [])}
+    items = {}
+    for key in store_info.FIELD_KEYS:
+        item = (store.get("info") or {}).get(key) or {}
+        if item.get("value") in (None, "", []):
+            continue
+        items[store_info.FIELD_LABELS[key]] = {
+            "値": item["value"],
+            # 公式で確かめた値とポータルの値を、AIが同じ重みで断定しないように確認状態も渡す
+            "確認状態": item.get("status"),
+            "出典": [source_names.get(sid, sid) for sid in item.get("source_ids") or []],
+        }
+
+    when = when or datetime.now()
+    setting = load_calendar_events().get(store.get("sheet_store_name") or store["name"]) or {}
+    today = (matched_event_labels(when, setting.get("anniversary_rules") or [])
+             + matched_event_labels(when, setting.get("event_rules") or []))
+    today_text = (f"{when.strftime('%Y-%m-%d')}は " + "、".join(today) + " に当たる(旧イベント日・周年日)"
+                  if today else f"{when.strftime('%Y-%m-%d')}は登録されている旧イベント日・周年日ではない")
+
+    return (f"店舗名: {store['name']}（{store.get('region') or '地域不明'}） 最終更新 {store.get('updated_at')}\n"
+            f"今日: {today_text}\n"
+            f"{json.dumps(items, ensure_ascii=False)}")
+
+
+def _live_chat_system_prompt(machine, judge_note, unit_notes=None, store_context=""):
     # $schema や表示色はAIの判断に関係ないので渡さない
     info = {k: v for k, v in machine.items() if k not in ("$schema", "theme")}
     return f"""あなたはパチスロを打っている最中のユーザーに付き添う立ち回りアシスタントです。
@@ -4801,6 +4853,26 @@ def _live_chat_system_prompt(machine, judge_note, unit_notes=None):
 過去の日の観察事実。設定は日ごとに変わりうるので、据え置きやリセットの判断材料として参照するだけにし、
 今日の設定を断定する根拠にはしない。
 {_format_unit_notes(unit_notes)}
+
+【店舗情報】
+ユーザーが入力した店舗の基本情報(店舗情報JSONから。Webで集めたもの)。
+店舗のこと(換金率・貸単価・営業時間・入場方法・旧イベント日など)を聞かれたら、ここだけを根拠に答え、
+確認状態が「未確認」の値はポータル等の情報であることを一言添える。ここに無い項目は「店舗情報に無い」と言い、推測で埋めない。
+旧イベント日は店の傾向の目安で、今日の設定を約束するものではない。
+{store_context or "なし(店舗名が未入力か、店舗情報に登録されていない)"}
+
+【収支・損益分岐の計算】
+換金率や損益分岐を聞かれたら、【店舗情報】の貸玉・貸メダル料金と交換率から計算し、式と前提を短く示す。
+- 貸単価: 「21.73円スロット」は1枚21.73円(1000円=46枚)、「4円パチンコ」は1玉4円。
+- 交換率: 「5.2枚」は100円あたり5.2枚 → 1枚の価値は 100÷5.2=約19.2円。「28玉」なら1玉 100÷28=約3.57円。
+  「等価」は貸単価と同じ価値(21.73円スロットなら4.6枚交換)。
+- 収支(円) = 手持ち(流す)メダル数 × 1枚の価値 − 現金投資額。
+  損益分岐の枚数 = 現金投資額 ÷ 1枚の価値。
+- 非等価の損は「現金で借りたメダルを換金するとき」にだけ生じる。持ちメダル遊技では差が出ないので、
+  機械割の損益分岐を聞かれたら、全て現金投資なら 貸単価÷交換単価(例 21.73÷19.23=約113%)、
+  持ちメダルで回す割合が増えるほど100%に近づく、と前提を分けて答える。
+- 店舗情報に交換率・貸単価が無いときは、ユーザーに聞き返す(一般的な相場で決めつけない)。
+- 数値はユーザーが送った投資額・持ちメダルと上の値だけで計算し、途中式を1行で見せる(打ちながら確かめられるように)。
 
 【機種情報JSON】
 {json.dumps(info, ensure_ascii=False)}
@@ -4873,7 +4945,7 @@ def _live_chat_call(payload, label):
     return None, "回答の生成に失敗しました。もう一度送ってください。"
 
 
-def live_chat_reply(machine, history, message, judge_note="", image_part=None, unit_notes=None):
+def live_chat_reply(machine, history, message, judge_note="", image_part=None, unit_notes=None, store_context=""):
     """
     機種情報JSONと会話履歴をもとに、打ちながらの相談に答える。
 
@@ -4881,6 +4953,7 @@ def live_chat_reply(machine, history, message, judge_note="", image_part=None, u
     image_part は live_chat_image_part() の戻り値。今回の発言にだけ付ける
     (過去の画像はAIの「📷 読み取り」行が文字で残っているので再送しない)。
     unit_notes は unit_notes_for() の戻り値(この台の過去の台メモ)。
+    store_context は live_chat_store_context() の戻り値(入力された店舗の店舗情報)。
     戻り値: (回答テキスト, エラーかどうか)。エラー時は画面にそのまま出せる文言を返す。
     """
     message = (message or "").strip()[:LIVE_CHAT_MAX_CHARS]
@@ -4891,7 +4964,8 @@ def live_chat_reply(machine, history, message, judge_note="", image_part=None, u
 
     contents = _live_chat_add_user_turn(_live_chat_contents(history), message, image_part)
     payload = {
-        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note, unit_notes)}]},
+        "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note, unit_notes,
+                                                                          store_context)}]},
         "contents": contents,
     }
     text, error = _live_chat_call(payload, "実戦チャット")

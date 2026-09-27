@@ -23,8 +23,17 @@ def index():
         machines=[{"id": m.get("id"), "name": m.get("name")} for m in machines],
         errors=errors,
         preselect_id=request.args.get("machine_id", ""),
-        store_names=[s["name"] for s in common.list_store_names()],
+        store_names=_store_names(),
     )
+
+
+def _store_names():
+    """
+    店舗名の入力候補。シートにデータがある店舗に加え、店舗情報JSONだけがある店舗も出す
+    (店舗情報をチャットの根拠に使うので、まだ打ったことのない店舗も選べるように)。
+    """
+    names = [s["name"] for s in common.list_store_names()]
+    return names + [n for n in common.store_info_by_sheet_name() if n not in set(names)]
 
 
 @live_chat_bp.route("/api", methods=("POST",))
@@ -44,6 +53,7 @@ def api():
         str(data.get("judge_note") or "")[:1000],
         image_part,
         common.unit_notes_for(data.get("store_name"), data.get("machine_number")),
+        common.live_chat_store_context(data.get("store_name")),
     )
     return jsonify({"reply": reply, "error": is_error})
 
