@@ -28,6 +28,7 @@
 - パチンコの機種データ（`/pachinko`）— スロットの `machine_data/` とは別枠。ボーダー・遊タイム・止め打ちなど
   ホールで見返すメモを新台のたびに画面から足したいので、置き場所はシート（`pachinko_machines`）。書き込みは管理者だけ。
   回転率計算（`/pachinko/calc`）は判別と同じくブラウザ側だけで計算し、入力は localStorage に残す。
+  チャットで登録を頼まれたら、調べた結果を `data/pachinko_collected/*.json` に書き、`tools/pachinko_apply.py` でシートに反映する（同じ機種名は上書き）。
 - `tools/` — アナスロ(ana-slo.com)からホールデータを取り込むCLI（使い方は `tools/README.md`）と、
   店舗情報をWebから集める `store_collect.py`。
 - `data/` — 取り込みの中間ファイル置き場。コミット対象外の作業データ。
