@@ -30,6 +30,23 @@ NUMERIC_FIELDS = [
 BORDER_POINTS = [("border_equiv", 250), ("border_28", 280), ("border_33", 330)]
 
 
+def border_at(machine, balls):
+    """
+    交換率(1,000円分を何玉で交換するか)でのボーダーの概算。式は static/js/pachinko_ev.js の borderAt と同じ
+    (画面の表示はJSが正。こちらは稼働の保存とAIの振り返りに使う数字を出すため)。登録が無ければ None。
+    """
+    points = [(b, machine.get(key)) for key, b in BORDER_POINTS if machine.get(key)]
+    if not points:
+        return None
+    if len(points) == 1:
+        return points[0][1]
+    i = 0
+    while i < len(points) - 2 and balls > points[i + 1][0]:
+        i += 1
+    (x0, y0), (x1, y1) = points[i], points[i + 1]
+    return y0 + (y1 - y0) * (balls - x0) / (x1 - x0)
+
+
 def _path_of(machine_id):
     # URLから来たIDでファイルを開くので、ディレクトリの外を指せないよう文字種を絞る。
     # _ で始まるファイル(ひな形)は一覧に出さないだけでなく、URLからも開けないようにする

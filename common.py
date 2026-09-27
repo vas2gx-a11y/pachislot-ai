@@ -19,6 +19,7 @@ from flask import flash, g, has_request_context
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import machine_info
+import pachinko_info
 import store_info
 
 # --- ロギング設定 ---
@@ -5496,3 +5497,318 @@ def build_api_usage_report(month=None):
         "price_output": price_out,
         "usd_jpy": USD_JPY_RATE,
     }
+
+
+# ---------------------------------------------------------------------------
+# パチンコの稼働記録と振り返り(期待値・ボーダー未満の時間・交換率からAIが改善点を出す)
+# ---------------------------------------------------------------------------
+# 回転率計算はブラウザだけで完結させている(打ちながら触るため)が、振り返りは
+# 「前回も同じ店で低い交換率のまま打った」のように過去の稼働と並べないと意味が薄いので、
+# 保存を押したときだけ1稼働1行を pachinko_sessions シートに残す。打った人の持ち物なので、
+# 記録・台メモと同じく user_id で分ける。
+#
+# 期待値の式は static/js/pachinko_ev.js と同じ(考え方もそちらに書いてある)。画面の表示はJSが正で、
+# こちらは保存とAIに渡す数字を出すためにある。ブラウザが送ってきた期待値を信じず、
+# 区間の回転数・投資からここで計算し直す(AIが根拠にする数字を、改ざんされた値にしないため)。
+#
+# 振り返りは勝ち負けではなく期待値で評価させる。パチンコは1日の収支のブレが期待値よりずっと大きく、
+# 収支で良し悪しを言うと、ボーダー超えを打って負けた正しい日まで悪い日にされてしまうため。
+PACHINKO_SESSIONS_SHEET_NAME = os.environ.get("PACHINKO_SESSIONS_SHEET_NAME", "pachinko_sessions")
+PACHINKO_SESSIONS_HEADERS = [
+    "session_id", "date", "store_name", "machine_id", "machine_name",
+    "exchange_balls", "lend_balls", "cash_ratio", "border", "spins", "invest_yen", "rate",
+    "ev_per_spin", "work_yen", "below_border_ratio", "below_border_basis", "play_minutes",
+    "result_yen", "segments_json", "note", "ai_feedback", "updated_at", "user_id",
+]
+PACHINKO_SESSION_ID_PATTERN = re.compile(r"pc-[0-9a-z]{6,32}")
+PACHINKO_SESSION_NUMERIC_FIELDS = [
+    "exchange_balls", "lend_balls", "cash_ratio", "border", "spins", "invest_yen", "rate",
+    "ev_per_spin", "work_yen", "below_border_ratio", "play_minutes", "result_yen",
+]
+PACHINKO_MAX_SEGMENTS = 200  # 1日で区切る回数の上限。送られてきたJSONでシートのセルが膨らまないように
+PACHINKO_REVIEW_HISTORY = 20  # 振り返りでAIに見せる過去の稼働の件数
+PACHINKO_DEFAULT_LEND = 250
+
+
+def get_pachinko_sessions_worksheet():
+    return _get_worksheet(PACHINKO_SESSIONS_SHEET_NAME, PACHINKO_SESSIONS_HEADERS, rows=500,
+                          label="pachinko_sessionsシート")
+
+
+def pachinko_exchange_label(balls):
+    """1,000円あたりの交換玉数を、ホールの表記(等価 / 28玉交換)と1玉の値段で表す。"""
+    if not balls:
+        return "交換率不明"
+    name = "等価" if abs(balls - PACHINKO_DEFAULT_LEND) < 0.01 else f"{balls / 10:g}玉交換"
+    return f"{name}(1玉{1000 / balls:.2f}円)"
+
+
+def pachinko_ev_per_spin(rate, border, exchange_balls, lend=PACHINKO_DEFAULT_LEND, cash_ratio=1.0):
+    """1回転あたりの期待値(円)。pachinko_ev.js の evPerSpin と同じ式。"""
+    if not rate or rate <= 0 or not border or border <= 0:
+        return None
+    cash = min(1.0, max(0.0, cash_ratio))
+    ball_cost_factor = (lend or PACHINKO_DEFAULT_LEND) / exchange_balls if exchange_balls else 1.0
+    return 1000 / border - 1000 / rate * (cash + (1 - cash) * ball_cost_factor)
+
+
+def _parse_iso(value):
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _pachinko_segments(raw_segments):
+    """ブラウザから来た区間を、数値と時刻だけの形にそろえる。回転も投資も無い区間は捨てる。"""
+    segments = []
+    for s in (raw_segments if isinstance(raw_segments, list) else [])[:PACHINKO_MAX_SEGMENTS]:
+        if not isinstance(s, dict):
+            continue
+        spins = max(0.0, _to_number(s.get("spins"), 0.0))
+        invest_k = max(0.0, _to_number(s.get("investK"), 0.0))
+        if not spins and not invest_k:
+            continue
+        started, ended = _parse_iso(s.get("startedAt")), _parse_iso(s.get("endedAt"))
+        minutes = None
+        if started and ended and ended >= started:
+            minutes = (ended - started).total_seconds() / 60
+        segments.append({"spins": int(spins), "invest_k": round(invest_k, 3), "minutes": minutes,
+                         "started_at": started})
+    return segments
+
+
+def build_pachinko_session(data):
+    """
+    振り返り画面から送られてきた稼働を、保存する形に計算し直す。
+    戻り値: (稼働の辞書, エラー文言)。
+    """
+    session_id = str(data.get("session_id") or "")
+    if not PACHINKO_SESSION_ID_PATTERN.fullmatch(session_id):
+        return None, "稼働のIDが不正です。ページを読み込み直してください。"
+
+    machine = pachinko_info.load(str(data.get("machine_id") or "")) or {}
+    exchange_balls = _to_number(data.get("exchange_balls"), 0.0)
+    if not 100 <= exchange_balls <= 1000:
+        return None, "交換率が読み取れません。回転率計算で交換率を選んでください。"
+    lend = _to_number(data.get("lend"), PACHINKO_DEFAULT_LEND) or PACHINKO_DEFAULT_LEND
+    cash_ratio = min(100.0, max(0.0, _to_number(data.get("cash_ratio"), 100.0))) / 100
+
+    border = _to_number(data.get("border_manual"), 0.0)
+    if border <= 0:
+        border = pachinko_info.border_at(machine, exchange_balls) if machine else None
+    if not border:
+        return None, "ボーダーが分かりません。機種を選ぶか、回転率計算でボーダーを手入力してください。"
+
+    segments = _pachinko_segments(data.get("segments"))
+    spins = sum(s["spins"] for s in segments)
+    invest_k = sum(s["invest_k"] for s in segments)
+    if not spins or not invest_k:
+        return None, "回転数と投資がまだありません。回転率計算で入力してから保存してください。"
+    rate = spins / invest_k
+    ev = pachinko_ev_per_spin(rate, border, exchange_balls, lend, cash_ratio)
+
+    # ボーダー未満だった割合は時間で見る(長く打つほど損が積み上がるため)。時刻の無い区間があれば回転数で代える
+    # 投資0の区間(持ち玉だけで回した・大当り後の残り保留など)は回転率が出せないので、未満には数えない
+    below = [s for s in segments if s["invest_k"] and s["spins"] / s["invest_k"] < border]
+    timed = all(s["minutes"] is not None for s in segments)
+    total_minutes = sum(s["minutes"] for s in segments) if timed else None
+    if timed and total_minutes:
+        below_ratio, basis = sum(s["minutes"] for s in below) / total_minutes, "time"
+    else:
+        below_ratio, basis = sum(s["spins"] for s in below) / spins, "spins"
+
+    first_started = next((s["started_at"] for s in segments if s["started_at"]), None)
+    result_yen = _to_number(data.get("result_yen"))
+    now = datetime.now()
+    return {
+        "session_id": session_id,
+        "date": (first_started.astimezone().replace(tzinfo=None) if first_started else now).strftime("%Y-%m-%d %H:%M"),
+        "store_name": str(data.get("store_name") or "").strip()[:100],
+        "machine_id": machine.get("machine_id", ""),
+        "machine_name": machine.get("name") or "機種未選択(ボーダー手入力)",
+        "exchange_balls": round(exchange_balls, 1),
+        "lend_balls": round(lend),
+        "cash_ratio": round(cash_ratio * 100),
+        "border": round(border, 2),
+        "spins": spins,
+        "invest_yen": round(invest_k * 1000),
+        "rate": round(rate, 2),
+        "ev_per_spin": round(ev, 2),
+        "work_yen": round(ev * spins),
+        "below_border_ratio": round(below_ratio, 3),
+        "below_border_basis": basis,
+        "play_minutes": round(total_minutes) if total_minutes else "",
+        "result_yen": round(result_yen) if result_yen is not None else "",
+        "segments_json": json.dumps(
+            [{"spins": s["spins"], "investK": s["invest_k"],
+              "minutes": round(s["minutes"], 1) if s["minutes"] is not None else None} for s in segments],
+            ensure_ascii=False),
+        "note": str(data.get("note") or "").strip()[:500],
+        "ai_feedback": "",
+        "updated_at": now.strftime("%Y-%m-%d %H:%M:%S"),
+    }, None
+
+
+def load_pachinko_sessions():
+    """ログイン中のユーザーのパチンコ稼働を、新しい順で返す。"""
+    cached = _cache_get("pachinko_sessions")
+    if cached is None:
+        try:
+            rows = get_pachinko_sessions_worksheet().get_all_records()
+        except Exception as e:
+            logger.error(f"パチンコ稼働の読み込みエラー: {e}")
+            return []
+        for r in rows:
+            for field in PACHINKO_SESSION_NUMERIC_FIELDS:
+                r[field] = _to_number(r.get(field))
+            r["date"] = str(r.get("date", ""))
+        rows.sort(key=lambda r: r["date"], reverse=True)
+        _cache_set("pachinko_sessions", rows)
+        cached = rows
+    return _own_rows(cached)
+
+
+def save_pachinko_session(session):
+    """1稼働1行。同じ session_id(同じ人)なら上書きするので、保存し直しても行は増えない。"""
+    try:
+        ws = get_pachinko_sessions_worksheet()
+        session = {**session, "user_id": current_user_id() or OWNER_USER_ID}
+        _upsert_row_by_session(ws, session["session_id"],
+                               [session.get(h, "") for h in PACHINKO_SESSIONS_HEADERS], PACHINKO_SESSIONS_HEADERS)
+    except Exception as e:
+        logger.error(f"パチンコ稼働の保存エラー: {e}")
+        return False
+    _cache_invalidate("pachinko_sessions")
+    return True
+
+
+def build_pachinko_store_summary(sessions):
+    """
+    店舗ごとの集計(交換率・回転率とボーダーの差・仕事量・収支)。
+    「どの店で打つべきだったか」は1回の稼働からは言えないので、画面にもAIにもこの表を並べる。
+    """
+    stores = {}
+    for s in sessions:
+        name = str(s.get("store_name") or "").strip() or "(店舗未入力)"
+        acc = stores.setdefault(name, {"store_name": name, "count": 0, "spins": 0, "work_yen": 0, "result_yen": 0,
+                                        "result_count": 0, "exchange": [], "diffs": []})
+        # 保存直後の稼働(未入力は "")とシートから読んだ稼働(未入力は None)の両方が来るので、ここで数値にそろえる
+        value = {f: _to_number(s.get(f)) for f in ("spins", "work_yen", "result_yen", "exchange_balls", "rate", "border")}
+        acc["count"] += 1
+        acc["spins"] += value["spins"] or 0
+        acc["work_yen"] += value["work_yen"] or 0
+        if value["result_yen"] is not None:
+            acc["result_yen"] += value["result_yen"]
+            acc["result_count"] += 1
+        if value["exchange_balls"]:
+            acc["exchange"].append(value["exchange_balls"])
+        if value["rate"] and value["border"]:
+            acc["diffs"].append(value["rate"] - value["border"])
+    rows = []
+    for acc in stores.values():
+        exchange = sum(acc["exchange"]) / len(acc["exchange"]) if acc["exchange"] else None
+        rows.append({
+            "store_name": acc["store_name"],
+            "count": acc["count"],
+            "spins": int(acc["spins"]),
+            "exchange_balls": exchange,
+            "exchange_label": pachinko_exchange_label(exchange),
+            "avg_border_diff": sum(acc["diffs"]) / len(acc["diffs"]) if acc["diffs"] else None,
+            "work_yen": round(acc["work_yen"]),
+            # 収支は入れない日もあるので、入れた日だけで合計する(未入力を0円として混ぜない)
+            "result_yen": round(acc["result_yen"]) if acc["result_count"] else None,
+        })
+    # 交換率が良い(1,000円あたりの交換玉数が少ない)順。同じなら稼働の多い順
+    rows.sort(key=lambda r: (r["exchange_balls"] or 9999, -r["count"]))
+    return rows
+
+
+def _describe_pachinko_session(s):
+    below = s.get("below_border_ratio")
+    basis = "時間" if s.get("below_border_basis") == "time" else "回転数"
+    result = f"{s['result_yen']:+,.0f}円" if s.get("result_yen") not in (None, "") else "未入力"
+    return (f"{str(s.get('date', ''))[:16]} {s.get('store_name') or '店舗未入力'} {s.get('machine_name', '')} "
+            f"{pachinko_exchange_label(s.get('exchange_balls'))} 回転率{s.get('rate') or 0:.1f}/ボーダー{s.get('border') or 0:.1f} "
+            f"{s.get('spins') or 0:.0f}回転 期待値{s.get('ev_per_spin') or 0:+.2f}円/回転 仕事量{s.get('work_yen') or 0:+,.0f}円 "
+            f"ボーダー未満{(below or 0) * 100:.0f}%({basis}) 収支{result}")
+
+
+def _pachinko_store_exchange_context():
+    """店舗情報JSONに載っている交換率。他の店と比べて交換率の良い店を挙げさせるために渡す(推測で店を挙げさせない)。"""
+    lines = []
+    for sheet_name, store in store_info_by_sheet_name().items():
+        item = (store.get("info") or {}).get("exchange_rates") or {}
+        # スロットだけの店・スロットのレートは比べる意味がないので、パチンコに当てはまる値だけ渡す
+        values = [str(v) for v in item.get("value") or [] if "パチンコ" in str(v) or "全レート" in str(v)]
+        if values:
+            lines.append(f"- {sheet_name}: {' / '.join(values)}(確認状態: {item.get('status') or '不明'})")
+    return "\n".join(lines) or "なし"
+
+
+def pachinko_session_feedback(session, history):
+    """稼働1回分の振り返り。戻り値: (本文, エラー文言)。"""
+    segment_lines = []
+    for i, seg in enumerate(json.loads(session.get("segments_json") or "[]"), start=1):
+        rate = f"{seg['spins'] / seg['investK']:.1f}回/千円" if seg["investK"] else "投資なし"
+        minutes = "" if seg.get("minutes") is None else f" / {seg['minutes']:.0f}分"
+        segment_lines.append(f"- 区間{i}: {seg['spins']}回転 / {seg['investK'] * 1000:,.0f}円 → {rate}{minutes}")
+    machine = pachinko_info.load(session.get("machine_id") or "") or {}
+    machine_text = json.dumps(
+        {k: machine.get(k) for k in ("name", "spec_type", "hit_prob", "rush_entry_rate", "rush_continue_rate",
+                                     "border_equiv", "border_28", "border_33", "yutime_games", "yutime_note",
+                                     "technique_note")},
+        ensure_ascii=False) if machine else "機種データなし(ボーダー手入力)"
+    past = [s for s in history if s.get("session_id") != session["session_id"]][:PACHINKO_REVIEW_HISTORY]
+    store_rows = build_pachinko_store_summary(past + [session])
+    store_lines = []
+    for r in store_rows:
+        result = "未入力" if r["result_yen"] is None else f"{r['result_yen']:+,}円"
+        diff = "不明" if r["avg_border_diff"] is None else f"{r['avg_border_diff']:+.1f}"
+        store_lines.append(f"- {r['store_name']}: {r['count']}回 {r['exchange_label']} "
+                           f"回転率-ボーダー 平均{diff} 仕事量計{r['work_yen']:+,}円 収支計{result}")
+    segments_text = "\n".join(segment_lines) or "なし"
+    stores_text = "\n".join(store_lines)
+    past_text = "\n".join("- " + _describe_pachinko_session(s) for s in past) or "なし(今回が初めての記録)"
+    prompt = f"""あなたはパチンコの立ち回りを指導するコーチです。以下の稼働データを見て、打ち手へのフィードバックを書いてください。
+
+## 評価の原則
+- 収支(勝ち負け)ではなく、期待値(仕事量)と判断で評価する。パチンコは1日の収支のブレが期待値よりはるかに大きい。
+  ボーダーを超えた台を打って負けたなら「判断は正しい」と言う。ボーダー未満で勝ったなら「たまたま」と言う。
+- 期待値の式: 1回転あたり = 1000/ボーダー − 1000/回転率 ×(現金比率 + 持ち玉比率 × 貸玉/交換玉数)。
+- 数値は下のデータにあるものだけを使う。機種の数値や店の交換率を一般知識で補ったり、データに無い店を挙げたりしない。
+
+## 書いてほしいこと(見出しつき・箇条書き・全体で400字程度)
+1. **総評**: この稼働の期待値の評価を1〜2文。
+2. **良かった判断**: 1つ。
+3. **改善点**: 2〜3つ。次の観点のうち当てはまるものを具体的な数字で指摘する。
+   - ボーダー未満で打っていた時間・回転数が長い(区間ごとの回転率を見て、どの時点で見切るべきだったか)
+   - 交換率の低い店で打っている(下の【自分の店舗別の集計】と【店舗情報の交換率】を比べ、交換率の良い店があれば店名を挙げる。
+     交換率が低い店ほどボーダーが上がり、同じ回転率でも期待値が下がることを数字で示す)
+   - 現金投資の比率が高い(非等価では持ち玉遊技の方が有利)
+   - 稼働時間・回転数が少なく、仕事量が積めていない
+4. **次回やること**: 1〜2個。「回転率が○回/千円を下回ったら○回転で台移動」のように行動の形で。
+- 【過去の稼働】に同じ傾向があれば「前回も〜」と打ち手の癖として指摘する。
+
+## 今回の稼働
+{_describe_pachinko_session(session)}
+現金比率 {session.get('cash_ratio')}% / 貸玉 {session.get('lend_balls')}玉/千円 / 稼働時間 {session.get('play_minutes') or '不明'}分
+メモ: {session.get('note') or 'なし'}
+
+### 区間ごと(大当り・台移動で区切った単位)
+{segments_text}
+
+### 機種データ
+{machine_text}
+
+## 自分の店舗別の集計(今回を含む。交換率の良い順)
+{stores_text}
+
+## 店舗情報の交換率(店舗情報JSONより)
+{_pachinko_store_exchange_context()}
+
+## 過去の稼働(新しい順)
+{past_text}
+"""
+    payload = {"contents": [{"role": "user", "parts": [{"text": prompt}]}]}
+    return _live_chat_call(payload, "パチンコの振り返り")
