@@ -1,29 +1,29 @@
 {
   "$schema": "./schema.json",
-  "id": "slotking_minamiurawa",
-  "name": "スロットキング南浦和",
-  "region": "埼玉県",
-  "sheet_store_name": "スロットキング南浦和",
+  "id": "asia_center_akabane",
+  "name": "アジアセンター",
+  "region": "東京都",
+  "sheet_store_name": "アジアセンター",
   "updated_at": "2026-09-30",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち スロットキング南浦和",
-      "url": "https://minpachi.com/omega/",
+      "name": "みんぱち アジアセンター",
+      "url": "https://minpachi.com/%e3%82%a2%e3%82%b8%e3%82%a2%e3%82%bb%e3%83%b3%e3%82%bf%e3%83%bc/",
       "reliability": "ポータル",
-      "checked_at": "2026-09-27"
+      "checked_at": "2026-09-30"
     }
   ],
   "info": {
     "city": {
-      "value": "さいたま市南区",
+      "value": "北区",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "address": {
-      "value": "埼玉県さいたま市南区南本町1-5-6",
+      "value": "東京都北区赤羽西1-6-1-103",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -43,10 +43,9 @@
     },
     "entry": {
       "value": [
-        "整理券あり（会員カード不要）",
+        "整理券は特定日のみあり（会員カード不要）",
         "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "配布時間: 9:30"
       ],
       "status": "未確認",
       "source_ids": [
@@ -59,12 +58,14 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": 252,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "slot_units": {
-      "value": 218,
+      "value": 136,
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -72,7 +73,8 @@
     },
     "rates": {
       "value": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円",
+        "スロット 21.73円"
       ],
       "status": "未確認",
       "source_ids": [
@@ -81,8 +83,9 @@
     },
     "exchange_rates": {
       "value": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 28玉",
+        "1円パチンコ 非等価",
+        "21.73円スロット 5.2枚"
       ],
       "status": "未確認",
       "source_ids": [
@@ -95,7 +98,7 @@
       "source_ids": []
     },
     "prize_exchange": {
-      "value": "店の入口に併設",
+      "value": "店の北側の出口から出て、左手に20メートルくらい進んだところ",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -117,9 +120,20 @@
       "source_ids": []
     },
     "sns": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/akabaneajia/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@asiacenter7033"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "line": {
       "value": null,
@@ -127,11 +141,9 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2014年4月26日",
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "features": {
       "value": null,
@@ -144,27 +156,21 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "第1土曜日、第3土曜日",
+      "value": "土曜日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "anniversary_days": {
-      "value": "4月26日",
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "special_days": {
-      "value": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "new_machines": {
       "value": null,
@@ -181,8 +187,8 @@
     {
       "field": "city",
       "before": null,
-      "after": "さいたま市南区",
-      "changed_at": "2026-09-27",
+      "after": "北区",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -190,8 +196,8 @@
     {
       "field": "address",
       "before": null,
-      "after": "埼玉県さいたま市南区南本町1-5-6",
-      "changed_at": "2026-09-27",
+      "after": "東京都北区赤羽西1-6-1-103",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -200,7 +206,7 @@
       "field": "hours",
       "before": null,
       "after": "10:00〜22:50",
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -209,12 +215,20 @@
       "field": "entry",
       "before": null,
       "after": [
-        "整理券あり（会員カード不要）",
+        "整理券は特定日のみあり（会員カード不要）",
         "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "配布時間: 9:30"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 252,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -222,8 +236,8 @@
     {
       "field": "slot_units",
       "before": null,
-      "after": 218,
-      "changed_at": "2026-09-27",
+      "after": 136,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -232,9 +246,10 @@
       "field": "rates",
       "before": null,
       "after": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円",
+        "スロット 21.73円"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -243,10 +258,11 @@
       "field": "exchange_rates",
       "before": null,
       "after": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 28玉",
+        "1円パチンコ 非等価",
+        "21.73円スロット 5.2枚"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -254,37 +270,26 @@
     {
       "field": "prize_exchange",
       "before": null,
-      "after": "店の入口に併設",
-      "changed_at": "2026-09-27",
+      "after": "店の北側の出口から出て、左手に20メートルくらい進んだところ",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
     },
     {
-      "field": "opened_on",
-      "before": null,
-      "after": "2014年4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "anniversary_days",
-      "before": null,
-      "after": "4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "special_days",
+      "field": "sns",
       "before": null,
       "after": [
-        "第1土曜日・第3土曜日（旧イベント日）"
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/akabaneajia/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/@asiacenter7033"
+        }
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -292,7 +297,7 @@
     {
       "field": "event_days",
       "before": null,
-      "after": "第1土曜日、第3土曜日",
+      "after": "土曜日",
       "changed_at": "2026-09-30",
       "source_ids": [
         "s1"

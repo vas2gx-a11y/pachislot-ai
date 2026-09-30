@@ -1,29 +1,29 @@
 {
   "$schema": "./schema.json",
-  "id": "slotking_minamiurawa",
-  "name": "スロットキング南浦和",
-  "region": "埼玉県",
-  "sheet_store_name": "スロットキング南浦和",
+  "id": "k1_akabane",
+  "name": "Ｋ－１赤羽店",
+  "region": "東京都",
+  "sheet_store_name": "Ｋ－１赤羽店",
   "updated_at": "2026-09-30",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち スロットキング南浦和",
-      "url": "https://minpachi.com/omega/",
+      "name": "みんぱち Ｋ－１赤羽店",
+      "url": "https://minpachi.com/k1-akabane/",
       "reliability": "ポータル",
-      "checked_at": "2026-09-27"
+      "checked_at": "2026-09-30"
     }
   ],
   "info": {
     "city": {
-      "value": "さいたま市南区",
+      "value": "北区",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "address": {
-      "value": "埼玉県さいたま市南区南本町1-5-6",
+      "value": "東京都北区赤羽1-7-4",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -35,7 +35,7 @@
       "source_ids": []
     },
     "hours": {
-      "value": "10:00〜22:50",
+      "value": "10:00～22:50",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -43,10 +43,7 @@
     },
     "entry": {
       "value": [
-        "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "整理券なし（並び順、会員カード不要）"
       ],
       "status": "未確認",
       "source_ids": [
@@ -59,12 +56,14 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": 274,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "slot_units": {
-      "value": 218,
+      "value": 185,
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -72,7 +71,8 @@
     },
     "rates": {
       "value": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円",
+        "スロット 20円"
       ],
       "status": "未確認",
       "source_ids": [
@@ -81,8 +81,9 @@
     },
     "exchange_rates": {
       "value": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 30玉",
+        "1円パチンコ 112玉",
+        "20円スロット 5.6枚"
       ],
       "status": "未確認",
       "source_ids": [
@@ -95,7 +96,7 @@
       "source_ids": []
     },
     "prize_exchange": {
-      "value": "店の入口に併設",
+      "value": "メイン出入口の向かい（角を挟んで南西側）",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -107,9 +108,11 @@
       "source_ids": []
     },
     "access": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "JR赤羽駅東口より徒歩1分",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "official_url": {
       "value": null,
@@ -127,11 +130,9 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2014年4月26日",
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "features": {
       "value": null,
@@ -144,27 +145,21 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "第1土曜日、第3土曜日",
+      "value": "1のつく日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "anniversary_days": {
-      "value": "4月26日",
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "special_days": {
-      "value": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "new_machines": {
       "value": null,
@@ -181,8 +176,8 @@
     {
       "field": "city",
       "before": null,
-      "after": "さいたま市南区",
-      "changed_at": "2026-09-27",
+      "after": "北区",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -190,8 +185,8 @@
     {
       "field": "address",
       "before": null,
-      "after": "埼玉県さいたま市南区南本町1-5-6",
-      "changed_at": "2026-09-27",
+      "after": "東京都北区赤羽1-7-4",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -199,8 +194,8 @@
     {
       "field": "hours",
       "before": null,
-      "after": "10:00〜22:50",
-      "changed_at": "2026-09-27",
+      "after": "10:00～22:50",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -209,12 +204,18 @@
       "field": "entry",
       "before": null,
       "after": [
-        "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "整理券なし（並び順、会員カード不要）"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 274,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -222,8 +223,8 @@
     {
       "field": "slot_units",
       "before": null,
-      "after": 218,
-      "changed_at": "2026-09-27",
+      "after": 185,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -232,9 +233,10 @@
       "field": "rates",
       "before": null,
       "after": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円",
+        "スロット 20円"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -243,10 +245,11 @@
       "field": "exchange_rates",
       "before": null,
       "after": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 30玉",
+        "1円パチンコ 112玉",
+        "20円スロット 5.6枚"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -254,37 +257,17 @@
     {
       "field": "prize_exchange",
       "before": null,
-      "after": "店の入口に併設",
-      "changed_at": "2026-09-27",
+      "after": "メイン出入口の向かい（角を挟んで南西側）",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
     },
     {
-      "field": "opened_on",
+      "field": "access",
       "before": null,
-      "after": "2014年4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "anniversary_days",
-      "before": null,
-      "after": "4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "special_days",
-      "before": null,
-      "after": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "changed_at": "2026-09-27",
+      "after": "JR赤羽駅東口より徒歩1分",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -292,7 +275,7 @@
     {
       "field": "event_days",
       "before": null,
-      "after": "第1土曜日、第3土曜日",
+      "after": "1のつく日",
       "changed_at": "2026-09-30",
       "source_ids": [
         "s1"

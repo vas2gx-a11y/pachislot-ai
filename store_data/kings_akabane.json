@@ -1,29 +1,29 @@
 {
   "$schema": "./schema.json",
-  "id": "slotking_minamiurawa",
-  "name": "スロットキング南浦和",
-  "region": "埼玉県",
-  "sheet_store_name": "スロットキング南浦和",
+  "id": "kings_akabane",
+  "name": "キングス",
+  "region": "東京都",
+  "sheet_store_name": "キングス",
   "updated_at": "2026-09-30",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち スロットキング南浦和",
-      "url": "https://minpachi.com/omega/",
+      "name": "みんぱち キングス",
+      "url": "https://minpachi.com/%e3%82%ad%e3%83%b3%e3%82%b0%e3%82%b9/",
       "reliability": "ポータル",
-      "checked_at": "2026-09-27"
+      "checked_at": "2026-09-30"
     }
   ],
   "info": {
     "city": {
-      "value": "さいたま市南区",
+      "value": "北区",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "address": {
-      "value": "埼玉県さいたま市南区南本町1-5-6",
+      "value": "東京都北区赤羽南1-7-2",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -43,10 +43,9 @@
     },
     "entry": {
       "value": [
-        "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "整理券あり（会員カード優先）",
+        "配布方法: 並び順",
+        "配布時間: 9:50"
       ],
       "status": "未確認",
       "source_ids": [
@@ -59,20 +58,20 @@
       "source_ids": []
     },
     "pachinko_units": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
-    },
-    "slot_units": {
-      "value": 218,
+      "value": 279,
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
+    "slot_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
     "rates": {
       "value": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円"
       ],
       "status": "未確認",
       "source_ids": [
@@ -81,8 +80,8 @@
     },
     "exchange_rates": {
       "value": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉"
       ],
       "status": "未確認",
       "source_ids": [
@@ -95,7 +94,7 @@
       "source_ids": []
     },
     "prize_exchange": {
-      "value": "店の入口に併設",
+      "value": "店舗裏側出口（駅とは反対側）を右に進んですぐ右側、店舗から2軒隣の一軒家",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -127,7 +126,7 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2014年4月26日",
+      "value": "2006年12月20日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -144,27 +143,21 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "第1土曜日、第3土曜日",
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "anniversary_days": {
-      "value": "4月26日",
+      "value": "12月20日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "special_days": {
-      "value": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "new_machines": {
       "value": null,
@@ -181,8 +174,8 @@
     {
       "field": "city",
       "before": null,
-      "after": "さいたま市南区",
-      "changed_at": "2026-09-27",
+      "after": "北区",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -190,8 +183,8 @@
     {
       "field": "address",
       "before": null,
-      "after": "埼玉県さいたま市南区南本町1-5-6",
-      "changed_at": "2026-09-27",
+      "after": "東京都北区赤羽南1-7-2",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -200,7 +193,7 @@
       "field": "hours",
       "before": null,
       "after": "10:00〜22:50",
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -209,21 +202,20 @@
       "field": "entry",
       "before": null,
       "after": [
-        "整理券あり（会員カード不要）",
-        "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "整理券あり（会員カード優先）",
+        "配布方法: 並び順",
+        "配布時間: 9:50"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
     },
     {
-      "field": "slot_units",
+      "field": "pachinko_units",
       "before": null,
-      "after": 218,
-      "changed_at": "2026-09-27",
+      "after": 279,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -232,9 +224,9 @@
       "field": "rates",
       "before": null,
       "after": [
-        "スロット 21.73円 / 5.43円"
+        "パチンコ 4円 / 1円"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -243,10 +235,10 @@
       "field": "exchange_rates",
       "before": null,
       "after": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -254,8 +246,8 @@
     {
       "field": "prize_exchange",
       "before": null,
-      "after": "店の入口に併設",
-      "changed_at": "2026-09-27",
+      "after": "店舗裏側出口（駅とは反対側）を右に進んですぐ右側、店舗から2軒隣の一軒家",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -263,8 +255,8 @@
     {
       "field": "opened_on",
       "before": null,
-      "after": "2014年4月26日",
-      "changed_at": "2026-09-27",
+      "after": "2006年12月20日",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -272,27 +264,7 @@
     {
       "field": "anniversary_days",
       "before": null,
-      "after": "4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "special_days",
-      "before": null,
-      "after": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "event_days",
-      "before": null,
-      "after": "第1土曜日、第3土曜日",
+      "after": "12月20日",
       "changed_at": "2026-09-30",
       "source_ids": [
         "s1"

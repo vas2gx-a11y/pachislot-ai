@@ -1,29 +1,29 @@
 {
   "$schema": "./schema.json",
-  "id": "slotking_minamiurawa",
-  "name": "スロットキング南浦和",
-  "region": "埼玉県",
-  "sheet_store_name": "スロットキング南浦和",
+  "id": "marche_akabane",
+  "name": "マルシェ赤羽店",
+  "region": "東京都",
+  "sheet_store_name": "マルシェ赤羽店",
   "updated_at": "2026-09-30",
   "sources": [
     {
       "id": "s1",
-      "name": "みんぱち スロットキング南浦和",
-      "url": "https://minpachi.com/omega/",
+      "name": "みんぱち マルシェ赤羽店",
+      "url": "https://minpachi.com/marche-a/",
       "reliability": "ポータル",
-      "checked_at": "2026-09-27"
+      "checked_at": "2026-09-30"
     }
   ],
   "info": {
     "city": {
-      "value": "さいたま市南区",
+      "value": "北区",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "address": {
-      "value": "埼玉県さいたま市南区南本町1-5-6",
+      "value": "東京都北区赤羽1-8-3",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -45,8 +45,8 @@
       "value": [
         "整理券あり（会員カード不要）",
         "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "配布時間: 9:30",
+        "新台初日は並び順で別途新台整理券を配布（開始時刻は一般抽選・新台整理券ともに9:30）"
       ],
       "status": "未確認",
       "source_ids": [
@@ -64,7 +64,7 @@
       "source_ids": []
     },
     "slot_units": {
-      "value": 218,
+      "value": 170,
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -72,7 +72,7 @@
     },
     "rates": {
       "value": [
-        "スロット 21.73円 / 5.43円"
+        "スロット 21.73円"
       ],
       "status": "未確認",
       "source_ids": [
@@ -81,8 +81,7 @@
     },
     "exchange_rates": {
       "value": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "21.73円スロット 5.2枚"
       ],
       "status": "未確認",
       "source_ids": [
@@ -90,12 +89,16 @@
       ]
     },
     "replay_limit": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        "21.73円スロット 460枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "prize_exchange": {
-      "value": "店の入口に併設",
+      "value": "店舗左側出口を左に向かい最初の十字路右側（TUC赤羽駅中央店）",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -117,9 +120,20 @@
       "source_ids": []
     },
     "sns": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/marche-a/"
+        },
+        {
+          "label": "X",
+          "url": "https://twitter.com/marcheakabane"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
     },
     "line": {
       "value": null,
@@ -127,7 +141,7 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": "2014年4月26日",
+      "value": "2000年12月19日",
       "status": "未確認",
       "source_ids": [
         "s1"
@@ -144,27 +158,23 @@
       "source_ids": []
     },
     "event_days": {
-      "value": "第1土曜日、第3土曜日",
+      "value": "7のつく日、金曜日、土曜日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "anniversary_days": {
-      "value": "4月26日",
+      "value": "12月19日",
       "status": "未確認",
       "source_ids": [
         "s1"
       ]
     },
     "special_days": {
-      "value": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "status": "未確認",
-      "source_ids": [
-        "s1"
-      ]
+      "value": null,
+      "status": "不明",
+      "source_ids": []
     },
     "new_machines": {
       "value": null,
@@ -181,8 +191,8 @@
     {
       "field": "city",
       "before": null,
-      "after": "さいたま市南区",
-      "changed_at": "2026-09-27",
+      "after": "北区",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -190,8 +200,8 @@
     {
       "field": "address",
       "before": null,
-      "after": "埼玉県さいたま市南区南本町1-5-6",
-      "changed_at": "2026-09-27",
+      "after": "東京都北区赤羽1-8-3",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -200,7 +210,7 @@
       "field": "hours",
       "before": null,
       "after": "10:00〜22:50",
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -211,10 +221,10 @@
       "after": [
         "整理券あり（会員カード不要）",
         "配布方法: 抽選",
-        "配布時間: 9:40",
-        "9:40整理券抽選配布、9:50再整列、10時入場"
+        "配布時間: 9:30",
+        "新台初日は並び順で別途新台整理券を配布（開始時刻は一般抽選・新台整理券ともに9:30）"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -222,8 +232,8 @@
     {
       "field": "slot_units",
       "before": null,
-      "after": 218,
-      "changed_at": "2026-09-27",
+      "after": 170,
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -232,9 +242,9 @@
       "field": "rates",
       "before": null,
       "after": [
-        "スロット 21.73円 / 5.43円"
+        "スロット 21.73円"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -243,10 +253,20 @@
       "field": "exchange_rates",
       "before": null,
       "after": [
-        "21.73円スロット 5.0枚",
-        "5.43円スロット 20枚"
+        "21.73円スロット 5.2枚"
       ],
-      "changed_at": "2026-09-27",
+      "changed_at": "2026-09-30",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "21.73円スロット 460枚"
+      ],
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -254,8 +274,26 @@
     {
       "field": "prize_exchange",
       "before": null,
-      "after": "店の入口に併設",
-      "changed_at": "2026-09-27",
+      "after": "店舗左側出口を左に向かい最初の十字路右側（TUC赤羽駅中央店）",
+      "changed_at": "2026-09-30",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "ブログ（Ameba）",
+          "url": "https://ameblo.jp/marche-a/"
+        },
+        {
+          "label": "X",
+          "url": "https://twitter.com/marcheakabane"
+        }
+      ],
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -263,28 +301,8 @@
     {
       "field": "opened_on",
       "before": null,
-      "after": "2014年4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "anniversary_days",
-      "before": null,
-      "after": "4月26日",
-      "changed_at": "2026-09-27",
-      "source_ids": [
-        "s1"
-      ]
-    },
-    {
-      "field": "special_days",
-      "before": null,
-      "after": [
-        "第1土曜日・第3土曜日（旧イベント日）"
-      ],
-      "changed_at": "2026-09-27",
+      "after": "2000年12月19日",
+      "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
       ]
@@ -292,7 +310,16 @@
     {
       "field": "event_days",
       "before": null,
-      "after": "第1土曜日、第3土曜日",
+      "after": "7のつく日、金曜日、土曜日",
+      "changed_at": "2026-09-30",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "12月19日",
       "changed_at": "2026-09-30",
       "source_ids": [
         "s1"
