@@ -2944,12 +2944,16 @@ def _summarize_daily_rows(rows, overall_avg_games=None):
 # 旧イベント日・周年日
 # ---------------------------------------------------------------------------
 # ホールデータサイトに載っている表記をそのまま貼れるように、書き方を何通りか受け付ける。
-#   ゾロ目日 / 月日がゾロ目日 / 1のつく日 / 毎月7日 / 9月9日
+#   ゾロ目日 / 月日がゾロ目日 / 1のつく日 / 毎月7日 / 9月9日 / 土曜日(毎週土曜日) / 第1土曜日
 _EVENT_ZOROME_RE = re.compile(r"^ゾロ目日?$")
 _EVENT_MD_ZOROME_RE = re.compile(r"^月日(が)?ゾロ目日?$")
 _EVENT_DIGIT_RE = re.compile(r"^(\d)の[付つ]く日$")
 _EVENT_MONTH_DAY_RE = re.compile(r"^(\d{1,2})月(\d{1,2})日$")
 _EVENT_DAY_RE = re.compile(r"^(?:毎月)?(\d{1,2})日$")
+# 曜日で決めている店もある(「毎週土曜日」「第1・第3土曜日」)。日付の数字では表せないので別の型にする
+_EVENT_WEEKDAY_RE = re.compile(r"^(?:毎週)?([月火水木金土日])曜日?$")
+_EVENT_NTH_WEEKDAY_RE = re.compile(r"^第(\d)([月火水木金土日])曜日?$")
+_WEEKDAY_CHARS = "月火水木金土日"  # datetime.weekday() の並び(月曜=0)
 # ゾロ目日として扱う日(31日は「3と1」でゾロ目にならないため入れない)
 _ZOROME_DAYS = (11, 22)
 
@@ -2966,9 +2970,9 @@ def parse_event_day_rules(text):
         return [], []
 
     # 「ゾロ目日(11日、22日)」のようにカッコ内に具体日が書かれている表記に合わせ、
-    # カッコも区切り文字として扱う
+    # カッコも区切り文字として扱う。「毎月1日・11日」のような中黒区切りもサイトによく出るので区切りにする
     normalized = re.sub(r"[（）()]", "、", str(text))
-    tokens = [t.strip() for t in re.split(r"[、,／/\n\r\t]+", normalized) if t.strip()]
+    tokens = [t.strip() for t in re.split(r"[、,／/・\n\r\t]+", normalized) if t.strip()]
 
     rules = []
     unknown = []
@@ -3006,6 +3010,16 @@ def parse_event_day_rules(text):
             if 1 <= day <= 31:
                 _add("day", day, f"毎月{day}日")
                 continue
+        matched = _EVENT_NTH_WEEKDAY_RE.match(cleaned)
+        if matched and 1 <= int(matched.group(1)) <= 5:
+            nth, wd = int(matched.group(1)), matched.group(2)
+            _add("nth_weekday", (nth, _WEEKDAY_CHARS.index(wd)), f"第{nth}{wd}曜日")
+            continue
+        matched = _EVENT_WEEKDAY_RE.match(cleaned)
+        if matched:
+            wd = matched.group(1)
+            _add("weekday", _WEEKDAY_CHARS.index(wd), f"毎週{wd}曜日")
+            continue
         unknown.append(token)
 
     return rules, unknown
@@ -3024,6 +3038,11 @@ def _rule_matches_date(rule, day):
         return day.day == rule["value"]
     if rule_type == "date":
         return (day.month, day.day) == tuple(rule["value"])
+    if rule_type == "weekday":
+        return day.weekday() == rule["value"]
+    if rule_type == "nth_weekday":
+        nth, weekday = rule["value"]
+        return day.weekday() == weekday and (day.day - 1) // 7 + 1 == nth
     return False
 
 
