@@ -1,16 +1,18 @@
 {% extends "base.html" %}
-{% from "_macros.html" import back_link %}
+{% from "_macros.html" import back_link, stat_card, trend_section, hall_metric_section %}
 
 {#
   店舗情報ページ。上半分(基本情報)は store_data/<id>.json、下半分(営業データ)はシートから来る。
   不明な項目は推測で埋めず「不明」と見せ、値のある項目には確認状態と出典番号を必ず添える。
   セクションの並びを変えるときは、下の toc の並びも合わせて直す(目次とずれないように)。
+  営業データの傾向(日別の推移・イベ日の信頼度・曜日・台別)は以前「店舗傾向」ページにあったものをここへ移した。
 #}
 
 {% set toc = [
     ('basic', '基本情報'), ('access', 'アクセス'), ('prices', '料金・交換率'), ('units', '設置台数'), ('machines', '設置機種'),
     ('days', '営業日・特定日'), ('notices', 'イベント・告知'), ('new', '新台入替'),
-    ('daily', '過去の営業データ'), ('slot', 'パチスロデータ'), ('features', '店舗の特徴'),
+    ('daily', '日別データ'), ('event', 'イベ日の信頼度'), ('weekday', '曜日・日付の傾向'), ('slot', '台別データ'),
+    ('features', '店舗の特徴'),
     ('sources', '情報源'), ('history', '更新履歴'),
 ] %}
 
@@ -68,6 +70,12 @@
 </section>
 {%- endmacro %}
 
+{# 信頼度の段階。高/中/低は「差を信じてよい度合い」で、強い・弱いの向きとは別に見せる #}
+{% macro reliability_badge(r) -%}
+{% if not r or r.level == '判定不可' %}<span class="rel rel-na" title="イベ日か通常日の日数が3日未満">判定不可</span>
+{% else %}<span class="rel rel-{{ {'高': 'high', '中': 'mid', '低': 'low'}[r.level] }}" title="t値 {{ '%.2f' % r.t }}">{{ r.level }}{% if r.level != '低' %}・{{ r.direction }}{% endif %}</span>{% endif %}
+{%- endmacro %}
+
 {% macro signed(v) -%}
 {% if v is none %}-{% else %}<span class="{{ 'text-emerald-600' if v > 0 else 'text-rose-600' if v < 0 else '' }}">{{ '{:+,}'.format(v | int) }}</span>{% endif %}
 {%- endmacro %}
@@ -107,6 +115,17 @@
     .num-table th:first-child, .num-table td:first-child { text-align: left; }
     .num-table thead th { color: #71717a; font-weight: 600; font-size: .75rem; }
 
+    /* 信頼度のバッジ。「高」でも向きが「弱い」ことがあるので、色は段階だけで付ける */
+    .rel { display: inline-block; padding: 0 .5rem; border-radius: 9999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+    .rel-high { background: #0f766e; color: #fff; }
+    .rel-mid { background: #ccfbf1; color: #115e59; }
+    .rel-low { background: #f4f4f5; color: #71717a; }
+    .rel-na { background: #fff; color: #a1a1aa; border: 1px dashed #d4d4d8; }
+    .kind-dot { display: inline-block; width: .55rem; height: .55rem; border-radius: 9999px; margin-right: .25rem; vertical-align: middle; }
+    .kind-event { background: #f59e0b; }
+    .kind-anniversary { background: #e11d48; }
+    .range-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
+
     .toc a { display: block; padding: .3rem .75rem; border-left: 2px solid #e4e4e7; color: #71717a; font-size: .8125rem; }
     .toc a:hover { color: #18181b; }
     .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
@@ -137,7 +156,8 @@
                 <div class="font-bold text-sm mt-1">{{ (info.hours and info.hours.value) or '不明' }}</div></div>
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4">
-            <a href="{{ url_for('store_trends.index', store_name=s.sheet_store_name) }}" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">{{ icon('building') }} 店舗傾向を見る</a>
+            <a href="#daily" class="btn btn-sm bg-white text-gray-900 hover:bg-gray-100">{{ icon('trend_up') }} 傾向・グラフへ</a>
+            <a href="{{ url_for('store_trends.my_records', store_name=s.sheet_store_name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">{{ icon('chart') }} 自分の記録</a>
             {% if current_user_is_admin %}
             <a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="btn btn-sm border border-white/30 text-white hover:bg-white/10">{{ icon('import') }} 営業データを取り込む</a>
             {% endif %}
@@ -210,24 +230,157 @@
     {% call section('notices', 'イベント・告知') %}{{ dated_block('notices') }}{% endcall %}
     {% call section('new', '新台入替') %}{{ dated_block('new_machines') }}{% endcall %}
 
-    {% call section('daily', '過去の営業データ（日別）') %}
+    {# ---- ここから営業データ(シート)。店の全台が対象で、自分の記録とは母数が違う ---- #}
+    {% set d1 = tr.daily %}
+    {% set dall = tr.daily_all %}
+    {% set kinds = {} %}
+    {% for p in (dall.series if dall and dall.series else []) %}{% set _ = kinds.update({p.date: p.kind}) %}{% endfor %}
+
+    {% call section('daily', '日別データ（店の全台）') %}
+        {% if d1 and d1.record_count %}
+        {% set o = d1.overall %}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+            {{ stat_card("平均差枚（直近1年）", ("%+d" | format(o.avg_diff | round(0) | int) ~ "枚") if o.avg_diff is not none else "データなし",
+                         "text-green-600" if o.avg_diff and o.avg_diff > 0 else "text-red-600") }}
+            {{ stat_card("平均G数", ((o.avg_games | round(0) | int) ~ "G") if o.avg_games is not none else "データなし") }}
+            {{ stat_card("勝率", ("%.1f" | format(o.win_rate) ~ "%") if o.win_rate is not none else "データなし") }}
+            {{ stat_card("データのある日", d1.record_count ~ "日") }}
+        </div>
+        {% endif %}
+
+        {% if dall and dall.series and dall.series | length > 1 %}
+        <div class="mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <p class="text-xs text-gray-500">
+                    棒＝平均差枚、線＝平均G数。
+                    <span class="kind-dot kind-event"></span>旧イベ日
+                    <span class="kind-dot kind-anniversary ml-2"></span>周年日
+                </p>
+                <div class="flex gap-1" role="group" aria-label="グラフの期間">
+                    {% for label, n in [('30日', 30), ('90日', 90), ('1年', 365), ('全期間', 0)] %}
+                    <button type="button" class="range-btn text-xs px-2.5 py-1 rounded-full border border-gray-200 bg-white text-gray-600{% if n == 90 %} active{% endif %}" data-range="{{ n }}">{{ label }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="relative h-64 md:h-72"><canvas id="daily-chart"></canvas></div>
+        </div>
+        {% endif %}
+
         {% if ops.daily %}
-        <div class="overflow-x-auto -mx-1 px-1">
+        <div class="overflow-x-auto -mx-1 px-1 mt-4">
         <table class="num-table"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th></tr></thead><tbody>
             {% for d in ops.daily %}
-            <tr><td>{{ d.date }}</td><td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
+            {% set k = kinds.get(d.date, 'normal') %}
+            <tr><td>{% if k != 'normal' %}<span class="kind-dot kind-{{ k }}" title="{{ '周年日' if k == 'anniversary' else '旧イベ日' }}"></span>{% endif %}{{ d.date }}</td>
+                <td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
                 <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
                 <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td></tr>
             {% endfor %}
         </tbody></table>
         </div>
-        <p class="hint">直近 {{ ops.daily | length }} 日分を表示（全 {{ ops.daily_count }} 日）。曜日・特定日ごとの傾向は店舗傾向ページで見られます。</p>
+        <p class="hint">直近 {{ ops.daily | length }} 日分（全 {{ ops.daily_count }} 日）。差枚・勝率はデータサイト側で空欄の日があり、平均は値のある日だけで出しています。</p>
+
+        {% if dall and dall.rows and dall.rows | length > ops.daily | length %}
+        <details class="mt-2">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 全 {{ dall.rows | length }} 日分を見る</summary>
+            <div class="mt-2 max-h-96 overflow-y-auto">
+            <table class="num-table"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th class="!text-left">取り込み方法</th></tr></thead><tbody>
+                {% for d in dall.rows %}
+                {% set k = kinds.get(d.date, 'normal') %}
+                <tr><td>{% if k != 'normal' %}<span class="kind-dot kind-{{ k }}"></span>{% endif %}{{ d.date }}</td>
+                    <td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
+                    <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
+                    <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td>
+                    <td class="!text-left text-gray-400">{{ d.source or '-' }}</td></tr>
+                {% endfor %}
+            </tbody></table>
+            </div>
+        </details>
+        {% endif %}
         {% else %}
         <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の日別データはまだありません。</p>
         {% endif %}
+        {% if current_user_is_admin %}
+        <p class="hint"><a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="text-blue-600 underline">{{ icon('import') }} 日別データを取り込む</a>（貼り付け・CSV・データサイトの一覧）</p>
+        {% endif %}
     {% endcall %}
 
-    {% call section('slot', 'パチスロデータ（台別）') %}
+    {% call section('event', 'イベ日の信頼度') %}
+        {% if (d1 and d1.by_event_category) or (dall and dall.by_event_category) %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for period_label, pt in [("直近1年", d1), ("全期間", dall)] %}
+            <div>
+                <p class="text-xs font-bold text-gray-400 mb-1.5">{{ period_label }}{% if pt and pt.first_date %}<span class="font-normal">（{{ pt.first_date }}〜{{ pt.last_date }}）</span>{% endif %}</p>
+                {% if pt and pt.event_vs_normal %}
+                {% set cmp = pt.event_vs_normal %}
+                <div class="grid grid-cols-2 gap-2">
+                    {{ stat_card("平均差枚の差", ("%+d" | format(cmp.diff_gap | round(0) | int) ~ "枚") if cmp.diff_gap is not none else "データなし",
+                                 "text-green-600" if cmp.diff_gap and cmp.diff_gap > 0 else "text-red-600") }}
+                    {{ stat_card("稼働（通常日=100%）", (cmp.games_ratio | round(0) | int) ~ "%",
+                                 "text-green-600" if cmp.games_ratio >= 100 else "text-red-600") }}
+                </div>
+                <p class="mt-2 text-sm">信頼度 {{ reliability_badge(cmp.event.reliability) }}
+                    <span class="text-xs text-gray-400">旧イベ日 {{ cmp.event.count }}日 / 通常日 {{ cmp.normal.count }}日</span></p>
+                {% else %}
+                <p class="text-sm text-gray-400">この期間では比べられるデータがありません。</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% set rows = (dall.by_event_category | rejectattr('key', 'equalto', 'normal') | list) + (dall.by_event_rule or []) %}
+        {% set normal = dall.by_event_category | selectattr('key', 'equalto', 'normal') | first %}
+        {% if rows %}
+        <div class="overflow-x-auto -mx-1 px-1 mt-4">
+        <table class="num-table"><thead><tr>
+            <th>区分（全期間）</th><th>日数</th><th>平均差枚</th><th>通常日との差</th><th>平均G数</th><th>通常日超え</th><th>信頼度</th>
+        </tr></thead><tbody>
+            {% if normal %}
+            <tr class="text-gray-400"><td>通常日（基準）</td><td>{{ normal.count }}</td><td>{{ signed(normal.avg_diff) }}</td><td>-</td>
+                <td>{{ '{:,}'.format(normal.avg_games | int) if normal.avg_games is not none else '-' }}</td><td>-</td><td>-</td></tr>
+            {% endif %}
+            {% for r in rows %}
+            {% set rel = r.reliability %}
+            <tr><td class="!whitespace-normal">{{ r.label }}</td><td>{{ r.count }}</td><td>{{ signed(r.avg_diff) }}</td>
+                <td>{% if rel and rel.gap is not none %}{{ signed(rel.gap) }}{% if rel.basis == 'avg_games' %}G{% endif %}{% else %}-{% endif %}</td>
+                <td>{{ '{:,}'.format(r.avg_games | int) if r.avg_games is not none else '-' }}{% if r.games_index %} <span class="text-gray-400">({{ r.games_index | round | int }}%)</span>{% endif %}</td>
+                <td>{{ ('%d%%' % rel.beat_rate) if rel and rel.beat_rate is not none else '-' }}</td>
+                <td>{{ reliability_badge(rel) }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        </div>
+        {% endif %}
+        <details class="mt-2">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 信頼度の見方</summary>
+            <div class="text-xs text-gray-600 mt-2 space-y-1">
+                <p>差枚は日ごとのブレが大きく、1日だけ爆発した日があると平均は簡単に跳ねます。そこで「通常日との差」が日ごとのばらつきに比べてどれだけ大きいかと、日数で段階を付けています。</p>
+                <p><strong>高</strong>: 6日以上あり、差がばらつきの2倍以上（偶然とは考えにくい）／<strong>中</strong>: 差がばらつきの1倍以上（傾向はあるが日数を重ねて確認したい）／<strong>低</strong>: 差がばらつきに埋もれている（偶然の範囲）。</p>
+                <p>「通常日超え」はイベ日のうち通常日の平均差枚を上回った日の割合です。平均が高くても超えた日が少なければ、一部の日に偏っています。</p>
+                <p>差枚が3日分そろわない店では、代わりに平均G数（稼働）で判定し、差の単位がGになります。稼働は客の期待で上がるので、設定が入っている証拠としては弱めなので、この場合は「中」までにしています。</p>
+            </div>
+        </details>
+        {% elif ops.events is none %}
+        <p class="text-gray-400 text-sm">旧イベント日・周年日がまだ登録されていません。{% if current_user_is_admin %}<a href="{{ url_for('store_trends.import_page', store_name=s.sheet_store_name) }}" class="text-blue-600 underline">{{ icon('import') }} データ取り込み</a>の「旧イベント日・周年日を登録」から登録すると、通常日との比較と信頼度が出ます。{% endif %}</p>
+        {% else %}
+        <p class="text-gray-400 text-sm">登録した旧イベント日に当たる日別データがまだありません。</p>
+        {% endif %}
+    {% endcall %}
+
+    <section id="weekday" class="info-section">
+        <h2 class="flex items-center gap-2 font-bold text-gray-900 mb-3"><span class="section-bar"></span>曜日・日付の傾向（直近1年）</h2>
+        {% if d1 and d1.record_count %}
+        <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4 items-start">
+            {{ hall_metric_section("calendar", "曜日別", "平均G数が高い曜日ほど、店が力を入れている可能性があります。",
+                 d1.by_weekday, d1.min_samples) }}
+            {{ hall_metric_section("hash", "日付末尾別", "「7の付く日」のような周期イベントがあれば、その末尾が跳ねます。",
+                 d1.by_day_suffix, d1.min_samples, false) }}
+        </div>
+        {% else %}
+        <p class="card card-body text-gray-400 text-sm">日別データが入ると、曜日・日付末尾ごとの稼働が出ます。</p>
+        {% endif %}
+    </section>
+
+    {% call section('slot', '台別データ（店の全台）') %}
         {% if ops.latest_units %}
         <p class="text-sm mb-2">最新 <strong>{{ ops.latest_unit_date }}</strong>（全 {{ ops.unit_date_count }} 日 / {{ '{:,}'.format(ops.unit_row_count) }} 行）</p>
         <div class="overflow-x-auto -mx-1 px-1">
@@ -242,11 +395,61 @@
             {% endfor %}
         </tbody></table>
         </div>
-        <p class="hint">差枚の多い順に最大30台。台番号ごとの履歴は店舗傾向ページで見られます。</p>
+        <p class="hint">最新日の差枚の多い順に最大30台。</p>
         {% else %}
         <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の台別データはまだありません。</p>
         {% endif %}
+
+        {% set ut = tr.units %}
+        {% if ut and ut.record_count %}
+        <form action="{{ url_for('store_info.detail', store_id=s.id) }}#slot" method="GET" class="flex flex-wrap items-end gap-2 mt-4 pt-4 border-t border-gray-100">
+            <div>
+                <label class="label" for="days">台別の集計期間</label>
+                <select id="days" name="days" class="input" onchange="this.form.submit()">
+                    {% for label, value in period_choices %}
+                    <option value="{{ value }}" {% if value == days %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <noscript><button type="submit" class="btn btn-ghost btn-sm">切り替え</button></noscript>
+            <p class="text-xs text-gray-400 pb-2">{{ ut.first_date }}〜{{ ut.last_date }}・{{ ut.day_count }}日分・のべ{{ ut.record_count }}台</p>
+        </form>
+        {% endif %}
     {% endcall %}
+
+    {% if tr.units and tr.units.record_count %}
+    {% set ut = tr.units %}
+    <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4 items-start">
+        {{ trend_section("calendar", "日別の出方", "取り込んだ日ごとの平均差枚です。特定の日だけ全体が跳ねていれば、その日に設定を使っている可能性があります。",
+             ut.by_date, ut.min_samples, true) }}
+        {{ trend_section("digit", "台番号の末尾別", "末尾を揃えて設定を入れているホールかどうかを、実際の差枚で見ます。",
+             ut.by_number_suffix, ut.min_samples, false, false, false) }}
+        {{ trend_section("pin", "端台（角台の候補）とそれ以外", "同じ日・同じ機種の台番号の連番の両端を「端台」として集計しています。",
+             ut.by_edge, ut.min_samples, false, false, false) }}
+        {{ trend_section("slot", "機種別", "その店がどの機種に設定を入れているかを、店の全台データで見ます。",
+             ut.by_machine, ut.min_samples, true, true, false) }}
+        {{ trend_section("medal", "好調な台トップ20", "台番号ごとの平均差枚が高い順です。複数日ぶん取り込むほど、狙い台の候補として意味を持ちます。",
+             ut.top_units, ut.min_samples, true, true, false) }}
+    </div>
+
+    {# 機種ごとの台一覧はHTMLが大きいので、開かれたときに読み込む #}
+    {% if ut.machine_count %}
+    <section class="card card-body" id="machine-details">
+        <h2 class="font-bold text-gray-900">{{ icon('search') }} 機種ごとの台一覧 <span class="text-xs text-gray-400 font-normal">{{ ut.machine_count }}機種</span></h2>
+        {% if ut.machine_details %}
+        {% set unit_trends = ut %}
+        {% include "_store_machine_details.html" %}
+        {% else %}
+        <details class="mt-3" data-lazy-details
+                 data-lazy-url="{{ url_for('store_trends.machine_details', store_name=s.sheet_store_name, days=days) }}">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 機種ごとの台一覧を開く（{{ ut.machine_count }}機種）</summary>
+            <div data-lazy-body class="mt-3"><p class="hint">読み込み中...</p></div>
+        </details>
+        <noscript><p class="hint mt-3"><a href="{{ url_for('store_info.detail', store_id=s.id, days=days, details=1) }}#machine-details" class="text-blue-600 underline">機種ごとの台一覧を表示する</a></p></noscript>
+        {% endif %}
+    </section>
+    {% endif %}
+    {% endif %}
 
     {% call section('features', '店舗の特徴') %}{{ list_block('features') }}{% endcall %}
 
@@ -292,6 +495,96 @@
     </nav>
 </aside>
 </div>
+
+{% if dall and dall.series and dall.series | length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  // 日別の推移。棒(平均差枚)をイベ日だけ色替えして、跳ねた日がイベ日と重なるかを目で見られるようにする
+  (function () {
+    var series = {{ dall.series | tojson }};
+    var colors = { event: '#f59e0b', anniversary: '#e11d48' };
+    var font = { family: "'JetBrains Mono', ui-monospace, monospace" };
+    var grid = 'rgba(24,24,27,0.08)';
+    var chart;
+
+    function slice(n) {
+      if (!n) return series;
+      // 件数ではなく日付で切る(取り込んでいない日があっても期間の意味が変わらないように)
+      var last = new Date(series[series.length - 1].date);
+      last.setDate(last.getDate() - n);
+      var from = last.toISOString().slice(0, 10);
+      return series.filter(function (p) { return p.date > from; });
+    }
+
+    function draw(n) {
+      var pts = slice(n);
+      var data = {
+        labels: pts.map(function (p) { return p.date.slice(5) + '(' + p.weekday + ')'; }),
+        datasets: [
+          { type: 'bar', label: '平均差枚', yAxisID: 'y', data: pts.map(function (p) { return p.avg_diff; }),
+            backgroundColor: pts.map(function (p) {
+              return colors[p.kind] || ((p.avg_diff || 0) >= 0 ? 'rgba(22,163,74,.55)' : 'rgba(220,38,38,.45)');
+            }), borderRadius: 2 },
+          { type: 'line', label: '平均G数', yAxisID: 'y2', data: pts.map(function (p) { return p.avg_games; }),
+            borderColor: '#18181b', borderWidth: 1.5, pointRadius: 0, tension: 0.25, spanGaps: true },
+        ],
+      };
+      if (chart) { chart.data = data; chart.update(); return; }
+      chart = new Chart(document.getElementById('daily-chart'), {
+        data: data,
+        options: {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: {
+              title: function (items) {
+                var p = slice(currentRange)[items[0].dataIndex];
+                var tag = p.kind === 'anniversary' ? ' 周年日' : p.kind === 'event' ? ' 旧イベ日' : '';
+                return p.date + '(' + p.weekday + ')' + tag;
+              },
+              afterBody: function (items) {
+                var p = slice(currentRange)[items[0].dataIndex];
+                return p.win_rate != null ? '勝率: ' + p.win_rate.toFixed(1) + '%' : '';
+              },
+            } },
+          },
+          scales: {
+            x: { ticks: { font: font, color: '#71717a', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
+            y: { position: 'left', title: { display: true, text: '平均差枚' }, ticks: { font: font, color: '#71717a' }, grid: { color: grid } },
+            y2: { position: 'right', title: { display: true, text: '平均G数' }, ticks: { font: font, color: '#71717a' }, grid: { display: false } },
+          },
+        },
+      });
+    }
+
+    var currentRange = 90;
+    document.querySelectorAll('.range-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        currentRange = Number(btn.dataset.range);
+        document.querySelectorAll('.range-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
+        draw(currentRange);
+      });
+    });
+    draw(currentRange);
+  })();
+</script>
+{% endif %}
+
+<script>
+  // 機種ごとの台一覧は、開かれたときに1回だけ読み込む(ページ本体のHTMLを小さく保つため)
+  document.querySelectorAll('details[data-lazy-details]').forEach(function (block) {
+    var loaded = false;
+    block.addEventListener('toggle', function () {
+      if (!block.open || loaded) return;
+      loaded = true;
+      var body = block.querySelector('[data-lazy-body]');
+      fetch(block.getAttribute('data-lazy-url'), { headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (res) { return res.text(); })
+        .then(function (html) { body.innerHTML = html; })
+        .catch(function () { loaded = false; body.innerHTML = '<p class="hint">読み込みに失敗しました。もう一度開いてみてください。</p>'; });
+    });
+  });
+</script>
 
 <script>
   // 表示中のセクションを目次でハイライトする

@@ -3184,6 +3184,59 @@ def save_store_events(store_name, event_days="", anniversary_days="", note="", s
 
 _EVENT_CATEGORY_LABELS = {"event": "旧イベント日", "anniversary": "周年日", "normal": "通常日"}
 
+# 信頼度の判定に使う閾値。
+# イベ日は月に数日しかなく、差枚は日によるブレが大きいので、平均の差だけを見ると
+# 「たまたま1日爆発した」を「強いイベ日」と読んでしまう。日ごとのばらつきに対して
+# 差がどれだけ大きいか(Welchのt値)と日数で、差を信じてよい度合いを段階で出す。
+EVENT_RELIABILITY_MIN_DAYS = 3
+EVENT_RELIABILITY_HIGH_DAYS = 6
+EVENT_RELIABILITY_HIGH_T = 2.0
+EVENT_RELIABILITY_MID_T = 1.0
+
+
+def _event_reliability(group_rows, normal_rows):
+    """
+    イベ日のかたまりが通常日と比べて本当に違うのかを、平均差枚で判定する。
+
+    稼働(平均G数)は客が集まれば上がるので「店が設定を入れたか」は差枚で見る。
+    差枚が空欄の店では判定できないため、そのときは稼働で代用し、basis で区別する。
+    """
+    def _values(rows, key):
+        return [r[key] for r in rows if r.get(key) is not None]
+
+    basis = "avg_diff"
+    ev, nv = _values(group_rows, "avg_diff"), _values(normal_rows, "avg_diff")
+    if len(ev) < EVENT_RELIABILITY_MIN_DAYS or len(nv) < EVENT_RELIABILITY_MIN_DAYS:
+        basis = "avg_games"
+        ev, nv = _values(group_rows, "avg_games"), _values(normal_rows, "avg_games")
+    if len(ev) < EVENT_RELIABILITY_MIN_DAYS or len(nv) < EVENT_RELIABILITY_MIN_DAYS:
+        return {"level": "判定不可", "basis": None, "days": len(ev), "t": None,
+                "gap": None, "beat_rate": None, "direction": None}
+
+    def _mean_var(values):
+        m = sum(values) / len(values)
+        return m, sum((x - m) ** 2 for x in values) / (len(values) - 1)
+
+    em, evar = _mean_var(ev)
+    nm, nvar = _mean_var(nv)
+    gap = em - nm
+    se = (evar / len(ev) + nvar / len(nv)) ** 0.5
+    t = gap / se if se > 0 else 0.0
+    # 平均は1日の爆発で動くので、「イベ日のうち何日が通常日の平均を超えたか」も添える
+    beat_rate = sum(1 for x in ev if x > nm) / len(ev) * 100
+
+    if abs(t) >= EVENT_RELIABILITY_HIGH_T and len(ev) >= EVENT_RELIABILITY_HIGH_DAYS:
+        level = "高"
+    elif abs(t) >= EVENT_RELIABILITY_MID_T:
+        level = "中"
+    else:
+        level = "低"
+    # 稼働は客の期待だけでも上がるので、設定の証拠としては差枚より弱い。稼働で判定したときは「高」を出さない
+    if basis == "avg_games" and level == "高":
+        level = "中"
+    return {"level": level, "basis": basis, "days": len(ev), "t": t, "gap": gap,
+            "beat_rate": beat_rate, "direction": "強い" if gap > 0 else "弱い"}
+
 
 def _event_category_rows(parsed_dates, events, overall):
     """旧イベント日 / 周年日 / 通常日 の3つに分けて集計する(日は重複して属することがある)"""
@@ -3205,12 +3258,16 @@ def _event_category_rows(parsed_dates, events, overall):
             continue
         summary["key"] = key
         summary["label"] = _EVENT_CATEGORY_LABELS[key]
+        if key != "normal":
+            summary["reliability"] = _event_reliability(buckets[key], buckets["normal"])
         rows.append(summary)
     return rows
 
 
 def _event_rule_rows(parsed_dates, events, overall):
     """設定したルールごとの集計(「11日だけ強い」のような差を見るため)"""
+    all_rules = list(events["event_rules"]) + list(events["anniversary_rules"])
+    normal_rows = [row for day, row in parsed_dates if not any(_rule_matches_date(r, day) for r in all_rules)]
     rows = []
     seen = set()
     for rule in list(events["event_rules"]) + list(events["anniversary_rules"]):
@@ -3223,6 +3280,7 @@ def _event_rule_rows(parsed_dates, events, overall):
             continue
         summary["key"] = rule["label"]
         summary["label"] = rule["label"]
+        summary["reliability"] = _event_reliability(group, normal_rows)
         rows.append(summary)
     # 稼働の高い順。G数が無い行は後ろに送る
     rows.sort(key=lambda r: (r["avg_games"] is None, -(r["avg_games"] or 0)))
@@ -3293,6 +3351,20 @@ def build_store_daily_trends(store_name, days=365):
     if events and (events["event_rules"] or events["anniversary_rules"]):
         trends["by_event_category"] = _event_category_rows(parsed_dates, events, overall)
         trends["by_event_rule"] = _event_rule_rows(parsed_dates, events, overall)
+
+    # 推移グラフ用(古い順)。イベ日だけ色を変えて、跳ねている日がイベ日と重なるかを目で見られるようにする
+    series = []
+    for dt, r in reversed(parsed_dates):
+        kind = "normal"
+        if events:
+            if any(_rule_matches_date(rule, dt) for rule in events["anniversary_rules"]):
+                kind = "anniversary"
+            elif any(_rule_matches_date(rule, dt) for rule in events["event_rules"]):
+                kind = "event"
+        series.append({"date": r["date"], "weekday": WEEKDAY_LABELS[dt.weekday()], "kind": kind,
+                       "avg_diff": r["avg_diff"], "avg_games": r["avg_games"], "win_rate": r["win_rate"],
+                       "total_diff": r["total_diff"]})
+    trends["series"] = series
 
     def _best(rows_, key):
         eligible = [r for r in rows_ if r["enough_samples"] and r.get(key) is not None]

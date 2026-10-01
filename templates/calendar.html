@@ -223,7 +223,7 @@
                 {% if s.anniversary_days %}<span class="chip">{{ icon('cake') }} {{ s.anniversary_days }}</span>{% endif %}
                 {% if not s.has_rules %}
                 <span class="text-gray-400">イベント日は未登録</span>
-                <a href="{{ url_for('store_trends.index', store_name=s.name) }}" class="text-blue-600 underline">登録する</a>
+                {% if current_user_is_admin %}<a href="{{ url_for('store_trends.import_page', store_name=s.name) }}" class="text-blue-600 underline">登録する</a>{% endif %}
                 {% endif %}
             </div>
             {% endfor %}
@@ -240,7 +240,7 @@
     {% elif calendar.summary.event_days == 0 %}
     <p class="hint mt-3">
         この月に当てはまるイベント日がありません。
-        イベント日は「店舗傾向」の画面で「毎月7日」「ゾロ目日」のように登録できます。
+        イベント日は「データ取り込み」の画面で「毎月7日」「ゾロ目日」のように登録できます。
     </p>
     {% endif %}
     {% endcall %}
@@ -258,7 +258,7 @@
         {% endif %}
     </section>
 
-    {{ back_link(url_for('store_trends.index'), "店舗の傾向分析に戻る") }}
+    {{ back_link(url_for('store_info.index'), "店舗情報の一覧に戻る") }}
 </div>
 
 {# ポップアップ本体。中身は日付を選んだときにサーバーから読み込む #}

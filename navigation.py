@@ -87,16 +87,10 @@ NAV = [
         "description": "店舗ごとのデータを取り込み、出方のクセを分析します。",
         "items": [
             {
-                "endpoint": "store_trends.index",
-                "label": "店舗傾向（店の全台）",
-                "icon": "building",
-                "description": "取り込んだホールデータから、曜日・イベント日・機種・台番号ごとの傾向を見ます。",
-            },
-            {
                 "endpoint": "store_info.index",
                 "label": "店舗情報",
                 "icon": "store_info",
-                "description": "住所・台数・営業時間・特定日などを出典付きでまとめ、取り込んだ営業データと並べて見ます。",
+                "description": "住所・台数・特定日などの基本情報と、取り込んだ営業データの傾向（日別の推移・イベ日の信頼度・機種・台番号）を店舗ごとに見ます。",
                 # 一覧から各店舗のページへ入るので、その配下も選択状態として扱う
                 "match": "/store_info",
             },

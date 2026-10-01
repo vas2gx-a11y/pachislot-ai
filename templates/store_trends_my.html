@@ -13,7 +13,7 @@
 {% block content %}
 <div class="stack">
     {#
-      店の全台データ(店舗傾向ページ)とは母数がまったく違うので、ページを分けている。
+      店の全台データ(店舗情報ページ)とは母数がまったく違うので、ページを分けている。
       こちらは「自分が打った台だけ」の集計。
     #}
     {% call card("chart", "店舗と期間を選ぶ", None, "bg-gray-100",
@@ -53,7 +53,7 @@
                 <span>{{ icon('store') }} 店の全台データを見る</span>
                 <span class="chip">取り込みデータ・店の全台が対象</span>
             </span>
-            <span class="hint block">データの取り込み、旧イベント日の比較、機種別・台別の集計はこちら。</span>
+            <span class="hint block">店舗情報ページで、日別の推移・旧イベント日の信頼度・機種別・台別の集計を見られます。</span>
         </span>
         <span class="text-blue-600 shrink-0" aria-hidden="true">→</span>
     </a>
@@ -185,6 +185,6 @@
     {% elif store_name %}
     {{ empty_state("building", "この店舗・期間の記録がまだありません。期間を「全期間」に広げるか、データ管理画面から記録を追加してください。") }}
     {% endif %}
-    {{ back_link(url_for('store_trends.index', store_name=store_name, days=days), "店舗の傾向分析に戻る") }}
+    {{ back_link(url_for('store_trends.index', store_name=store_name, days=days), "店舗情報に戻る") }}
 </div>
 {% endblock %}

@@ -229,7 +229,7 @@
         {{ icon_action(url_for('records.machine_chart', store_name=item.store_name, machine_number=item.machine_number, machine_name=item.machine_name), "chart", "グラフ") }}
         {% endif %}
         {% if item.store_name %}
-        {{ icon_action(url_for('store_trends.index', store_name=item.store_name), "building", "店舗傾向") }}
+        {{ icon_action(url_for('store_trends.index', store_name=item.store_name), "building", "店舗情報") }}
         {% endif %}
     </div>
 

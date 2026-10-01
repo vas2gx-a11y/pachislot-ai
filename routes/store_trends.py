@@ -126,49 +126,6 @@ def _stores_for_select(store_name):
     return stores
 
 
-def _render(store_name, days, with_machine_details=False):
-    """
-    店舗傾向のページ(見るためのページ。取り込みのフォームは import_page 側)
-
-    with_machine_details: 「機種ごとの台一覧」をページに埋め込むかどうか。
-      この一覧だけでHTMLの8割を占めるため、既定では埋め込まず、画面で開かれたときに
-      machine_details() から読み込む。JSが使えない場合の ?details=1 でだけ True にする。
-    """
-    stores = _stores_for_select(store_name)
-
-    # 店舗が未指定なら、記録が一番多い店舗を初期表示にする(毎回選び直す手間を省く)
-    if not store_name and stores:
-        store_name = stores[0]["name"]
-
-    trends = common.build_store_trends(store_name, days=days) if store_name else None
-    store_stats = common.load_store_stats().get(store_name) if store_name else None
-    # 旧イベント日・周年日の設定(登録フォームの初期値と、解析結果の表示に使う)
-    store_events = common.load_store_events().get(store_name) if store_name else None
-    # 取り込んだホールデータ(店の全台)は、自分の記録より対象期間が長いことが多いので
-    # 画面の期間指定とは別に、常に直近1年分を集計する
-    daily_trends = common.build_store_daily_trends(store_name, days=365) if store_name else None
-    # 旧イベント日・周年日の傾向は、直近1年だけだと「最近たまたま強い/弱い」を
-    # 「そういうイベントだ」と誤読しやすいため、全期間の集計も並べて比較できるようにする
-    daily_trends_all = common.build_store_daily_trends(store_name, days=0) if store_name else None
-    # 台別データは台ごとの傾向を見るためのものなので、画面の期間指定に合わせて集計する
-    unit_trends = common.build_store_unit_trends(
-        store_name, days=days, include_machine_details=with_machine_details) if store_name else None
-
-    return render_template(
-        "store_trends.html",
-        stores=stores,
-        store_name=store_name,
-        days=days,
-        period_choices=PERIOD_CHOICES,
-        trends=trends,
-        store_stats=store_stats,
-        store_events=store_events,
-        daily_trends=daily_trends,
-        daily_trends_all=daily_trends_all,
-        unit_trends=unit_trends,
-    )
-
-
 def _render_my_records(store_name, days, ai_summary=""):
     """
     自分の記録の集計ページ。
@@ -200,7 +157,7 @@ def _render_import(store_name, days, import_preview=None, pasted_text="",
     データ取り込みページ。
 
     取り込みのフォームだけを集めたページなので、集計は年間データとの比較に使う
-    自分の記録ぶんだけに絞る(日別・台別の集計は傾向ページの担当)。
+    自分の記録ぶんだけに絞る(日別・台別の集計は店舗情報ページの担当)。
     """
     stores = _stores_for_select(store_name)
     if not store_name and stores:
@@ -237,15 +194,25 @@ def _back_to_import(store_name, days):
 
 @store_trends_bp.route("/")
 def index():
+    """
+    旧「店舗の傾向分析」ページ。傾向は店舗情報ページに統合したので、そちらへ送る。
+    カレンダーや古いブックマークがシートの店舗名でここを開くため、URLは残している。
+    店舗JSONが無い店は店舗情報ページが作れないので、一覧へ送って登録を促す。
+    """
     store_name = request.args.get("store_name", "").strip()
-    days = _parse_days(request.args.get("days", DEFAULT_DAYS))
-    return _render(store_name, days, with_machine_details=bool(request.args.get("details")))
+    store = common.store_info_by_sheet_name().get(store_name) if store_name else None
+    if store:
+        return redirect(url_for("store_info.detail", store_id=store["id"], days=request.args.get("days") or None))
+    if store_name:
+        flash(f"「{store_name}」の店舗情報(store_data/*.json)がまだ無いため、傾向を表示できません。"
+              f"店舗情報を登録すると、その店舗のページに傾向が出ます。")
+    return redirect(url_for("store_info.index"))
 
 
 @store_trends_bp.route("/machine_details")
 def machine_details():
     """
-    「機種ごとの台一覧」だけを返す(傾向ページが開かれたときにfetchで読み込む部分)。
+    「機種ごとの台一覧」だけを返す(店舗情報ページで開かれたときにfetchで読み込む部分)。
 
     表示の組み立てはページ側と同じテンプレートを使い回す。
     """
@@ -301,7 +268,7 @@ def ai_summary():
 
     store_stats = common.load_store_stats().get(store_name)
     daily_trends = common.build_store_daily_trends(store_name, days=365)
-    # AIに渡すのは集計値だけなので、機種ごとの台一覧は作らない(傾向ページとキャッシュも共有できる)
+    # AIに渡すのは集計値だけなので、機種ごとの台一覧は作らない(店舗情報ページとキャッシュも共有できる)
     unit_trends = common.build_store_unit_trends(store_name, days=days, include_machine_details=False)
     summary, error = common.summarize_store_trends_with_gemini(
         trends, store_stats=store_stats, daily_trends=daily_trends, unit_trends=unit_trends
