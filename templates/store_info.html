@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import back_link, stat_card, trend_section, hall_metric_section %}
+{% from "_macros.html" import back_link, stat_card, trend_section, hall_metric_section, favorite_button %}
 
 {#
   店舗情報ページ。上半分(基本情報)は store_data/<id>.json、下半分(営業データ)はシートから来る。
@@ -145,7 +145,10 @@
 <div class="hero">
     <div class="page-container py-5">
         <p class="text-xs opacity-60"><a href="{{ url_for('store_info.index') }}" class="underline">店舗情報</a> / {{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</p>
-        <h2 class="font-display font-extrabold text-2xl md:text-3xl mt-1">{{ s.name }}</h2>
+        <div class="flex items-start justify-between gap-2 mt-1">
+            <h2 class="font-display font-extrabold text-2xl md:text-3xl">{{ s.name }}</h2>
+            {{ favorite_button(s.id, is_favorite, 'shrink-0') }}
+        </div>
         {% if info.address and info.address.value %}<p class="text-sm opacity-70 mt-1">{{ info.address.value }}</p>{% endif %}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
             {% for key, label in [('total_units', '総台数'), ('slot_units', 'パチスロ'), ('pachinko_units', 'パチンコ')] %}

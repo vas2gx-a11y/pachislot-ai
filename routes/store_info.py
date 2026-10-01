@@ -7,7 +7,7 @@
 URLを /stores にしないのは、店舗名の変更・統合を行う「店舗の管理」が既に使っているため。
 """
 
-from flask import Blueprint, abort, render_template, request
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 
 import common
 import store_info
@@ -61,8 +61,28 @@ def _sort_by(rows, key):
 @store_info_bp.route("/")
 def index():
     stores, errors = store_info.load_all()
+    # お気に入りは登録した順で上に並べ、残りは今までどおり地域・店名順
+    favorites = common.favorite_store_ids()
+    order = {sid: i for i, sid in enumerate(favorites)}
+    stores.sort(key=lambda s: order.get(s["id"], len(order)))
     return render_template("store_info_list.html", stores=stores, errors=errors,
-                           field_labels=store_info.FIELD_LABELS)
+                           favorites=set(favorites), field_labels=store_info.FIELD_LABELS)
+
+
+@store_info_bp.route("/<store_id>/favorite", methods=["POST"])
+def favorite(store_id):
+    """
+    お気に入りに入れる・外す。一覧と店舗ページの両方から押せるので、押した画面へ戻す。
+    戻り先は自サイト内のパスだけに限る(外部URLへ飛ばされないように)。
+    """
+    if store_info.load(store_id) is None:
+        abort(404)
+    if not common.set_favorite_store(store_id, request.form.get("on") == "1"):
+        flash("お気に入りの保存に失敗しました。時間をおいてお試しください。")
+    back = request.form.get("next", "")
+    if not back.startswith("/") or back.startswith("//"):
+        back = url_for("store_info.index")
+    return redirect(back)
 
 
 @store_info_bp.route("/<store_id>")
@@ -84,6 +104,7 @@ def detail(store_id):
         problems=store_info.validate(s, store_id),
         source_no=source_no,
         known=known,
+        is_favorite=store_id in common.favorite_store_ids(),
         field_count=len(store_info.FIELD_KEYS),
         field_labels=store_info.FIELD_LABELS,
         ops=_operation_summary(sheet_store_name),

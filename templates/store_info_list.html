@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty_state %}
+{% from "_macros.html" import empty_state, favorite_button %}
 
 {% block title %}店舗情報{% endblock %}
 
@@ -17,6 +17,7 @@
     <p class="hint mt-0">
         店舗の住所・台数・営業時間などを出典付きでまとめ、取り込んだ営業データと並べて見られます。
         店舗は <code>tools/store_collect.py</code> で登録・収集すると、ここに追加されます。
+        {{ icon('star') }} を押した店舗はお気に入りとして一覧の上に出ます（アカウントごとに保存されるので、別の端末でも同じです）。
     </p>
 
     {% if errors %}
@@ -30,7 +31,10 @@
     <div class="grid gap-3 md:grid-cols-2">
         {% for s in stores %}
         {% set info = s.info or {} %}
-        <a href="{{ url_for('store_info.detail', store_id=s.id) }}" class="card card-body block" style="border-left: 4px solid #0f766e">
+        {% set fav = s.id in favorites %}
+        {# ボタンを <a> の中に入れるとフォームが入れ子のリンクになるので、カードの右上に重ねる #}
+        <div class="relative">
+        <a href="{{ url_for('store_info.detail', store_id=s.id) }}" class="card card-body block pr-12" style="border-left: 4px solid {{ '#f59e0b' if fav else '#0f766e' }}">
             <div class="font-bold text-gray-900">{{ s.name }}</div>
             <div class="text-xs text-gray-500 mt-1">{{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</div>
             <div class="flex flex-wrap gap-1.5 mt-2">
@@ -39,6 +43,8 @@
                 <span class="chip">更新 {{ s.updated_at }}</span>
             </div>
         </a>
+        {{ favorite_button(s.id, fav, 'absolute top-2 right-2') }}
+        </div>
         {% endfor %}
     </div>
     {% else %}
