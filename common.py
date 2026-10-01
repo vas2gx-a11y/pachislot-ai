@@ -2792,10 +2792,32 @@ def parse_hall_daily_text(text, max_rows=2000):
     return rows, report
 
 
+def _repo_store_daily_rows():
+    """
+    リポジトリに置いた日別データ(store_data/daily/<id>.txt)を、シートと同じ形の行にする。
+
+    シートへの書き込みは認証情報のある環境(アプリの取り込み画面)からしかできないため、
+    データサイトから取った一覧をファイルで置いてpushするだけでも反映できるようにしている。
+    中身はデータサイトの一覧をそのまま写した形式(tools/anaslo.py daily の出力)。
+    """
+    rows = []
+    for name, store in store_info_by_sheet_name().items():
+        text = store_info.daily_text(store.get("id"))
+        if not text:
+            continue
+        parsed, _report = parse_hall_daily_text(text, max_rows=5000)
+        for r in parsed:
+            rows.append(dict(r, store_name=name, source="リポジトリ(store_data/daily)"))
+    return rows
+
+
 def load_store_daily(store_name=""):
     """
     store_daily シートを読み込む。store_name を指定するとその店舗の行だけを返す。
-    日付の新しい順。読み込みに失敗した場合は空リスト。
+    日付の新しい順。読み込みに失敗した場合はリポジトリの日別データだけを返す。
+
+    リポジトリの日別データ(store_data/daily/)も足す。同じ店舗・日付がシートにあれば
+    シートを優先する(画面から取り込み直した値を、古いファイルで上書きしないため)。
     """
     cached = _cache_get("store_daily")
     if cached is None:
@@ -2804,7 +2826,9 @@ def load_store_daily(store_name=""):
             raw_rows = ws.get_all_records()
         except Exception as e:
             logger.error(f"店舗日別データの読み込みエラー: {e}")
-            return []
+            # シートが読めなくてもリポジトリ分は見せる。失敗はキャッシュしない(次で読み直す)
+            repo_rows = sorted(_repo_store_daily_rows(), key=lambda r: r["date"], reverse=True)
+            return repo_rows if not store_name else [r for r in repo_rows if r["store_name"] == store_name]
 
         cached = []
         for row in raw_rows:
@@ -2823,6 +2847,8 @@ def load_store_daily(store_name=""):
                 "total_units": _to_number(row.get("total_units")),
                 "source": str(row.get("source", "")).strip(),
             })
+        have = {(r["store_name"], r["date"]) for r in cached}
+        cached += [r for r in _repo_store_daily_rows() if (r["store_name"], r["date"]) not in have]
         cached.sort(key=lambda r: r["date"], reverse=True)
         _cache_set("store_daily", cached)
 
@@ -3113,7 +3139,7 @@ def load_calendar_events():
     シートは店舗傾向の画面から人が登録したもの、JSONはWebから集めたもの。
     どちらか片方にしか無い店舗もあるので、ルールは両方を合わせて重複だけ除く
     (どちらかを正にすると、もう片方で登録した日がカレンダーから消えてしまうため)。
-    分析(店舗傾向)は今まで通りシートだけを見る。
+    日別データの集計(build_store_daily_trends)は、シートに登録が無い店に限ってこちらを使う。
     """
     merged = {name: dict(setting) for name, setting in load_store_events().items()}
     for name, store in store_info_by_sheet_name().items():
@@ -3343,8 +3369,9 @@ def build_store_daily_trends(store_name, days=365):
     trends["by_weekday"] = _group(lambda dt: dt.weekday(), lambda k: f"{WEEKDAY_LABELS[k]}曜", lambda row: row["key"])
     trends["by_day_suffix"] = _group(lambda dt: dt.day % 10, lambda k: f"末尾{k}の日", lambda row: row["key"])
 
-    # 旧イベント日・周年日が登録されていれば、その日と通常日を比べられるようにする
-    events = load_store_events().get(store_name)
+    # 旧イベント日・周年日が登録されていれば、その日と通常日を比べられるようにする。
+    # シート(画面から登録)が無い店は、店舗情報JSONの特定日を使う(カレンダーと同じ合わせ方)
+    events = load_store_events().get(store_name) or load_calendar_events().get(store_name)
     trends["events"] = events
     trends["by_event_category"] = []
     trends["by_event_rule"] = []

@@ -9,6 +9,7 @@ store_data/<id>.json に置く運用にしている。項目ごとに出典と�
 
 【営業データとの分担】
 日別・台別の営業データ(差枚・G数・BB/RB など)は、これまで通りシート側が正。
+(例外として、日別データは store_data/daily/<id>.txt に置けばシートに無い日を補える)
 JSONには持たせず、sheet_store_name でシートの店舗名と紐づけて画面で並べる。
 基本情報は「たまに変わる」、営業データは「毎日増える」もので、置き場所を分けておくと
 設定推測(common.py)からは今まで通りシートだけを見ればよい。
@@ -113,6 +114,22 @@ def load(store_id):
         return None
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+# 日別データをリポジトリに置く場合の置き場所(store_data/daily/<id>.txt)。
+# 営業データはシートが正だが、シートに書けない環境からでもpushで反映できるようにするための逃げ道。
+DAILY_DIR = os.path.join(DATA_DIR, "daily")
+
+
+def daily_text(store_id):
+    """store_data/daily/<id>.txt の中身(無ければ空文字)。"""
+    if not store_id or "/" in store_id or ".." in store_id:
+        return ""
+    path = os.path.join(DAILY_DIR, f"{store_id}.txt")
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8") as f:
+        return f.read()
 
 
 def load_all():
