@@ -342,6 +342,12 @@
         */
         .ico { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; flex-shrink: 0; }
         .inline-flex > .ico, .flex > .ico { vertical-align: 0; }
+        /* 店舗のお気に入り(_macros.html の favorite_button)。登録済みは塗りつぶした黄色で一目で分かるように */
+        .fav-btn { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem;
+                   border-radius: 9999px; font-size: 1.25rem; color: #a1a1aa; transition: color .15s, background-color .15s; }
+        .fav-btn:hover { color: #f59e0b; background: rgba(245, 158, 11, .12); }
+        .fav-btn.fav-on { color: #f59e0b; }
+        .fav-btn.fav-on .ico path { fill-opacity: 1; }
         /* サイドバーの折りたたみボタンは、状態に応じて向きの違う矢印を出し分ける */
         .sidebar-toggle-icon .when-compact { display: none; }
         body.sidebar-compact .sidebar-toggle-icon .when-wide { display: none; }

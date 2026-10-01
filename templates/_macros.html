@@ -431,3 +431,13 @@
     {% endif %}
 </section>
 {% endmacro %}
+
+
+{# 店舗のお気に入りボタン。一覧と店舗ページで同じ見た目にする。押した画面へ戻ってくる #}
+{% macro favorite_button(store_id, on, cls='') -%}
+<form method="post" action="{{ url_for('store_info.favorite', store_id=store_id) }}" class="{{ cls }}">
+    <input type="hidden" name="on" value="{{ '0' if on else '1' }}">
+    <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+    <button type="submit" class="fav-btn{{ ' fav-on' if on else '' }}" title="{{ 'お気に入りから外す' if on else 'お気に入りに追加' }}" aria-pressed="{{ 'true' if on else 'false' }}">{{ icon('star') }}<span class="sr-only">{{ 'お気に入りから外す' if on else 'お気に入りに追加' }}</span></button>
+</form>
+{%- endmacro %}

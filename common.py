@@ -5248,7 +5248,7 @@ def save_live_chat_result(machine, data):
 USERS_SHEET_NAME = os.environ.get("USERS_SHEET_NAME", "users")
 USERS_HEADERS = [
     "user_id", "login_id", "display_name", "password_hash", "role", "active",
-    "created_at", "updated_at",
+    "created_at", "updated_at", "favorite_stores",
 ]
 OWNER_USER_ID = "owner"
 ROLE_ADMIN = "admin"
@@ -5449,6 +5449,29 @@ def set_user_active(user_id, active):
     if not _update_user(user_id, {"active": "1" if active else "0"}):
         return False, "保存に失敗しました。時間をおいてお試しください。"
     return True, f"「{user['display_name']}」の利用を{'再開' if active else '停止'}しました。"
+
+
+def favorite_store_ids(user=None):
+    """
+    お気に入りの店舗ID(登録順)。
+    ブラウザ(localStorage)ではなく users シートに持つのは、家のPCで登録した店を
+    ホールでスマホから開いたときにも上に出てほしいため。
+    """
+    user = user or current_user()
+    if not user:
+        return []
+    return [x for x in (user.get("favorite_stores") or "").split(",") if x]
+
+
+def set_favorite_store(store_id, favorite):
+    """店舗をお気に入りに入れる・外す。戻り値: 成功したかどうか。何度押しても同じ結果になるよう、切り替えではなく状態を指定させる。"""
+    user = current_user()
+    if not user:
+        return False
+    ids = [x for x in favorite_store_ids(user) if x != store_id]
+    if favorite:
+        ids.append(store_id)
+    return _update_user(user["user_id"], {"favorite_stores": ",".join(ids)})
 
 
 # ---------------------------------------------------------------------------
