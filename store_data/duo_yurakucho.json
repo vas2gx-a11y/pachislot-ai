@@ -13,6 +13,13 @@
       "url": "https://minpachi.com/1011duo/",
       "reliability": "ポータル",
       "checked_at": "2026-10-02"
+    },
+    {
+      "id": "s2",
+      "name": "アナスロ 有楽町DUO データ一覧（日別・台別データから集計）",
+      "url": "https://ana-slo.com/%e3%83%9b%e3%83%bc%e3%83%ab%e3%83%87%e3%83%bc%e3%82%bf/%e6%9d%b1%e4%ba%ac%e9%83%bd/%e6%9c%89%e6%a5%bd%e7%94%baduo-%e3%83%87%e3%83%bc%e3%82%bf%e4%b8%80%e8%a6%a7/",
+      "reliability": "その他",
+      "checked_at": "2026-10-02"
     }
   ],
   "info": {
@@ -137,9 +144,13 @@
       ]
     },
     "features": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": [
+        "2のつく日の勝率 37.4%（8,791/23,480台・82日分、2022/04〜2026/09）。それ以外の日は33.8%（330日分）"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
     },
     "installed_machines": {
       "value": null,
@@ -282,6 +293,17 @@
       "changed_at": "2026-10-02",
       "source_ids": [
         "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "2のつく日の勝率 37.4%（8,791/23,480台・82日分、2022/04〜2026/09）。それ以外の日は33.8%（330日分）"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s2"
       ]
     }
   ]
