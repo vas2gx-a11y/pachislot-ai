@@ -1,5 +1,6 @@
 from flask import Blueprint, abort, render_template, request
 
+import machine_terms
 import pachinko_info
 
 pachinko_bp = Blueprint("pachinko", __name__, url_prefix="/pachinko")
@@ -43,4 +44,4 @@ def detail(machine_id):
     machine = pachinko_info.load(machine_id)
     if not machine:
         abort(404)
-    return render_template("pachinko_detail.html", machine=machine)
+    return render_template("pachinko_detail.html", machine=machine, terms=machine_terms.for_pachinko(machine))

@@ -220,6 +220,12 @@
         {% if m.basic.features %}
         <div class="flex flex-wrap gap-1.5 mt-3">{% for t in m.basic.features %}<span class="chip">{{ t }}</span>{% endfor %}</div>
         {% endif %}
+        {% if terms %}
+        {# タイプ欄の用語(AT・差枚数管理型など)の説明。文章は machine_terms.py に1か所だけ置いている #}
+        <dl class="panel text-xs text-gray-600 mt-3 space-y-1">
+            {% for t in terms %}<div><dt class="inline font-bold text-gray-900">{{ t.term }}</dt><dd class="inline">：{{ t.text }}</dd></div>{% endfor %}
+        </dl>
+        {% endif %}
         {% if m.settings.note %}<p class="panel text-xs text-gray-600 mt-3">{{ m.settings.note }}</p>{% endif %}
         {{ cite(((m.basic.source_ids or []) + (m.settings.source_ids or [])) | unique | list) }}
     {% endcall %}

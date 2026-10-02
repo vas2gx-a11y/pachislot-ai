@@ -38,6 +38,12 @@
         <div><dt class="label">RUSH突入率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.rush_entry_rate, '%') }}</dd></div>
         <div><dt class="label">RUSH継続率</dt><dd class="font-mono tabular-nums font-bold">{{ num(machine.rush_continue_rate, '%') }}</dd></div>
     </dl>
+    {% if terms %}
+    {# タイプ・メモに出てくる用語(ST・時短など)の説明。文章は machine_terms.py に1か所だけ置いている #}
+    <dl class="panel text-xs text-gray-600 mt-3 space-y-1">
+        {% for t in terms %}<div><dt class="inline font-bold text-gray-900">{{ t.term }}</dt><dd class="inline">：{{ t.text }}</dd></div>{% endfor %}
+    </dl>
+    {% endif %}
     {% endcall %}
 
     {% call card("coin", "大当り振り分け（何%で何個）") %}

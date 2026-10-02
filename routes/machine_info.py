@@ -11,6 +11,7 @@ from datetime import date
 from flask import Blueprint, abort, render_template
 
 import machine_info
+import machine_terms
 
 machine_info_bp = Blueprint("machine_info", __name__, url_prefix="/info")
 
@@ -118,6 +119,7 @@ def detail(machine_id):
         payout=_payout_range(m),
         judge_spec=judge_spec,
         judge_skipped=judge_skipped,
+        terms=machine_terms.for_slot(m),
         **HELPERS,
     )
 
