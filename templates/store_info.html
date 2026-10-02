@@ -571,8 +571,9 @@
         document.querySelectorAll('.range-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
         if (currentRange === 0 && hasMore) {
           var range = currentRange;
-          fetch(fullUrl, { headers: { 'X-Requested-With': 'fetch' } })
-            .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
+          window.pageLoading.track('store-daily-series',
+            fetch(fullUrl, { headers: { 'X-Requested-With': 'fetch' } })
+              .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); }))
             .then(function (all) { series = all; hasMore = false; })
             .catch(function () { /* 読めなければ手元の1年ぶんで描く */ })
             .then(function () { if (currentRange === range) draw(currentRange); });
