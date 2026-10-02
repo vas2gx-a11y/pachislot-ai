@@ -19,20 +19,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
-                        display: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-                    },
-                },
-            },
-        };
-    </script>
     <style>
         /*
           レイアウトの土台。
@@ -76,7 +62,7 @@
             bottom: -8vmin;
             width: min(84vmin, 820px);
             aspect-ratio: 1;
-            background: url("/static/demon.webp") right bottom / contain no-repeat;
+            background: url("{{ url_for('static', filename='demon.webp') }}") right bottom / contain no-repeat;
             opacity: 0.07;
             pointer-events: none;
             z-index: -1;
@@ -395,6 +381,13 @@
     </style>
     {# ページ固有のスタイル。共通で使える見た目はここではなく上の定義に足す #}
     {% block styles %}{% endblock %}
+    {#
+      Tailwindは事前に作ったCSS(作り方は tools/tailwind/build.sh)。以前の Play CDN はページを開くたびに
+      ブラウザでCSSを生成していて、スマホだとその間画面が崩れていたので置き換えた。
+      Play CDN の生成結果は head の最後に入っていた(「card p-4」のようにユーティリティで上書きできていた)ので、
+      重なり順を変えないよう上の独自スタイルより後に読む。
+    #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
 </head>
 <body class="text-gray-900 min-h-screen font-sans antialiased {% if not current_user %}no-nav{% endif %}">
     <script>
