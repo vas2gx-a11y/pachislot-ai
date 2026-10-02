@@ -14,7 +14,7 @@
                 <span class="shrink-0 font-mono tabular-nums font-bold {% if m.avg_diff > 0 %}text-green-600{% elif m.avg_diff < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
                     {{ "%+d" | format(m.avg_diff | round(0) | int) }}
                 </span>
-                <span class="shrink-0 w-20 text-right text-gray-400 font-mono tabular-nums">{{ m.unit_count }}台 {{ m.plus_rate | round(0) | int }}%</span>
+                <span class="shrink-0 w-28 text-right text-gray-400 font-mono tabular-nums" title="のべ{{ m.diff_count }}台中{{ m.plus_count }}台がプラス">{{ m.unit_count }}台 <span class="text-gray-700">{{ m.plus_count }}/{{ m.diff_count }}</span></span>
             </summary>
             <div class="mt-1 mb-2 pl-5">
                 <table class="w-full text-xs border-collapse font-mono tabular-nums">
@@ -25,7 +25,7 @@
                             <th class="pr-3 pb-1 text-right">最高</th>
                             <th class="pr-3 pb-1 text-right">最低</th>
                             <th class="pr-3 pb-1 text-right">平均G数</th>
-                            <th class="pb-1 text-right">日数/プラス</th>
+                            <th class="pb-1 text-right">プラス/日数</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-gray-700">
@@ -38,7 +38,7 @@
                             <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.best_diff | round(0) | int) }}</td>
                             <td class="pr-3 py-0.5 text-right text-gray-400">{{ "%+d" | format(u.worst_diff | round(0) | int) }}</td>
                             <td class="pr-3 py-0.5 text-right">{{ u.avg_games | round(0) | int }}</td>
-                            <td class="py-0.5 text-right text-gray-400">{{ u.count }}日 {{ u.plus_rate | round(0) | int }}%</td>
+                            <td class="py-0.5 text-right text-gray-400"><span class="text-gray-700">{{ u.plus_count }}/{{ u.diff_count }}日</span> {{ u.plus_rate | round(0) | int }}%</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -50,4 +50,4 @@
         </details>
         {% endfor %}
     </div>
-    <p class="hint">「端」は端台（角台の候補）です。日数が少ない機種は薄く表示しています。</p>
+    <p class="hint">「端」は端台（角台の候補）です。機種の右端は「プラスの台数/のべ台数」、台の右端は「プラスの日数/日数」です。日数が少ない機種は薄く表示しています。</p>

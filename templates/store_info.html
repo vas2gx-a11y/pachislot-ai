@@ -378,6 +378,10 @@
     {% call section('slot', '台別データ（店の全台）') %}
         {% if ops.latest_units %}
         <p class="text-sm mb-2">最新 <strong>{{ ops.latest_unit_date }}</strong>（全 {{ ops.unit_date_count }} 日 / {{ '{:,}'.format(ops.unit_row_count) }} 行）</p>
+        {% set ls = ops.latest_summary %}
+        {% if ls and ls.diff_count %}
+        <p class="text-sm mb-2">この日は <strong>{{ ls.diff_count }}台中 {{ ls.plus_count }}台がプラス</strong>（勝率 {{ ls.plus_rate | round(0) | int }}% / 平均 {{ signed(ls.avg_diff | round(0) | int) }}枚）</p>
+        {% endif %}
         <div class="overflow-x-auto -mx-1 px-1">
         <table class="num-table"><thead><tr><th>台番</th><th>機種</th><th>G数</th><th>差枚</th><th>BB</th><th>RB</th><th>AT/ART</th></tr></thead><tbody>
             {% for u in ops.latest_units[:30] %}
@@ -390,7 +394,7 @@
             {% endfor %}
         </tbody></table>
         </div>
-        <p class="hint">最新日の差枚の多い順に最大30台。</p>
+        <p class="hint">最新日の差枚の多い順に最大30台。日別・機種別などの集計では、右端に「プラスの台数/差枚のある台数」を出しています（複数日の集計はのべ台数）。</p>
         {% else %}
         <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の台別データはまだありません。</p>
         {% endif %}
@@ -416,15 +420,15 @@
     {% set ut = tr.units %}
     <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4 items-start">
         {{ trend_section("calendar", "日別の出方", "取り込んだ日ごとの平均差枚です。特定の日だけ全体が跳ねていれば、その日に設定を使っている可能性があります。",
-             ut.by_date, ut.min_samples, true) }}
+             ut.by_date, ut.min_samples, true, unit="台") }}
         {{ trend_section("digit", "台番号の末尾別", "末尾を揃えて設定を入れているホールかどうかを、実際の差枚で見ます。",
-             ut.by_number_suffix, ut.min_samples, false, false, false) }}
+             ut.by_number_suffix, ut.min_samples, false, false, false, unit="台") }}
         {{ trend_section("pin", "端台（角台の候補）とそれ以外", "同じ日・同じ機種の台番号の連番の両端を「端台」として集計しています。",
-             ut.by_edge, ut.min_samples, false, false, false) }}
+             ut.by_edge, ut.min_samples, false, false, false, unit="台") }}
         {{ trend_section("slot", "機種別", "その店がどの機種に設定を入れているかを、店の全台データで見ます。",
-             ut.by_machine, ut.min_samples, true, true, false) }}
-        {{ trend_section("medal", "好調な台トップ20", "台番号ごとの平均差枚が高い順です。複数日ぶん取り込むほど、狙い台の候補として意味を持ちます。",
-             ut.top_units, ut.min_samples, true, true, false) }}
+             ut.by_machine, ut.min_samples, true, true, false, unit="台") }}
+        {{ trend_section("medal", "好調な台トップ20", "台番号ごとの平均差枚が高い順です。右端は取り込んだ日数のうちプラスだった日数です。1日だけの大勝ちより、何日中何日勝っているかで狙い台を見てください。",
+             ut.top_units, ut.min_samples, true, true, false, unit="日") }}
     </div>
 
     {# 機種ごとの台一覧はHTMLが大きいので、開かれたときに読み込む #}

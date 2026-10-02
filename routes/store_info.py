@@ -36,6 +36,8 @@ def _operation_summary(sheet_store_name):
         "unit_row_count": len(units),
         "latest_unit_date": unit_dates[0] if unit_dates else None,
         "latest_units": sorted(latest_units, key=lambda r: r["difference_slabs"] or 0, reverse=True),
+        # 上位だけ並べても店全体の出方は分からないので、全台のうち何台が勝ったかを添える
+        "latest_summary": common._summarize_unit_rows(latest_units),
         "events": events,
     }
 
