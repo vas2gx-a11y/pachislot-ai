@@ -310,8 +310,9 @@
             body.innerHTML = '<p class="hint">読み込み中...</p>';
             open();
 
-            fetch(link.getAttribute('data-detail-url'), { headers: { 'X-Requested-With': 'fetch' } })
-                .then(function (res) { return res.text(); })
+            var url = link.getAttribute('data-detail-url');
+            window.pageLoading.track('calendar-detail',
+                fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then(function (res) { return res.text(); }))
                 .then(function (html) { body.innerHTML = html; })
                 .catch(function () {
                     // 通信に失敗したら、詳細がページ内に出る通常のリンク遷移に切り替える

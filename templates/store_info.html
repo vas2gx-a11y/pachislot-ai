@@ -594,8 +594,9 @@
       if (!block.open || loaded) return;
       loaded = true;
       var body = block.querySelector('[data-lazy-body]');
-      fetch(block.getAttribute('data-lazy-url'), { headers: { 'X-Requested-With': 'fetch' } })
-        .then(function (res) { return res.text(); })
+      var url = block.getAttribute('data-lazy-url');
+      window.pageLoading.track('store-machine-details',
+        fetch(url, { headers: { 'X-Requested-With': 'fetch' } }).then(function (res) { return res.text(); }))
         .then(function (html) { body.innerHTML = html; })
         .catch(function () { loaded = false; body.innerHTML = '<p class="hint">読み込みに失敗しました。もう一度開いてみてください。</p>'; });
     });

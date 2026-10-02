@@ -378,6 +378,19 @@
             html, body { overflow-x: clip; }
         }
         img, canvas, svg, table { max-width: 100%; }
+
+        /* 読み込み中の進捗(画面上端のバーと右上の％)。表示・計算は下の pageLoading */
+        #page-loading { position: fixed; inset: 0 0 auto 0; z-index: 9999; pointer-events: none; display: none; }
+        #page-loading.is-active { display: block; }
+        #page-loading .bar { height: 3px; width: 0; background: #18181b; transition: width .2s ease-out; }
+        #page-loading .pct {
+            position: absolute; top: 8px; right: var(--page-gutter);
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .25rem .6rem; border-radius: 9999px;
+            background: rgba(24, 24, 27, .88); color: #fff;
+            font: 600 12px/1.2 "JetBrains Mono", ui-monospace, monospace;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+        }
     </style>
     {# ページ固有のスタイル。共通で使える見た目はここではなく上の定義に足す #}
     {% block styles %}{% endblock %}
@@ -620,6 +633,114 @@
                 localStorage.setItem(KEY, compact ? '1' : '0');
                 apply(compact);
             });
+        })();
+    </script>
+
+    <div id="page-loading" role="status" aria-live="polite">
+        <div class="bar"></div>
+        <span class="pct"><svg class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span data-pct>読み込み中 0%</span></span>
+    </div>
+    <script>
+        /*
+          読み込み中の進捗表示。
+          サーバーはシートの読み込みがどこまで進んだかを返せないので、％は「そのページが前回かかった時間」に
+          対する経過時間で出す目安。超えても止まって見えないよう、95%から先はゆっくり99%へ近づける。
+          ページごとの所要時間は端末の localStorage に持つ(使えない環境では既定の3秒で計算する)。
+        */
+        window.pageLoading = (function () {
+            var STORE = 'pageLoadMs', PENDING = 'pageLoadPending', DEFAULT_MS = 3000;
+            var root = document.getElementById('page-loading');
+            var bar = root.querySelector('.bar');
+            var label = root.querySelector('[data-pct]');
+            var timer = null, count = 0;
+
+            function readTimes() {
+                try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { return {}; }
+            }
+            function expectedMs(key) {
+                var ms = readTimes()[key];
+                return ms > 0 ? ms : DEFAULT_MS;
+            }
+            function record(key, ms) {
+                try {
+                    var times = readTimes(), prev = times[key];
+                    // 1回だけ極端に遅かった(Renderの起動待ちなど)ときに引きずられないよう、前回値とならす
+                    times[key] = Math.round(prev ? prev * 0.5 + ms * 0.5 : ms);
+                    localStorage.setItem(STORE, JSON.stringify(times));
+                } catch (e) {}
+            }
+            function percent(elapsed, expected) {
+                var r = elapsed / expected;
+                if (r < 1) return Math.floor(r * 95);
+                return Math.min(99, Math.floor(95 + 4 * (1 - Math.exp(-(r - 1)))));
+            }
+            function show(key, startedAt) {
+                var expected = expectedMs(key);
+                function tick() {
+                    var p = percent(Date.now() - startedAt, expected);
+                    bar.style.width = p + '%';
+                    label.textContent = '読み込み中 ' + p + '%';
+                }
+                clearInterval(timer);
+                root.classList.add('is-active');
+                tick();
+                timer = setInterval(tick, 100);
+            }
+            function hide() {
+                clearInterval(timer);
+                timer = null;
+                root.classList.remove('is-active');
+                bar.style.width = '0';
+            }
+
+            // 前のページで始めた遷移の所要時間を、遷移先で記録する
+            try {
+                var pending = JSON.parse(sessionStorage.getItem(PENDING) || 'null');
+                sessionStorage.removeItem(PENDING);
+                if (pending && pending.key === location.pathname) record(pending.key, Date.now() - pending.at);
+            } catch (e) {}
+
+            function navigate(url) {
+                var key = url.pathname, at = Date.now();
+                try { sessionStorage.setItem(PENDING, JSON.stringify({ key: key, at: at })); } catch (e) {}
+                show(key, at);
+            }
+
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a || e.defaultPrevented || e.button !== 0) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                if (a.target && a.target !== '_self') return;
+                if (a.hasAttribute('download')) return;
+                var url = new URL(a.href, location.href);
+                if (url.origin !== location.origin) return;
+                // 同じページ内のリンク(目次など)は読み込みが起きない
+                if (url.pathname === location.pathname && url.search === location.search && url.hash) return;
+                navigate(url);
+            });
+            // wireAsyncForm のようにページ側で送信を止めて自前で表示しているフォームは対象外
+            document.addEventListener('submit', function (e) {
+                if (e.defaultPrevented) return;
+                var form = e.target;
+                if (form.target && form.target !== '_self') return;
+                navigate(new URL(form.action || location.href, location.href));
+            });
+            // 戻るボタンでキャッシュから表示されたときに出たままにならないようにする
+            window.addEventListener('pageshow', function (e) { if (e.persisted) hide(); });
+
+            // ページ内の fetch 用。key は所要時間を覚える単位(日付などが違っても同じ処理なら同じ key にする)
+            function track(key, promise) {
+                count++;
+                var at = Date.now();
+                show(key, at);
+                function end(ok) {
+                    if (ok) record(key, Date.now() - at);
+                    if (--count <= 0) { count = 0; hide(); }
+                }
+                return promise.then(function (v) { end(true); return v; }, function (err) { end(false); throw err; });
+            }
+
+            return { track: track };
         })();
     </script>
 </body>
