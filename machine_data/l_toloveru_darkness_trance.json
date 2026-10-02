@@ -1,0 +1,238 @@
+{
+  "$schema": "./schema.json",
+  "id": "l_toloveru_darkness_trance",
+  "name": "L ToLOVEるダークネス TRANCE ver.8.7",
+  "aliases": ["スマスロ ToLOVEるダークネス トランス", "とらぶるダークネス トランス", "トラブル トランスバージョン", "トラブルダークネス 8.7", "トラブル8.7", "ToLOVEるダークネス 8.7", "とらぶるダークネス 8.7"],
+  "updated_at": "2026-10-02",
+  "theme": { "accent": "#b03aa8" },
+
+  "sources": [
+    { "id": "pworld", "name": "P-WORLD 機種データベース「L ToLOVEるダークネス TRANCE ver.8.7」", "url": "https://www.p-world.co.jp/machine/database/10259", "checked_at": "2026-10-02" },
+    { "id": "ptown", "name": "DMMぱちタウン 機種ページ「L ToLOVEるダークネス TRANCE ver.8.7」", "url": "https://p-town.dmm.com/machines/4806", "checked_at": "2026-10-02" },
+    { "id": "ptown_sp", "name": "DMMぱちタウン 特集「スマスロトラブルダークネストランスの設定差はこれを見ればOK！ウィスパー・終了画面・スタンプ」", "url": "https://p-town.dmm.com/specials/4239", "checked_at": "2026-10-02" },
+    { "id": "1geki", "name": "一撃 「トラブル（トランスバージョン）解析攻略」", "url": "https://1geki.jp/slot/l_toloveru_d_trance/", "checked_at": "2026-10-02" },
+    { "id": "1geki_settei", "name": "一撃 「トラブル（トランスバージョン）設定差・設定判別要素まとめ」", "url": "https://1geki.jp/slot/l_toloveru_d_trance/0/", "checked_at": "2026-10-02" },
+    { "id": "altema_tenjo", "name": "アルテマ 「トラブル トランスバージョン 天井ゲーム数や期待値・狙い目」", "url": "https://altema.jp/pachimo/ltoloveru2tenjyo", "checked_at": "2026-10-02" },
+    { "id": "altema_gamen", "name": "アルテマ 「トラブル トランスバージョン 終了画面の示唆内容」", "url": "https://altema.jp/pachimo/ltoloveru2gamen", "checked_at": "2026-10-02" },
+    { "id": "greenbelt", "name": "グリーンベルト 「『L ToLOVEるダークネス』から新スペック、純増＆上位ST突入率が大幅アップ」", "url": "https://web-greenbelt.jp/post-95234/", "checked_at": "2026-10-02" }
+  ],
+
+  "basic": {
+    "maker": "オリンピアエステート",
+    "release_date": "2025-05-19",
+    "category": "スマスロ（6.5号機）",
+    "type": "AT（ST＋疑似ボーナス）",
+    "model_name": "LToLOVEるダークネスS8",
+    "certification_no": "530010",
+    "games_per_50_coins": null,
+    "net_gain_per_game": { "value": 8.7, "unit": "枚", "note": "ボーナス中 約8.7枚/G" },
+    "features": ["「L ToLOVEるダークネス」（2024年6月）の新スペック版", "設定L搭載機", "実質5段階設定（設定2〜6）"],
+    "summary": "前作と同じゲーム性（チャンス目→CZ→メモリアルボーナス→ST「楽園ハーレム計画」）のまま、ボーナスの純増を約6.6枚/G→約8.7枚/Gに、ST3人攻略時の上位ST「ハーレムモード」突入期待度を約34%→約50.2%（設定2）に引き上げたバージョン。",
+    "source_ids": ["pworld", "ptown", "greenbelt"]
+  },
+
+  "settings": {
+    "list": ["2", "3", "4", "5", "6"],
+    "note": "設定1は非搭載（設定2〜6の実質5段階）。前作と同じく設定L（ロング稼働用）搭載。",
+    "source_ids": ["pworld", "ptown"]
+  },
+
+  "spec": {
+    "rows": [
+      { "key": "payout", "label": "機械割", "format": "percent", "values": { "2": 98.0, "3": 99.0, "4": 103.1, "5": 110.3, "6": 112.0 }, "highlight": true },
+      { "key": "first_hit", "label": "初当り", "format": "fraction", "values": { "2": 353.3, "3": 346.3, "4": 328.9, "5": 312.3, "6": 307.6 }, "highlight": true }
+    ],
+    "note": "前作比で設定5は105.8%→110.3%、設定6は110.1%→112.0%に上がっている。",
+    "source_ids": ["pworld", "ptown", "1geki"]
+  },
+
+  "probabilities": {
+    "koyaku": [
+      { "key": "replay", "label": "リプレイ", "format": "fraction", "value": 16.7 },
+      { "key": "chance_left", "label": "左チャンス目", "format": "fraction", "value": 32.0 },
+      { "key": "chance_center", "label": "中チャンス目", "format": "fraction", "value": 40.0 },
+      { "key": "chance_right", "label": "右チャンス目", "format": "fraction", "value": 68.0 }
+    ],
+    "note": "小役確率は前作と同じ値。設定差なし。",
+    "source_ids": ["1geki"]
+  },
+
+  "features": {
+    "cz": [
+      {
+        "name": "きゅんきゅんバルーン",
+        "facts": [
+          { "label": "継続", "value": "6G+α（小役成立で1G加算）" },
+          { "label": "ボーナス期待度", "value": "約33%" }
+        ],
+        "description": "前作と同じCZ。左チャンス目のどきどきポイントが貯まると突入。",
+        "source_ids": ["1geki"]
+      },
+      {
+        "name": "ときめきスイート",
+        "facts": [
+          { "label": "継続", "value": "5G+α" },
+          { "label": "ボーナス期待度", "value": "約40%" }
+        ],
+        "description": "前作と同じCZ。中チャンス目のどきどきポイントが貯まると突入。",
+        "source_ids": ["1geki"]
+      },
+      {
+        "name": "ぷっちゅんちゃれんじ",
+        "facts": [
+          { "label": "ボーナス期待度", "value": "約70%" }
+        ],
+        "description": "前作と同じCZ。右チャンス目のどきどきポイントが貯まると突入。",
+        "source_ids": ["1geki"]
+      }
+    ],
+    "bonus": [
+      {
+        "name": "とらぶるBONUS",
+        "facts": [
+          { "label": "純増", "value": "約8.7枚/G" },
+          { "label": "平均（楽園計画中・設定2）", "value": "約563.1枚" },
+          { "label": "平均（ハーレムモード中）", "value": "約630枚" }
+        ],
+        "description": "差枚数型のボーナス。開始時に選ばれる演出（愛すぷRUSH・ウィスパー演出など）で獲得枚数が決まる。ウィスパー演出は800枚か1,600枚（1:1）。",
+        "source_ids": ["pworld", "1geki"]
+      }
+    ],
+    "at": [
+      {
+        "name": "楽園ハーレム計画（ST）",
+        "facts": [
+          { "label": "継続", "value": "10G+α" },
+          { "label": "継続期待度", "value": "約52%" },
+          { "label": "3人攻略時のハーレムモード突入", "value": "約50.2%（設定2。前作は約34%）" },
+          { "label": "6人攻略時", "value": "ハーレムモード濃厚" }
+        ],
+        "description": "ボーナス後に突入。ベル・チャンス目でボーナス抽選。ヒロイン攻略でハーレムモードを目指す。",
+        "source_ids": ["pworld", "1geki", "greenbelt"]
+      },
+      {
+        "name": "ハーレムモード（上位ST）",
+        "facts": [
+          { "label": "継続期待度", "value": "約80%" },
+          { "label": "ボーナス平均", "value": "約630枚" },
+          { "label": "期待枚数", "value": "約3,000枚以上" }
+        ],
+        "description": "ボーナス平均約630枚×約80%ループ。",
+        "source_ids": ["pworld", "1geki"]
+      }
+    ]
+  },
+
+  "ceiling": {
+    "games": { "value": 999, "text": "通常時 999G+α" },
+    "games_after_reset": { "value": 650, "text": "設定変更後 650G+α" },
+    "benefit": "ボーナス当選",
+    "notes": [],
+    "source_ids": ["pworld", "altema_tenjo"]
+  },
+
+  "zones": {
+    "items": [
+      { "games": "150G", "note": "規定ゲーム数抽選" },
+      { "games": "250G", "note": "規定ゲーム数抽選。高設定ほど当選に期待" },
+      { "games": "450G", "note": "規定ゲーム数抽選" },
+      { "games": "650G", "note": "規定ゲーム数抽選。高設定ほど当選に期待" },
+      { "games": "999G", "note": "天井" }
+    ],
+    "notes": ["規定ゲーム数到達時の一部で連続演出へ移行し、成功でボーナス当選"],
+    "source_ids": ["1geki", "altema_tenjo"]
+  },
+
+  "quit_timing": {
+    "items": [
+      "ST終了後が基本のやめどき",
+      "ゾーン狙いはゾーン終了後にやめ"
+    ],
+    "source_ids": ["altema_tenjo"]
+  },
+
+  "reset": {
+    "items": [
+      "天井が650G+αに短縮"
+    ],
+    "source_ids": ["altema_tenjo"]
+  },
+
+  "sns_tips": {
+    "items": [],
+    "note": ""
+  },
+
+  "setting_estimation": {
+    "probabilities": [
+      {
+        "key": "first_hit",
+        "label": "初当り確率",
+        "observe": "通常時ゲーム数に対する初当り回数",
+        "denom_base": "normal",
+        "values": { "2": 353.3, "3": 346.3, "4": 328.9, "5": 312.3, "6": 307.6 },
+        "weight_note": "設定差はあるが大きくない",
+        "source_ids": ["pworld", "1geki"]
+      }
+    ],
+    "ratios": [
+      {
+        "key": "harem_zone_select",
+        "label": "ハーレムモード中 ボーナス演出の振り分け",
+        "observe": "ハーレムモード中のとらぶるBONUS当選時に選ばれた演出",
+        "outcomes": [
+          { "key": "aisupu_rush", "label": "愛すぷRUSH", "values": { "2": 96.1, "3": 95.5, "4": 93.1, "5": 91.3, "6": 85.1 }, "note": "設定2以外は100%からウィスパーとEPISODEを引いた値" },
+          { "key": "whisper", "label": "ウィスパー演出", "values": { "2": 3.2, "3": 3.8, "4": 6.2, "5": 8.0, "6": 14.2 }, "highlight": true },
+          { "key": "episode", "label": "ToLOVEるEPISODE", "values": { "2": 0.7, "3": 0.7, "4": 0.7, "5": 0.7, "6": 0.7 }, "note": "全設定共通" }
+        ],
+        "source_ids": ["ptown_sp", "1geki_settei"]
+      }
+    ],
+    "hints": [
+      { "category": "ST終了画面", "pattern": "各ヒロイン単体", "meaning": "基本パターン", "min_setting": null, "exact_setting": null, "level": "none" },
+      { "category": "ST終了画面", "pattern": "美柑", "meaning": "高設定示唆", "min_setting": null, "exact_setting": null, "level": "weak" },
+      { "category": "ST終了画面", "pattern": "メア", "meaning": "設定5の期待度大幅アップ（トランス版で追加）", "min_setting": null, "exact_setting": null, "level": "strong" },
+      { "category": "ST終了画面", "pattern": "ネメシス／吉スタンプ", "meaning": "設定3以上濃厚", "min_setting": 3, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ヤミ&美柑／良スタンプ", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ララ&モモ&ナナ／優スタンプ", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "ST終了画面", "pattern": "ヒロイン集合／極スタンプ", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "456枚OVER", "meaning": "設定4以上濃厚", "min_setting": 4, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "555枚OVER", "meaning": "設定5以上濃厚", "min_setting": 5, "exact_setting": null, "level": "confirm" },
+      { "category": "獲得枚数表示", "pattern": "666枚OVER", "meaning": "設定6濃厚", "min_setting": 6, "exact_setting": 6, "level": "confirm" }
+    ],
+    "hints_source_ids": ["ptown_sp", "altema_gamen", "1geki_settei"],
+    "hints_note": "ST終了画面はキャラ名とスタンプ名の両方の表記があるため同じ行にまとめている。",
+    "observations": [
+      {
+        "label": "250G・650Gでの当選",
+        "detail": "高設定ほど規定ゲーム数（250G・650G）での当選に期待できるとされる。公式な数値は未確認。",
+        "official": false,
+        "source_ids": ["altema_tenjo"]
+      }
+    ],
+    "pending": [
+      { "label": "ハーレムモード突入率の設定差", "status": "情報確認中", "note": "設定2の約50.2%は確認できたが、他設定の値は今回の出典で確認できていない。" },
+      { "label": "設定Lの数値", "status": "調査中", "note": "" }
+    ]
+  },
+
+  "practical_points": {
+    "items": [
+      "ゲーム性は前作と同じ。違いはボーナス純増（約8.7枚/G）とST3人攻略時のハーレムモード突入率（約50.2%）",
+      "ハーレムモード中のウィスパー演出の頻度が最も分かりやすい設定差（設定2：3.2%／設定6：14.2%）",
+      "ST終了画面・獲得枚数表示は必ず確認。メア（トランス版で追加）は設定5に期待",
+      "設定変更後は天井650G+α"
+    ],
+    "source_ids": ["ptown_sp", "1geki_settei", "altema_gamen", "altema_tenjo"]
+  },
+
+  "cautions": {
+    "items": [
+      "設定1は非搭載（最低設定は設定2・機械割98.0%）",
+      "初当り確率の設定差は小さく、単独での判別は難しい",
+      "前作「L ToLOVEるダークネス」とは別機種。数値（機械割・ウィスパー選択率など）が違うので混同しない",
+      "今回は出典ページを直接開けず、検索結果で複数サイトの値が一致したものだけを入れた。CZ出現率・リセット恩恵の詳細などは未記載"
+    ],
+    "source_ids": ["pworld", "ptown"]
+  }
+}

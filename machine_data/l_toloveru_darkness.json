@@ -2,7 +2,7 @@
   "$schema": "./schema.json",
   "id": "l_toloveru_darkness",
   "name": "L ToLOVEるダークネス",
-  "aliases": ["スマスロ ToLOVEるダークネス", "スマスロ とらぶるダークネス"],
+  "aliases": ["スマスロ ToLOVEるダークネス", "スマスロ とらぶるダークネス", "ToLOVEるダークネス", "とらぶるダークネス", "トラブルダークネス", "トラブル", "とらぶる"],
   "updated_at": "2026-09-27",
   "theme": { "accent": "#e0457b" },
 
