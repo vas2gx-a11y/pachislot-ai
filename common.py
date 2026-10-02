@@ -3286,24 +3286,10 @@ EVENT_RELIABILITY_HIGH_T = 2.0
 EVENT_RELIABILITY_MID_T = 1.0
 
 
-def _event_reliability(group_rows, normal_rows):
-    """
-    イベ日のかたまりが通常日と比べて本当に違うのかを、平均差枚で判定する。
-
-    稼働(平均G数)は客が集まれば上がるので「店が設定を入れたか」は差枚で見る。
-    差枚が空欄の店では判定できないため、そのときは稼働で代用し、basis で区別する。
-    """
-    def _values(rows, key):
-        return [r[key] for r in rows if r.get(key) is not None]
-
-    basis = "avg_diff"
-    ev, nv = _values(group_rows, "avg_diff"), _values(normal_rows, "avg_diff")
+def _compare_metric(ev, nv):
+    """イベ日と通常日の値の列を比べる(Welchのt値)。どちらかが最低日数に届かなければ None。"""
     if len(ev) < EVENT_RELIABILITY_MIN_DAYS or len(nv) < EVENT_RELIABILITY_MIN_DAYS:
-        basis = "avg_games"
-        ev, nv = _values(group_rows, "avg_games"), _values(normal_rows, "avg_games")
-    if len(ev) < EVENT_RELIABILITY_MIN_DAYS or len(nv) < EVENT_RELIABILITY_MIN_DAYS:
-        return {"level": "判定不可", "basis": None, "days": len(ev), "t": None,
-                "gap": None, "beat_rate": None, "direction": None}
+        return None
 
     def _mean_var(values):
         m = sum(values) / len(values)
@@ -3313,21 +3299,44 @@ def _event_reliability(group_rows, normal_rows):
     nm, nvar = _mean_var(nv)
     gap = em - nm
     se = (evar / len(ev) + nvar / len(nv)) ** 0.5
-    t = gap / se if se > 0 else 0.0
-    # 平均は1日の爆発で動くので、「イベ日のうち何日が通常日の平均を超えたか」も添える
-    beat_rate = sum(1 for x in ev if x > nm) / len(ev) * 100
+    return {"days": len(ev), "gap": gap, "t": gap / se if se > 0 else 0.0,
+            # 平均は1日の爆発で動くので、「イベ日のうち何日が通常日の平均を超えたか」も添える
+            "beat_rate": sum(1 for x in ev if x > nm) / len(ev) * 100}
 
-    if abs(t) >= EVENT_RELIABILITY_HIGH_T and len(ev) >= EVENT_RELIABILITY_HIGH_DAYS:
+
+def _event_reliability(group_rows, normal_rows):
+    """
+    イベ日のかたまりが通常日と比べて本当に違うのかを判定する。
+
+    「店が設定を入れたか」に近い順に、平均差枚 → 勝率 → 稼働(平均G数) の最初に使えるもので判定し、basis で区別する。
+    稼働は客の期待だけでも上がるので証拠として一番弱い。データサイトは差枚を隠しても勝率は出していることがあり、
+    勝率は「勝った台の割合」なので還元の目安になる。
+    判定に使わなかった勝率も win として添え、稼働だけ高くて勝率が変わらない(客寄せだけの)日を見分けられるようにする。
+    """
+    def _values(rows, key):
+        return [r[key] for r in rows if r.get(key) is not None]
+
+    win = _compare_metric(_values(group_rows, "win_rate"), _values(normal_rows, "win_rate"))
+    result = None
+    for basis in ("avg_diff", "win_rate", "avg_games"):
+        result = _compare_metric(_values(group_rows, basis), _values(normal_rows, basis))
+        if result:
+            break
+    if not result:
+        return {"level": "判定不可", "basis": None, "days": len(_values(group_rows, "avg_games")), "t": None,
+                "gap": None, "beat_rate": None, "direction": None, "win": win}
+
+    t = result["t"]
+    if abs(t) >= EVENT_RELIABILITY_HIGH_T and result["days"] >= EVENT_RELIABILITY_HIGH_DAYS:
         level = "高"
     elif abs(t) >= EVENT_RELIABILITY_MID_T:
         level = "中"
     else:
         level = "低"
-    # 稼働は客の期待だけでも上がるので、設定の証拠としては差枚より弱い。稼働で判定したときは「高」を出さない
+    # 稼働で判定したときは「高」を出さない(稼働は設定の証拠として弱い)
     if basis == "avg_games" and level == "高":
         level = "中"
-    return {"level": level, "basis": basis, "days": len(ev), "t": t, "gap": gap,
-            "beat_rate": beat_rate, "direction": "強い" if gap > 0 else "弱い"}
+    return dict(result, level=level, basis=basis, direction="強い" if result["gap"] > 0 else "弱い", win=win)
 
 
 def _event_category_rows(parsed_dates, events, overall):

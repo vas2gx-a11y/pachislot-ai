@@ -325,16 +325,18 @@
         {% if rows %}
         <div class="overflow-x-auto -mx-1 px-1 mt-4">
         <table class="num-table"><thead><tr>
-            <th>区分（全期間）</th><th>日数</th><th>平均差枚</th><th>通常日との差</th><th>平均G数</th><th>通常日超え</th><th>信頼度</th>
+            <th>区分（全期間）</th><th>日数</th><th>平均差枚</th><th>通常日との差</th><th>勝率</th><th>平均G数</th><th>通常日超え</th><th>信頼度</th>
         </tr></thead><tbody>
             {% if normal %}
             <tr class="text-gray-400"><td>通常日（基準）</td><td>{{ normal.count }}</td><td>{{ signed(normal.avg_diff) }}</td><td>-</td>
+                <td>{{ ('%.1f%%' % normal.win_rate) if normal.win_rate is not none else '-' }}</td>
                 <td>{{ '{:,}'.format(normal.avg_games | int) if normal.avg_games is not none else '-' }}</td><td>-</td><td>-</td></tr>
             {% endif %}
             {% for r in rows %}
             {% set rel = r.reliability %}
             <tr><td class="!whitespace-normal">{{ r.label }}</td><td>{{ r.count }}</td><td>{{ signed(r.avg_diff) }}</td>
-                <td>{% if rel and rel.gap is not none %}{{ signed(rel.gap) }}{% if rel.basis == 'avg_games' %}G{% endif %}{% else %}-{% endif %}</td>
+                <td>{% if rel and rel.gap is not none %}{% if rel.basis == 'win_rate' %}{{ '%+.1f' % rel.gap }}pt{% else %}{{ signed(rel.gap) }}{% if rel.basis == 'avg_games' %}G{% endif %}{% endif %}{% else %}-{% endif %}</td>
+                <td>{{ ('%.1f%%' % r.win_rate) if r.win_rate is not none else '-' }}{% if rel and rel.win and rel.basis != 'win_rate' %} <span class="text-gray-400">({{ '%+.1f' % rel.win.gap }})</span>{% endif %}</td>
                 <td>{{ '{:,}'.format(r.avg_games | int) if r.avg_games is not none else '-' }}{% if r.games_index %} <span class="text-gray-400">({{ r.games_index | round | int }}%)</span>{% endif %}</td>
                 <td>{{ ('%d%%' % rel.beat_rate) if rel and rel.beat_rate is not none else '-' }}</td>
                 <td>{{ reliability_badge(rel) }}</td></tr>
@@ -348,7 +350,8 @@
                 <p>差枚は日ごとのブレが大きく、1日だけ爆発した日があると平均は簡単に跳ねます。そこで「通常日との差」が日ごとのばらつきに比べてどれだけ大きいかと、日数で段階を付けています。</p>
                 <p><strong>高</strong>: 6日以上あり、差がばらつきの2倍以上（偶然とは考えにくい）／<strong>中</strong>: 差がばらつきの1倍以上（傾向はあるが日数を重ねて確認したい）／<strong>低</strong>: 差がばらつきに埋もれている（偶然の範囲）。</p>
                 <p>「通常日超え」はイベ日のうち通常日の平均差枚を上回った日の割合です。平均が高くても超えた日が少なければ、一部の日に偏っています。</p>
-                <p>差枚が3日分そろわない店では、代わりに平均G数（稼働）で判定し、差の単位がGになります。稼働は客の期待で上がるので、設定が入っている証拠としては弱めなので、この場合は「中」までにしています。</p>
+                <p>差枚が3日分そろわない店では勝率で判定し、差の単位がpt（勝率の差）になります。勝率も無い店は平均G数（稼働）で判定し、差の単位がGになります。稼働は客の期待だけでも上がり、設定が入っている証拠としては弱いので、稼働で判定したときは「中」までにしています。</p>
+                <p>勝率の列のかっこ内は、通常日との勝率の差です。稼働が高いのに勝率が変わらない日は、客寄せだけで還元は弱い可能性があります。</p>
             </div>
         </details>
         {% elif ops.events is none %}
