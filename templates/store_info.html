@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import back_link, stat_card, trend_section, hall_metric_section, favorite_button %}
+{% from "_macros.html" import back_link, stat_card, trend_section, hall_metric_section, favorite_button, signed %}
 
 {#
   店舗情報ページ。上半分(基本情報)は store_data/<id>.json、下半分(営業データ)はシートから来る。
@@ -74,10 +74,6 @@
 {% macro reliability_badge(r) -%}
 {% if not r or r.level == '判定不可' %}<span class="rel rel-na" title="イベ日か通常日の日数が3日未満">判定不可</span>
 {% else %}<span class="rel rel-{{ {'高': 'high', '中': 'mid', '低': 'low'}[r.level] }}" title="t値 {{ '%.2f' % r.t }}">{{ r.level }}{% if r.level != '低' %}・{{ r.direction }}{% endif %}</span>{% endif %}
-{%- endmacro %}
-
-{% macro signed(v) -%}
-{% if v is none %}-{% else %}<span class="{{ 'text-emerald-600' if v > 0 else 'text-rose-600' if v < 0 else '' }}">{{ '{:+,}'.format(v | int) }}</span>{% endif %}
 {%- endmacro %}
 
 
@@ -236,8 +232,6 @@
     {# ---- ここから営業データ(シート)。店の全台が対象で、自分の記録とは母数が違う ---- #}
     {% set d1 = tr.daily %}
     {% set dall = tr.daily_all %}
-    {% set kinds = {} %}
-    {% for p in (dall.series if dall and dall.series else []) %}{% set _ = kinds.update({p.date: p.kind}) %}{% endfor %}
 
     {% call section('daily', '日別データ（店の全台）') %}
         {% if d1 and d1.record_count %}
@@ -284,21 +278,11 @@
         <p class="hint">直近 {{ ops.daily | length }} 日分（全 {{ ops.daily_count }} 日）。差枚・勝率はデータサイト側で空欄の日があり、平均は値のある日だけで出しています。</p>
 
         {% if dall and dall.rows and dall.rows | length > ops.daily | length %}
-        <details class="mt-2">
+        <details class="mt-2" data-lazy-details data-lazy-url="{{ url_for('store_info.daily_rows', store_id=s.id) }}">
             <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 全 {{ dall.rows | length }} 日分を見る</summary>
-            <div class="mt-2 max-h-96 overflow-y-auto">
-            <table class="num-table"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th class="!text-left">取り込み方法</th></tr></thead><tbody>
-                {% for d in dall.rows %}
-                {% set k = kinds.get(d.date, 'normal') %}
-                <tr><td>{% if k != 'normal' %}<span class="kind-dot kind-{{ k }}"></span>{% endif %}{{ d.date }}</td>
-                    <td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
-                    <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
-                    <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td>
-                    <td class="!text-left text-gray-400">{{ d.source or '-' }}</td></tr>
-                {% endfor %}
-            </tbody></table>
-            </div>
+            <div data-lazy-body class="mt-2"><p class="hint">読み込み中...</p></div>
         </details>
+        <noscript><p class="hint"><a href="{{ url_for('store_info.daily_rows', store_id=s.id) }}" class="text-blue-600 underline">全 {{ dall.rows | length }} 日分を表示する</a></p></noscript>
         {% endif %}
         {% else %}
         <p class="text-gray-400 text-sm">シート「{{ s.sheet_store_name }}」の日別データはまだありません。</p>
@@ -504,7 +488,10 @@
 <script>
   // 日別の推移。棒(平均差枚)をイベ日だけ色替えして、跳ねた日がイベ日と重なるかを目で見られるようにする
   (function () {
-    var series = {{ dall.series | tojson }};
+    // 最初は直近1年ぶんだけ埋め込み、「全期間」が押されたら残りを読み込む(ページを軽くするため)
+    var series = {{ chart_series | tojson }};
+    var hasMore = {{ 'true' if chart_has_more else 'false' }};
+    var fullUrl = {{ url_for('store_info.daily_series', store_id=s.id) | tojson }};
     var colors = { event: '#f59e0b', anniversary: '#e11d48' };
     var font = { family: "'JetBrains Mono', ui-monospace, monospace" };
     var grid = 'rgba(24,24,27,0.08)';
@@ -565,6 +552,15 @@
       btn.addEventListener('click', function () {
         currentRange = Number(btn.dataset.range);
         document.querySelectorAll('.range-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
+        if (currentRange === 0 && hasMore) {
+          var range = currentRange;
+          fetch(fullUrl, { headers: { 'X-Requested-With': 'fetch' } })
+            .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
+            .then(function (all) { series = all; hasMore = false; })
+            .catch(function () { /* 読めなければ手元の1年ぶんで描く */ })
+            .then(function () { if (currentRange === range) draw(currentRange); });
+          return;
+        }
         draw(currentRange);
       });
     });

@@ -2792,7 +2792,49 @@ def parse_hall_daily_text(text, max_rows=2000):
     return rows, report
 
 
+# リポジトリのファイル(store_data/)を解析した結果。ファイルはデプロイでしか変わらないので、
+# シートのキャッシュ(5分)とは別に、ファイルが変わるまで持ち続ける。
+# 以前はキャッシュが切れるたびに全店舗分を解析し直していて、数年分のファイルを置いた店が増えるほど
+# 店舗ページの表示が遅くなっていた。
+_repo_parse_cache = {}
+# 日別の解析が中で台別の解析を呼ぶので、同じスレッドから入り直せる RLock にする
+_repo_parse_lock = threading.RLock()
+
+
+def _repo_files_signature():
+    """store_data/ 以下のファイルの更新日時とサイズ。どれか変われば解析し直す(ローカルで書き換えたときのため)。"""
+    sig = []
+    for root, _dirs, files in os.walk(store_info.DATA_DIR):
+        for name in files:
+            path = os.path.join(root, name)
+            try:
+                st = os.stat(path)
+            except OSError:
+                continue
+            sig.append((path, st.st_mtime_ns, st.st_size))
+    return tuple(sorted(sig))
+
+
+def _repo_parsed(key, build):
+    signature = _repo_files_signature()
+    hit = _repo_parse_cache.get(key)
+    if hit and hit[0] == signature:
+        return hit[1]
+    with _repo_parse_lock:
+        hit = _repo_parse_cache.get(key)
+        if hit and hit[0] == signature:
+            return hit[1]
+        value = build()
+        _repo_parse_cache[key] = (signature, value)
+        return value
+
+
 def _repo_store_daily_rows():
+    # 解析結果は使い回すので、呼び出し側で行を書き換えてもキャッシュに響かないよう写しを返す
+    return [dict(r) for r in _repo_parsed("daily", _build_repo_store_daily_rows)]
+
+
+def _build_repo_store_daily_rows():
     """
     リポジトリに置いた日別データ(store_data/daily/<id>.txt)を、シートと同じ形の行にする。
 
@@ -2819,6 +2861,10 @@ def _repo_store_daily_rows():
 
 
 def _repo_units_by_store():
+    return _repo_parsed("units", _build_repo_units_by_store)
+
+
+def _build_repo_units_by_store():
     """
     リポジトリに置いた台別データ(store_data/units/<id>/*.csv)を {シートの店舗名: {日付: [台...]}} にする。
     CSVの店名ではなくフォルダ(店舗id)で店を決める(データサイトの店名表記と、シートの店舗名がずれても紐づくように)。
