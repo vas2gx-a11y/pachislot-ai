@@ -100,6 +100,11 @@
     .st-check { background: #fef3c7; color: #92400e; }
     .st-none { background: #f4f4f5; color: #a1a1aa; }
     .cite { font-size: .7rem; color: #2563eb; text-decoration: none; }
+    /* 店舗の特徴の文章。見出し(全体・曜日など)を左に置き、文章の頭が揃うようにする */
+    .summary-list > div { display: grid; grid-template-columns: 4em 1fr; gap: .25rem .75rem; padding: .5rem 0; border-top: 1px dashed #e4e4e7; }
+    .summary-list > div:first-child { border-top: 0; padding-top: 0; }
+    .summary-list dt { font-size: .75rem; font-weight: 700; color: var(--accent); padding-top: .15rem; }
+    .summary-list dd { font-size: .875rem; line-height: 1.7; color: #3f3f46; }
 
     .info-list { padding-left: 1.2em; list-style: disc; font-size: .875rem; }
     .info-list li { margin: .25rem 0; }
@@ -438,7 +443,19 @@
     {% endif %}
     {% endif %}
 
-    {% call section('features', '店舗の特徴') %}{{ list_block('features') }}{% endcall %}
+    {% call section('features', '店舗の特徴') %}
+        {% if summary %}
+        <h3 class="text-xs font-bold text-gray-400 mb-1.5">データから見た特徴</h3>
+        <dl class="summary-list">
+            {% for item in summary %}
+            <div><dt>{{ item.label }}</dt><dd>{{ item.text }}</dd></div>
+            {% endfor %}
+        </dl>
+        <p class="hint">取り込んだ日別・台別データから自動でまとめた文章です（数字は上の表・グラフと同じ集計）。データが増えると内容も変わります。</p>
+        <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">設備・サービス</h3>
+        {% endif %}
+        {{ list_block('features') }}
+    {% endcall %}
 
     {% call section('sources', '情報源') %}
         {% if s.sources %}

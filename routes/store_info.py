@@ -138,6 +138,8 @@ def detail(store_id):
         field_labels=store_info.FIELD_LABELS,
         ops=_operation_summary(sheet_store_name),
         tr=tr,
+        # 台別の部分は画面で選んだ集計期間に合わせる(下の表と数字がずれないように)
+        summary=common.build_store_summary(sheet_store_name, unit_days=days),
         # 表の日付にイベ日の印を付けるため。テンプレートで全期間を回して作ると日数ぶん重くなるのでここで作る
         kinds={p["date"]: p["kind"] for p in series},
         chart_series=chart_series,
