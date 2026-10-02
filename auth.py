@@ -24,6 +24,13 @@ def load_logged_in_user():
     停止したメンバーを、セッションの期限切れを待たずに締め出すため。
     """
     g.user = None
+    if "user_id" in session and not common.load_users():
+        # 管理者がいる限り users シートは空にならないので、空ならシートの読み込み失敗(429など)。
+        # ここでセッションを消すと一時的なエラーのたびにログアウトされるので、消さずに断る
+        message = "ユーザー情報を一時的に読み込めません。少し待ってから読み込み直してください。"
+        if "/api" in request.path:
+            return jsonify({"ok": False, "error": message}), 503
+        return message, 503
     user = common.find_user(session.get("user_id"))
     if user and user["active"]:
         g.user = user

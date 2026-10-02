@@ -5546,6 +5546,10 @@ _login_failures = {}
 _DUMMY_PASSWORD_HASH = generate_password_hash(secrets.token_hex(16))
 
 
+# シートの読み込みに失敗したときの予備(キャッシュのTTLとは別に、最後に読めた一覧を持っておく)
+_last_loaded_users = []
+
+
 def get_users_worksheet():
     return _get_worksheet(USERS_SHEET_NAME, USERS_HEADERS, rows=100, label="usersシート")
 
@@ -5555,12 +5559,14 @@ def load_users():
     cached = _cache_get("users")
     if cached is not None:
         return cached
+    global _last_loaded_users
     try:
         # ログインIDが数字だけでも数値に変換されないよう、すべて文字列のまま読む
         rows = get_users_worksheet().get_all_records(numericise_ignore=["all"])
     except Exception as e:
         logger.error(f"ユーザーの読み込みエラー: {e}")
-        return []
+        # 読めなかっただけで全員を「存在しない」扱いにするとログアウトされるので、直前に読めた一覧で答える
+        return _last_loaded_users
     users = []
     for row in rows:
         user = {h: str(row.get(h, "")).strip() for h in USERS_HEADERS}
@@ -5569,6 +5575,7 @@ def load_users():
         user["active"] = user["active"] not in ("0", "false", "FALSE", "")
         users.append(user)
     _cache_set("users", users)
+    _last_loaded_users = users
     return users
 
 
@@ -5629,6 +5636,9 @@ def authenticate(login_id, password):
         minutes = int((locked_until - now) // 60) + 1
         return None, f"続けて間違えたため、ログインを止めています。{minutes}分ほど待ってからお試しください。"
 
+    if not load_users():
+        # シートが読めないときに「パスワードが違う」と返して失敗回数まで数えると、本人が締め出される
+        return None, "ユーザー情報を一時的に読み込めません。少し待ってからお試しください。"
     user = _find_user_by_login(key)
     ok = check_password_hash(user["password_hash"] if user else _DUMMY_PASSWORD_HASH, password or "")
     if not user or not ok:
