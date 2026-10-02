@@ -441,3 +441,8 @@
     <button type="submit" class="fav-btn{{ ' fav-on' if on else '' }}" title="{{ 'お気に入りから外す' if on else 'お気に入りに追加' }}" aria-pressed="{{ 'true' if on else 'false' }}">{{ icon('star') }}<span class="sr-only">{{ 'お気に入りから外す' if on else 'お気に入りに追加' }}</span></button>
 </form>
 {%- endmacro %}
+
+{# 差枚などの符号つき数値。プラスは緑、マイナスは赤 #}
+{% macro signed(v) -%}
+{% if v is none %}-{% else %}<span class="{{ 'text-emerald-600' if v > 0 else 'text-rose-600' if v < 0 else '' }}">{{ '{:+,}'.format(v | int) }}</span>{% endif %}
+{%- endmacro %}

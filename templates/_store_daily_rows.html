@@ -1,0 +1,14 @@
+{# 店舗情報ページの「全 N 日分を見る」の中身。開かれたときに読み込む(routes/store_info.py の daily_rows) #}
+{% from "_macros.html" import signed %}
+<div class="max-h-96 overflow-y-auto">
+<table class="num-table"><thead><tr><th>日付</th><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th><th class="!text-left">取り込み方法</th></tr></thead><tbody>
+    {% for d in rows %}
+    {% set k = kinds.get(d.date, 'normal') %}
+    <tr><td>{% if k != 'normal' %}<span class="kind-dot kind-{{ k }}"></span>{% endif %}{{ d.date }}</td>
+        <td>{{ signed(d.total_diff) }}</td><td>{{ signed(d.avg_diff) }}</td>
+        <td>{{ '{:,}'.format(d.avg_games | int) if d.avg_games is not none else '-' }}</td>
+        <td>{{ ('%.1f%%' % d.win_rate) if d.win_rate is not none else '-' }}</td>
+        <td class="!text-left text-gray-400">{{ d.source or '-' }}</td></tr>
+    {% endfor %}
+</tbody></table>
+</div>

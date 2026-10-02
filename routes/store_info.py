@@ -7,7 +7,9 @@
 URLを /stores にしないのは、店舗名の変更・統合を行う「店舗の管理」が既に使っているため。
 """
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from datetime import datetime, timedelta
+
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 
 import common
 import store_info
@@ -51,6 +53,30 @@ def _trend_summary(sheet_store_name, days, with_machine_details):
         "units": common.build_store_unit_trends(sheet_store_name, days=days,
                                                 include_machine_details=with_machine_details),
     }
+
+
+# グラフに最初から埋め込む期間。期間ボタンの最長(1年)ぶんだけ持たせ、「全期間」は押されたときに取りに行く。
+# 数年分を全部埋め込むと、初期表示(90日)では使わないデータでページが数百KB膨らむため
+CHART_EMBED_DAYS = 365
+
+
+def _chart_series(series):
+    """グラフに埋め込むぶん。ブラウザ側の期間の切り方(最後の日から数える)に合わせて切る。"""
+    if not series:
+        return []
+    try:
+        last = datetime.strptime(series[-1]["date"], "%Y-%m-%d")
+    except ValueError:
+        return series
+    since = (last - timedelta(days=CHART_EMBED_DAYS)).strftime("%Y-%m-%d")
+    return [p for p in series if p["date"] > since]
+
+
+def _store_or_404(store_id):
+    s = store_info.load(store_id)
+    if s is None:
+        abort(404)
+    return s, s.get("sheet_store_name") or s["name"]
 
 
 def _sort_by(rows, key):
@@ -97,6 +123,9 @@ def detail(store_id):
     days = _parse_days(request.args.get("days", DEFAULT_DAYS))
     known = sum(1 for k in store_info.FIELD_KEYS if (s["info"].get(k) or {}).get("status") != "不明")
 
+    tr = _trend_summary(sheet_store_name, days, with_machine_details=bool(request.args.get("details")))
+    series = (tr["daily_all"] or {}).get("series") or []
+    chart_series = _chart_series(series)
     return render_template(
         "store_info.html",
         s=s,
@@ -108,9 +137,33 @@ def detail(store_id):
         field_count=len(store_info.FIELD_KEYS),
         field_labels=store_info.FIELD_LABELS,
         ops=_operation_summary(sheet_store_name),
-        tr=_trend_summary(sheet_store_name, days, with_machine_details=bool(request.args.get("details"))),
+        tr=tr,
+        # 表の日付にイベ日の印を付けるため。テンプレートで全期間を回して作ると日数ぶん重くなるのでここで作る
+        kinds={p["date"]: p["kind"] for p in series},
+        chart_series=chart_series,
+        chart_has_more=len(chart_series) < len(series),
         days=days,
         period_choices=PERIOD_CHOICES,
         history=list(reversed(s.get("history", [])))[:50],
         sort_by=_sort_by,
     )
+
+
+@store_info_bp.route("/<store_id>/daily_rows")
+def daily_rows(store_id):
+    """
+    「全 N 日分を見る」の表だけを返す(開かれたときにfetchで読み込む)。
+    数年分の表をページ本体に入れると、閉じたままでも毎回その行数ぶん組み立てて送ることになるため分けている。
+    """
+    _s, sheet_store_name = _store_or_404(store_id)
+    dall = common.build_store_daily_trends(sheet_store_name, days=0) or {}
+    kinds = {p["date"]: p["kind"] for p in dall.get("series") or []}
+    return render_template("_store_daily_rows.html", rows=dall.get("rows") or [], kinds=kinds)
+
+
+@store_info_bp.route("/<store_id>/daily_series")
+def daily_series(store_id):
+    """推移グラフの全期間ぶん。「全期間」ボタンが押されたときだけ読み込む。"""
+    _s, sheet_store_name = _store_or_404(store_id)
+    dall = common.build_store_daily_trends(sheet_store_name, days=0) or {}
+    return jsonify(dall.get("series") or [])
