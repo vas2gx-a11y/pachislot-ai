@@ -1,0 +1,275 @@
+{
+  "$schema": "./schema.json",
+  "id": "messe_ogikubo",
+  "name": "メッセ荻窪",
+  "region": "東京都",
+  "area": "荻窪",
+  "sheet_store_name": "メッセ荻窪",
+  "updated_at": "2026-10-02",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち メッセ荻窪",
+      "url": "https://minpachi.com/%E3%83%A1%E3%83%83%E3%82%BB%E8%8D%BB%E7%AA%AA%E5%BA%97/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "杉並区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都杉並区上荻1-16-16",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00～22:45",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "配布 9:40"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "slot_units": {
+      "value": 381,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "スロット 21.73円 / 5.61円 / 2円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "21.73円スロット 5.2枚",
+        "5.61円スロット 20枚",
+        "2円スロット 56.5枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "店舗は地下にあります エレベーター1階 向かいのドラッグストアを左に約6ⅿ",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2019年8月7日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "2のつく日、7のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "杉並区",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都杉並区上荻1-16-16",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:45",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "配布 9:40"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 381,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "スロット 21.73円 / 5.61円 / 2円"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "21.73円スロット 5.2枚",
+        "5.61円スロット 20枚",
+        "2円スロット 56.5枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "店舗は地下にあります エレベーター1階 向かいのドラッグストアを左に約6ⅿ",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2019年8月7日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "2のつく日、7のつく日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}

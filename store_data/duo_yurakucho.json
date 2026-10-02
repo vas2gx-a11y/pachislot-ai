@@ -1,0 +1,288 @@
+{
+  "$schema": "./schema.json",
+  "id": "duo_yurakucho",
+  "name": "有楽町DUO",
+  "region": "東京都",
+  "area": "有楽町",
+  "sheet_store_name": "有楽町DUO",
+  "updated_at": "2026-10-02",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち 有楽町DUO",
+      "url": "https://minpachi.com/1011duo/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "千代田区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都千代田区有楽町2-8-1",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00～22:55",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:35"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 281,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 287,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1.33円",
+        "スロット 21.73円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 28玉",
+        "1.33円パチンコ 84玉",
+        "21.73円スロット 5.2枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "ルミネの信号をはさんで向かい側にあります(正面入口側の道まっすぐ進むとルミネが正面に見えたら右側にあります)",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "1997年5月28日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "2のつく日、28日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "千代田区",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都千代田区有楽町2-8-1",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:55",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:35"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 281,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 287,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1.33円",
+        "スロット 21.73円"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 28玉",
+        "1.33円パチンコ 84玉",
+        "21.73円スロット 5.2枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "ルミネの信号をはさんで向かい側にあります(正面入口側の道まっすぐ進むとルミネが正面に見えたら右側にあります)",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "1997年5月28日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "2のつく日、28日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}

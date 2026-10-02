@@ -1,0 +1,305 @@
+{
+  "$schema": "./schema.json",
+  "id": "palazzo_senkawa",
+  "name": "パラッツォ千川店",
+  "region": "東京都",
+  "area": "千川",
+  "sheet_store_name": "パラッツォ千川店",
+  "updated_at": "2026-10-02",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち パラッツォ千川店",
+      "url": "https://minpachi.com/palazzo-senkawa/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "豊島区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都豊島区要町3-44-2",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00～22:45",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "9:45 抽選 / 9:50 再整列 / 10:00 入場"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 239,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 156,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.3枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": [
+        "4円パチンコ 2500玉",
+        "21.27円スロット 500枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "prize_exchange": {
+      "value": "店舗正面出入口を出て左手側(セブンイレブンがあります。)に歩いた交差点がある位置、正面右手前にTUCショップ(景品交換所)千川店があります。",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2012年4月27日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "2のつく日、8のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "豊島区",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都豊島区要町3-44-2",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:45",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "9:45 抽選 / 9:50 再整列 / 10:00 入場"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 239,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 156,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.3枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "4円パチンコ 2500玉",
+        "21.27円スロット 500枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "店舗正面出入口を出て左手側(セブンイレブンがあります。)に歩いた交差点がある位置、正面右手前にTUCショップ(景品交換所)千川店があります。",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2012年4月27日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "2のつく日、8のつく日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}

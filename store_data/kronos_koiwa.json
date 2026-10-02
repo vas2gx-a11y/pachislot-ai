@@ -1,0 +1,294 @@
+{
+  "$schema": "./schema.json",
+  "id": "kronos_koiwa",
+  "name": "クロノス",
+  "region": "東京都",
+  "area": "小岩",
+  "sheet_store_name": "クロノス",
+  "updated_at": "2026-10-02",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち クロノス",
+      "url": "https://minpachi.com/kuronosu/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "江戸川区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都江戸川区西小岩1-22-18",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00～22:40",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:40"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 413,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 396,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円 / 0.5円",
+        "スロット 20円 / 10円 / 5円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 25.87玉",
+        "1円パチンコ 103玉",
+        "0.5円パチンコ 206玉",
+        "20円スロット 5.6枚",
+        "10円スロット 11.2枚",
+        "5円スロット 22.4枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "正面出口を出て右手側に真っすぐ数メートル進むとTUCが右手側にあります",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2010年12月6日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "2のつく日、7のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "江戸川区",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都江戸川区西小岩1-22-18",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:40",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:40"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 413,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 396,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円 / 0.5円",
+        "スロット 20円 / 10円 / 5円"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 25.87玉",
+        "1円パチンコ 103玉",
+        "0.5円パチンコ 206玉",
+        "20円スロット 5.6枚",
+        "10円スロット 11.2枚",
+        "5円スロット 22.4枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "正面出口を出て右手側に真っすぐ数メートル進むとTUCが右手側にあります",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2010年12月6日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "2のつく日、7のつく日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}

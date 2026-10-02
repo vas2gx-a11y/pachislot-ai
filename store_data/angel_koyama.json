@@ -1,0 +1,290 @@
+{
+  "$schema": "./schema.json",
+  "id": "angel_koyama",
+  "name": "エンジェル本店",
+  "region": "東京都",
+  "area": "武蔵小山",
+  "sheet_store_name": "エンジェル本店",
+  "updated_at": "2026-10-02",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "みんぱち エンジェル本店",
+      "url": "https://minpachi.com/angel/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "品川区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都品川区小山3-26-5",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "hours": {
+      "value": "10:00～22:45",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "モバイル抽選 9:30"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 380,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 264,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4.38円 / 1.12円",
+        "スロット 21.73円 / 5.61円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4.38円パチンコ 25.6玉",
+        "1.12円パチンコ 100玉",
+        "21.73円スロット 5.2枚",
+        "5.61円スロット 20枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "この店舗の至近に系列店であるAngel Ⅴ店があり、同店の裏側(正面出入口は、パルム商店街側)の至近にTUCショップ小山商店街店(景品交換所)があります",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "sns": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2004年4月21日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "features": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "1日、2日、10日、11日、21日",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "anniversary_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "品川区",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都品川区小山3-26-5",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00～22:45",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "モバイル抽選 9:30"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 380,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 264,
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4.38円 / 1.12円",
+        "スロット 21.73円 / 5.61円"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4.38円パチンコ 25.6玉",
+        "1.12円パチンコ 100玉",
+        "21.73円スロット 5.2枚",
+        "5.61円スロット 20枚"
+      ],
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "この店舗の至近に系列店であるAngel Ⅴ店があり、同店の裏側(正面出入口は、パルム商店街側)の至近にTUCショップ小山商店街店(景品交換所)があります",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2004年4月21日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "1日、2日、10日、11日、21日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s1"
+      ]
+    }
+  ]
+}
