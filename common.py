@@ -4505,6 +4505,191 @@ def describe_store_unit_history(store_name, machine_number, days=90, limit=5):
 
 
 # ---------------------------------------------------------------------------
+# 店舗の特徴(日別・台別の集計を文章にまとめる)
+# ---------------------------------------------------------------------------
+# 店舗情報ページの数字は表とグラフで細かく出しているが、「結局どんな店か」は
+# 曜日・末尾・イベ日・機種の表を見比べないと分からない。そこを数行の文章にまとめて「店舗の特徴」に出す。
+#
+# AIに書かせず集計値から組み立てているのは、データを足すたびに書き直しの手間も料金もかからず、
+# 書いてある数字が下の表と必ず一致するようにするため(もっともらしい作り話が混ざらない)。
+# 言い切りは信頼度(_event_reliability)が「高」「中」のものだけにし、日数の少ないものは「参考」と添える。
+
+# 「高め」「低め」と書くのは、全体の平均から何%離れたときか。小さい差まで書くと、どの店も特徴だらけになる
+SUMMARY_GAMES_GAP_PCT = 5
+# 台別データで機種名を挙げる数
+SUMMARY_MACHINE_COUNT = 3
+# 差枚の平均を文章にするのに要る日数。差枚はデータサイト側で空欄の日が多く、数日分だと1日の爆発で決まってしまう
+SUMMARY_MIN_DIFF_DAYS = 10
+
+
+def _fmt_games(v):
+    return f"{v:,.0f}G"
+
+
+def _fmt_diff(v):
+    return f"{v:+,.0f}枚"
+
+
+def _summary_overall(d1):
+    o = d1["overall"]
+    parts = [f"直近1年（{d1['first_date']}〜{d1['last_date']}、{d1['record_count']}日分）の平均G数は{_fmt_games(o['avg_games'])}"
+             if o["avg_games"] is not None else f"直近1年（{d1['record_count']}日分）"]
+    if o["avg_diff"] is not None and o["diff_days"] >= SUMMARY_MIN_DIFF_DAYS:
+        lean = "客側のプラス" if o["avg_diff"] > 0 else "店側の回収"
+        parts.append(f"平均差枚は{_fmt_diff(o['avg_diff'])}で{lean}寄り（差枚が分かる{o['diff_days']}日分）")
+    if o["win_rate"] is not None:
+        parts.append(f"勝率は{o['win_rate']:.1f}%")
+    return "、".join(parts) + "。"
+
+
+def _summary_weekday(d1):
+    rows = [r for r in d1["by_weekday"] if r["enough_samples"] and r["games_index"] is not None]
+    if len(rows) < 2:
+        return None
+    hi = max(rows, key=lambda r: r["games_index"])
+    lo = min(rows, key=lambda r: r["games_index"])
+    if hi["games_index"] - lo["games_index"] < SUMMARY_GAMES_GAP_PCT:
+        text = "曜日による稼働の差はほとんどない。"
+    else:
+        text = (f"稼働は{hi['label']}が最も高く（{_fmt_games(hi['avg_games'])}、平均の{hi['games_index']:.0f}%）、"
+                f"{lo['label']}が最も低い（{_fmt_games(lo['avg_games'])}）。")
+    diff_rows = [r for r in rows if r["avg_diff"] is not None and r["diff_days"] >= SUMMARY_MIN_DIFF_DAYS]
+    if len(diff_rows) >= 2:
+        best = max(diff_rows, key=lambda r: r["avg_diff"])
+        worst = min(diff_rows, key=lambda r: r["avg_diff"])
+        # どの曜日もプラスの店で「悪い」と書くと誤解されるので、高い・低いで比べる
+        text += f"平均差枚は{best['label']}が最も高く（{_fmt_diff(best['avg_diff'])}）、{worst['label']}が最も低い（{_fmt_diff(worst['avg_diff'])}）。"
+    return text
+
+
+def _summary_day_suffix(d1, events):
+    rows = [r for r in d1["by_day_suffix"] if r["enough_samples"] and r["games_index"] is not None]
+    high = sorted((r for r in rows if r["games_index"] >= 100 + SUMMARY_GAMES_GAP_PCT),
+                  key=lambda r: -r["games_index"])
+    if not high:
+        return "日付の末尾による稼働の差は目立たない。" if rows else None
+    detail = "、".join(f"{r['key']}の付く日 {r['games_index']:.0f}%" for r in high[:3])
+    text = f"日付の末尾では{'・'.join(str(r['key']) for r in high[:3])}の付く日の稼働が高い（平均比 {detail}）。"
+    # 旧イベ日に入っていない末尾が跳ねていれば、登録漏れか、告知の無い周期イベントの手がかりになる
+    # 「7のつく日」のような書き方に限らず、毎月1日・11日・21日のように個別の日で登録している店もあるので、
+    # その末尾の日付(31日まで)の半分以上が旧イベ日に当たれば登録済みとみなす
+    rules = (events or {}).get("event_rules") or []
+
+    def _registered(digit):
+        days = [day for day in range(1, 32) if day % 10 == digit]
+        hits = sum(1 for day in days if any(_rule_matches_date(rule, datetime(2024, 1, day)) for rule in rules))
+        return hits * 2 >= len(days)
+
+    unregistered = [r for r in high[:3] if not _registered(r["key"])]
+    if events and unregistered:
+        text += "・".join(f"{r['key']}の付く日" for r in unregistered) + "は旧イベ日に登録されていないのに稼働が高い。"
+    return text
+
+
+def _reliable(row):
+    rel = row.get("reliability") or {}
+    return rel.get("level") in ("高", "中")
+
+
+def _summary_events(dall):
+    cmp = dall.get("event_vs_normal")
+    events = dall.get("events") or {}
+    if not cmp:
+        return None
+    rule_names = "・".join(r["label"] for r in events.get("event_rules") or [])
+    ev = cmp["event"]
+    rel = ev.get("reliability") or {}
+    text = f"旧イベ日（{rule_names}）は通常日と比べて稼働が{cmp['games_ratio']:.0f}%"
+    # 差枚が足りず稼働で判定した店では、差枚の差は数日分の値なので書かない
+    if cmp.get("diff_gap") is not None and rel.get("basis") == "avg_diff":
+        text += f"、平均差枚が{_fmt_diff(cmp['diff_gap'])}"
+    if rel.get("level") in ("高", "中"):
+        text += f"で、信頼度は{rel['level']}（{rel['direction']}）。"
+    elif rel.get("level") == "低":
+        text += "だが、差は日ごとのばらつきに埋もれていて、イベ日だから出るとは言いにくい。"
+    else:
+        text += "（日数が少なく判定できない）。"
+
+    rule_rows = [r for r in dall.get("by_event_rule") or [] if r.get("reliability")]
+    anniversary = {r["label"] for r in events.get("anniversary_rules") or []}
+    rule_rows = [r for r in rule_rows if r["label"] not in anniversary]
+    strong = sorted((r for r in rule_rows if _reliable(r) and r["reliability"]["direction"] == "強い"),
+                    key=lambda r: -(r["reliability"]["gap"] or 0))
+    weak = [r for r in rule_rows if _reliable(r) and r["reliability"]["direction"] == "弱い"]
+    flat = [r for r in rule_rows if r["reliability"]["level"] == "低"]
+    unit = lambda r: "G" if r["reliability"]["basis"] == "avg_games" else "枚"
+    if strong and len(rule_rows) > 1:
+        text += "なかでも" + "・".join(f"{r['label']}（通常日比{r['reliability']['gap']:+,.0f}{unit(r)}）" for r in strong[:3]) + "が強い。"
+    if weak:
+        text += "・".join(r["label"] for r in weak) + "は通常日より弱い。"
+    if flat:
+        text += "一方、" + "・".join(r["label"] for r in flat) + "は通常日との差がはっきりしない。"
+    return text
+
+
+def _summary_anniversary(dall):
+    row = next((r for r in dall.get("by_event_category") or [] if r["key"] == "anniversary"), None)
+    if not row:
+        return None
+    rel = row.get("reliability") or {}
+    if rel.get("level") in ("高", "中"):
+        gap = _fmt_diff(rel["gap"]) if rel["basis"] == "avg_diff" else f"{rel['gap']:+,.0f}G"
+        return f"周年日は{row['count']}日分で通常日比{gap}と{rel['direction']}（日数が少ないので参考）。"
+    return f"周年日はまだ{row['count']}日分しかなく、傾向は判断できない。"
+
+
+def _summary_units(ut):
+    if not ut or not ut.get("record_count"):
+        return None
+    period = f"{ut['first_date']}〜{ut['last_date']}の{ut['day_count']}日分" if ut["day_count"] > 1 else f"{ut['last_date']}の1日分"
+    machines = [r for r in ut["by_machine"] if r["enough_samples"] and r["avg_diff"] is not None and r["avg_diff"] > 0]
+    text = f"台別データ（{period}、のべ{ut['record_count']}台）では"
+    if machines:
+        text += "、" + "・".join(
+            f"{r['label']}（{r['count']}台平均{_fmt_diff(r['avg_diff'])}、プラス{r['plus_count']}台）"
+            for r in machines[:SUMMARY_MACHINE_COUNT]) + "の出方が良い"
+    else:
+        text += "、平均差枚がプラスの機種は見当たらない"
+    edge = ut["highlights"].get("edge")
+    middle = ut["highlights"].get("middle")
+    if edge and middle and edge["enough_samples"] and middle["enough_samples"]:
+        gap = edge["avg_diff"] - middle["avg_diff"]
+        if abs(gap) >= 100:
+            text += f"。端台は島の中ほどより{'良い' if gap > 0 else '悪い'}（{_fmt_diff(gap)}）"
+    text += "。"
+    if ut["day_count"] < TREND_MIN_SAMPLES:
+        text += "日数が少ないので、たまたまの可能性が高い。"
+    return text
+
+
+@_cached_by_data_version
+def build_store_summary(store_name, unit_days=90):
+    """
+    店舗の特徴を文章でまとめる。戻り値: [{"label": 見出し, "text": 文章}, ...](データが無ければ空)。
+    数字は店舗情報ページの表と同じ集計(build_store_daily_trends / build_store_unit_trends)から取る。
+    """
+    d1 = build_store_daily_trends(store_name, days=365)
+    dall = build_store_daily_trends(store_name, days=0)
+    ut = build_store_unit_trends(store_name, days=unit_days, include_machine_details=False)
+
+    items = []
+
+    def add(label, text):
+        if text:
+            items.append({"label": label, "text": text})
+
+    if d1 and d1.get("record_count"):
+        add("全体", _summary_overall(d1))
+        add("曜日", _summary_weekday(d1))
+        add("日付", _summary_day_suffix(d1, d1.get("events")))
+    if dall and dall.get("record_count"):
+        add("イベ日", _summary_events(dall))
+        add("周年日", _summary_anniversary(dall))
+    add("台別", _summary_units(ut))
+    return items
+
+
+# ---------------------------------------------------------------------------
 # イベントカレンダー(月別)
 # ---------------------------------------------------------------------------
 # 旧イベント日・周年日は store_events に「毎月7日」「ゾロ目日」といった
