@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import os
 from datetime import timedelta
 
@@ -77,9 +78,15 @@ GZIP_LEVEL = 6
 def compress_response(response):
     if "gzip" not in request.headers.get("Accept-Encoding", "").lower():
         return response
-    # ファイル送信などのストリーミング応答は get_data() すると壊れるので触らない
-    if response.direct_passthrough or response.headers.get("Content-Encoding"):
+    if response.headers.get("Content-Encoding"):
         return response
+    if response.direct_passthrough:
+        # ファイル送信などのストリーミング応答は get_data() すると壊れるので触らない。
+        # ただし static/ のCSS・JSは小さく、圧縮すると数分の1になる(tailwind.css は 23KB → 5KB)ので、
+        # 全体を返すとき(200)に限って読み込んで圧縮する。途中から(206)の応答を圧縮すると壊れる。
+        if request.endpoint != "static" or response.status_code != 200:
+            return response
+        response.direct_passthrough = False
     if not (200 <= response.status_code < 300):
         return response
 
@@ -97,6 +104,34 @@ def compress_response(response):
     response.headers["Content-Length"] = response.content_length
     response.headers.add("Vary", "Accept-Encoding")
     return response
+
+
+# ---------------------------------------------------------------------------
+# static/ のファイルをブラウザにキャッシュさせる
+# ---------------------------------------------------------------------------
+# Flaskの既定ではキャッシュさせないので、CSS・判別のJS・背景画像を毎回サーバーに問い合わせていた
+# (Renderの無料プランは遅いので、1件ごとの往復が体感に効く)。1年キャッシュさせる代わりに、
+# URLに中身から作った版(?v=)を付け、デプロイでファイルが変われば別のURLとして取り直させる。
+STATIC_MAX_AGE = timedelta(days=365)
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = STATIC_MAX_AGE
+_static_versions = {}
+
+
+@app.url_defaults
+def add_static_version(endpoint, values):
+    if endpoint != "static" or "filename" not in values or "v" in values:
+        return
+    filename = values["filename"]
+    # ファイルの中身はデプロイしない限り変わらないので、プロセスの間は覚えておく
+    if filename not in _static_versions:
+        path = os.path.join(app.static_folder, filename)
+        try:
+            with open(path, "rb") as f:
+                _static_versions[filename] = hashlib.md5(f.read()).hexdigest()[:10]
+        except OSError:
+            _static_versions[filename] = None
+    if _static_versions[filename]:
+        values["v"] = _static_versions[filename]
 
 
 @app.before_request

@@ -16,6 +16,9 @@
 - `auth.py` — ログインの強制（全ページを before_request で守る）と `admin_required`。
   ユーザーの読み書きは `common.py` の「ユーザー」セクション。
 - `templates/` — Jinja2。`base.html` と `_macros.html` が共通土台。
+- `static/css/tailwind.css` — Tailwindを事前に作ったCSS（生成物だがコミットする。本番にNodeが無いため）。
+  テンプレートで新しいTailwindのクラスを使ったら `tools/tailwind/build.sh` で作り直す（作り直さないとそのクラスは効かない）。
+  `static/` のファイルは1年キャッシュさせ、URLに中身の版（`?v=`）を付けている（`app.py`）。参照は必ず `url_for('static', ...)` で書く。
 - `static/js/` — 設定判別のブラウザ側コード。他の画面はJSをテンプレートに直書きしているが、
   判別だけは分量と「計算と表示を混ぜない」方針からファイルに切り出している。
 - `machine_info.py` / `machine_data/*.json` — 機種情報（解析まとめ）。**機種データの置き場所はここだけ**。
