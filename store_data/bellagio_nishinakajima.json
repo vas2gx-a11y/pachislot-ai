@@ -5,7 +5,7 @@
   "region": "大阪府",
   "area": "西中島南方",
   "sheet_store_name": "ベラジオ西中島店",
-  "updated_at": "2026-09-25",
+  "updated_at": "2026-10-02",
   "sources": [
     {
       "id": "s1",
@@ -20,6 +20,20 @@
       "url": "https://www.p-world.co.jp/osaka/bellagio-nishinaka.htm",
       "reliability": "ポータル",
       "checked_at": "2026-09-25"
+    },
+    {
+      "id": "s3",
+      "name": "みんぱち ベラジオ西中島店",
+      "url": "https://minpachi.com/bellagio-nishinaka/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
+    },
+    {
+      "id": "s4",
+      "name": "スロッターギルド関西 べラジオ西中島店",
+      "url": "https://kansai.slotterguild.com/osaka/bellagio-nishinakajima/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-02"
     }
   ],
   "info": {
@@ -132,9 +146,11 @@
       "source_ids": []
     },
     "opened_on": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "2011年12月22日",
+      "status": "未確認",
+      "source_ids": [
+        "s3"
+      ]
     },
     "features": {
       "value": [
@@ -154,14 +170,19 @@
       "source_ids": []
     },
     "event_days": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "0のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s3",
+        "s4"
+      ]
     },
     "anniversary_days": {
-      "value": null,
-      "status": "不明",
-      "source_ids": []
+      "value": "12月22日",
+      "status": "未確認",
+      "source_ids": [
+        "s4"
+      ]
     },
     "special_days": {
       "value": null,
@@ -285,6 +306,33 @@
       "changed_at": "2026-09-25",
       "source_ids": [
         "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2011年12月22日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s3"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "0のつく日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s3"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "12月22日",
+      "changed_at": "2026-10-02",
+      "source_ids": [
+        "s4"
       ]
     }
   ]
