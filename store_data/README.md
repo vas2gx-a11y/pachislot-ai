@@ -108,3 +108,16 @@ Renderの無料プランはディスクが揮発性なので、サーバー上�
   アナスロの「データ一覧」を保存したHTMLから `python3 tools/anaslo.py daily --list <index.html> --out store_data/daily/<id>.txt` で作れる。
 - 同じ日付がシートにもあれば、シートの値を優先する。
 - シートに旧イベント日の登録が無い店は、このJSONの `event_days` / `anniversary_days` で通常日と比べる。
+
+## 台別データをファイルで置く（store_data/units/）
+
+アナスロの日別ページ（その日のデータまとめ）を保存したHTMLから、1日1ファイルで置く。
+
+```bash
+python3 tools/anaslo.py parse <index.html> --out store_data/units/<店舗id>/<YYYY-MM-DD>.csv
+```
+
+- どの店のデータかはフォルダ名（店舗id）で決まる（CSVの店名表記がシートの店舗名とずれていても紐づく）。
+- シートに同じ店舗・日付の台別データが1台でもあれば、その日はシートを優先する。
+- 台別データがある日は、日別データ（総差枚・平均差枚・平均G数・勝率）も全台から計算した値になる
+  （一覧ページで差枚が「–」の日も埋まる）。

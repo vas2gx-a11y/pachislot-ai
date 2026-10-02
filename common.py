@@ -2802,13 +2802,33 @@ def _repo_store_daily_rows():
     """
     rows = []
     for name, store in store_info_by_sheet_name().items():
+        by_date = {}
         text = store_info.daily_text(store.get("id"))
-        if not text:
-            continue
-        parsed, _report = parse_hall_daily_text(text, max_rows=5000)
-        for r in parsed:
-            rows.append(dict(r, store_name=name, source="リポジトリ(store_data/daily)"))
+        if text:
+            parsed, _report = parse_hall_daily_text(text, max_rows=5000)
+            for r in parsed:
+                by_date[r["date"]] = dict(r, store_name=name, source="リポジトリ(store_data/daily)")
+        # 台別データ(store_data/units)がある日は、全台から計算した値で置き換える。
+        # 一覧ページは差枚を「–」で隠している日が多いが、台別ページには全台の差枚が載っているため
+        # (tools/anaslo.py daily --csv と同じ優先順位)
+        for date_str, units in _repo_units_by_store().get(name, {}).items():
+            r = _daily_row_from_units(date_str, units)
+            by_date[date_str] = dict(r, store_name=name, source="リポジトリ(store_data/units から計算)")
+        rows.extend(by_date.values())
     return rows
+
+
+def _repo_units_by_store():
+    """
+    リポジトリに置いた台別データ(store_data/units/<id>/*.csv)を {シートの店舗名: {日付: [台...]}} にする。
+    CSVの店名ではなくフォルダ(店舗id)で店を決める(データサイトの店名表記と、シートの店舗名がずれても紐づくように)。
+    """
+    result = {}
+    for name, store in store_info_by_sheet_name().items():
+        for text in store_info.unit_csv_texts(store.get("id")):
+            units_by_date, _daily, _report = parse_anaslo_csv_text(text)
+            result.setdefault(name, {}).update(units_by_date)
+    return result
 
 
 def load_store_daily(store_name=""):
@@ -3802,8 +3822,23 @@ def _daily_row_from_units(date_str, units):
     }
 
 
+def _repo_store_unit_rows():
+    """リポジトリの台別データ(store_data/units/)を、シートと同じ形の行にする。"""
+    rows = []
+    for name, by_date in _repo_units_by_store().items():
+        for date_str, units in by_date.items():
+            for u in units:
+                rows.append(dict(u, store_name=name, date=date_str, source="リポジトリ(store_data/units)"))
+    return rows
+
+
 def load_store_units(store_name=""):
-    """store_units シートを読み込む(日付の新しい順)。読み込み失敗時は空リスト。"""
+    """
+    store_units シートを読み込む(日付の新しい順)。読み込み失敗時はリポジトリの台別データだけを返す。
+
+    リポジトリの台別データ(store_data/units/)も足す。シートに同じ店舗・日付の行が1台でもあれば、
+    その日はシートを正とする(台単位で混ぜると、取り込み直した日に古い台が残るため)。
+    """
     cached = _cache_get("store_units")
     if cached is None:
         try:
@@ -3811,7 +3846,9 @@ def load_store_units(store_name=""):
             raw_rows = ws.get_all_records()
         except Exception as e:
             logger.error(f"台別データの読み込みエラー: {e}")
-            return []
+            # 失敗はキャッシュしない(次で読み直す)
+            repo_rows = sorted(_repo_store_unit_rows(), key=lambda r: (r["date"], r["machine_number"]), reverse=True)
+            return repo_rows if not store_name else [r for r in repo_rows if r["store_name"] == store_name]
 
         cached = []
         for row in raw_rows:
@@ -3834,6 +3871,8 @@ def load_store_units(store_name=""):
                 "art_count": _to_number(row.get("art_count")),
                 "source": str(row.get("source", "")).strip(),
             })
+        sheet_days = {(r["store_name"], r["date"]) for r in cached}
+        cached += [r for r in _repo_store_unit_rows() if (r["store_name"], r["date"]) not in sheet_days]
         cached.sort(key=lambda r: (r["date"], r["machine_number"]), reverse=True)
         _cache_set("store_units", cached)
 
