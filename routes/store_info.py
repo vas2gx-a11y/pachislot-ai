@@ -87,11 +87,14 @@ def _sort_by(rows, key):
 @store_info_bp.route("/")
 def index():
     stores, errors = store_info.load_all()
-    # お気に入りは登録した順で上に並べ、残りは今までどおり地域・店名順
+    # お気に入りは登録した順で先頭の枠にまとめ、残りは地域→エリア(最寄り駅など)ごとに分ける。
+    # 店舗が増えて1列に並べると目当ての店を探しにくくなったため。お気に入りはエリアの方には重ねて出さない
     favorites = common.favorite_store_ids()
     order = {sid: i for i, sid in enumerate(favorites)}
-    stores.sort(key=lambda s: order.get(s["id"], len(order)))
-    return render_template("store_info_list.html", stores=stores, errors=errors,
+    fav_stores = sorted((s for s in stores if s["id"] in order), key=lambda s: order[s["id"]])
+    groups = store_info.group_by_area([s for s in stores if s["id"] not in order])
+    return render_template("store_info_list.html", fav_stores=fav_stores, groups=groups,
+                           store_count=len(stores), errors=errors,
                            favorites=set(favorites), field_labels=store_info.FIELD_LABELS)
 
 

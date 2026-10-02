@@ -161,8 +161,27 @@ def load_all():
             stores.append(load(sid))
         except (OSError, ValueError) as e:
             errors.append(f"{sid}.json: {e}")
-    stores.sort(key=lambda s: (s.get("region") or "", s.get("name") or ""))
+    stores.sort(key=lambda s: (s.get("region") or "", s.get("area") or "", s.get("name") or ""))
     return stores, errors
+
+
+def group_by_area(stores):
+    """
+    一覧の見出し用に [(地域, [(エリア, [店舗, ...]), ...]), ...] にまとめる。
+    地域・エリアは店舗の多い順(よく行く所ほど多く登録されているので上に来る)、同数なら名前順。
+    アプリの一覧(/store_info)と単体HTMLの一覧で並びをそろえるためにここに置く。
+    """
+    tree = {}
+    for s in stores:
+        region = s.get("region") or "地域不明"
+        area = s.get("area") or "エリア未設定"
+        tree.setdefault(region, {}).setdefault(area, []).append(s)
+
+    groups = []
+    for region, areas in sorted(tree.items(), key=lambda kv: (-sum(map(len, kv[1].values())), kv[0])):
+        rows = sorted(areas.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+        groups.append((region, [(area, sorted(items, key=lambda s: s.get("name") or "")) for area, items in rows]))
+    return groups
 
 
 def save(store):
@@ -176,7 +195,7 @@ def save(store):
     return path
 
 
-def new_store(store_id, name, region, sheet_store_name=""):
+def new_store(store_id, name, region, sheet_store_name="", area=""):
     """
     店舗名と地域だけの空の店舗を作る。項目はすべて「不明」から始め、
     収集した値で埋まった分だけ「確認済」「未確認」になる。
@@ -186,6 +205,8 @@ def new_store(store_id, name, region, sheet_store_name=""):
         "id": store_id,
         "name": name,
         "region": region,
+        # 一覧をまとめる単位(最寄り駅など)。住所から機械的に決められないので登録時に人が入れる
+        "area": area,
         # シート側(日別・台別データ)の店舗名。表記が違う場合だけ変える
         "sheet_store_name": sheet_store_name or name,
         "updated_at": today(),

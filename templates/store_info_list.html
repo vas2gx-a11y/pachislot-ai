@@ -17,7 +17,7 @@
     <p class="hint mt-0">
         店舗の住所・台数・営業時間などを出典付きでまとめ、取り込んだ営業データと並べて見られます。
         店舗は <code>tools/store_collect.py</code> で登録・収集すると、ここに追加されます。
-        {{ icon('star') }} を押した店舗はお気に入りとして一覧の上に出ます（アカウントごとに保存されるので、別の端末でも同じです）。
+        店舗は最寄り駅などのエリアごとにまとめています。{{ icon('star') }} を押した店舗はお気に入りとして一覧の上に出ます（アカウントごとに保存されるので、別の端末でも同じです）。
     </p>
 
     {% if errors %}
@@ -27,16 +27,14 @@
     </div>
     {% endif %}
 
-    {% if stores %}
-    <div class="grid gap-3 md:grid-cols-2">
-        {% for s in stores %}
+    {% macro store_card(s) %}
         {% set info = s.info or {} %}
         {% set fav = s.id in favorites %}
         {# ボタンを <a> の中に入れるとフォームが入れ子のリンクになるので、カードの右上に重ねる #}
         <div class="relative">
         <a href="{{ url_for('store_info.detail', store_id=s.id) }}" class="card card-body block pr-12" style="border-left: 4px solid {{ '#f59e0b' if fav else '#0f766e' }}">
             <div class="font-bold text-gray-900">{{ s.name }}</div>
-            <div class="text-xs text-gray-500 mt-1">{{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ s.region }}{% if info.city and info.city.value %} {{ info.city.value }}{% endif %}{% if s.area %} ・ {{ s.area }}{% endif %}</div>
             <div class="flex flex-wrap gap-1.5 mt-2">
                 <span class="chip">パチスロ {{ (info.slot_units.value ~ '台') if info.slot_units and info.slot_units.value is number else '不明' }}</span>
                 <span class="chip">情報源 {{ (s.sources or []) | length }}件</span>
@@ -45,8 +43,41 @@
         </a>
         {{ favorite_button(s.id, fav, 'absolute top-2 right-2') }}
         </div>
+    {% endmacro %}
+
+    {% if store_count %}
+    {# エリアへのジャンプ。店舗が増えてスクロールで探すのが大変になったため #}
+    <nav class="flex flex-wrap gap-1.5" aria-label="エリア">
+        {% if fav_stores %}<a href="#area-fav" class="chip">{{ icon('star') }} お気に入り {{ fav_stores | length }}</a>{% endif %}
+        {% for region, areas in groups %}{% for area, items in areas %}
+        <a href="#area-{{ loop.index }}-{{ region }}" class="chip">{{ area }} {{ items | length }}</a>
+        {% endfor %}{% endfor %}
+    </nav>
+
+    {% if fav_stores %}
+    <section id="area-fav" class="scroll-mt-20">
+        <h2 class="font-bold text-gray-900 mb-2">{{ icon('star') }} お気に入り</h2>
+        <div class="grid gap-3 md:grid-cols-2">
+            {% for s in fav_stores %}{{ store_card(s) }}{% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% for region, areas in groups %}
+    <section>
+        <h2 class="font-bold text-gray-900 mb-2">{{ region }}</h2>
+        <div class="stack">
+        {% for area, items in areas %}
+        <div id="area-{{ loop.index }}-{{ region }}" class="scroll-mt-20">
+            <h3 class="text-sm font-bold text-gray-700 mb-2">{{ area }} <span class="text-xs font-normal text-gray-500">{{ items | length }}店舗</span></h3>
+            <div class="grid gap-3 md:grid-cols-2">
+                {% for s in items %}{{ store_card(s) }}{% endfor %}
+            </div>
+        </div>
         {% endfor %}
-    </div>
+        </div>
+    </section>
+    {% endfor %}
     {% else %}
     {{ empty_state("store_info", "まだ店舗情報がありません。tools/store_collect.py new で店舗を登録するとここに表示されます（書き方は store_data/README.md）。") }}
     {% endif %}

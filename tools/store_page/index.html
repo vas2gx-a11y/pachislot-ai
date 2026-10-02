@@ -19,11 +19,13 @@
 </header>
 
 <main class="wrap stack">
-    {% for region, items in stores | groupby('region') %}
+    {% for region, areas in groups %}
     <section class="card">
-        <h2>{{ region or '地域不明' }}</h2>
+        <h2>{{ region }}</h2>
+        {% for area, area_items in areas %}
+        <h3 class="area-head">{{ area }} <span class="muted">{{ area_items | length }}店舗</span></h3>
         <ul class="store-list">
-            {% for s in items %}
+            {% for s in area_items %}
             {% set info = s.info or {} %}
             <li>
                 <a href="{{ s.id }}.html">{{ s.name }}</a>
@@ -35,6 +37,7 @@
             </li>
             {% endfor %}
         </ul>
+        {% endfor %}
     </section>
     {% else %}
     <p class="muted">店舗がまだありません。</p>

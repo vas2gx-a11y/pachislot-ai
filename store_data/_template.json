@@ -3,6 +3,7 @@
   "id": "store_id_here",
   "name": "店舗名",
   "region": "都道府県",
+  "area": "最寄り駅など",
   "sheet_store_name": "店舗名",
   "updated_at": "YYYY-MM-DD",
   "sources": [],

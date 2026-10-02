@@ -29,6 +29,7 @@
     "id": { "type": "string", "pattern": "^[a-z0-9_]+$", "description": "ファイル名と同じ" },
     "name": { "type": "string" },
     "region": { "type": "string", "description": "都道府県(登録時に人が入れる)" },
+    "area": { "type": "string", "description": "一覧をまとめる単位。最寄り駅(「池袋」)、駅から遠い店は区など(「さいたま市西区」)。登録時に人が入れる" },
     "sheet_store_name": { "type": "string", "description": "シート(日別・台別データ)側の店舗名。営業データとの紐づけに使う" },
     "updated_at": { "type": "string", "description": "最後に収集を反映した日(YYYY-MM-DD)" },
     "sources": {

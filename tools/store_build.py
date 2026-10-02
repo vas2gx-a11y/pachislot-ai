@@ -77,7 +77,8 @@ def build_store(env, store, with_sheet, generated_at):
 
 
 def build_index(env, stores, generated_at):
-    html = env.get_template("index.html").render(stores=stores, generated_at=generated_at)
+    html = env.get_template("index.html").render(stores=stores, groups=store_info.group_by_area(stores),
+                                                generated_at=generated_at)
     with open(os.path.join(OUT_DIR, "index.html"), "w", encoding="utf-8") as f:
         f.write(html)
 

@@ -7,7 +7,7 @@
 
 使い方:
     # 1. 店舗を登録(店舗名＋地域だけの空のJSONができる)
-    python3 tools/store_collect.py new bellagio_nishinakajima "ベラジオ西中島店" --region 大阪府
+    python3 tools/store_collect.py new bellagio_nishinakajima "ベラジオ西中島店" --region 大阪府 --area 西中島南方
 
     # 2. 公式サイトなどから集める(既定は差分を見せるだけで保存しない)
     python3 tools/store_collect.py collect bellagio_nishinakajima --url https://example.com/ --reliability 公式
@@ -229,7 +229,7 @@ def _report_and_save(store, values, rejected, url, source_name, reliability, app
 def cmd_new(args):
     if store_info.load(args.store_id) is not None:
         raise SystemExit(f"store_data/{args.store_id}.json はもうあります。")
-    store = store_info.new_store(args.store_id, args.name, args.region, args.sheet_name)
+    store = store_info.new_store(args.store_id, args.name, args.region, args.sheet_name, args.area)
     print(f"作成しました: {store_info.save(store)}")
 
 
@@ -290,10 +290,14 @@ def cmd_apply(args):
         if not payload.get("name") or not payload.get("region"):
             raise SystemExit(f"store_data/{store_id}.json が無いので、収集結果に name と region が必要です。")
         store = store_info.new_store(store_id, payload["name"], payload["region"],
-                                     payload.get("sheet_store_name", ""))
+                                     payload.get("sheet_store_name", ""), payload.get("area", ""))
         print(f"新しい店舗として登録します: {payload['name']}（{payload['region']}）")
         if store_info._path_of(store_id) is None:
             raise SystemExit(f"店舗IDが不正です: {store_id!r}（英小文字・数字・_ のみ）")
+
+    elif payload.get("area") and not store.get("area"):
+        # エリアは出典つきの項目ではなく一覧の分類なので、まだ無い店だけ埋める(人が直した値は上書きしない)
+        store["area"] = payload["area"]
 
     for src in payload.get("sources") or []:
         if src.get("reliability") not in store_info.RELIABILITIES:
@@ -317,6 +321,7 @@ def main():
     n.add_argument("store_id", help="英小文字・数字・_（ファイル名になる）")
     n.add_argument("name", help="店舗名")
     n.add_argument("--region", required=True, help="都道府県")
+    n.add_argument("--area", default="", help="一覧をまとめるエリア（最寄り駅など）")
     n.add_argument("--sheet-name", default="", help="シート側の店舗名が違う場合だけ指定")
     n.set_defaults(func=cmd_new)
 
