@@ -642,17 +642,17 @@
     </div>
     <script>
         /*
-          読み込み中の進捗表示。
+          読み込み中の進捗表示。0%から1%ずつ刻んで上がり、読み込みが終わったら100%まで進めて消す。
           サーバーはシートの読み込みがどこまで進んだかを返せないので、％は「そのページが前回かかった時間」に
           対する経過時間で出す目安。超えても止まって見えないよう、95%から先はゆっくり99%へ近づける。
           ページごとの所要時間は端末の localStorage に持つ(使えない環境では既定の3秒で計算する)。
         */
         window.pageLoading = (function () {
-            var STORE = 'pageLoadMs', PENDING = 'pageLoadPending', DEFAULT_MS = 3000;
+            var STORE = 'pageLoadMs', PENDING = 'pageLoadPending', DEFAULT_MS = 3000, TICK_MS = 40;
             var root = document.getElementById('page-loading');
             var bar = root.querySelector('.bar');
             var label = root.querySelector('[data-pct]');
-            var timer = null, count = 0;
+            var timer = null, count = 0, shown = 0;
 
             function readTimes() {
                 try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch (e) { return {}; }
@@ -674,36 +674,67 @@
                 if (r < 1) return Math.floor(r * 95);
                 return Math.min(99, Math.floor(95 + 4 * (1 - Math.exp(-(r - 1)))));
             }
-            function show(key, startedAt) {
+            function render() {
+                bar.style.width = shown + '%';
+                label.textContent = '読み込み中 ' + shown + '%';
+            }
+            // 表示は目標値へ1%ずつ近づける(数字が飛ばずに刻んで上がって見えるように)。
+            // 大きく遅れたときだけ歩幅を広げて追いつく
+            function stepToward(target) {
+                if (shown < target) shown += Math.max(1, Math.round((target - shown) / 6));
+                if (shown > target) shown = target;
+                render();
+            }
+            function show(key, startedAt, from) {
                 var expected = expectedMs(key);
-                function tick() {
-                    var p = percent(Date.now() - startedAt, expected);
-                    bar.style.width = p + '%';
-                    label.textContent = '読み込み中 ' + p + '%';
-                }
                 clearInterval(timer);
+                shown = from || 0;
                 root.classList.add('is-active');
-                tick();
-                timer = setInterval(tick, 100);
+                render();
+                timer = setInterval(function () { stepToward(percent(Date.now() - startedAt, expected)); }, TICK_MS);
+            }
+            function finish() {
+                clearInterval(timer);
+                if (!root.classList.contains('is-active')) return;
+                timer = setInterval(function () {
+                    stepToward(100);
+                    if (shown >= 100) {
+                        clearInterval(timer);
+                        timer = setTimeout(hide, 250);
+                    }
+                }, TICK_MS);
             }
             function hide() {
                 clearInterval(timer);
+                clearTimeout(timer);
                 timer = null;
+                shown = 0;
                 root.classList.remove('is-active');
                 bar.style.width = '0';
             }
 
-            // 前のページで始めた遷移の所要時間を、遷移先で記録する
+            // 前のページで始めた遷移の所要時間を遷移先で記録し、続きの％から100%まで進めて終わったことを見せる
             try {
                 var pending = JSON.parse(sessionStorage.getItem(PENDING) || 'null');
                 sessionStorage.removeItem(PENDING);
-                if (pending && pending.key === location.pathname) record(pending.key, Date.now() - pending.at);
+                if (pending) {
+                    var took = Date.now() - pending.at;
+                    var from = Math.min(pending.shown || 0, percent(took, expectedMs(pending.key)));
+                    if (pending.key === location.pathname) record(pending.key, took);
+                    show(pending.key, pending.at, from);
+                    finish();
+                }
             } catch (e) {}
 
             function navigate(url) {
                 var key = url.pathname, at = Date.now();
-                try { sessionStorage.setItem(PENDING, JSON.stringify({ key: key, at: at })); } catch (e) {}
-                show(key, at);
+                show(key, at, 0);
+                // 遷移先で続きの％から始められるよう、いま出している値を残しておく
+                var save = function () {
+                    try { sessionStorage.setItem(PENDING, JSON.stringify({ key: key, at: at, shown: shown })); } catch (e) {}
+                };
+                save();
+                window.addEventListener('pagehide', save, { once: true });
             }
 
             document.addEventListener('click', function (e) {
@@ -730,12 +761,11 @@
 
             // ページ内の fetch 用。key は所要時間を覚える単位(日付などが違っても同じ処理なら同じ key にする)
             function track(key, promise) {
-                count++;
+                if (count++ === 0) show(key, Date.now(), 0);
                 var at = Date.now();
-                show(key, at);
                 function end(ok) {
                     if (ok) record(key, Date.now() - at);
-                    if (--count <= 0) { count = 0; hide(); }
+                    if (--count <= 0) { count = 0; finish(); }
                 }
                 return promise.then(function (v) { end(true); return v; }, function (err) { end(false); throw err; });
             }
