@@ -69,6 +69,18 @@
         text-overflow: ellipsis;
     }
 
+    /*
+      イベント日の信頼度(店舗情報ページの「イベ日の信頼度」と同じ段階)。
+      「高」でも向きが「弱い」ことがあるので、色は段階だけで付ける。
+      ポップアップの中身(_calendar_day.html)も同じクラスを使うので、ここにまとめて置く。
+    */
+    .rel { display: inline-block; padding: 0 0.375rem; border-radius: 9999px; font-size: 0.625rem; font-weight: 700; line-height: 1.4; white-space: nowrap; }
+    .rel-high { background: #0f766e; color: #fff; }
+    .rel-mid { background: #ccfbf1; color: #115e59; }
+    .rel-low { background: #f4f4f5; color: #71717a; }
+    .rel-na { background: #fff; color: #a1a1aa; border: 1px dashed #d4d4d8; }
+    .cal-chip .rel { padding: 0 0.25rem; margin-left: 0.125rem; }
+
     /* 日付を選んだときのポップアップ(JSが使えない場合はページ下部の詳細欄を使う) */
     .cal-modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
     @media (min-width: 768px) { .cal-modal { align-items: center; } }
@@ -185,7 +197,9 @@
                 {% for e in cell.entries[:3] %}
                 <span class="cal-chip"
                       style="background: {{ e.color.bg }}; color: {{ e.color.text }}; border-color: {{ e.color.border }};"
-                      title="{{ e.store_name }}{% if e.labels %} / {{ e.labels | join('、') }}{% endif %}">
+                      title="{{ e.store_name }}{% if e.labels %} / {{ e.labels | join('、') }}{% endif %}{% if e.reliability and e.reliability.level != '判定不可' %} / 信頼度 {{ e.reliability.level }}{% if e.reliability.level != '低' %}・{{ e.reliability.direction }}{% endif %}（{{ e.reliability.label }}）{% endif %}">
+                    {# 信頼度は先に出す(店名・イベント名は狭いマスで省略されるため) #}
+                    {% if e.reliability and e.reliability.level != '判定不可' %}<span class="rel rel-{{ {'高': 'high', '中': 'mid', '低': 'low'}[e.reliability.level] }}">{{ e.reliability.level }}</span>{% endif %}
                     {{ icon(e.kind_icon) }} {{ e.short_name }}{% if e.labels %} {{ e.labels[0] }}{% endif %}
                 </span>
                 {% endfor %}
@@ -231,6 +245,8 @@
         <p class="hint mt-2">
             {{ icon('cake') }} 周年日 ／ {{ icon('target') }} 旧イベント日 ／ {{ icon('trend_up') }} ホールデータのみ ／ {{ icon('memo') }} 自分の記録あり。
             マスの上辺に色が付いている日がイベント日、太枠が今日です。
+            イベント名の前の <span class="rel rel-high">高</span> <span class="rel rel-mid">中</span> <span class="rel rel-low">低</span> は、
+            そのイベント日が通常日と比べて本当に違うと言えるかの信頼度です（店舗情報ページの「イベ日の信頼度」と同じ。全期間の日別データから判定し、日数が足りないルールには付きません）。
         </p>
     </div>
     {% endif %}
