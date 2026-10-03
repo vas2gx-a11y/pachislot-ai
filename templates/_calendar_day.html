@@ -14,6 +14,12 @@
 </div>
 {% endmacro %}
 
+{# 信頼度の段階(店舗情報ページの reliability_badge と同じ表記)。CSSは calendar.html 側にある #}
+{% macro reliability_badge(r) -%}
+{% if not r or r.level == '判定不可' %}<span class="rel rel-na" title="イベ日か通常日の日数が3日未満">判定不可</span>
+{% else %}<span class="rel rel-{{ {'高': 'high', '中': 'mid', '低': 'low'}[r.level] }}" title="通常日との差を信じてよい度合い(t値 {{ '%.2f' % r.t }} / {{ r.days }}日)">信頼度 {{ r.level }}{% if r.level != '低' %}・{{ r.direction }}{% endif %}</span>{% endif %}
+{%- endmacro %}
+
 {% if not embedded %}
 <h3 class="font-display font-bold text-base text-gray-900 mb-3">
     {{ icon('calendar') }} {{ detail.label }}{% if detail.is_today %}<span class="chip ml-2">今日</span>{% endif %}
@@ -33,9 +39,11 @@
             <span class="font-bold text-sm text-gray-900 break-words">{{ s.store_name }}</span>
             {% for label in s.anniversary_labels %}
             <span class="chip bg-white" style="color: {{ s.color.text }}">{{ icon('cake') }} {{ label }}</span>
+            {% if label in s.reliability_by_label %}{{ reliability_badge(s.reliability_by_label[label]) }}{% endif %}
             {% endfor %}
             {% for label in s.event_labels %}
             <span class="chip bg-white" style="color: {{ s.color.text }}">{{ icon('target') }} {{ label }}</span>
+            {% if label in s.reliability_by_label %}{{ reliability_badge(s.reliability_by_label[label]) }}{% endif %}
             {% endfor %}
             {% if not s.anniversary_labels and not s.event_labels %}
             <span class="chip bg-white text-gray-400">通常日</span>
