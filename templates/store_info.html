@@ -322,7 +322,7 @@
             </div>
             {% endfor %}
         </div>
-        <p class="hint">50が店の普通の日です。直近1年 {{ forecast.record_count }} 日分（差枚あり {{ forecast.diff_days }} 日）の日別データから計算しています。<span class="kind-dot kind-event"></span>は旧イベント日・周年日です。特定日の狙い機種・末尾は<a href="#kind" class="text-blue-600 underline">特定日と通常日</a>を見てください。</p>
+        <p class="hint">50が店の普通の日です。直近1年 {{ forecast.record_count }} 日分（差枚あり {{ forecast.diff_days }} 日）の日別データから計算しています。対象期間: {{ forecast.first_date }}〜{{ forecast.last_date }} ・ データ最終追加・更新: {{ forecast.last_imported_at or '日時の記録なし' }}。<span class="kind-dot kind-event"></span>は旧イベント日・周年日です。特定日の狙い機種・末尾は<a href="#kind" class="text-blue-600 underline">特定日と通常日</a>を見てください。</p>
         <details class="mt-2">
             <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 指数の出し方</summary>
             <div class="text-xs text-gray-600 mt-2 space-y-1">

@@ -2912,6 +2912,7 @@ def load_store_daily(store_name=""):
                 "win_units": _to_number(row.get("win_units")),
                 "total_units": _to_number(row.get("total_units")),
                 "source": str(row.get("source", "")).strip(),
+                "updated_at": str(row.get("updated_at", "")).strip(),
             })
         have = {(r["store_name"], r["date"]) for r in cached}
         cached += [r for r in _repo_store_daily_rows() if (r["store_name"], r["date"]) not in have]
@@ -3416,6 +3417,12 @@ def build_store_daily_trends(store_name, days=365):
     trends["overall"] = overall
     trends["first_date"] = rows[-1]["date"]
     trends["last_date"] = rows[0]["date"]
+    # 日別データをシートへ最後に取り込んだ日時。リポジトリ内の補完データや
+    # updated_at のない旧データだけの場合は、追加日時を推測せず空のままにする。
+    trends["last_imported_at"] = max(
+        (str(r.get("updated_at", "")).strip() for r in rows if r.get("updated_at")),
+        default="",
+    ) or None
     trends["recent"] = rows[:30]
     # 「実際に何日分・どの日が取り込めているか」を画面で確認できるよう、
     # 集計対象になった行をそのまま(新しい日付順)持たせておく
@@ -3822,7 +3829,8 @@ def build_store_day_forecast(store_name, start="", days_ahead=DAY_FORECAST_DAYS)
         days.append(entry)
     return {"store_name": store_name, "days": days, "first_date": trends.get("first_date"),
             "last_date": trends.get("last_date"), "record_count": trends["record_count"],
-            "diff_days": trends["overall"]["diff_days"]}
+            "diff_days": trends["overall"]["diff_days"],
+            "last_imported_at": trends.get("last_imported_at")}
 
 
 def _format_score_reason(reason):
