@@ -5384,7 +5384,33 @@ def _calendar_targets(store_names=None, pref=None):
     return all_stores, targets, color_by_store
 
 
-def _calendar_entry(store_name, day, day_key, rules, color, daily, units, records, store_avg_games):
+# 信頼度の強さの順(マスには1つしか出せないので、同じ日に複数のルールが重なったら強い方を出す)
+_RELIABILITY_ORDER = {"高": 0, "中": 1, "低": 2, "判定不可": 3}
+
+
+def _calendar_rule_reliability(store_names):
+    """
+    店舗ごとに「ルール(旧イベント日・周年日のラベル) → 信頼度」の対応を作る。
+
+    店舗情報ページの「イベ日の信頼度」の表(全期間)と同じ集計を使う。
+    カレンダーで別に計算すると、同じルールなのにページによって段階が食い違ってしまうため。
+    集計はシートの登録を優先するので、JSONにしか無いルールは対応が無く、そのラベルには信頼度を出さない。
+    """
+    result = {}
+    for name in store_names:
+        trends = build_store_daily_trends(name, days=0) or {}
+        result[name] = {row["label"]: row["reliability"]
+                        for row in trends.get("by_event_rule") or [] if row.get("reliability")}
+    return result
+
+
+def _pick_reliability(labels, reliability_by_label):
+    """その日に当たったルールのうち、信頼度の一番強いものを返す(無ければ None)"""
+    found = [dict(reliability_by_label[label], label=label) for label in labels if label in reliability_by_label]
+    return min(found, key=lambda r: _RELIABILITY_ORDER.get(r["level"], 9)) if found else None
+
+
+def _calendar_entry(store_name, day, day_key, rules, color, daily, units, records, store_avg_games, reliability_by_label=None):
     """
     カレンダーの1マスに入れる「1店舗ぶんの予定」を作る。
     出すものが何も無い日は None を返し、マスを空のままにする。
@@ -5428,6 +5454,8 @@ def _calendar_entry(store_name, day, day_key, rules, color, daily, units, record
         "anniversary_labels": anniversary_labels,
         # マスに出す用(周年日を先に出す)
         "labels": anniversary_labels + event_labels,
+        # そのルールの日が通常日と比べて本当に違うのか(店舗情報ページの信頼度と同じもの)
+        "reliability": _pick_reliability(anniversary_labels + event_labels, reliability_by_label or {}),
         "avg_games": avg_games,
         "avg_diff": avg_diff,
         "win_rate": daily.get("win_rate") if daily else None,
@@ -5467,6 +5495,8 @@ def build_event_calendar(year=None, month=None, store_names=None, pref=None):
                                 setting.get("anniversary_rules") or [])
 
     start_key, end_key = first.strftime("%Y-%m-%d"), last_day.strftime("%Y-%m-%d")
+    reliability_by_store = _calendar_rule_reliability(
+        [name for name in targets if rules_by_store[name][0] or rules_by_store[name][1]])
 
     # その月の日別データと、店ごとの平均稼働(全期間)をまとめて拾う。
     # 平均稼働は「その日はいつもより動いたのか」を出すための基準として使う。
@@ -5527,6 +5557,7 @@ def build_event_calendar(year=None, month=None, store_names=None, pref=None):
                         unit_index.get((name, key)) or [],
                         record_index.get((name, key)) or [],
                         store_avg_games,
+                        reliability_by_store.get(name),
                     )
                     if entry:
                         entries.append(entry)
@@ -5625,6 +5656,9 @@ def build_calendar_day_detail(date_str, store_names=None, pref=None):
     _all_stores, targets, color_by_store = _calendar_targets(store_names, pref)
     target_set = set(targets)
     events_by_store = load_calendar_events()
+    reliability_by_store = _calendar_rule_reliability(
+        [name for name in targets if (events_by_store.get(name) or {}).get("event_rules")
+         or (events_by_store.get(name) or {}).get("anniversary_rules")])
 
     # その店の平均稼働(全期間)を基準に、その日が高いか低いかを出す
     daily_rows = load_store_daily()
@@ -5672,6 +5706,10 @@ def build_calendar_day_detail(date_str, store_names=None, pref=None):
             "color": color_by_store.get(name, CALENDAR_STORE_COLORS[0]),
             "event_labels": event_labels,
             "anniversary_labels": anniversary_labels,
+            # ラベルごとの信頼度(このルールの日を信じてよいか)。対応が無いラベルは入らない
+            "reliability_by_label": {label: reliability_by_store[name][label]
+                                     for label in anniversary_labels + event_labels
+                                     if label in reliability_by_store.get(name, {})},
             "note": setting.get("note", ""),
             "daily": daily,
             "unit_summary": unit_summary,
