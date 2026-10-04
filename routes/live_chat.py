@@ -54,6 +54,7 @@ def api():
         image_part,
         common.unit_notes_for(data.get("store_name"), data.get("machine_number")),
         common.live_chat_store_context(data.get("store_name")),
+        common.live_chat_hall_data_context(data.get("store_name"), m, data.get("machine_number")),
     )
     return jsonify({"reply": reply, "error": is_error})
 

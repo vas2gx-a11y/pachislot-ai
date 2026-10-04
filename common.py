@@ -3443,10 +3443,12 @@ def build_store_daily_trends(store_name, days=365):
 
     trends["by_weekday"] = _group(lambda dt: dt.weekday(), lambda k: f"{WEEKDAY_LABELS[k]}曜", lambda row: row["key"])
     trends["by_day_suffix"] = _group(lambda dt: dt.day % 10, lambda k: f"末尾{k}の日", lambda row: row["key"])
+    # 祝日・月末・年末年始など、どの店にも共通する日付の属性
+    trends["by_day_attribute"] = _day_attribute_rows(parsed_dates, overall)
 
     # 旧イベント日・周年日が登録されていれば、その日と通常日を比べられるようにする。
     # シート(画面から登録)が無い店は、店舗情報JSONの特定日を使う(カレンダーと同じ合わせ方)
-    events = load_store_events().get(store_name) or load_calendar_events().get(store_name)
+    events = store_event_setting(store_name)
     trends["events"] = events
     trends["by_event_category"] = []
     trends["by_event_rule"] = []
@@ -3496,7 +3498,7 @@ def build_store_daily_trends(store_name, days=365):
     return trends
 
 
-def describe_store_daily_trends(trends, limit=10):
+def describe_store_daily_trends(trends, limit=12):
     """取り込んだ日別データの集計を、AIプロンプト用のテキストにまとめる。"""
     if not trends or not trends.get("record_count"):
         return "登録なし"
@@ -3525,6 +3527,7 @@ def describe_store_daily_trends(trends, limit=10):
 
     lines.append(_rows_text("曜日別", trends.get("by_weekday", [])))
     lines.append(_rows_text("日付末尾別", trends.get("by_day_suffix", [])))
+    lines.append(_rows_text(f"日付の属性別({DAY_ATTRIBUTE_NOTE})", trends.get("by_day_attribute", [])))
 
     if trends.get("by_event_category"):
         lines.append(_rows_text("旧イベント日/周年日/通常日", trends["by_event_category"]))
@@ -3568,6 +3571,283 @@ def describe_store_day_context(store_name, when=None):
 
     return (f"{when.strftime('%Y-%m-%d')}時点: " + " / ".join(parts)
             + "(稼働が高い日はイベント等で設定を使っている可能性があるが、稼働だけでは設定は分からない)")
+
+
+# ---------------------------------------------------------------------------
+# 日付の属性(祝日・月初/月末・年末年始など)と勝てる日指数
+# ---------------------------------------------------------------------------
+# 旧イベント日は店ごとに登録したルールで見るが、祝日・月末・年末年始のような
+# どの店にも共通する日付の属性でも、店の出し方にクセが出ることがある。
+# 勝てる日指数は、その日に当てはまる切り口(旧イベ日・曜日・日付末尾・日付の属性)ごとに
+# 「当てはまる日と、それ以外の日で差があるか」をイベ日の信頼度と同じt値で測り、点数にまとめたもの。
+# 店の過去の出方から見た目安で、その日に設定が入ることを約束するものではない。
+
+_holiday_cache = {}
+
+
+def japanese_holidays(year):
+    """
+    その年の祝日(振替休日・国民の休日を含む)を {date: 名前} で返す。
+    外部ライブラリを入れず祝日法の決まりから計算する(本番環境にパッケージを増やさないため)。
+    今の決まり(2020年〜)で計算するので、2020・2021年の五輪による移動と、それより前の年の違いは扱わない。
+    """
+    if year in _holiday_cache:
+        return _holiday_cache[year]
+
+    def nth_monday(month, nth):
+        first = datetime(year, month, 1).date()
+        return first + timedelta(days=(7 - first.weekday()) % 7 + 7 * (nth - 1))
+
+    # 春分・秋分は国立天文台の公表に一致する近似式(1980〜2099年で有効)
+    offset = year - 1980
+    vernal = int(20.8431 + 0.242194 * offset - offset // 4)
+    autumnal = int(23.2488 + 0.242194 * offset - offset // 4)
+    day = lambda m, d: datetime(year, m, d).date()  # noqa: E731
+    holidays = {
+        day(1, 1): "元日", nth_monday(1, 2): "成人の日", day(2, 11): "建国記念の日",
+        day(2, 23): "天皇誕生日", day(3, vernal): "春分の日", day(4, 29): "昭和の日",
+        day(5, 3): "憲法記念日", day(5, 4): "みどりの日", day(5, 5): "こどもの日",
+        nth_monday(7, 3): "海の日", day(8, 11): "山の日", nth_monday(9, 3): "敬老の日",
+        day(9, autumnal): "秋分の日", nth_monday(10, 2): "スポーツの日",
+        day(11, 3): "文化の日", day(11, 23): "勤労感謝の日",
+    }
+    # 国民の休日: 祝日に挟まれた日(敬老の日と秋分の日の間に出る)
+    for d in list(holidays):
+        between = d + timedelta(days=1)
+        if between not in holidays and d + timedelta(days=2) in holidays and between.weekday() != 6:
+            holidays[between] = "国民の休日"
+    # 振替休日: 日曜の祝日のあと、最初の祝日でない日
+    for d in sorted(holidays):
+        if d.weekday() == 6:
+            substitute = d + timedelta(days=1)
+            while substitute in holidays:
+                substitute += timedelta(days=1)
+            holidays[substitute] = "振替休日"
+
+    _holiday_cache[year] = holidays
+    return holidays
+
+
+def holiday_name(day):
+    """祝日なら名前、そうでなければ空文字"""
+    d = day.date() if isinstance(day, datetime) else day
+    return japanese_holidays(d.year).get(d, "")
+
+
+# 日付の属性の並び(画面・プロンプトはこの順で出す)。ラベルはスマホの表に収まる長さにし、定義は DAY_ATTRIBUTE_NOTE で添える
+DAY_ATTRIBUTE_NOTE = "月初=1〜10日、月中=11〜20日、月末=21日〜、給料日後=25〜27日、年末年始=12/29〜1/3、ゾロ目日=11・22日"
+DAY_ATTRIBUTE_LABELS = {
+    "weekday": "平日",
+    "weekend": "土日祝",
+    "holiday": "祝日",
+    "before_holiday": "休前日",
+    "early_month": "月初",
+    "mid_month": "月中",
+    "late_month": "月末",
+    "month_last": "月末日",
+    "payday": "給料日後",
+    "new_year": "年末年始",
+    "zorome": "ゾロ目日",
+    "md_zorome": "月日ゾロ目",
+}
+
+
+def day_attributes(day):
+    """その日に当てはまる日付の属性のキー(DAY_ATTRIBUTE_LABELS のキー)の一覧"""
+    d = day.date() if isinstance(day, datetime) else day
+    keys = []
+    is_holiday = bool(holiday_name(d))
+    if is_holiday:
+        keys.append("holiday")
+    keys.append("weekend" if is_holiday or d.weekday() >= 5 else "weekday")
+    # 翌日が休みの日は夜まで稼働が残りやすく、店が設定を入れる日として使われることがある
+    following = d + timedelta(days=1)
+    if following.weekday() >= 5 or holiday_name(following):
+        keys.append("before_holiday")
+    keys.append("early_month" if d.day <= 10 else "mid_month" if d.day <= 20 else "late_month")
+    if following.month != d.month:
+        keys.append("month_last")
+    # 給料日は25日が多い。財布に余裕のある客が来る日に、店が回収に回るのか還元するのかを見る
+    if 25 <= d.day <= 27:
+        keys.append("payday")
+    if (d.month == 12 and d.day >= 29) or (d.month == 1 and d.day <= 3):
+        keys.append("new_year")
+    if d.day in _ZOROME_DAYS:
+        keys.append("zorome")
+    if d.month == d.day:
+        keys.append("md_zorome")
+    return keys
+
+
+def _day_attribute_rows(parsed_dates, overall):
+    """日付の属性ごとの集計。属性の無い日と比べた信頼度も付ける"""
+    rows = []
+    for key, label in DAY_ATTRIBUTE_LABELS.items():
+        group, rest = [], []
+        for day, row in parsed_dates:
+            (group if key in day_attributes(day) else rest).append(row)
+        summary = _summarize_daily_rows(group, overall_avg_games=overall["avg_games"])
+        if summary is None:
+            continue
+        summary["key"] = key
+        summary["label"] = label
+        summary["reliability"] = _event_reliability(group, rest)
+        rows.append(summary)
+    return rows
+
+
+def store_event_setting(store_name):
+    """
+    店の旧イベント日・周年日のルール。シート(画面から登録)が無い店は店舗情報JSONの特定日を使う
+    (カレンダーと同じ合わせ方)。登録が無ければ None。
+    """
+    return load_store_events().get(store_name) or load_calendar_events().get(store_name)
+
+
+def is_special_day(day, events):
+    """旧イベント日・周年日のどれかに当たるか"""
+    if not events:
+        return False
+    return any(_rule_matches_date(rule, day)
+               for rule in list(events.get("event_rules") or []) + list(events.get("anniversary_rules") or []))
+
+
+# 勝てる日指数の点数の付け方。
+# 切り口ごとのt値(差がばらつきの何倍か)を ±DAY_SCORE_T_CAP で頭打ちにし、DAY_SCORE_PER_T 点を掛ける。
+# 同じ日に当てはまる切り口は「7のつく日」と「末尾7の日」のように中身が重なるので、
+# |t| の大きい順に重みを半分ずつ減らして足す(重なった根拠を何重にも数えないため)。
+DAY_SCORE_T_CAP = 3.0
+DAY_SCORE_PER_T = 8.0
+# 稼働(平均G数)しか比べられない切り口は、設定の証拠として弱いので半分の重みにする
+DAY_SCORE_GAMES_WEIGHT = 0.5
+DAY_SCORE_GRADES = ((75, "強い"), (60, "やや強い"), (41, "普通"), (0, "弱い"))
+DAY_FORECAST_DAYS = 14
+
+
+def _day_factors(parsed_dates, events):
+    """
+    指数の材料になる切り口の一覧: [(キー, ラベル, その日に当てはまるかの判定関数, 比べる相手の判定関数)]。
+    旧イベ日のルールは「どのルールにも当たらない日(通常日)」と比べる(イベ日の信頼度の表と同じ)。
+    """
+    factors = []
+    rules = list((events or {}).get("event_rules") or []) + list((events or {}).get("anniversary_rules") or [])
+    seen = set()
+    for rule in rules:
+        if rule["label"] in seen:
+            continue
+        seen.add(rule["label"])
+        factors.append((f"rule:{rule['label']}", rule["label"],
+                        lambda d, rule=rule: _rule_matches_date(rule, d),
+                        lambda d: not any(_rule_matches_date(r, d) for r in rules)))
+    for wd in range(7):
+        factors.append((f"weekday:{wd}", f"{WEEKDAY_LABELS[wd]}曜",
+                        lambda d, wd=wd: d.weekday() == wd, lambda d, wd=wd: d.weekday() != wd))
+    for digit in range(10):
+        factors.append((f"suffix:{digit}", f"末尾{digit}の日",
+                        lambda d, digit=digit: d.day % 10 == digit, lambda d, digit=digit: d.day % 10 != digit))
+    for key, label in DAY_ATTRIBUTE_LABELS.items():
+        # 平日/土日祝は曜日で、月初/月中/月末は日付末尾とほぼ同じ情報なので、指数には足さない(画面の表には出す)
+        if key in ("weekday", "weekend", "early_month", "mid_month", "late_month"):
+            continue
+        factors.append((f"attr:{key}", label,
+                        lambda d, key=key: key in day_attributes(d), lambda d, key=key: key not in day_attributes(d)))
+    return factors
+
+
+def _score_day(day, factor_stats):
+    """1日分の指数。factor_stats は {キー: (ラベル, 判定関数, 信頼度の辞書)}"""
+    matched = []
+    for _key, (label, matches, rel) in factor_stats.items():
+        if not matches(day) or rel.get("t") is None:
+            continue
+        matched.append((label, rel))
+    matched.sort(key=lambda item: -abs(item[1]["t"]))
+
+    score = 50.0
+    weight = 1.0
+    for _label, rel in matched:
+        t = max(-DAY_SCORE_T_CAP, min(DAY_SCORE_T_CAP, rel["t"]))
+        basis_weight = DAY_SCORE_GAMES_WEIGHT if rel["basis"] == "avg_games" else 1.0
+        score += t * DAY_SCORE_PER_T * basis_weight * weight
+        weight /= 2
+    score = int(round(max(0, min(100, score))))
+    grade = next(label for threshold, label in DAY_SCORE_GRADES if score >= threshold) if matched else "根拠なし"
+    reasons = [{"label": label, "level": rel["level"], "direction": rel["direction"], "basis": rel["basis"],
+                "gap": rel["gap"], "days": rel["days"], "t": rel["t"]} for label, rel in matched]
+    for reason in reasons:
+        reason["text"] = _format_score_reason(reason)
+    return {"score": score, "grade": grade, "reasons": reasons}
+
+
+@_cached_by_data_version
+def build_store_day_forecast(store_name, start="", days_ahead=DAY_FORECAST_DAYS):
+    """
+    start(YYYY-MM-DD。空なら今日)から days_ahead 日分の勝てる日指数。
+    直近1年の日別データから切り口ごとの差を測る。データが無ければ None。
+    """
+    trends = build_store_daily_trends(store_name, days=365)
+    if not trends or not trends.get("record_count"):
+        return None
+    parsed_dates = []
+    for r in trends["rows"]:
+        try:
+            parsed_dates.append((datetime.strptime(r["date"], "%Y-%m-%d"), r))
+        except ValueError:
+            continue
+    events = trends.get("events")
+
+    factor_stats = {}
+    for key, label, matches, compare_to in _day_factors(parsed_dates, events):
+        group = [row for d, row in parsed_dates if matches(d)]
+        rest = [row for d, row in parsed_dates if compare_to(d)]
+        factor_stats[key] = (label, matches, _event_reliability(group, rest))
+
+    try:
+        first = datetime.strptime(start, "%Y-%m-%d") if start else datetime.now()
+    except ValueError:
+        first = datetime.now()
+    first = first.replace(hour=0, minute=0, second=0, microsecond=0)
+    days = []
+    for offset in range(days_ahead):
+        day = first + timedelta(days=offset)
+        entry = _score_day(day, factor_stats)
+        entry.update({
+            "date": day.strftime("%Y-%m-%d"),
+            "label": _format_date_with_weekday(day.strftime("%Y-%m-%d")),
+            "holiday": holiday_name(day),
+            "special": is_special_day(day, events),
+            "events": matched_event_labels(day, list((events or {}).get("anniversary_rules") or [])
+                                           + list((events or {}).get("event_rules") or [])),
+        })
+        days.append(entry)
+    return {"store_name": store_name, "days": days, "first_date": trends.get("first_date"),
+            "last_date": trends.get("last_date"), "record_count": trends["record_count"],
+            "diff_days": trends["overall"]["diff_days"]}
+
+
+def _format_score_reason(reason):
+    """指数の根拠1つを短い文にする(画面とプロンプトで共通)"""
+    if reason["basis"] == "avg_diff":
+        gap = f"平均差枚{reason['gap']:+.0f}枚"
+    elif reason["basis"] == "win_rate":
+        gap = f"勝率{reason['gap']:+.1f}pt"
+    else:
+        gap = f"稼働{reason['gap']:+.0f}G"
+    return f"{reason['label']}({gap}・{reason['days']}日・信頼度{reason['level']})"
+
+
+def describe_store_day_forecast(forecast, limit=7):
+    """勝てる日指数を、AIプロンプト用のテキストにまとめる"""
+    if not forecast or not forecast.get("days"):
+        return ""
+    lines = [f"勝てる日指数(0〜100。50が店の普通の日。直近1年{forecast['record_count']}日分"
+             f"(差枚あり{forecast['diff_days']}日)の日別データで、当てはまる切り口とそれ以外の日の差から計算)"]
+    for day in forecast["days"][:limit]:
+        tags = [t for t in [day["holiday"]] + day["events"] if t]
+        reasons = "、".join(r["text"] for r in day["reasons"][:3]) or "差のある切り口なし"
+        lines.append(f"{day['label']}{('[' + '・'.join(tags) + ']') if tags else ''}: "
+                     f"{day['score']}点({day['grade']}) 根拠: {reasons}")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -4358,6 +4638,226 @@ def _unit_machine_details(rows):
     return details
 
 
+def _group_unit_rows(rows, key_func, label_func, sort_key=None, min_count=1):
+    """台別データを key_func の値ごとにまとめて集計する。key_func が None を返した行は除く"""
+    buckets = {}
+    for row in rows:
+        key = key_func(row)
+        if key is None:
+            continue
+        buckets.setdefault(key, []).append(row)
+    result = []
+    for key, group_rows in buckets.items():
+        if len(group_rows) < min_count:
+            continue
+        summary = _summarize_unit_rows(group_rows)
+        summary["key"] = key
+        summary["label"] = label_func(key, group_rows)
+        result.append(summary)
+    result.sort(key=sort_key or (lambda row: -row["avg_diff"]))
+    return result
+
+
+def _number_suffix(row):
+    return int(row["machine_number"][-1]) if str(row.get("machine_number", "")).isdigit() else None
+
+
+def _unit_label(key, group_rows):
+    return f"No.{key}" + (f" {group_rows[0].get('machine_name', '')}" if group_rows[0].get("machine_name") else "")
+
+
+# 島の平均差枚がこれ以上の日を「島が強かった日」と数える(島単位で設定を入れる店を見つけるため)
+ISLAND_HOT_DIFF = 500
+
+
+def _mark_islands(rows, store):
+    """
+    店舗JSONの島の構成(islands)から、各行に島の名前と「島の端か」を付ける。島が書かれていなければ何もしない。
+    戻り値: 島の構成があるか。島の端は台番号の連番から推定する is_edge より正確なので、あればこちらを使う。
+    """
+    mapping = store_info.island_map(store) if store else {}
+    if not mapping:
+        return False
+    for row in rows:
+        number = row.get("machine_number", "")
+        place = mapping.get(int(number)) if str(number).isdigit() else None
+        row["island"] = place["island"] if place else None
+        row["island_order"] = place["order"] if place else None
+        row["island_end"] = place["is_end"] if place else None
+        row["island_note"] = place["note"] if place else ""
+    return True
+
+
+def _island_rows(rows):
+    """島ごとの集計。書いた順に並べ、島の平均差枚が ISLAND_HOT_DIFF 以上だった日数も付ける"""
+    # 「入口側」のような補足は、島の名前だけでは場所が分からないのでラベルに添える
+    result = _group_unit_rows(rows, lambda r: r.get("island"),
+                              lambda key, group_rows: key + (f"（{group_rows[0]['island_note']}）"
+                                                             if group_rows[0].get("island_note") else ""))
+    for summary in result:
+        island_rows = [r for r in rows if r.get("island") == summary["key"]]
+        summary["order"] = island_rows[0]["island_order"]
+        by_date = {}
+        for r in island_rows:
+            if r.get("difference_slabs") is not None:
+                by_date.setdefault(r["date"], []).append(r["difference_slabs"])
+        summary["day_count"] = len(by_date)
+        summary["hot_days"] = sum(1 for diffs in by_date.values() if sum(diffs) / len(diffs) >= ISLAND_HOT_DIFF)
+    result.sort(key=lambda r: r["order"])
+    return result
+
+
+# 特定日と通常日の比較で、表に出す機種・台の数
+UNIT_DAY_KIND_LIMIT = 15
+
+
+def _unit_day_kind_rows(rows):
+    """
+    旧イベント日・周年日(特定日)と通常日で、機種・末尾・台番号の出方を比べる。
+    rows には _mark_day_kind で day_kind を付けておく。
+    「特定日はこの機種に入れる」「特定日だけ末尾7が強い」のような、日を選んだうえでの狙いを見るため。
+    """
+    special = [r for r in rows if r.get("day_kind") == "special"]
+    normal = [r for r in rows if r.get("day_kind") == "normal"]
+    if not special:
+        return None
+
+    def _compare(key_func, label_func, sort_by_key=False):
+        normal_by_key = {r["key"]: r for r in _group_unit_rows(normal, key_func, label_func)}
+        merged = []
+        for row in _group_unit_rows(special, key_func, label_func):
+            other = normal_by_key.get(row["key"])
+            merged.append({
+                "key": row["key"], "label": row["label"], "special": row, "normal": other,
+                "gap": (row["avg_diff"] - other["avg_diff"]) if other else None,
+            })
+        if sort_by_key:
+            merged.sort(key=lambda r: r["key"])
+        return merged
+
+    return {
+        "special_days": len({r["date"] for r in special}),
+        "normal_days": len({r["date"] for r in normal}),
+        "special": _summarize_unit_rows(special),
+        "normal": _summarize_unit_rows(normal),
+        "by_machine": _compare(lambda r: r.get("machine_name") or None, lambda key, _rows: key)[:UNIT_DAY_KIND_LIMIT],
+        "by_number_suffix": _compare(_number_suffix, lambda key, _rows: f"末尾{key}", sort_by_key=True),
+        "top_units": _compare(lambda r: r["machine_number"], _unit_label)[:UNIT_DAY_KIND_LIMIT],
+        "by_island": _compare(lambda r: r.get("island"), lambda key, _rows: key),
+    }
+
+
+def _mark_day_kind(rows, events):
+    """各行に day_kind("special"=旧イベント日・周年日 / "normal")を付ける。特定日の登録が無ければ付けない"""
+    if not events or not (events.get("event_rules") or events.get("anniversary_rules")):
+        return rows
+    kinds = {}
+    for row in rows:
+        if row["date"] not in kinds:
+            try:
+                day = datetime.strptime(row["date"], "%Y-%m-%d")
+            except ValueError:
+                kinds[row["date"]] = None
+                continue
+            kinds[row["date"]] = "special" if is_special_day(day, events) else "normal"
+        row["day_kind"] = kinds[row["date"]]
+    return rows
+
+
+def _suffix_matches_date(row):
+    """台番号の末尾と日付の末尾が同じか(「7の日は末尾7」のような入れ方を見るため)。判定できなければ None"""
+    suffix = _number_suffix(row)
+    if suffix is None:
+        return None
+    try:
+        return int(row["date"][-1]) == suffix
+    except (TypeError, ValueError):
+        return None
+
+
+# ---- 並び(好調台が台番号の連番で隣り合っているか) ----
+# 「好調台」とみなす差枚。設定を推定する材料がない台別データでは、差枚が大きく出た台を高設定の候補とみる。
+# 低設定でも一撃で超えることはあるので、1回の並びではなく「偶然より多く並んでいるか」で読む。
+UNIT_RUN_GOOD_DIFF = 1000
+UNIT_RUN_LIST_LIMIT = 30
+
+
+def _unit_runs(rows):
+    """
+    日ごとに台番号順に並べ、好調台が連番で2台以上続いたところ(並び)を拾う。
+    台番号が連番でも島の裏表で離れていることがあるので、物理的な並びの近似として扱う。
+
+    偶然との比較: その日の好調台の割合を p とすると、連番の隣どうしが両方好調になるのは偶然なら p² の割合。
+    これを全部の隣り合いで足した期待値と実際の数を比べ、店が並びで設定を入れているかの目安にする。
+    """
+    by_date = {}
+    for row in rows:
+        if str(row.get("machine_number", "")).isdigit() and row.get("difference_slabs") is not None:
+            by_date.setdefault(row["date"], []).append(row)
+
+    runs = []
+    observed = 0
+    expected = 0.0
+    for date_str, group in by_date.items():
+        group.sort(key=lambda r: int(r["machine_number"]))
+        good = [r["difference_slabs"] >= UNIT_RUN_GOOD_DIFF for r in group]
+        p = sum(good) / len(group)
+        current = []
+        for index, row in enumerate(group):
+            adjacent = index > 0 and int(row["machine_number"]) - int(group[index - 1]["machine_number"]) == 1
+            if adjacent:
+                expected += p * p
+                if good[index] and good[index - 1]:
+                    observed += 1
+            if good[index] and adjacent and current:
+                current.append(row)
+                continue
+            if len(current) >= 2:
+                runs.append(current)
+            current = [row] if good[index] else []
+        if len(current) >= 2:
+            runs.append(current)
+
+    run_rows = []
+    for run in runs:
+        machines = list(dict.fromkeys(r.get("machine_name") or "機種名なし" for r in run))
+        run_rows.append({
+            "date": run[0]["date"],
+            "label": _format_date_with_weekday(run[0]["date"]),
+            "numbers": f"{run[0]['machine_number']}〜{run[-1]['machine_number']}",
+            "length": len(run),
+            "machines": machines,
+            "same_machine": len(machines) == 1,
+            "total_diff": sum(r["difference_slabs"] for r in run),
+            "day_kind": run[0].get("day_kind"),
+            "units": [{"number": r["machine_number"], "machine_name": r.get("machine_name", ""),
+                       "diff": r["difference_slabs"]} for r in run],
+        })
+    run_rows.sort(key=lambda r: (r["date"], r["length"]), reverse=True)
+
+    def _count(pred):
+        return sum(1 for r in run_rows if pred(r))
+
+    return {
+        "good_diff": UNIT_RUN_GOOD_DIFF,
+        "day_count": len(by_date),
+        "days_with_runs3": len({r["date"] for r in run_rows if r["length"] >= 3}),
+        "by_length": [{"label": label, "count": _count(pred)} for label, pred in (
+            ("2台", lambda r: r["length"] == 2), ("3台", lambda r: r["length"] == 3),
+            ("4台", lambda r: r["length"] == 4), ("5台以上", lambda r: r["length"] >= 5))],
+        "runs2": _count(lambda r: r["length"] == 2),
+        "runs3": _count(lambda r: r["length"] >= 3),
+        "same_machine": _count(lambda r: r["same_machine"]),
+        "cross_machine": _count(lambda r: not r["same_machine"]),
+        "special_runs3": _count(lambda r: r["length"] >= 3 and r["day_kind"] == "special"),
+        "observed_pairs": observed,
+        "expected_pairs": expected,
+        # 1.0なら偶然と同じ。1を大きく超えるほど、好調台が隣り合いやすい(並びで入れている可能性)
+        "pair_ratio": (observed / expected) if expected > 0 else None,
+        "runs": [r for r in run_rows if r["length"] >= 3][:UNIT_RUN_LIST_LIMIT],
+    }
+
+
 @_cached_by_data_version
 def build_store_unit_trends(store_name, days=90, include_machine_details=True):
     """
@@ -4383,6 +4883,7 @@ def build_store_unit_trends(store_name, days=90, include_machine_details=True):
         return trends
 
     _mark_edge_units(rows)
+    trends["has_islands"] = _mark_islands(rows, store_info_by_sheet_name().get(store_name))
     dates = sorted({r["date"] for r in rows})
     trends["overall"] = _summarize_unit_rows(rows)
     trends["first_date"] = dates[0]
@@ -4391,25 +4892,10 @@ def build_store_unit_trends(store_name, days=90, include_machine_details=True):
     trends["unit_count"] = len({r["machine_number"] for r in rows})
 
     def _grouped(key_func, label_func, sort_key=None, min_count=1):
-        buckets = {}
-        for row in rows:
-            key = key_func(row)
-            if key is None:
-                continue
-            buckets.setdefault(key, []).append(row)
-        result = []
-        for key, group_rows in buckets.items():
-            if len(group_rows) < min_count:
-                continue
-            summary = _summarize_unit_rows(group_rows)
-            summary["key"] = key
-            summary["label"] = label_func(key, group_rows)
-            result.append(summary)
-        result.sort(key=sort_key or (lambda row: -row["avg_diff"]))
-        return result
+        return _group_unit_rows(rows, key_func, label_func, sort_key, min_count)
 
     trends["by_number_suffix"] = _grouped(
-        lambda r: int(r["machine_number"][-1]) if r["machine_number"].isdigit() else None,
+        _number_suffix,
         lambda key, _rows: f"末尾{key}",
         sort_key=lambda row: row["key"],
     )
@@ -4429,10 +4915,23 @@ def build_store_unit_trends(store_name, days=90, include_machine_details=True):
         sort_key=lambda row: row["key"],
     )
     # 台番号ごとの成績(複数日ぶんまとめて、平均差枚の高い順)
-    trends["top_units"] = _grouped(
-        lambda r: r["machine_number"],
-        lambda key, group_rows: f"No.{key}" + (f" {group_rows[0].get('machine_name', '')}" if group_rows[0].get("machine_name") else ""),
-    )[:20]
+    trends["top_units"] = _grouped(lambda r: r["machine_number"], _unit_label)[:20]
+    # 特定日(旧イベント日・周年日)と通常日で、機種・末尾・台番号の出方が変わるか
+    _mark_day_kind(rows, store_event_setting(store_name))
+    trends["by_day_kind"] = _unit_day_kind_rows(rows)
+    trends["by_suffix_match"] = _grouped(
+        _suffix_matches_date,
+        lambda key, _rows: "台番末尾＝日付末尾" if key else "それ以外",
+        sort_key=lambda row: 0 if row["key"] else 1,
+    )
+    trends["runs"] = _unit_runs(rows)
+    # 島の構成(店舗JSONの islands)がある店だけ。島単位の出方と、実際の島の端・中ほどを比べる
+    trends["by_island"] = _island_rows(rows) if trends["has_islands"] else []
+    trends["by_island_end"] = _grouped(
+        lambda r: r.get("island_end"),
+        lambda key, _rows: "島の端(角台)" if key else "島の中ほど",
+        sort_key=lambda row: 0 if row["key"] else 1,
+    ) if trends["has_islands"] else []
     trends["by_date_detail"] = _unit_rows_by_date(rows)
     trends["machine_details"] = _unit_machine_details(rows) if include_machine_details else None
     # 一覧を作らない場合でも「開けるかどうか」と件数は画面に出したいので、機種数だけ持たせる
@@ -4477,6 +4976,48 @@ def describe_store_unit_trends(trends, limit=10):
     lines.append(_rows_text("端台(角台の候補)と島の中ほど", trends.get("by_edge", [])))
     lines.append(_rows_text("機種別", trends.get("by_machine", [])))
     lines.append(_rows_text("好調な台(平均差枚の高い順)", trends.get("top_units", [])[:5]))
+    lines.append(_rows_text("台番末尾と日付末尾の一致", trends.get("by_suffix_match", [])))
+    if trends.get("by_island"):
+        lines.append("島別(店舗JSONの島の構成から): " + " / ".join(
+            f"{row['label']}: 平均差枚{row['avg_diff']:+.0f}枚/のべ{row['count']}台/プラス率{row['plus_rate']:.0f}%"
+            f"/島平均+{ISLAND_HOT_DIFF}枚以上の日{row['hot_days']}日(全{row['day_count']}日)"
+            for row in trends["by_island"]))
+        lines.append(_rows_text("島の端(角台)と中ほど", trends.get("by_island_end", [])))
+
+    kind = trends.get("by_day_kind")
+    if kind:
+        def _kind_text(title, rows_, count):
+            parts = []
+            for row in rows_[:count]:
+                piece = f"{row['label']}: 特定日{row['special']['avg_diff']:+.0f}枚/{row['special']['count']}台"
+                if row["normal"]:
+                    piece += f"(通常日{row['normal']['avg_diff']:+.0f}枚/{row['normal']['count']}台)"
+                parts.append(piece)
+            return f"{title}: " + (" / ".join(parts) if parts else "データなし")
+
+        lines.append(f"特定日(旧イベント日・周年日){kind['special_days']}日の全体: 平均差枚{kind['special']['avg_diff']:+.0f}枚, "
+                     f"プラス率{kind['special']['plus_rate']:.0f}% / 通常日{kind['normal_days']}日: "
+                     + (f"平均差枚{kind['normal']['avg_diff']:+.0f}枚, プラス率{kind['normal']['plus_rate']:.0f}%"
+                        if kind["normal"] else "データなし"))
+        lines.append(_kind_text("特定日の機種別(特定日の平均差枚順)", kind["by_machine"], 8))
+        lines.append(_kind_text("特定日の台番号末尾別", kind["by_number_suffix"], 10))
+        lines.append(_kind_text("特定日に好調な台", kind["top_units"], 5))
+        if kind.get("by_island"):
+            lines.append(_kind_text("特定日の島別", kind["by_island"], 20))
+    else:
+        lines.append("特定日と通常日の比較: 旧イベント日の登録が無いか、台別データに特定日が無い")
+
+    runs = trends.get("runs")
+    if runs and runs["day_count"]:
+        counts = "、".join(f"{b['label']}{b['count']}回" for b in runs["by_length"])
+        text = (f"並び(差枚+{runs['good_diff']}枚以上の台が台番号の連番で続いた所。{runs['day_count']}日分): {counts}"
+                f"(同一機種内{runs['same_machine']}・機種またぎ{runs['cross_machine']})")
+        if runs["pair_ratio"] is not None:
+            text += (f"。好調台どうしが隣り合った数は{runs['observed_pairs']}組で、偶然の期待値{runs['expected_pairs']:.1f}組の"
+                     f"{runs['pair_ratio']:.2f}倍")
+        recent = " / ".join(f"{r['label']} {r['numbers']}({r['length']}台・{'・'.join(r['machines'][:2])})"
+                            for r in runs["runs"][:5])
+        lines.append(text + (f"。3台以上の並びの直近: {recent}" if recent else ""))
     return "\n".join(lines)
 
 
@@ -4671,6 +5212,28 @@ def _summary_units(ut):
     return text
 
 
+# 並びが「偶然より多い」と書くのは、好調台が隣り合った数が偶然の期待値の何倍以上のときか
+SUMMARY_RUN_RATIO = 1.3
+
+
+def _summary_runs(ut):
+    runs = (ut or {}).get("runs")
+    if not runs or not runs["day_count"] or runs["pair_ratio"] is None:
+        return None
+    long_runs = sum(b["count"] for b in runs["by_length"] if b["label"] != "2台")
+    text = (f"差枚+{runs['good_diff']:,}枚以上の台が3台以上連番で並んだのは{runs['day_count']}日で{long_runs}回。"
+            f"好調台どうしが隣り合った数は偶然の{runs['pair_ratio']:.1f}倍で、")
+    if runs["pair_ratio"] >= SUMMARY_RUN_RATIO:
+        text += "並びで設定を入れている可能性がある。"
+    elif runs["pair_ratio"] <= 1 / SUMMARY_RUN_RATIO:
+        text += "むしろ散らして入れている可能性がある。"
+    else:
+        text += "偶然と見分けがつかない。"
+    if runs["day_count"] < TREND_MIN_SAMPLES:
+        text += "日数が少ないので、たまたまの可能性が高い。"
+    return text
+
+
 @_cached_by_data_version
 def build_store_summary(store_name, unit_days=90):
     """
@@ -4695,6 +5258,7 @@ def build_store_summary(store_name, unit_days=90):
         add("イベ日", _summary_events(dall))
         add("周年日", _summary_anniversary(dall))
     add("台別", _summary_units(ut))
+    add("並び", _summary_runs(ut))
     return items
 
 
@@ -5214,7 +5778,52 @@ def live_chat_store_context(store_name, when=None):
             f"{json.dumps(items, ensure_ascii=False)}")
 
 
-def _live_chat_system_prompt(machine, judge_note, unit_notes=None, store_context=""):
+def live_chat_hall_data_context(store_name, machine=None, machine_number="", when=None):
+    """
+    実戦チャットに渡す、取り込んだホールデータ(日別・台別)の集計。
+    店舗情報JSONは「店の決まりごと」しか持たないので、「この店は実際にいつ・どの機種・どの台が出ているか」は
+    こちらで渡す。店舗情報JSONが無くてもシートや store_data/daily にデータがあれば渡す。
+    データが何も無ければ空文字。
+    """
+    store = find_store_info(store_name)
+    sheet_name = (store.get("sheet_store_name") or store["name"]) if store else (store_name or "").strip()
+    if not sheet_name:
+        return ""
+
+    sections = []
+    daily = build_store_daily_trends(sheet_name, days=365)
+    if daily and daily.get("record_count"):
+        day_context = describe_store_day_context(sheet_name, when)
+        sections.append("■日別データ(直近1年)\n" + describe_store_daily_trends(daily)
+                        + (f"\n今日の位置づけ: {day_context}" if day_context else ""))
+
+    forecast = describe_store_day_forecast(
+        build_store_day_forecast(sheet_name, start=(when or datetime.now()).strftime("%Y-%m-%d"), days_ahead=7))
+    if forecast:
+        sections.append("■今日から7日間の" + forecast)
+
+    units = build_store_unit_trends(sheet_name, days=90, include_machine_details=False)
+    if units and units.get("record_count"):
+        text = "■台別データ(直近90日)\n" + describe_store_unit_trends(units)
+        # 機種別は上位10件しか文章にしないので、打っている機種は順位に関係なく別に出す。
+        # ホールデータの機種名はサイトの表記なので、機種JSONの通称込みで照らし合わせる
+        if machine:
+            row = next((r for r in units.get("by_machine", [])
+                        if (machine_info.find_by_name(r["key"]) or {}).get("id") == machine.get("id")), None)
+            if row:
+                text += (f"\n打っている機種({row['label']}): 平均差枚{row['avg_diff']:+.0f}枚/"
+                         f"のべ{row['count']}台/プラス率{row['plus_rate']:.0f}%")
+            else:
+                text += "\n打っている機種: 台別データに見当たらない"
+        unit_history = describe_store_unit_history(sheet_name, machine_number)
+        if unit_history:
+            text += f"\nこの台: {unit_history}"
+        sections.append(text)
+
+    return "\n".join(sections)
+
+
+def _live_chat_system_prompt(machine, judge_note, unit_notes=None, store_context="", hall_data_context=""):
     # $schema や表示色はAIの判断に関係ないので渡さない
     info = {k: v for k, v in machine.items() if k not in ("$schema", "theme")}
     return f"""あなたはパチスロを打っている最中のユーザーに付き添う立ち回りアシスタントです。
@@ -5257,6 +5866,16 @@ def _live_chat_system_prompt(machine, judge_note, unit_notes=None, store_context
 確認状態が「未確認」の値はポータル等の情報であることを一言添える。ここに無い項目は「店舗情報に無い」と言い、推測で埋めない。
 旧イベント日は店の傾向の目安で、今日の設定を約束するものではない。
 {store_context or "なし(店舗名が未入力か、店舗情報に登録されていない)"}
+
+【店舗のホールデータ(取り込んだ日別・台別の実績)】
+店の全台が対象の過去の実績。「今日(明日)は強い日か」「どの機種・末尾・台が出やすいか」を聞かれたら、
+ここを根拠に答え、何日分・何台分のデータかを添える(数日分しかない傾向は「参考程度」と言う)。
+- 日の強さは勝てる日指数と根拠を使い、「勝てる日 → 狙い機種 → 狙い台」の順に答える。
+  特定日(旧イベント日・周年日)なら特定日の機種別・末尾別・好調な台を、通常日なら台別データ全体の傾向を使う。
+- 並びは偶然の期待値の何倍かで読む(1倍前後なら並びで入れている根拠は弱い)。
+過去の傾向であって今日の設定を約束するものではない。ここに無い集計(島の構成が未登録の店の島別・リセット率・抽選人数など)は「データが無い」と言う。
+今打っている台の設定判断は機種の設定差要素が主で、ここは店の使い方を見る補助として使う。
+{hall_data_context or "なし(店舗名が未入力か、この店のホールデータが取り込まれていない)"}
 
 【収支・損益分岐の計算】
 換金率や損益分岐を聞かれたら、【店舗情報】の貸玉・貸メダル料金と交換率から計算し、式と前提を短く示す。
@@ -5342,7 +5961,8 @@ def _live_chat_call(payload, label):
     return None, "回答の生成に失敗しました。もう一度送ってください。"
 
 
-def live_chat_reply(machine, history, message, judge_note="", image_part=None, unit_notes=None, store_context=""):
+def live_chat_reply(machine, history, message, judge_note="", image_part=None, unit_notes=None, store_context="",
+                    hall_data_context=""):
     """
     機種情報JSONと会話履歴をもとに、打ちながらの相談に答える。
 
@@ -5351,6 +5971,7 @@ def live_chat_reply(machine, history, message, judge_note="", image_part=None, u
     (過去の画像はAIの「📷 読み取り」行が文字で残っているので再送しない)。
     unit_notes は unit_notes_for() の戻り値(この台の過去の台メモ)。
     store_context は live_chat_store_context() の戻り値(入力された店舗の店舗情報)。
+    hall_data_context は live_chat_hall_data_context() の戻り値(その店の日別・台別の実績)。
     戻り値: (回答テキスト, エラーかどうか)。エラー時は画面にそのまま出せる文言を返す。
     """
     message = (message or "").strip()[:LIVE_CHAT_MAX_CHARS]
@@ -5362,7 +5983,7 @@ def live_chat_reply(machine, history, message, judge_note="", image_part=None, u
     contents = _live_chat_add_user_turn(_live_chat_contents(history), message, image_part)
     payload = {
         "system_instruction": {"parts": [{"text": _live_chat_system_prompt(machine, judge_note, unit_notes,
-                                                                          store_context)}]},
+                                                                          store_context, hall_data_context)}]},
         "contents": contents,
     }
     text, error = _live_chat_call(payload, "実戦チャット")

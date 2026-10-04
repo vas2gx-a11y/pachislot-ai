@@ -145,6 +145,9 @@ def detail(store_id):
         tr=tr,
         # 台別の部分は画面で選んだ集計期間に合わせる(下の表と数字がずれないように)
         summary=common.build_store_summary(sheet_store_name, unit_days=days),
+        forecast=common.build_store_day_forecast(sheet_store_name),
+        day_attribute_note="（" + common.DAY_ATTRIBUTE_NOTE + "）",
+        island_hot_diff=common.ISLAND_HOT_DIFF,
         # 表の日付にイベ日の印を付けるため。テンプレートで全期間を回して作ると日数ぶん重くなるのでここで作る
         kinds={p["date"]: p["kind"] for p in series},
         chart_series=chart_series,

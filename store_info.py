@@ -25,6 +25,8 @@ Webから集めた値は merge() で既存JSONに重ねる。
 
 import json
 import os
+import re
+import unicodedata
 from datetime import date
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -288,7 +290,88 @@ def validate(store, store_id):
         for sid in h.get("source_ids") or []:
             if sid not in source_ids:
                 problems.append(f"履歴の出典「{sid}」が sources にありません")
+    problems += island_problems(store)
     return sorted(set(problems))
+
+
+# ---------------------------------------------------------------------------
+# 島の構成
+# ---------------------------------------------------------------------------
+# 台番号 → 島 の対応。Webの収集では取れず、配置表を見て人が書くものなので、
+# info の項目(出典・確認状態つき)とは別にトップレベルの "islands" に置く。収集の反映(merge)では触らない。
+#   "islands": [{"name": "島A", "units": "501〜520", "note": "入口側"}, ...]
+# units は「501〜520」「501-510, 515」のように範囲とカンマ区切りで書く。
+# 範囲の両端の台を「島の端(角台)」として扱うので、島の表と裏で番号が分かれる店は、範囲を分けて書く
+# (例 "501〜510, 511〜520" なら 501・510・511・520 が端になる)。
+
+_UNIT_RANGE_RE = re.compile(r"^(\d+)(?:[~〜\-ー－](\d+))?$")
+
+
+def parse_unit_ranges(text):
+    """「501〜520, 525」→ ([(501, 520), (525, 525)], 読めなかった語)"""
+    ranges, unknown = [], []
+    normalized = unicodedata.normalize("NFKC", str(text or ""))
+    for token in re.split(r"[,、，/・\s]+", normalized):
+        if not token:
+            continue
+        matched = _UNIT_RANGE_RE.match(token)
+        if not matched:
+            unknown.append(token)
+            continue
+        start = int(matched.group(1))
+        end = int(matched.group(2) or start)
+        if end < start:
+            unknown.append(token)
+            continue
+        ranges.append((start, end))
+    return ranges, unknown
+
+
+def island_map(store):
+    """
+    台番号(int) → {"island": 島の名前, "is_end": 範囲の両端か, "order": 書いた順}。島が書かれていなければ空。
+    台番号が2つの島に重なっているときは先に書いた島を使う(重なりは validate で指摘する)。
+    """
+    mapping = {}
+    for order, island in enumerate(store.get("islands") or []):
+        if not isinstance(island, dict) or not island.get("name"):
+            continue
+        ranges, _unknown = parse_unit_ranges(island.get("units"))
+        for start, end in ranges:
+            for number in range(start, end + 1):
+                mapping.setdefault(number, {"island": island["name"], "is_end": number in (start, end),
+                                            "order": order, "note": island.get("note") or ""})
+    return mapping
+
+
+def island_problems(store):
+    islands = store.get("islands")
+    if islands is None:
+        return []
+    if not isinstance(islands, list):
+        return ["islands は配列で書いてください"]
+    problems = []
+    owner = {}
+    for island in islands:
+        if not isinstance(island, dict) or not island.get("name"):
+            problems.append("islands の各要素には name が必要です")
+            continue
+        name = island["name"]
+        ranges, unknown = parse_unit_ranges(island.get("units"))
+        if not ranges:
+            problems.append(f"島「{name}」の units に台番号の範囲がありません")
+        if unknown:
+            problems.append(f"島「{name}」の units に読めない指定があります: {'、'.join(unknown)}")
+        overlaps = {}
+        for start, end in ranges:
+            for number in range(start, end + 1):
+                if number in owner and owner[number] != name:
+                    overlaps.setdefault(owner[number], []).append(number)
+                owner.setdefault(number, name)
+        # 台番号ごとに出すと範囲の書き間違い1つで何十行も並ぶので、島の組ごとにまとめる
+        for other, numbers in overlaps.items():
+            problems.append(f"島「{other}」と「{name}」で台番号が重なっています（{numbers[0]}〜{numbers[-1]}の{len(numbers)}台）")
+    return problems
 
 
 # ---------------------------------------------------------------------------

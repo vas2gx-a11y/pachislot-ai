@@ -11,7 +11,8 @@
 {% set toc = [
     ('basic', '基本情報'), ('access', 'アクセス'), ('prices', '料金・交換率'), ('units', '設置台数'), ('machines', '設置機種'),
     ('days', '営業日・特定日'), ('notices', 'イベント・告知'), ('new', '新台入替'),
-    ('daily', '日別データ'), ('event', 'イベ日の信頼度'), ('weekday', '曜日・日付の傾向'), ('slot', '台別データ'),
+    ('daily', '日別データ'), ('forecast', '勝てる日指数'), ('event', 'イベ日の信頼度'), ('weekday', '曜日・日付の傾向'),
+    ('slot', '台別データ'), ('kind', '特定日と通常日'), ('runs', '並び'),
     ('features', '店舗の特徴'),
     ('sources', '情報源'), ('history', '更新履歴'),
 ] %}
@@ -203,6 +204,15 @@
 
     {% call section('units', '設置台数') %}
         {{ kv_rows(['total_units', 'pachinko_units', 'slot_units']) }}
+        {% if s.islands %}
+        <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">島の構成</h3>
+        <table class="num-table"><thead><tr><th>島</th><th>台番号</th><th class="!text-left">メモ</th></tr></thead><tbody>
+            {% for isl in s.islands %}
+            <tr><td>{{ isl.name }}</td><td>{{ isl.units }}</td><td class="!text-left !whitespace-normal">{{ isl.note or '' }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        <p class="hint">配置表から手で書いたものです（store_data/{{ s.id }}.json の islands）。台別データの島別の集計に使います。</p>
+        {% endif %}
     {% endcall %}
 
     {% call section('machines', '設置機種（パチスロ）') %}
@@ -297,6 +307,35 @@
         {% endif %}
     {% endcall %}
 
+    {% call section('forecast', '勝てる日指数（今日から2週間）') %}
+        {% if forecast and forecast.days %}
+        {# 根拠の文が長いので表にせず、スマホ幅でも読めるよう日付の下に根拠を置く #}
+        <div class="divide-y divide-gray-100">
+            {% for d in forecast.days %}
+            <div class="py-2 flex items-start gap-3">
+                <div class="w-10 shrink-0 text-right font-mono tabular-nums font-bold text-xl {{ 'text-emerald-700' if d.score >= 75 else 'text-emerald-600' if d.score >= 60 else 'text-rose-600' if d.score <= 40 else 'text-gray-900' }}">{{ d.score }}</div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm">{{ d.label }}{% if d.special %} <span class="kind-dot kind-event" title="{{ d.events | join('・') }}"></span>{% endif %}{% if d.holiday %} <span class="text-xs text-rose-600">{{ d.holiday }}</span>{% endif %}
+                        <span class="text-xs font-bold text-gray-500 ml-1">{{ d.grade }}</span></p>
+                    <p class="text-xs text-gray-500 leading-relaxed">{% for r in d.reasons[:3] %}{{ r.text }}{% if not loop.last %}、{% endif %}{% else %}差のある切り口なし{% endfor %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="hint">50が店の普通の日です。直近1年 {{ forecast.record_count }} 日分（差枚あり {{ forecast.diff_days }} 日）の日別データから計算しています。<span class="kind-dot kind-event"></span>は旧イベント日・周年日です。特定日の狙い機種・末尾は<a href="#kind" class="text-blue-600 underline">特定日と通常日</a>を見てください。</p>
+        <details class="mt-2">
+            <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 指数の出し方</summary>
+            <div class="text-xs text-gray-600 mt-2 space-y-1">
+                <p>その日に当てはまる切り口（旧イベント日のルール・曜日・日付の末尾・祝日や休前日などの属性）ごとに、当てはまる日とそれ以外の日の差を、イベ日の信頼度と同じやり方（差が日ごとのばらつきの何倍か）で測ります。</p>
+                <p>差の大きい切り口から順に点を足し引きし、2つ目以降は重みを半分ずつにしています（「7のつく日」と「末尾7の日」のように中身が重なる根拠を何重にも数えないため）。平均G数（稼働）でしか比べられない切り口は、設定の証拠として弱いので半分の重みです。</p>
+                <p>切り口を30近く同時に見ているので、そのうちいくつかは偶然でも「信頼度 中」以上になります。根拠が1つだけの高い点は割り引いて見てください。過去の出方から見た目安で、その日に設定が入ることを約束するものではありません。</p>
+            </div>
+        </details>
+        {% else %}
+        <p class="text-gray-400 text-sm">日別データが入ると、日ごとの指数が出ます。</p>
+        {% endif %}
+    {% endcall %}
+
     {% call section('event', 'イベ日の信頼度') %}
         {% if (d1 and d1.by_event_category) or (dall and dall.by_event_category) %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -369,6 +408,8 @@
                  d1.by_weekday, d1.min_samples) }}
             {{ hall_metric_section("hash", "日付末尾別", "「7の付く日」のような周期イベントがあれば、その末尾が跳ねます。",
                  d1.by_day_suffix, d1.min_samples, false) }}
+            {{ hall_metric_section("calendar", "日付の属性別", "祝日・休前日・月末・年末年始など、どの店にも共通する日付の切り口です。" ~ day_attribute_note,
+                 d1.by_day_attribute, d1.min_samples, false) }}
         </div>
         {% else %}
         <p class="card card-body text-gray-400 text-sm">日別データが入ると、曜日・日付末尾ごとの稼働が出ます。</p>
@@ -429,6 +470,25 @@
              ut.by_machine, ut.min_samples, true, true, false, unit="台") }}
         {{ trend_section("medal", "好調な台トップ20", "台番号ごとの平均差枚が高い順です。右端は取り込んだ日数のうちプラスだった日数です。1日だけの大勝ちより、何日中何日勝っているかで狙い台を見てください。",
              ut.top_units, ut.min_samples, true, true, false, unit="日") }}
+        {% if ut.has_islands %}
+        <section class="card card-body">
+            <h2 class="font-display font-bold text-base md:text-lg text-gray-900 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-gray-100 text-gray-700 text-base shrink-0">{{ icon('pin') }}</span>島別</h2>
+            <div class="overflow-x-auto -mx-1 px-1 mt-3">
+            <table class="num-table"><thead><tr><th>島</th><th>平均差枚</th><th>プラス</th><th>強い日</th></tr></thead><tbody>
+                {% for r in ut.by_island %}
+                <tr class="{{ '' if r.enough_samples else 'opacity-60' }}"><td class="!whitespace-normal">{{ r.label }}</td><td>{{ signed(r.avg_diff) }}</td>
+                    <td>{{ r.plus_count }}/{{ r.diff_count }}台</td><td>{{ r.hot_days }}/{{ r.day_count }}日</td></tr>
+                {% endfor %}
+            </tbody></table>
+            </div>
+            <p class="hint">店舗情報の島の構成から集計しています。「強い日」は島の台の平均差枚が +{{ island_hot_diff }}枚以上だった日数です。何度もあれば、島単位で設定を入れている可能性があります。</p>
+        </section>
+        {{ trend_section("pin", "島の端（角台）と中ほど", "島の構成の範囲の両端を角台として集計しています（上の「端台」は連番からの推定です）。",
+             ut.by_island_end, ut.min_samples, false, false, false, unit="台") }}
+        {% endif %}
+        {{ trend_section("digit", "台番末尾と日付末尾", "「7の日は末尾7」のように、日付の末尾と同じ末尾の台に入れているかを見ます。",
+             ut.by_suffix_match, ut.min_samples, false, true, false, unit="台") }}
     </div>
 
     {# 機種ごとの台一覧はHTMLが大きいので、開かれたときに読み込む #}
@@ -449,6 +509,63 @@
     </section>
     {% endif %}
     {% endif %}
+
+    {% set ut = tr.units %}
+    {% call section('kind', '特定日と通常日（台別）') %}
+        {% set k = ut.by_day_kind if ut else none %}
+        {% if k %}
+        <p class="text-sm">特定日 <strong>{{ k.special_days }}日</strong>（平均 {{ signed(k.special.avg_diff) }}枚・プラス率 {{ k.special.plus_rate | round | int }}%）
+            ／ 通常日 <strong>{{ k.normal_days }}日</strong>{% if k.normal %}（平均 {{ signed(k.normal.avg_diff) }}枚・プラス率 {{ k.normal.plus_rate | round | int }}%）{% endif %}</p>
+        {% for title, rows in [("機種別（特定日の平均差枚順）", k.by_machine), ("台番号の末尾別", k.by_number_suffix), ("島別", k.by_island), ("台番号別（特定日の平均差枚順）", k.top_units)] if rows %}
+        <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">{{ title }}</h3>
+        <div class="overflow-x-auto -mx-1 px-1">
+        <table class="num-table"><thead><tr><th>区分</th><th>特定日</th><th>台数</th><th>プラス</th><th>通常日</th><th>台数</th><th>差</th></tr></thead><tbody>
+            {% for r in rows %}
+            <tr class="{{ '' if r.special.enough_samples else 'opacity-60' }}"><td class="!whitespace-normal">{{ r.label }}</td>
+                <td>{{ signed(r.special.avg_diff) }}</td><td>{{ r.special.count }}</td><td>{{ r.special.plus_count }}/{{ r.special.diff_count }}</td>
+                <td>{{ signed(r.normal.avg_diff) if r.normal else '-' }}</td><td>{{ r.normal.count if r.normal else '-' }}</td><td>{{ signed(r.gap) }}</td></tr>
+            {% endfor %}
+        </tbody></table>
+        </div>
+        {% endfor %}
+        <p class="hint">特定日は旧イベント日・周年日です。台数はのべ台数で、薄い行は{{ ut.min_samples }}台未満です。台別の集計期間（{{ ut.first_date }}〜{{ ut.last_date }}）で集計しています。</p>
+        {% elif ut and ut.record_count %}
+        <p class="text-gray-400 text-sm">旧イベント日・周年日が登録されていないか、台別データの期間に特定日がありません。</p>
+        {% else %}
+        <p class="text-gray-400 text-sm">台別データが入ると、特定日と通常日の機種・末尾・台番号の出方を比べられます。</p>
+        {% endif %}
+    {% endcall %}
+
+    {% call section('runs', '並び（好調台の連番）') %}
+        {% set rn = ut.runs if ut else none %}
+        {% if rn and rn.day_count %}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {{ stat_card("3台以上の並び", rn.runs3 ~ "回") }}
+            {{ stat_card("2台並び", rn.runs2 ~ "回") }}
+            {{ stat_card("偶然との比", ("%.2f" % rn.pair_ratio ~ "倍") if rn.pair_ratio is not none else "-",
+                         "text-green-600" if rn.pair_ratio and rn.pair_ratio >= 1.3 else "text-gray-900") }}
+            {{ stat_card("同一機種／機種またぎ", rn.same_machine ~ "／" ~ rn.cross_machine) }}
+        </div>
+        <p class="hint">差枚 +{{ '{:,}'.format(rn.good_diff) }}枚以上の台を「好調台」とし、同じ日に台番号の連番で2台以上続いた所を並びとして数えています（{{ rn.day_count }}日分）。
+            「偶然との比」は、好調台どうしが隣り合った数（{{ rn.observed_pairs }}組）が、好調台が適当に散らばった場合の期待値（{{ '%.1f' % rn.expected_pairs }}組）の何倍かです。1倍前後なら並びで入れている根拠は弱く、1.3倍を超えると並びを疑えます。
+            台番号が連番でも島の裏表で離れていることがあるので目安です。</p>
+        {% if rn.runs %}
+        <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">3台以上の並び（新しい順）</h3>
+        <div class="divide-y divide-gray-100">
+            {% for r in rn.runs %}
+            <div class="py-2 text-sm">
+                <p class="flex flex-wrap items-baseline gap-x-3"><span>{{ r.label }}{% if r.day_kind == 'special' %} <span class="kind-dot kind-event" title="特定日"></span>{% endif %}</span>
+                    <span class="font-mono tabular-nums font-bold">{{ r.numbers }}</span><span class="text-xs text-gray-500">{{ r.length }}台</span>
+                    <span class="ml-auto font-mono tabular-nums">{{ signed(r.total_diff) }}</span></p>
+                <p class="text-xs text-gray-500">{{ r.machines | join('・') }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-gray-400 text-sm">台別データが入ると、好調台の並びを数えます。</p>
+        {% endif %}
+    {% endcall %}
 
     {% call section('features', '店舗の特徴') %}
         {% if summary %}

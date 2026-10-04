@@ -32,6 +32,19 @@
     "area": { "type": "string", "description": "一覧をまとめる単位。最寄り駅(「池袋」)、駅から遠い店は区など(「さいたま市西区」)。登録時に人が入れる" },
     "sheet_store_name": { "type": "string", "description": "シート(日別・台別データ)側の店舗名。営業データとの紐づけに使う" },
     "updated_at": { "type": "string", "description": "最後に収集を反映した日(YYYY-MM-DD)" },
+    "islands": {
+      "type": "array",
+      "description": "島の構成(配置表を見て手で書く。収集では触らない)。台別データの島別の集計に使う",
+      "items": {
+        "type": "object",
+        "required": ["name", "units"],
+        "properties": {
+          "name": { "type": "string", "description": "島の名前(島A、ジャグラー島など)" },
+          "units": { "type": "string", "description": "台番号。範囲とカンマ区切り(501〜520, 525)。範囲の両端を島の端(角台)として扱う" },
+          "note": { "type": "string", "description": "場所の補足(入口側、壁際など)" }
+        }
+      }
+    },
     "sources": {
       "type": "array",
       "items": {
