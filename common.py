@@ -3318,10 +3318,18 @@ def _event_reliability(group_rows, normal_rows):
         return [r[key] for r in rows if r.get(key) is not None]
 
     win = _compare_metric(_values(group_rows, "win_rate"), _values(normal_rows, "win_rate"))
-    result = None
-    for basis in ("avg_diff", "win_rate", "avg_games"):
-        result = _compare_metric(_values(group_rows, basis), _values(normal_rows, basis))
-        if result:
+    # 差枚が数日しか無いと、その数日のブレだけで「中」「高」が出てしまう(差枚3日で信頼度中など)。
+    # 証拠の強い順に見るが、HIGH_DAYS に届かない指標は、届く指標が後ろにあればそちらを使う。
+    # どれも届かないときだけ、最初に比べられた指標で判定する(何も出さないよりはまし)
+    result = basis = None
+    for candidate in ("avg_diff", "win_rate", "avg_games"):
+        compared = _compare_metric(_values(group_rows, candidate), _values(normal_rows, candidate))
+        if not compared:
+            continue
+        if result is None:
+            result, basis = compared, candidate
+        if compared["days"] >= EVENT_RELIABILITY_HIGH_DAYS:
+            result, basis = compared, candidate
             break
     if not result:
         return {"level": "判定不可", "basis": None, "days": len(_values(group_rows, "avg_games")), "t": None,
