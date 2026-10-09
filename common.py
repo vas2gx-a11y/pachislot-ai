@@ -3816,7 +3816,15 @@ def build_store_day_forecast(store_name, start="", days_ahead=DAY_FORECAST_DAYS)
     events = trends.get("events")
 
     factor_stats = {}
+    # 「9のつく日」(旧イベ日のルール)と「末尾9の日」のように、当てはまる日がまったく同じ切り口は
+    # 同じ根拠なので1つにする。重なりは重みを半分ずつ減らして足しているが、完全に同じものは
+    # 半分でも二重に効いて点が偏るため。ルールが先に並ぶので、店の特定日としての名前が残る
+    seen_dates = set()
     for key, label, matches, compare_to in _day_factors(parsed_dates, events):
+        matched_dates = frozenset(d for d, _row in parsed_dates if matches(d))
+        if matched_dates in seen_dates:
+            continue
+        seen_dates.add(matched_dates)
         group = [row for d, row in parsed_dates if matches(d)]
         rest = [row for d, row in parsed_dates if compare_to(d)]
         factor_stats[key] = (label, matches, _event_reliability(group, rest))
