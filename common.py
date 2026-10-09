@@ -3403,12 +3403,24 @@ def build_store_daily_trends(store_name, days=365):
         return None
 
     rows = load_store_daily(store_name)
-    if days > 0:
+    # 今日から数えた期間にデータが1日も無い店(アナスロの掲載が昔で止まっている店など)は、
+    # 最後のデータの日から数え直す。古くても傾向が何も出ないよりは役に立つため。
+    # 画面・プロンプトでは period_label で「直近」ではないことを示す
+    period_label = f"直近{days // 365}年" if days > 0 and days % 365 == 0 else f"直近{days}日"
+    if days > 0 and rows:
         limit_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        rows = [r for r in rows if r["date"] >= limit_date]
+        recent = [r for r in rows if r["date"] >= limit_date]
+        if not recent:
+            last = datetime.strptime(rows[0]["date"], "%Y-%m-%d")
+            limit_date = (last - timedelta(days=days)).strftime("%Y-%m-%d")
+            recent = [r for r in rows if r["date"] >= limit_date]
+            period_label = period_label.replace("直近", "最終データまでの")
+        rows = recent
+    if days <= 0:
+        period_label = "全期間"
 
     trends = {"store_name": store_name, "days": days, "record_count": len(rows),
-              "min_samples": TREND_MIN_SAMPLES}
+              "min_samples": TREND_MIN_SAMPLES, "period_label": period_label}
     if not rows:
         trends["overall"] = None
         return trends
@@ -3790,7 +3802,7 @@ def _score_day(day, factor_stats):
 def build_store_day_forecast(store_name, start="", days_ahead=DAY_FORECAST_DAYS):
     """
     start(YYYY-MM-DD。空なら今日)から days_ahead 日分の勝てる日指数。
-    直近1年の日別データから切り口ごとの差を測る。データが無ければ None。
+    直近1年(無ければ最終データまでの1年)の日別データから切り口ごとの差を測る。データが無ければ None。
     """
     trends = build_store_daily_trends(store_name, days=365)
     if not trends or not trends.get("record_count"):
@@ -3829,6 +3841,7 @@ def build_store_day_forecast(store_name, start="", days_ahead=DAY_FORECAST_DAYS)
         days.append(entry)
     return {"store_name": store_name, "days": days, "first_date": trends.get("first_date"),
             "last_date": trends.get("last_date"), "record_count": trends["record_count"],
+            "period_label": trends["period_label"],
             "diff_days": trends["overall"]["diff_days"],
             "last_imported_at": trends.get("last_imported_at")}
 
@@ -3848,7 +3861,7 @@ def describe_store_day_forecast(forecast, limit=7):
     """勝てる日指数を、AIプロンプト用のテキストにまとめる"""
     if not forecast or not forecast.get("days"):
         return ""
-    lines = [f"勝てる日指数(0〜100。50が店の普通の日。直近1年{forecast['record_count']}日分"
+    lines = [f"勝てる日指数(0〜100。50が店の普通の日。{forecast['period_label']}{forecast['record_count']}日分"
              f"(差枚あり{forecast['diff_days']}日)の日別データで、当てはまる切り口とそれ以外の日の差から計算)"]
     for day in forecast["days"][:limit]:
         tags = [t for t in [day["holiday"]] + day["events"] if t]
@@ -5090,8 +5103,8 @@ def _fmt_diff(v):
 
 def _summary_overall(d1):
     o = d1["overall"]
-    parts = [f"直近1年（{d1['first_date']}〜{d1['last_date']}、{d1['record_count']}日分）の平均G数は{_fmt_games(o['avg_games'])}"
-             if o["avg_games"] is not None else f"直近1年（{d1['record_count']}日分）"]
+    parts = [f"{d1['period_label']}（{d1['first_date']}〜{d1['last_date']}、{d1['record_count']}日分）の平均G数は{_fmt_games(o['avg_games'])}"
+             if o["avg_games"] is not None else f"{d1['period_label']}（{d1['record_count']}日分）"]
     if o["avg_diff"] is not None and o["diff_days"] >= SUMMARY_MIN_DIFF_DAYS:
         lean = "客側のプラス" if o["avg_diff"] > 0 else "店側の回収"
         parts.append(f"平均差枚は{_fmt_diff(o['avg_diff'])}で{lean}寄り（差枚が分かる{o['diff_days']}日分）")
@@ -5840,7 +5853,7 @@ def live_chat_hall_data_context(store_name, machine=None, machine_number="", whe
     daily = build_store_daily_trends(sheet_name, days=365)
     if daily and daily.get("record_count"):
         day_context = describe_store_day_context(sheet_name, when)
-        sections.append("■日別データ(直近1年)\n" + describe_store_daily_trends(daily)
+        sections.append(f"■日別データ({daily['period_label']})\n" + describe_store_daily_trends(daily)
                         + (f"\n今日の位置づけ: {day_context}" if day_context else ""))
 
     forecast = describe_store_day_forecast(

@@ -252,7 +252,7 @@
         {% if d1 and d1.record_count %}
         {% set o = d1.overall %}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-            {{ stat_card("平均差枚（直近1年）", ("%+d" | format(o.avg_diff | round(0) | int) ~ "枚") if o.avg_diff is not none else "データなし",
+            {{ stat_card("平均差枚（" ~ d1.period_label ~ "）", ("%+d" | format(o.avg_diff | round(0) | int) ~ "枚") if o.avg_diff is not none else "データなし",
                          "text-green-600" if o.avg_diff and o.avg_diff > 0 else "text-red-600") }}
             {{ stat_card("平均G数", ((o.avg_games | round(0) | int) ~ "G") if o.avg_games is not none else "データなし") }}
             {{ stat_card("勝率", ("%.1f" | format(o.win_rate) ~ "%") if o.win_rate is not none else "データなし") }}
@@ -322,7 +322,7 @@
             </div>
             {% endfor %}
         </div>
-        <p class="hint">50が店の普通の日です。直近1年 {{ forecast.record_count }} 日分（差枚あり {{ forecast.diff_days }} 日）の日別データから計算しています。対象期間: {{ forecast.first_date }}〜{{ forecast.last_date }} ・ データ最終追加・更新: {{ forecast.last_imported_at or '日時の記録なし' }}。<span class="kind-dot kind-event"></span>は旧イベント日・周年日です。特定日の狙い機種・末尾は<a href="#kind" class="text-blue-600 underline">特定日と通常日</a>を見てください。</p>
+        <p class="hint">50が店の普通の日です。{{ forecast.period_label }} {{ forecast.record_count }} 日分（差枚あり {{ forecast.diff_days }} 日）の日別データから計算しています。対象期間: {{ forecast.first_date }}〜{{ forecast.last_date }} ・ データ最終追加・更新: {{ forecast.last_imported_at or '日時の記録なし' }}。<span class="kind-dot kind-event"></span>は旧イベント日・周年日です。特定日の狙い機種・末尾は<a href="#kind" class="text-blue-600 underline">特定日と通常日</a>を見てください。</p>
         <details class="mt-2">
             <summary class="cursor-pointer select-none text-xs text-blue-600 font-semibold">{{ icon('search') }} 指数の出し方</summary>
             <div class="text-xs text-gray-600 mt-2 space-y-1">
@@ -339,7 +339,7 @@
     {% call section('event', 'イベ日の信頼度') %}
         {% if (d1 and d1.by_event_category) or (dall and dall.by_event_category) %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for period_label, pt in [("直近1年", d1), ("全期間", dall)] %}
+            {% for period_label, pt in [((d1.period_label if d1 else "直近1年"), d1), ("全期間", dall)] %}
             <div>
                 <p class="text-xs font-bold text-gray-400 mb-1.5">{{ period_label }}{% if pt and pt.first_date %}<span class="font-normal">（{{ pt.first_date }}〜{{ pt.last_date }}）</span>{% endif %}</p>
                 {% if pt and pt.event_vs_normal %}
@@ -401,7 +401,7 @@
     {% endcall %}
 
     <section id="weekday" class="info-section">
-        <h2 class="flex items-center gap-2 font-bold text-gray-900 mb-3"><span class="section-bar"></span>曜日・日付の傾向（直近1年）</h2>
+        <h2 class="flex items-center gap-2 font-bold text-gray-900 mb-3"><span class="section-bar"></span>曜日・日付の傾向（{{ d1.period_label if d1 else "直近1年" }}）</h2>
         {% if d1 and d1.record_count %}
         <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4 items-start">
             {{ hall_metric_section("calendar", "曜日別", "平均G数が高い曜日ほど、店が力を入れている可能性があります。",
