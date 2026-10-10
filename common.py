@@ -4761,23 +4761,40 @@ def _unit_day_kind_rows(rows):
 
     def _compare(key_func, label_func, sort_by_key=False):
         normal_by_key = {r["key"]: r for r in _group_unit_rows(normal, key_func, label_func)}
+        special_dates, normal_dates = {}, {}
+        for source_rows, date_counts in ((special, special_dates), (normal, normal_dates)):
+            for source_row in source_rows:
+                key = key_func(source_row)
+                if key is not None:
+                    date_counts.setdefault(key, set()).add(source_row["date"])
         merged = []
         for row in _group_unit_rows(special, key_func, label_func):
             other = normal_by_key.get(row["key"])
             merged.append({
                 "key": row["key"], "label": row["label"], "special": row, "normal": other,
                 "gap": (row["avg_diff"] - other["avg_diff"]) if other else None,
+                "special_days": len(special_dates.get(row["key"], ())),
+                "normal_days": len(normal_dates.get(row["key"], ())),
             })
         if sort_by_key:
             merged.sort(key=lambda r: r["key"])
         return merged
 
+    by_machine = _compare(lambda r: r.get("machine_name") or None, lambda key, _rows: key)
+    # 1日の大量設置だけでおすすめに上がらないよう、複数日の実績と勝率も条件にする。
+    recommendations = [row for row in by_machine
+                       if row["special_days"] >= 2
+                       and row["special"]["diff_count"] >= TREND_MIN_SAMPLES
+                       and row["special"]["avg_diff"] > 0
+                       and row["special"]["plus_rate"] >= 50]
+    recommendations.sort(key=lambda row: (row["special"]["avg_diff"], row["special"]["plus_rate"]), reverse=True)
     return {
         "special_days": len({r["date"] for r in special}),
         "normal_days": len({r["date"] for r in normal}),
         "special": _summarize_unit_rows(special),
         "normal": _summarize_unit_rows(normal),
-        "by_machine": _compare(lambda r: r.get("machine_name") or None, lambda key, _rows: key)[:UNIT_DAY_KIND_LIMIT],
+        "by_machine": by_machine[:UNIT_DAY_KIND_LIMIT],
+        "recommendations": recommendations[:5],
         "by_number_suffix": _compare(_number_suffix, lambda key, _rows: f"末尾{key}", sort_by_key=True),
         "top_units": _compare(lambda r: r["machine_number"], _unit_label)[:UNIT_DAY_KIND_LIMIT],
         "by_island": _compare(lambda r: r.get("island"), lambda key, _rows: key),

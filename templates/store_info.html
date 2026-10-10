@@ -517,6 +517,17 @@
         {% if k %}
         <p class="text-sm">特定日 <strong>{{ k.special_days }}日</strong>（平均 {{ signed(k.special.avg_diff) }}枚・プラス率 {{ k.special.plus_rate | round | int }}%）
             ／ 通常日 <strong>{{ k.normal_days }}日</strong>{% if k.normal %}（平均 {{ signed(k.normal.avg_diff) }}枚・プラス率 {{ k.normal.plus_rate | round | int }}%）{% endif %}</p>
+        <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">おすすめ機種（特定日の実績）</h3>
+        {% if k.recommendations %}
+        <div class="flex flex-wrap gap-2">
+            {% for r in k.recommendations %}
+            <span class="chip">{{ r.label }} <strong>{{ signed(r.special.avg_diff) }}枚</strong>・プラス率{{ r.special.plus_rate | round | int }}%・{{ r.special_days }}日</span>
+            {% endfor %}
+        </div>
+        <p class="hint">特定日に2日以上の実績があり、差枚3台以上・平均差枚プラス・プラス率50%以上の機種を表示しています。過去実績からの候補です。</p>
+        {% else %}
+        <p class="text-gray-400 text-sm">条件を満たす機種はまだありません。特定日や台別データの登録が増えると判定できます。</p>
+        {% endif %}
         {% for title, rows in [("機種別（特定日の平均差枚順）", k.by_machine), ("台番号の末尾別", k.by_number_suffix), ("島別", k.by_island), ("台番号別（特定日の平均差枚順）", k.top_units)] if rows %}
         <h3 class="text-xs font-bold text-gray-400 mt-4 mb-1.5">{{ title }}</h3>
         <div class="overflow-x-auto -mx-1 px-1">
