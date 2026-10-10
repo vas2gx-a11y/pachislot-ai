@@ -318,6 +318,7 @@
                     <p class="text-sm">{{ d.label }}{% if d.special %} <span class="kind-dot kind-event" title="{{ d.events | join('・') }}"></span>{% endif %}{% if d.holiday %} <span class="text-xs text-rose-600">{{ d.holiday }}</span>{% endif %}
                         <span class="text-xs font-bold text-gray-500 ml-1">{{ d.grade }}</span></p>
                     <p class="text-xs text-gray-500 leading-relaxed">{% for r in d.reasons[:3] %}{{ r.text }}{% if not loop.last %}、{% endif %}{% else %}差のある切り口なし{% endfor %}</p>
+                    {% if d.notices %}<p class="text-xs text-amber-700 leading-relaxed mt-1">告知: {% for notice in d.notices %}{{ notice.title }}{% if notice.source_id in source_no %} <a class="cite" href="#src-{{ source_no[notice.source_id] }}">[{{ source_no[notice.source_id] }}]</a>{% endif %}{% if not loop.last %}、{% endif %}{% endfor %}</p>{% endif %}
                 </div>
             </div>
             {% endfor %}

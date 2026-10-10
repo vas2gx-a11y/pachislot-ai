@@ -131,6 +131,18 @@ def detail(store_id):
     tr = _trend_summary(sheet_store_name, days, with_machine_details=bool(request.args.get("details")))
     series = (tr["daily_all"] or {}).get("series") or []
     chart_series = _chart_series(series)
+    forecast = common.build_store_day_forecast(sheet_store_name)
+    # 店舗JSONの告知は公式SNSなどを出典にした予定情報。過去実績から計算する指数とは
+    # 混ぜず、同じ日付の欄に並べて確認できるようにする。
+    notices = (s.get("info", {}).get("notices") or {}).get("value") or []
+    notices_by_date = {}
+    for notice in notices:
+        date = notice.get("date")
+        if date:
+            notices_by_date.setdefault(date, []).append(notice)
+    if forecast:
+        for day in forecast.get("days", []):
+            day["notices"] = notices_by_date.get(day["date"], [])
     return render_template(
         "store_info.html",
         s=s,
@@ -145,7 +157,7 @@ def detail(store_id):
         tr=tr,
         # 台別の部分は画面で選んだ集計期間に合わせる(下の表と数字がずれないように)
         summary=common.build_store_summary(sheet_store_name, unit_days=days),
-        forecast=common.build_store_day_forecast(sheet_store_name),
+        forecast=forecast,
         day_attribute_note="（" + common.DAY_ATTRIBUTE_NOTE + "）",
         island_hot_diff=common.ISLAND_HOT_DIFF,
         # 表の日付にイベ日の印を付けるため。テンプレートで全期間を回して作ると日数ぶん重くなるのでここで作る
