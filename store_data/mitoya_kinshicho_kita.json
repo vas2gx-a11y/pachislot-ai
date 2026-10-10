@@ -1,0 +1,379 @@
+{
+  "$schema": "./schema.json",
+  "id": "mitoya_kinshicho_kita",
+  "name": "みとや錦糸町北口店",
+  "region": "東京都",
+  "area": "錦糸町",
+  "sheet_store_name": "みとや錦糸町北口店",
+  "updated_at": "2026-10-10",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "P-WORLD みとや錦糸町北口店",
+      "url": "https://www.p-world.co.jp/tokyo/kinshi-mitoya.htm",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    },
+    {
+      "id": "s2",
+      "name": "みんぱち みとや錦糸町北口店",
+      "url": "https://minpachi.com/kinshi-mitoya/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "墨田区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都墨田区錦糸3-3-4",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": "03-3829-3108",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hours": {
+      "value": "10:00〜22:50",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "〜09:30まで抽選参加券配布",
+        "09:30 抽選開始、抽選後即再整列",
+        "10:00 入場開始"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 381,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 289,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.3枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "裏口(ホルモン焼き錦糸町が向かいにある入口)を出てすぐ左手にあります。",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": "ＪＲ錦糸町北口、目の前",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "official_url": {
+      "value": "https://mitoyahall.co.jp",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/mitoyakinnshi"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "1993年9月4日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "features": {
+      "value": [
+        "台移動・貯玉再プレイ・新機種最速導入！"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "4のつく日、月日ゾロ目",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "anniversary_days": {
+      "value": "9月4日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "墨田区",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都墨田区錦糸3-3-4",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "03-3829-3108",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:50",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 381,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 289,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "ＪＲ錦糸町北口、目の前",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "https://mitoyahall.co.jp",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "台移動・貯玉再プレイ・新機種最速導入！"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "〜09:30まで抽選参加券配布",
+        "09:30 抽選開始、抽選後即再整列",
+        "10:00 入場開始"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.3枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "裏口(ホルモン焼き錦糸町が向かいにある入口)を出てすぐ左手にあります。",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/mitoyakinnshi"
+        }
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "1993年9月4日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "4のつく日、月日ゾロ目",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "9月4日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
+}

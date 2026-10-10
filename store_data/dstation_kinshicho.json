@@ -1,0 +1,419 @@
+{
+  "$schema": "./schema.json",
+  "id": "dstation_kinshicho",
+  "name": "Super D'station錦糸町店",
+  "region": "東京都",
+  "area": "錦糸町",
+  "sheet_store_name": "Super D'station錦糸町店",
+  "updated_at": "2026-10-10",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "P-WORLD Super D'station錦糸町店",
+      "url": "https://www.p-world.co.jp/tokyo/dstation-kinshicho.htm",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    },
+    {
+      "id": "s2",
+      "name": "みんぱち SuperＤ’station錦糸町店",
+      "url": "https://minpachi.com/dstation-kinshicho/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "墨田区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都墨田区江東橋4-25-5",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": "03-6659-9729",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hours": {
+      "value": "10:00〜22:45",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "09:00 オンライン抽選受付",
+        "09:30 抽選受付終了",
+        "09:45 抽選結果発表",
+        "09:50 整列",
+        "10:00 入場開始"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 639,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 361,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.73円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.73円スロット 5.2枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "replay_limit": {
+      "value": [
+        "4円パチンコ 2500玉",
+        "1円パチンコ 2500玉",
+        "21.73円スロット 460枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "prize_exchange": {
+      "value": "隣の花壇街入ってすぐ。",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "parking": {
+      "value": "400台",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "access": {
+      "value": "JR錦糸町駅南口徒歩3分",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "official_url": {
+      "value": "http://20227.p-world.jp",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/d_kinshicho"
+        },
+        {
+          "label": "TikTok",
+          "url": "https://www.tiktok.com/@dstation_kinshicho"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2021年4月29日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "features": {
+      "value": [
+        "錦糸町駅南口徒歩3分!!都内最大級の大型パチンコホール!!"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "3のつく日、9のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "anniversary_days": {
+      "value": "4月29日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "墨田区",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都墨田区江東橋4-25-5",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "03-6659-9729",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:45",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "09:00 オンライン抽選受付",
+        "09:30 抽選受付終了",
+        "09:45 抽選結果発表",
+        "09:50 整列",
+        "10:00 入場開始"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 639,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 361,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "parking",
+      "before": null,
+      "after": "400台",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "JR錦糸町駅南口徒歩3分",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "http://20227.p-world.jp",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "錦糸町駅南口徒歩3分!!都内最大級の大型パチンコホール!!"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.73円"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.73円スロット 5.2枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "4円パチンコ 2500玉",
+        "1円パチンコ 2500玉",
+        "21.73円スロット 460枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "隣の花壇街入ってすぐ。",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/d_kinshicho"
+        },
+        {
+          "label": "TikTok",
+          "url": "https://www.tiktok.com/@dstation_kinshicho"
+        }
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2021年4月29日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "3のつく日、9のつく日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "4月29日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
+}

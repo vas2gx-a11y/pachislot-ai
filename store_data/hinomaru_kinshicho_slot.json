@@ -1,0 +1,369 @@
+{
+  "$schema": "./schema.json",
+  "id": "hinomaru_kinshicho_slot",
+  "name": "ヒノマル錦糸町店スロット館",
+  "region": "東京都",
+  "area": "錦糸町",
+  "sheet_store_name": "ヒノマル錦糸町店スロット館",
+  "updated_at": "2026-10-10",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "P-WORLD ヒノマル錦糸町店スロット館",
+      "url": "https://www.p-world.co.jp/tokyo/hinomaru-kinshicho.htm",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    },
+    {
+      "id": "s2",
+      "name": "みんぱち ヒノマル錦糸町店スロット館",
+      "url": "https://minpachi.com/%E3%83%92%E3%83%8E%E3%83%9E%E3%83%AB%E9%8C%A6%E7%B3%B8%E7%94%BA%E5%BA%97/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "墨田区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都墨田区江東橋3-9-16",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": "03-3633-4114",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hours": {
+      "value": "10:00〜22:40",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "9:40 抽選",
+        "9:50 再整列",
+        "10:00 入場"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "slot_units": {
+      "value": 369,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "スロット 21.73円 / 5円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "21.73円スロット 5.2枚",
+        "5円スロット 22.4枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "replay_limit": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "prize_exchange": {
+      "value": "パチンコ館の方に歩いていき、道路渡って斜め右のプレハブ",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "official_url": {
+      "value": "http://www.hinomaru-pachinko.com",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://twitter.com/hinomaru_k"
+        },
+        {
+          "label": "ブログ",
+          "url": "http://tokyohinomaru.co.jp/blog/kinshicho/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/c/tokyohinomaru"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2018年12月20日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "features": {
+      "value": [
+        "スロット専門店！"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "0のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "anniversary_days": {
+      "value": "12月20日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "墨田区",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都墨田区江東橋3-9-16",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "03-3633-4114",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:40",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 369,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "http://www.hinomaru-pachinko.com",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "スロット専門店！"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "9:40 抽選",
+        "9:50 再整列",
+        "10:00 入場"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "スロット 21.73円 / 5円"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "21.73円スロット 5.2枚",
+        "5円スロット 22.4枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "パチンコ館の方に歩いていき、道路渡って斜め右のプレハブ",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://twitter.com/hinomaru_k"
+        },
+        {
+          "label": "ブログ",
+          "url": "http://tokyohinomaru.co.jp/blog/kinshicho/"
+        },
+        {
+          "label": "YouTube",
+          "url": "https://youtube.com/c/tokyohinomaru"
+        }
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2018年12月20日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "0のつく日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "12月20日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
+}

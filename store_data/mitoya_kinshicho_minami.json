@@ -1,0 +1,398 @@
+{
+  "$schema": "./schema.json",
+  "id": "mitoya_kinshicho_minami",
+  "name": "みとや錦糸町南口店",
+  "region": "東京都",
+  "area": "錦糸町",
+  "sheet_store_name": "みとや錦糸町南口店",
+  "updated_at": "2026-10-10",
+  "sources": [
+    {
+      "id": "s1",
+      "name": "P-WORLD みとや錦糸町南口店",
+      "url": "https://www.p-world.co.jp/tokyo/mitoyakinsityominami.htm",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    },
+    {
+      "id": "s2",
+      "name": "みんぱち みとや錦糸町南口店",
+      "url": "https://minpachi.com/%E3%81%BF%E3%81%A8%E3%82%84%E9%8C%A6%E7%B3%B8%E7%94%BA%E5%8D%97%E5%8F%A3%E5%BA%97/",
+      "reliability": "ポータル",
+      "checked_at": "2026-10-10"
+    }
+  ],
+  "info": {
+    "city": {
+      "value": "墨田区",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "address": {
+      "value": "東京都墨田区江東橋3-6-6",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "phone": {
+      "value": "03-5600-1911",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "hours": {
+      "value": "10:00〜22:50",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "entry": {
+      "value": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:45（パチンコ・スロット混合）"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "total_units": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "pachinko_units": {
+      "value": 168,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "slot_units": {
+      "value": 150,
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "rates": {
+      "value": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円 / 5円"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "exchange_rates": {
+      "value": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.15枚",
+        "5円スロット 22.4枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "replay_limit": {
+      "value": [
+        "4円パチンコ 2500玉",
+        "1円パチンコ 2500玉",
+        "21.27円スロット 460枚",
+        "5円スロット 500枚"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "prize_exchange": {
+      "value": "錦糸町駅側出口でてすぐ左に歩いていくとTUCがある。ヒノマルの同じTUC",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "parking": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "access": {
+      "value": "ＪＲ錦糸町南口、JRA-WINS横",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "official_url": {
+      "value": "https://mitoyahall.co.jp",
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "sns": {
+      "value": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/Kinshiminami"
+        }
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "line": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "opened_on": {
+      "value": "2014年7月17日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "features": {
+      "value": [
+        "パチンコ＆スロット全台が各台計数システム"
+      ],
+      "status": "未確認",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    "installed_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "event_days": {
+      "value": "4のつく日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "anniversary_days": {
+      "value": "7月17日",
+      "status": "未確認",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    "special_days": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "new_machines": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    },
+    "notices": {
+      "value": null,
+      "status": "不明",
+      "source_ids": []
+    }
+  },
+  "history": [
+    {
+      "field": "city",
+      "before": null,
+      "after": "墨田区",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "address",
+      "before": null,
+      "after": "東京都墨田区江東橋3-6-6",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "phone",
+      "before": null,
+      "after": "03-5600-1911",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "hours",
+      "before": null,
+      "after": "10:00〜22:50",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "pachinko_units",
+      "before": null,
+      "after": 168,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "slot_units",
+      "before": null,
+      "after": 150,
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "access",
+      "before": null,
+      "after": "ＪＲ錦糸町南口、JRA-WINS横",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "official_url",
+      "before": null,
+      "after": "https://mitoyahall.co.jp",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "features",
+      "before": null,
+      "after": [
+        "パチンコ＆スロット全台が各台計数システム"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s1"
+      ]
+    },
+    {
+      "field": "entry",
+      "before": null,
+      "after": [
+        "整理券あり（会員カード不要）",
+        "抽選 9:45（パチンコ・スロット混合）"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "rates",
+      "before": null,
+      "after": [
+        "パチンコ 4円 / 1円",
+        "スロット 21.27円 / 5円"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "exchange_rates",
+      "before": null,
+      "after": [
+        "4円パチンコ 28玉",
+        "1円パチンコ 112玉",
+        "21.27円スロット 5.15枚",
+        "5円スロット 22.4枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "replay_limit",
+      "before": null,
+      "after": [
+        "4円パチンコ 2500玉",
+        "1円パチンコ 2500玉",
+        "21.27円スロット 460枚",
+        "5円スロット 500枚"
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "prize_exchange",
+      "before": null,
+      "after": "錦糸町駅側出口でてすぐ左に歩いていくとTUCがある。ヒノマルの同じTUC",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "sns",
+      "before": null,
+      "after": [
+        {
+          "label": "X(旧Twitter)",
+          "url": "https://mobile.twitter.com/Kinshiminami"
+        }
+      ],
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "opened_on",
+      "before": null,
+      "after": "2014年7月17日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "event_days",
+      "before": null,
+      "after": "4のつく日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    },
+    {
+      "field": "anniversary_days",
+      "before": null,
+      "after": "7月17日",
+      "changed_at": "2026-10-10",
+      "source_ids": [
+        "s2"
+      ]
+    }
+  ]
+}
